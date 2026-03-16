@@ -4060,15 +4060,16 @@
         <!-- SYNC BAR -->
         <div style="display:flex;gap:0.75rem;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;">
           <div class="info-strip" style="flex:1;margin:0;">
-            🗂️ Inventory managed via Google Sheets (Apps Script). Connect your sheet in <strong>Google Drive Sheets</strong> and click Sync. Auto-sync, balance updates, and low stock alerts run live.
+            🗂️ Inventory managed via Google Sheets (Apps Script). Connect your sheet in <strong>Google Drive Sheets</strong> and click Sync. Data persists locally between sessions.
           </div>
-          <button class="tc-btn" style="border-color:rgba(16,185,129,0.4);color:var(--green);white-space:nowrap;" onclick="invSyncAll()">↻ Sync All</button>
-          <button class="tc-btn" style="white-space:nowrap;" onclick="invAutoSync()">🔄 Auto-Sync Master</button>
+          <button class="tc-btn" style="border-color:rgba(16,185,129,0.4);color:var(--green);white-space:nowrap;" onclick="invSyncAll()">↻ Sync Now</button>
+          <button id="inv-auto-sync-btn" class="tc-btn" style="white-space:nowrap;" onclick="invToggleAutoSync()">🔄 Auto-Sync</button>
           <button class="tc-btn" style="white-space:nowrap;" onclick="invUpdateAllBalances()">⚡ Update Balances</button>
           <button class="tc-btn" style="white-space:nowrap;" onclick="invCheckLowStock()">🚨 Low Stock Alert</button>
           <button class="tc-btn" style="white-space:nowrap;" onclick="invViewStatistics()">📊 Statistics</button>
           <button class="tc-btn" style="white-space:nowrap;" onclick="openThresholdManager('items')">⚙️ Thresholds</button>
           <button class="tc-btn primary" onclick="openAddInvItem()">+ Add Item</button>
+          <span id="inv-cache-stamp" style="font-size:0.68rem;font-family:var(--font-mono);color:var(--text3);white-space:nowrap;padding:0.2rem 0;"></span>
         </div>
 
         <!-- CATEGORY TABS -->
@@ -4577,6 +4578,8 @@
           setSyncStatus('ok','Connected');
           refreshLowStockAlerts();
           renderInventory();
+          _invShowCacheStamp();
+          _invUpdateAutoSyncBtn();
           if (WS_CONFIG.webAppUrl) {
             expLoadFromSheet().catch(() => expLoadDemoData());
             pubLoadFromSheet().catch(() => pubLoadDemoData());
@@ -4635,6 +4638,8 @@
           setSyncStatus('ok','Connected');
           refreshLowStockAlerts();
           renderInventory();
+          _invShowCacheStamp();
+          _invUpdateAutoSyncBtn();
           if (WS_CONFIG.webAppUrl) {
             expLoadFromSheet().catch(() => expLoadDemoData());
             pubLoadFromSheet().catch(() => pubLoadDemoData());
@@ -4683,6 +4688,16 @@
     document.querySelectorAll('.nav-item').forEach(n => {
       if(n.getAttribute('onclick')?.includes("'" + tabId + "'")) n.classList.add('active');
     });
+    // ── Inventory sub-item active state fix ──────────────────────────────
+    // The generic loop above marks ALL inventory nav-items active (they all
+    // reference 'inventory'). Re-narrow: only the top-level "All Inventory"
+    // item should be active when no sub-tab is drilled into.
+    if (tabId === 'inventory') {
+      document.querySelectorAll('.nav-item[data-tab="inventory"]').forEach(n => {
+        // Remove active from sub-items (those with switchInvTab in onclick)
+        if (n.getAttribute('onclick')?.includes('switchInvTab')) n.classList.remove('active');
+      });
+    }
     window.scrollTo(0, 0);
     if (tabId === 'people')    { setTimeout(initPeopleManagement, 50); }
     if (tabId === 'analytics') { setTimeout(() => { renderAnSec(); }, 80); }
@@ -4696,7 +4711,7 @@
     }, 80); }
     if (tabId === 'assets')    { setTimeout(assetInit, 50); }
     if (tabId === 'exec-dashboard') { setTimeout(execDashInit, 80); }
-    if (tabId === 'inventory') { setTimeout(renderInventory, 50); }
+    if (tabId === 'inventory') { setTimeout(() => { renderInventory(); _invShowCacheStamp(); }, 50); }
     if (tabId === 'expenses')  { setTimeout(() => {
       if (typeof EXP !== 'undefined' && !EXP.all.length) {
         if (WS_CONFIG.webAppUrl) expLoadFromSheet(); else expLoadDemoData();
@@ -7472,6 +7487,35 @@
     }
     try { refreshAssetKPIs(); renderITTable(); renderNonITTable(); renderGPUTable();
           renderILDSTable(); renderBooksTable(); renderSparesTable(); renderConsumablesTable(); renderVendorTable(); } catch(e) {}
+    // Recompute EXEC.assetSummary so Financial Summary in exec dashboard reflects new data
+    try {
+      if (typeof EXEC !== 'undefined') {
+        const _n = v => { const n=parseFloat(String(v||0).replace(/[₹,\s]/g,'')); return isNaN(n)?0:n; };
+        EXEC.assetSummary = {
+          itCount:       ASSET_DB.it.length,
+          itValue:       ASSET_DB.it.reduce((s,r)=>s+_n(r.purchaseValue),0),
+          nonitCount:    ASSET_DB.nonit.length,
+          nonitValue:    ASSET_DB.nonit.reduce((s,r)=>s+_n(r.purchaseValue),0),
+          gpuCount:      ASSET_DB.gpu.length,
+          gpuValue:      ASSET_DB.gpu.reduce((s,r)=>s+_n(r.purchaseValue),0),
+          ildsCount:     ASSET_DB.ilds.length,
+          ildsValue:     ASSET_DB.ilds.reduce((s,r)=>s+_n(r.purchaseValue),0),
+          booksCount:    ASSET_DB.books.length,
+          booksValue:    ASSET_DB.books.reduce((s,r)=>s+_n(r.purchaseValue||r.costForeign),0),
+          sparesCount:   ASSET_DB.spares.length,
+          consCount:     ASSET_DB.consumables.length,
+          totalCount:    ASSET_DB.it.length+ASSET_DB.nonit.length+ASSET_DB.gpu.length+
+                         ASSET_DB.ilds.length+ASSET_DB.books.length+ASSET_DB.spares.length,
+          portfolioTotal:0
+        };
+        EXEC.assetSummary.portfolioTotal =
+          EXEC.assetSummary.itValue+EXEC.assetSummary.nonitValue+EXEC.assetSummary.gpuValue+
+          EXEC.assetSummary.ildsValue+EXEC.assetSummary.booksValue;
+        // Rebuild exec dashboard financial section if visible
+        if (document.getElementById('tab-exec-dashboard')?.classList.contains('active'))
+          try { execBuildAll(); } catch(e2) {}
+      }
+    } catch(e) {}
     if (!silent) toast('✅ Assets loaded from sheet');
     logAction('Asset Sync', _currentUser||'Admin', 'Assets', 'Loaded from sheet via JSONP');
   }
@@ -10126,14 +10170,34 @@
   // ══════════════════════════════════════════════
   // INVENTORY CONFIG (mirrors Apps Script CONFIG)
   // ══════════════════════════════════════════════
+  // ── INV_CONFIG — mirrors GAS INVENTORY_THRESHOLDS + GIFTS_MASTER_MAP ──
   const INV_CONFIG = {
-    LOW_STOCK_THRESHOLD: 20,
+    // Per-category thresholds (matches GAS INVENTORY_THRESHOLDS exactly)
+    THRESHOLDS: {
+      gifts:        { low: 50, critical: 5 },
+      stationeries: { low: 30, critical: 5 },
+      mementos:     { low: 30, critical: 5 }
+    },
+    // Legacy flat thresholds (kept for getInvStatus/getVariantStatus compat)
+    LOW_STOCK_THRESHOLD:      20,   // per-item threshold field overrides this
     CRITICAL_STOCK_THRESHOLD: 5,
     TSHIRT_SIZES: ['XS','S','M','L','XL','XXL','XXXL'],
-    SHIRT_SIZES: ['38','39','40','42','44','46'],
-    CENTERS: ['WSAI','DSAI','RBCDSAI','CeRAI'],
-    CATEGORIES: ['Gifts','Stationeries','Mementos'],
-    CENTER_KEYWORDS: { RBCDSAI:['rbcdsai'], DSAI:['dsai'], WSAI:['wsai'], CeRAI:['cerai'] }
+    SHIRT_SIZES:  ['38','39','40','42','44','46'],
+    CENTERS:      ['WSAI','DSAI','RBCDSAI','CeRAI'],
+    CATEGORIES:   ['Gifts','Stationeries','Mementos'],
+    // Center detection — RBCDSAI checked FIRST (most specific, matches GAS)
+    CENTER_KEYWORDS: { RBCDSAI:['rbcdsai'], DSAI:['dsai'], WSAI:['wsai'], CeRAI:['cerai'] },
+    // GAS Master Summary sheet column map (GIFTS_MASTER_MAP)
+    MASTER_COLS: {
+      itemName:1, center:2, category:3, openingBalance:4,
+      totalReceived:5, totalIssued:6, currentBalance:7, status:8,
+      lowThreshold:9, lastUpdated:10, remarks:11
+    },
+    // GAS per-item ledger column map (GIFTS_ITEM_MAP)
+    ITEM_COLS: {
+      date:1, description:2, received:3, issued:4,
+      balance:5, remarks:6, issuedTo:7
+    }
   };
 
   // ── INVENTORY DATA STORE ──
@@ -10300,11 +10364,121 @@
       {color:'White',size:'44',center:'DSAI',type:'Formal',received:10,issued:9, threshold:3,lastUpdated:'2026-03-07'},
     ]
   };
+  // ← Immediately restore any previously-saved data from localStorage
+  // (runs synchronously before anything else references INV_DB)
+  (function _earlyInvRestore() {
+    try {
+      const raw = localStorage.getItem('wsai_inv_db_v3');
+      if (!raw) return;
+      const stored = JSON.parse(raw);
+      if (stored.items          && stored.items.length)          INV_DB.items           = stored.items;
+      if (stored.tshirtVariants && stored.tshirtVariants.length) INV_DB.tshirtVariants  = stored.tshirtVariants;
+      if (stored.shirtVariants  && stored.shirtVariants.length)  INV_DB.shirtVariants   = stored.shirtVariants;
+    } catch(e) {}
+  })();
 
   let currentInvTab = 'all';
   let currentMementoSubTab = 'items'; // 'items' | 'tshirt' | 'shirt'
 
-  // ── STATUS DETERMINATION (mirrors getStatusAndColor in Apps Script) ──
+  // ── INV_DB PERSISTENCE ─────────────────────────────────────────────────
+  // Keys used in localStorage
+  const INV_LS_KEY      = 'wsai_inv_db_v3';
+  const INV_LS_META_KEY = 'wsai_inv_meta_v3';
+
+  // Save the current INV_DB to localStorage (debounced)
+  let _invSaveTimer = null;
+  function _invPersist() {
+    clearTimeout(_invSaveTimer);
+    _invSaveTimer = setTimeout(() => {
+      try {
+        localStorage.setItem(INV_LS_KEY, JSON.stringify({
+          items: INV_DB.items,
+          tshirtVariants: INV_DB.tshirtVariants,
+          shirtVariants:  INV_DB.shirtVariants
+        }));
+        localStorage.setItem(INV_LS_META_KEY, JSON.stringify({
+          savedAt:   new Date().toISOString(),
+          itemCount: INV_DB.items.length,
+          tsCount:   INV_DB.tshirtVariants.length,
+          shCount:   INV_DB.shirtVariants.length
+        }));
+      } catch(e) { console.warn('[inv] persist failed:', e.message); }
+    }, 400);
+  }
+
+  // Restore INV_DB from localStorage on startup (merges, keeps seed data if empty)
+  function _invRestore() {
+    try {
+      const raw = localStorage.getItem(INV_LS_KEY);
+      if (!raw) return;
+      const stored = JSON.parse(raw);
+      if (stored.items && stored.items.length)            INV_DB.items           = stored.items;
+      if (stored.tshirtVariants && stored.tshirtVariants.length) INV_DB.tshirtVariants = stored.tshirtVariants;
+      if (stored.shirtVariants  && stored.shirtVariants.length)  INV_DB.shirtVariants  = stored.shirtVariants;
+      console.log('[inv] restored from localStorage —', INV_DB.items.length, 'items');
+    } catch(e) { console.warn('[inv] restore failed:', e.message); }
+  }
+
+  // Show last-cached timestamp in the sync bar
+  function _invShowCacheStamp() {
+    try {
+      const meta = JSON.parse(localStorage.getItem(INV_LS_META_KEY) || '{}');
+      const el = document.getElementById('inv-cache-stamp');
+      if (el && meta.savedAt) {
+        const d = new Date(meta.savedAt);
+        el.textContent = 'Cached ' + d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'})
+          + ' ' + d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})
+          + '  ·  ' + (meta.itemCount||0) + ' items';
+        el.title = 'Full data cached locally — works offline';
+      }
+    } catch(e) {}
+  }
+
+  // ── INV AUTO-SYNC TIMER ────────────────────────────────────────────────
+  let _invAutoSyncTimer   = null;
+  let _invAutoSyncEnabled = false;
+  const INV_AUTO_SYNC_MS  = 5 * 60 * 1000; // 5 minutes
+
+  function invStartAutoSync() {
+    if (_invAutoSyncTimer) { clearInterval(_invAutoSyncTimer); _invAutoSyncTimer = null; }
+    _invAutoSyncEnabled = true;
+    _invAutoSyncTimer = setInterval(async () => {
+      if (WS_CONFIG.webAppUrl || _resolveUrl('gifts') || _resolveUrl('stationery') || _resolveUrl('mementos')) {
+        await invSyncAll();
+      } else {
+        await invAutoSync();
+      }
+    }, INV_AUTO_SYNC_MS);
+    _invUpdateAutoSyncBtn();
+    toast('🔄 Inventory auto-sync ON — refreshes every 5 min');
+  }
+
+  function invStopAutoSync() {
+    if (_invAutoSyncTimer) { clearInterval(_invAutoSyncTimer); _invAutoSyncTimer = null; }
+    _invAutoSyncEnabled = false;
+    _invUpdateAutoSyncBtn();
+    toast('⏹ Inventory auto-sync OFF');
+  }
+
+  function invToggleAutoSync() {
+    if (_invAutoSyncEnabled) { invStopAutoSync(); } else { invStartAutoSync(); }
+  }
+
+  function _invUpdateAutoSyncBtn() {
+    const btn = document.getElementById('inv-auto-sync-btn');
+    if (!btn) return;
+    if (_invAutoSyncEnabled) {
+      btn.textContent  = '⏹ Stop Auto-Sync';
+      btn.style.borderColor = 'rgba(239,68,68,0.4)';
+      btn.style.color       = 'var(--red)';
+    } else {
+      btn.textContent  = '🔄 Auto-Sync';
+      btn.style.borderColor = '';
+      btn.style.color       = '';
+    }
+  }
+
+  // STATUS DETERMINATION (mirrors getStatusAndColor in Apps Script) ──
   function getInvBalance(item) {
     return Math.max(0, item.openingBal + item.totalReceived - item.totalIssued);
   }
@@ -10316,16 +10490,26 @@
   function getInvStatus(item) {
     const bal = getInvBalance(item);
     if (bal === 0) return 'out';
-    if (bal <= INV_CONFIG.CRITICAL_STOCK_THRESHOLD) return 'critical';
-    if (bal <= item.threshold) return 'low';
+    // Use per-category thresholds mirroring GAS INVENTORY_THRESHOLDS
+    const catKey = (item.category || 'gifts').toLowerCase();
+    const catT   = (INV_CONFIG.THRESHOLDS && INV_CONFIG.THRESHOLDS[catKey]) || { low: 30, critical: 5 };
+    const critT  = catT.critical;
+    // item.threshold is the per-item override (lowThreshold from sheet); fall back to category low
+    const lowT   = (item.threshold && item.threshold > 0) ? item.threshold : catT.low;
+    if (bal <= critT) return 'critical';
+    if (bal <= lowT)  return 'low';
     return 'ok';
   }
 
   function getVariantStatus(v) {
     const bal = getVariantBalance(v);
     if (bal === 0) return 'out';
-    if (bal <= INV_CONFIG.CRITICAL_STOCK_THRESHOLD) return 'critical';
-    if (bal <= v.threshold) return 'low';
+    // Apparel uses mementos thresholds
+    const catT  = (INV_CONFIG.THRESHOLDS && INV_CONFIG.THRESHOLDS.mementos) || { low: 30, critical: 5 };
+    const critT = catT.critical;
+    const lowT  = (v.threshold && v.threshold > 0) ? v.threshold : catT.low;
+    if (bal <= critT) return 'critical';
+    if (bal <= lowT)  return 'low';
     return 'ok';
   }
 
@@ -10361,6 +10545,15 @@
       const cls = {gifts:'gifts-active',stationeries:'stationeries-active',mementos:'mementos-active',all:'active'}[tab] || 'active';
       btn.classList.add(cls);
     }
+    // ── Sync sidebar sub-item highlight ──────────────────────────────────
+    document.querySelectorAll('.nav-item[data-tab="inventory"]').forEach(n => {
+      n.classList.remove('active');
+      const oc = n.getAttribute('onclick') || '';
+      // Top-level "All Inventory" item — active only when tab === 'all'
+      if (!oc.includes('switchInvTab') && tab === 'all') { n.classList.add('active'); return; }
+      // Sub-items — match by their switchInvTab('gifts') etc.
+      if (oc.includes("switchInvTab('" + tab + "')")) n.classList.add('active');
+    });
     renderInventory();
   }
 
@@ -10650,6 +10843,7 @@
     item.totalIssued += qty;
     item.lastUpdated  = today;
     item.ledger.push({ date: today, description: 'Issued', received: 0, issued: qty, issuedTo, remarks });
+    _invPersist();
     document.getElementById('inv-detail-overlay').style.display = 'none';
     renderInventory();
     logAction('Issue Item', _currentUser||'Admin', 'Inventory', qty + 'x ' + item.name + (issuedTo ? ' → ' + issuedTo : ''));
@@ -10669,6 +10863,7 @@
     item.totalReceived += qty;
     item.lastUpdated    = today;
     item.ledger.push({ date: today, description: 'Received', received: qty, issued: 0, issuedTo: '', remarks });
+    _invPersist();
     document.getElementById('inv-detail-overlay').style.display = 'none';
     renderInventory();
     logAction('Receive Stock', _currentUser||'Admin', 'Inventory', qty + 'x ' + item.name + ' received');
@@ -10735,6 +10930,7 @@
       ledger: [{ date: today, description: 'Opening Balance', received: opening, issued: 0, issuedTo: '', remarks: 'Initial entry' }]
     };
     INV_DB.items.push(newItem);
+    _invPersist();
     document.getElementById('add-inv-overlay').style.display = 'none';
     renderInventory();
     logAction('Add Item', _currentUser||'Admin', 'Inventory', name + ' (' + cat + ')');
@@ -10754,6 +10950,7 @@
       'Delete', 'var(--red)',
       function() {
         INV_DB.items = INV_DB.items.filter(i => i.id !== id);
+        _invPersist();
         document.getElementById('inv-detail-overlay').style.display = 'none';
         renderInventory();
         logAction('Delete Item', _currentUser||'Admin', 'Inventory', item.name + ' (' + item.category + ')');
@@ -10876,6 +11073,8 @@
       invUpdateAllBalances();
       renderInventory();
       if (loaded > 0) {
+        _invPersist();           // ← save to localStorage immediately after sheet load
+        _invShowCacheStamp();    // ← update "Cached …" label in sync bar
         setSyncStatus('ok', 'Inventory synced ✓');
         toast('✅ Inventory synced — ' + INV_DB.items.length + ' items across ' + loaded + ' categor' + (loaded===1?'y':'ies'));
         logAction('Inv Sync All', _currentUser||'Admin', 'Inventory', INV_DB.items.length + ' items loaded (' + loaded + ' categories)');
@@ -11119,6 +11318,7 @@
     if (qty > getVariantBalance(v)) { toast('❌ Insufficient stock — only ' + getVariantBalance(v) + ' available'); return; }
     v.issued += qty;
     v.lastUpdated = _todayDDMMYYYY();
+    _invPersist();
     document.getElementById('add-variant-overlay').style.display = 'none';
     if (currentMementoSubTab === 'tshirt') { renderTshirtMaster(); renderTshirtSizeGrid(); }
     else { renderShirtMaster(); renderShirtSizeGrid(); }
@@ -11136,6 +11336,7 @@
     if (qty <= 0) { toast('⚠️ Enter a valid quantity'); return; }
     v.received += qty;
     v.lastUpdated = _todayDDMMYYYY();
+    _invPersist();
     document.getElementById('add-variant-overlay').style.display = 'none';
     if (currentMementoSubTab === 'tshirt') { renderTshirtMaster(); renderTshirtSizeGrid(); }
     else { renderShirtMaster(); renderShirtSizeGrid(); }
@@ -11201,6 +11402,7 @@
     const existing = arr.find(v => v.color===color && v.size===size && v.center===center);
     if (existing) { toast('⚠️ Variant already exists for ' + color + ' ' + size + ' · ' + center); return; }
     arr.push({color, size, center, type: vtype, received: qty, issued: 0, threshold: thresh, lastUpdated: today});
+    _invPersist();
     document.getElementById('add-variant-overlay').style.display = 'none';
     if (type === 'tshirt') { renderTshirtMaster(); renderTshirtSizeGrid(); }
     else { renderShirtMaster(); renderShirtSizeGrid(); }
@@ -11397,6 +11599,7 @@
       else { INV_DB.shirtVariants[idx].threshold = val; }
       count++;
     });
+    _invPersist();
     document.getElementById('thresh-modal-overlay').style.display = 'none';
     renderInventory();
     if (currentMementoSubTab === 'tshirt') renderTshirtMaster();
@@ -11417,6 +11620,7 @@
       else if (type === 'tshirt' && INV_DB.tshirtVariants[idx]) { INV_DB.tshirtVariants[idx].threshold = val; count++; }
       else if (type === 'shirt' && INV_DB.shirtVariants[idx]) { INV_DB.shirtVariants[idx].threshold = val; count++; }
     });
+    _invPersist();
     document.getElementById('inv-thresh-panel').style.display = 'none';
     renderInventory();
     logAction('Threshold Update', _currentUser||'Admin', 'Inventory', count + ' thresholds updated');
@@ -11454,15 +11658,26 @@
   // ── UPDATE ALL BALANCES (mirrors updateAllBalances) ──
   function invUpdateAllBalances() {
     let updated = 0;
+    const today = new Date().toISOString().split('T')[0];
     INV_DB.items.forEach(item => {
-      let runningBal = item.openingBal;
+      if (!item.ledger || !item.ledger.length) { updated++; return; }
+      // Re-derive totals from ledger (mirrors GAS updateInventoryItem running-balance logic)
+      let totalRcv = 0, totalIss = 0;
       item.ledger.forEach(tx => {
-        runningBal = Math.max(0, runningBal + tx.received - tx.issued);
+        const desc = (tx.description || '').toLowerCase();
+        if (desc.includes('opening')) {
+          // Opening Balance row sets the floor — don't double-count in received
+        } else {
+          totalRcv += (tx.received || 0);
+          totalIss += (tx.issued   || 0);
+        }
       });
-      item.lastUpdated = new Date().toISOString().split('T')[0];
+      item.totalReceived = totalRcv;
+      item.totalIssued   = totalIss;
+      item.lastUpdated   = today;
       updated++;
     });
-    // Variant balances auto-calculated
+    _invPersist();
     renderInventory();
     toast('⚡ All balances updated — ' + updated + ' items');
     logAction('Update Balances', _currentUser||'Admin', 'Inventory', updated + ' item balances recalculated');
@@ -12115,7 +12330,7 @@
   // ── Init ──────────────────────────────────────────────────────────────
   async function labInit() {
     if (LAB.loaded) return;
-    LAB.loaded = true;
+    // Don't set loaded=true until data is confirmed — prevents false cache hits
     const url = _resolveUrl('labs');
     let source = null;
 
@@ -12153,7 +12368,12 @@
 
     // Fallback to sample data ONLY when sheet unavailable/not configured
     if (!source && !WS_CONFIG.webAppUrl) source = labSampleData();
-
+    if (!source) {
+      // Still no data (sheet connected but returned nothing) — leave loaded=false so next
+      // auto-fetch can retry, but default empty arrays so renders don't crash
+      source = { facultyLabs:[], facilityRooms:[], researchers:[], facultyRooms:[] };
+    }
+    LAB.loaded = true; // mark loaded only after we have a source
     LAB.data          = source;
     // Mirror at top-level so exec dashboard helpers also work
     LAB.facultyLabs   = source.facultyLabs;
@@ -13740,7 +13960,14 @@
   function execDashInit() {
     execBuildAll(); // render immediately with cached data
     if (WS_CONFIG.webAppUrl) {
-      execFetchFromSheet(); // then fetch live and re-render
+      execFetchFromSheet(); // fetch exec dashboard summary
+      // Also ensure assets and labs are loaded so financial/room sections have data
+      if (!ASSET_DB.it.length && !ASSET_DB.nonit.length) {
+        assetLoadFromSheet(true).then(function() { execBuildAll(); }).catch(function(){});
+      }
+      if (!LAB.loaded) {
+        labInit().then(function() { execBuildAll(); }).catch(function(){});
+      }
     }
   }
   function execDashRefresh() {
@@ -15570,56 +15797,93 @@ function _stopAutoSync() {
   if (ind) ind.style.display = 'none';
 }
 
+// ── SELECTIVE REFRESH POLICY (v23.0) ─────────────────────────────────────
+// FREQUENT  (~60 s): Assets, Labs, Inventory  — live stock / seat counts
+// LONG-CACHE (30 min): People, Biometric, Publications, Expenses, Exec Dashboard
+const _LONG_CACHE_MS = 30 * 60 * 1000; // 30 minutes
+let   _lastSlowSync  = 0;              // epoch ms of last slow-module fetch
+
 async function _runAutoSync() {
   const url = (typeof _resolveUrl === 'function' ? _resolveUrl('people') : '') || WS_CONFIG.webAppUrl;
   if (!url) { _stopAutoSync(); return; }
 
-  const dot   = document.getElementById('auto-sync-dot');
-  const label = document.getElementById('auto-sync-label');
-  const timeEl= document.getElementById('auto-sync-time');
+  const dot    = document.getElementById('auto-sync-dot');
+  const label  = document.getElementById('auto-sync-label');
+  const timeEl = document.getElementById('auto-sync-time');
 
-  // Pulse: yellow while syncing
-  if (dot)   dot.style.background   = 'var(--gold)';
-  if (label) label.textContent       = 'Syncing…';
+  if (dot)   dot.style.background = 'var(--gold)';
+  if (label) label.textContent    = 'Syncing…';
 
   try {
-    // Fetch people
-    const data = await _jsonpFetch(url, { action: 'GET_ALL', t: Date.now() });
-    if (data) {
-      if (data.staff)        DB.staff        = data.staff;
-      if (data.faculty)      DB.faculty      = data.faculty;
-      if (data.assocFaculty) DB.assocFaculty = data.assocFaculty;
-      if (data.affiFaculty)  DB.affiFaculty  = data.affiFaculty;
-      if (data.researchers)  DB.researchers  = data.researchers;
-      if (data.students)     DB.students     = data.students;
-      if (data.fellows)      DB.fellows      = data.fellows;
-      if (data.alumni)       DB.alumni       = data.alumni;
-      try { initPeopleManagement(); } catch(e) {}
-    }
-    // Fetch assets (includes vendors)
+    // ── ALWAYS: Assets ────────────────────────────────────────────────────
     try { await assetLoadFromSheet(true); } catch(e) {}
-    // Fetch expenses & publications
-    try { await expLoadFromSheet(); } catch(e) {}
-    try { await pubLoadFromSheet(); } catch(e) {}
 
-    // Update indicator — green + timestamp
-    const ts = new Date().toLocaleTimeString('en-IN', {hour:'2-digit',minute:'2-digit'});
-    if (dot)   { dot.style.background = 'var(--green)'; }
-    if (label) label.textContent = 'Auto ↻';
-    if (timeEl) timeEl.textContent = ts;
+    // ── ALWAYS: Labs ──────────────────────────────────────────────────────
+    try {
+      const labUrl  = _resolveUrl('labs') || url;
+      const labData = await _jsonpFetch(labUrl, { action: 'GET_LAB', t: Date.now() });
+      if (labData && (labData.facultyLabs || labData.facilityRooms)) {
+        const shaped = {
+          facultyLabs:   (labData.facultyLabs   || []).map(l => { if (!l.id) l.id = 'FL' + Math.random().toString(36).slice(2,8); return l; }),
+          facilityRooms: (labData.facilityRooms || []).map(r => { if (!r.id) r.id = 'FR' + Math.random().toString(36).slice(2,8); return r; }),
+          researchers:   (labData.researchers   || []).map(r => { if (!r.id) r.id = 'RS' + Math.random().toString(36).slice(2,8); return r; }),
+          facultyRooms:  (labData.facultyRooms  || []).map(r => { if (!r.id) r.id = 'FRM'+ Math.random().toString(36).slice(2,8); return r; })
+        };
+        if (typeof LAB !== 'undefined') {
+          LAB.data = shaped; LAB.facultyLabs = shaped.facultyLabs;
+          LAB.facilityRooms = shaped.facilityRooms; LAB.researchers = shaped.researchers; LAB.loaded = true;
+        }
+        if (document.getElementById('tab-labs')?.classList.contains('active')) {
+          try { labRefreshKPIs(); labRenderFacultyLabs(); } catch(e) {}
+        }
+      }
+    } catch(e) { console.warn('[auto-sync] labs failed:', e.message); }
 
-    // Update sys-last-sync if visible
-    const lsEl = document.getElementById('sys-last-sync');
-    if (lsEl) lsEl.textContent = ts;
+    // ── ALWAYS: Inventory ─────────────────────────────────────────────────
+    try {
+      const invUrl = _resolveUrl('gifts') || _resolveUrl('stationery') || _resolveUrl('mementos') || url;
+      if (invUrl) await invSyncAll();
+    } catch(e) { console.warn('[auto-sync] inventory failed:', e.message); }
+
+    // ── INFREQUENT: People, Expenses, Publications (max once per 30 min) ──
+    const now = Date.now();
+    if (now - _lastSlowSync >= _LONG_CACHE_MS) {
+      _lastSlowSync = now;
+      try {
+        const data = await _jsonpFetch(url, { action: 'GET_ALL', t: now });
+        if (data) {
+          if (data.staff)        DB.staff        = data.staff;
+          if (data.faculty)      DB.faculty      = data.faculty;
+          if (data.assocFaculty) DB.assocFaculty = data.assocFaculty;
+          if (data.affiFaculty)  DB.affiFaculty  = data.affiFaculty;
+          if (data.researchers)  DB.researchers  = data.researchers;
+          if (data.students)     DB.students     = data.students;
+          if (data.fellows)      DB.fellows      = data.fellows;
+          if (data.alumni)       DB.alumni       = data.alumni;
+          try { initPeopleManagement(); } catch(e) {}
+        }
+      } catch(e) { console.warn('[auto-sync] people failed:', e.message); }
+      try { await expLoadFromSheet(); } catch(e) {}
+      try { await pubLoadFromSheet(); } catch(e) {}
+      console.log('[WSAI v23] Slow-cache modules refreshed at', new Date().toLocaleTimeString());
+    }
+
+    // Update indicator
+    const ts = new Date().toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'});
+    if (dot)    dot.style.background = 'var(--green)';
+    if (label)  label.textContent    = 'Auto ↻';
+    if (timeEl) timeEl.textContent   = ts;
+    const lsEl  = document.getElementById('sys-last-sync');
     const dLsEl = document.getElementById('drive-last-sync');
+    if (lsEl)  lsEl.textContent  = ts;
     if (dLsEl) dLsEl.textContent = ts;
-
     setSyncStatus('ok', 'Auto-synced ✓ ' + ts);
+
   } catch(e) {
-    if (dot)   dot.style.background   = 'var(--red)';
-    if (label) label.textContent       = 'Sync failed';
-    if (timeEl) timeEl.textContent     = '';
-    console.warn('[WSAI v14] Auto-sync failed:', e.message);
+    if (dot)    dot.style.background = 'var(--red)';
+    if (label)  label.textContent    = 'Sync failed';
+    if (timeEl) timeEl.textContent   = '';
+    console.warn('[WSAI v23] Auto-sync failed:', e.message);
   }
 }
 
@@ -19728,538 +19992,442 @@ console.log('%c✅ WSAI Portal v24.4 — BugFix Patch loaded (sync hoist · rend
 'use strict';
 
 // ─── helpers ────────────────────────────────────────────────────────────────
-function _sf(fn) { try { if (typeof window[fn] === 'function') window[fn](); } catch(e) {} }
+function _sf(fn) { try { if (typeof window[fn]==='function') window[fn](); } catch(e){} }
 function _log(m) { console.log('%c[WSAI] '+m,'color:#10B981;font-size:10px;'); }
 
-// ─── alumni normaliser ───────────────────────────────────────────────────────
-const _ALUMNI_NORM = {
+const _ALUMNI_NORM={
   'Staff':'staff','staff':'staff',
   'Faculty':'faculty','faculty':'faculty',
-  'Associate Faculty':'assocFaculty','assocFaculty':'assocFaculty','assocfaculty':'assocFaculty',
-  'Affiliate Faculty':'affiFaculty','affiFaculty':'affiFaculty','affifaculty':'affiFaculty',
-  'Active Researchers':'researchers','researchers':'researchers','Researchers':'researchers',
+  'Associate Faculty':'assocFaculty','assocFaculty':'assocFaculty',
+  'Affiliate Faculty':'affiFaculty','affiFaculty':'affiFaculty',
+  'Active Researchers':'researchers','researchers':'researchers',
   'Students':'students','students':'students',
-  'Associate Fellows':'fellows','fellows':'fellows','Fellows':'fellows'
+  'Associate Fellows':'fellows','fellows':'fellows'
 };
-function _normAlumni(arr) {
-  return (arr||[]).map(function(r) {
-    if (r.movedFrom && _ALUMNI_NORM[r.movedFrom]) r.movedFrom = _ALUMNI_NORM[r.movedFrom];
-    if (!r.category && r.movedFrom) r.category = r.movedFrom;
+function _normAlumni(arr){
+  return (arr||[]).map(function(r){
+    if(r.movedFrom&&_ALUMNI_NORM[r.movedFrom]) r.movedFrom=_ALUMNI_NORM[r.movedFrom];
+    if(!r.category&&r.movedFrom) r.category=r.movedFrom;
     return r;
   });
 }
 
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// 1. INGEST — write data from a GAS response into the correct in-memory store
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ─── INGEST: write fetched data into the correct in-memory store ─────────────
 
-function _ingestPeople(data) {
-  if (!data || typeof DB === 'undefined') return false;
-  var any = false;
-  ['staff','faculty','assocFaculty','affiFaculty','researchers','students','fellows'].forEach(function(k) {
-    if (Array.isArray(data[k])) { DB[k] = data[k]; any = true; }
+function _ingestPeople(data){
+  if(!data||typeof DB==='undefined') return false;
+  var any=false;
+  ['staff','faculty','assocFaculty','affiFaculty','researchers','students','fellows'].forEach(function(k){
+    if(Array.isArray(data[k])){DB[k]=data[k];any=true;}
   });
-  if (Array.isArray(data.alumni)) { DB.alumni = _normAlumni(data.alumni); any = true; }
+  if(Array.isArray(data.alumni)){DB.alumni=_normAlumni(data.alumni);any=true;}
   return any;
 }
 
-function _ingestAssets(data) {
-  // Accepts either { it:[], nonit:[], ... } or { assets:[] } or { assetRows:{} }
-  if (!data || typeof ASSET_DB === 'undefined') return false;
-  var src = data.assetRows || data;
-  var keys = ['it','nonit','gpu','ilds','books','spares','consumables','vendors'];
-  var any = false;
-  keys.forEach(function(k) {
-    if (Array.isArray(src[k]) && src[k].length) { ASSET_DB[k] = src[k]; any = true; }
-  });
-  // Flat assets array
-  if (!any && Array.isArray(data.assets)) {
-    data.assets.forEach(function(r) {
-      var t = (r.assetType||r.type||r.category||'').toLowerCase();
-      var k = t.includes('non')||t.includes('non-it') ? 'nonit'
-            : t.includes('gpu') ? 'gpu' : t.includes('ilds') ? 'ilds'
-            : t.includes('book') ? 'books' : t.includes('spar') ? 'spares'
-            : t.includes('cons') ? 'consumables' : 'it';
-      if (!ASSET_DB[k]) ASSET_DB[k]=[];
-      ASSET_DB[k].push(r);
-    });
-    any = true;
-  }
+function _ingestAssets(data){
+  // Accepts: { it:[], nonit:[], ... }  OR  { assetRows:{ it:[], ... } }
+  if(!data||typeof ASSET_DB==='undefined') return false;
+  var src=data.assetRows||data;
+  var keys=['it','nonit','gpu','ilds','books','spares','consumables','vendors'];
+  var any=false;
+  keys.forEach(function(k){ if(Array.isArray(src[k])&&src[k].length){ASSET_DB[k]=src[k];any=true;} });
   return any;
 }
 
-function _ingestExpenses(data) {
-  if (!data || typeof EXP === 'undefined') return false;
-  if (!data.expenses && !data.transactions) return false;
-  if (typeof expOnData === 'function') { expOnData(data); return true; }
+function _ingestExpenses(data){
+  if(!data||(typeof EXP==='undefined')) return false;
+  if(!data.expenses&&!data.transactions) return false;
+  if(typeof expOnData==='function'){expOnData(data);return true;}
   return false;
 }
 
-function _ingestPublications(data) {
-  if (!data || typeof PUB === 'undefined') return false;
-  // pubOnData expects { journals, conferences, reports, preprintArxiv }
-  // GET_ALL_MODULES returns data.publications = { journals:[], ... }
-  var pub = data.publications || data;
-  if (!pub.journals && !pub.conferences) return false;
-  if (typeof pubOnData === 'function') { pubOnData(pub); return true; }
+function _ingestPublications(data){
+  if(!data||(typeof PUB==='undefined')) return false;
+  var pub=data.publications||data;
+  if(!pub.journals&&!pub.conferences&&!pub.reports&&!pub.preprintArxiv) return false;
+  if(typeof pubOnData==='function'){pubOnData(pub);return true;}
   return false;
 }
 
-function _ingestBiometric(data) {
-  if (!data || typeof BM === 'undefined') return false;
-  var bm = data.biometric || data;
-  if (!bm.allUsers && bm.totalActive === undefined) return false;
-  BM.raw = bm;
-  return true;
+function _ingestBiometric(data){
+  if(!data||(typeof BM==='undefined')) return false;
+  var bm=data.biometric||data;
+  // getBiometric returns { allUsers:[], totalActive:N, ... }
+  if(!bm.allUsers&&bm.totalActive===undefined) return false;
+  BM.raw=bm; return true;
 }
 
-function _ingestLab(data) {
-  if (!data || typeof LAB === 'undefined') return false;
-  var lab = data.lab || data;
-  if (!lab.facultyLabs && !lab.facilityRooms) return false;
-  function _addId(arr, prefix) {
-    return (arr||[]).map(function(r) {
-      if (!r.id) r.id = prefix + Math.random().toString(36).slice(2,8);
-      return r;
-    });
+function _ingestLab(data){
+  if(!data||(typeof LAB==='undefined')) return false;
+  // getAllModules wraps lab as data.lab = getLabData() result
+  var lab=data.lab||data;
+  if(!lab.facultyLabs&&!lab.facilityRooms) return false;
+  function _id(arr,pfx){
+    return (arr||[]).map(function(r){ if(!r.id) r.id=pfx+Math.random().toString(36).slice(2,8); return r; });
   }
-  var fls = _addId(lab.facultyLabs, 'FL');
-  fls.forEach(function(l) {
-    var occ=l.occupiedSeats||0, tot=l.totalSeats||0;
-    l.availableSeats = Math.max(0, tot-occ);
-    l.utilizationRate = tot>0 ? occ/tot : 0;
-    if (typeof labGetIndicator==='function') l.statusIndicator = labGetIndicator(l);
+  var fls=_id(lab.facultyLabs,'FL');
+  fls.forEach(function(l){
+    var occ=l.occupiedSeats||0,tot=l.totalSeats||0;
+    l.availableSeats=Math.max(0,tot-occ);
+    l.utilizationRate=tot>0?occ/tot:0;
+    if(typeof labGetIndicator==='function') l.statusIndicator=labGetIndicator(l);
   });
-  var src = {
-    facultyLabs:   fls,
-    facilityRooms: _addId(lab.facilityRooms, 'FR'),
-    researchers:   _addId(lab.researchers,   'RS'),
-    facultyRooms:  _addId(lab.facultyRooms,  'FRM')
+  var src={
+    facultyLabs:  fls,
+    facilityRooms:_id(lab.facilityRooms,'FR'),
+    researchers:  _id(lab.researchers,'RS'),
+    facultyRooms: _id(lab.facultyRooms,'FRM')
   };
-  LAB.data = src; LAB.facultyLabs = src.facultyLabs;
-  LAB.facilityRooms = src.facilityRooms; LAB.researchers = src.researchers;
-  LAB.facultyRooms = src.facultyRooms; LAB.loaded = true;
+  LAB.data=src; LAB.facultyLabs=src.facultyLabs;
+  LAB.facilityRooms=src.facilityRooms; LAB.researchers=src.researchers;
+  LAB.facultyRooms=src.facultyRooms; LAB.loaded=true;
   return true;
 }
 
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// 2. RENDER — unconditionally re-renders every module from current stores
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ─── RENDER ALL: unconditional full render from current stores ────────────────
 
-window._wsai_renderAll = function() {
-  // ── People ──────────────────────────────────────────────────────────────
-  try {
-    _sf('refreshKPIs');
-    _sf('refreshPeopleDashboard');
-    _sf('runTenureCheck');
-    if (typeof renderCurrentTab === 'function' && typeof currentPeopleTab !== 'undefined')
-      renderCurrentTab(currentPeopleTab);
-  } catch(e) {}
+window._wsai_renderAll=function(){
+  // People
+  try{_sf('refreshKPIs');_sf('refreshPeopleDashboard');_sf('runTenureCheck');
+    if(typeof renderCurrentTab==='function'&&typeof currentPeopleTab!=='undefined')
+      renderCurrentTab(currentPeopleTab);}catch(e){}
 
-  // ── Assets ──────────────────────────────────────────────────────────────
-  try {
-    _sf('refreshAssetKPIs');
-    _sf('populateAssetFilters');
-    _sf('renderITTable'); _sf('renderNonITTable'); _sf('renderGPUTable');
-    _sf('renderILDSTable'); _sf('renderBooksTable'); _sf('renderSparesTable');
-    _sf('renderConsumablesTable'); _sf('renderVendorTable');
-  } catch(e) {}
+  // Assets
+  try{_sf('refreshAssetKPIs');_sf('populateAssetFilters');
+    _sf('renderITTable');_sf('renderNonITTable');_sf('renderGPUTable');
+    _sf('renderILDSTable');_sf('renderBooksTable');_sf('renderSparesTable');
+    _sf('renderConsumablesTable');_sf('renderVendorTable');}catch(e){}
 
-  // ── Expenses ────────────────────────────────────────────────────────────
-  try {
-    if (typeof EXP !== 'undefined' && EXP.all) {
-      _sf('expApplyFilters'); _sf('expUpdateKPIs'); _sf('expRenderAlerts');
-      if (document.getElementById('an-expenses')?.classList.contains('active')) _sf('_anExpenses');
-    }
-  } catch(e) {}
+  // Expenses
+  try{if(typeof EXP!=='undefined'&&EXP.all){
+    _sf('expApplyFilters');_sf('expUpdateKPIs');_sf('expRenderAlerts');
+    if(document.getElementById('an-expenses')?.classList.contains('active'))_sf('_anExpenses');
+  }}catch(e){}
 
-  // ── Publications ────────────────────────────────────────────────────────
-  try {
-    if (typeof PUB !== 'undefined' && PUB.all) {
-      _sf('pubApplyFilters'); _sf('pubRenderCharts');
-    }
-  } catch(e) {}
+  // Publications
+  try{if(typeof PUB!=='undefined'&&PUB.all){_sf('pubApplyFilters');_sf('pubRenderCharts');}}catch(e){}
 
-  // ── Biometric ───────────────────────────────────────────────────────────
-  try {
-    if (typeof BM !== 'undefined' && BM.raw && typeof bmOnData === 'function')
-      bmOnData(BM.raw);
-    _sf('refreshBiometricPendingPanel');
-  } catch(e) {}
+  // Biometric
+  try{if(typeof BM!=='undefined'&&BM.raw&&typeof bmOnData==='function')bmOnData(BM.raw);
+    _sf('refreshBiometricPendingPanel');}catch(e){}
 
-  // ── Lab ─────────────────────────────────────────────────────────────────
-  try {
-    if (typeof LAB !== 'undefined' && LAB.loaded) {
-      _sf('labRefreshKPIs'); _sf('labRenderFacultyLabs');
-      _sf('labRenderUtilizationRibbons'); _sf('labRenderCategoryAnalysis');
-      _sf('labRenderFacilityRooms'); _sf('labRenderResearchers'); _sf('labRenderFacultyRooms');
-    }
-  } catch(e) {}
+  // Lab — render even when arrays are empty so tables show "no data" rather than stale demo
+  try{if(typeof LAB!=='undefined'&&LAB.data){
+    _sf('labRefreshKPIs');_sf('labRenderFacultyLabs');
+    _sf('labRenderUtilizationRibbons');_sf('labRenderCategoryAnalysis');
+    _sf('labRenderFacilityRooms');_sf('labRenderResearchers');_sf('labRenderFacultyRooms');
+  }}catch(e){}
 
-  // ── Inventory ───────────────────────────────────────────────────────────
-  try { _sf('renderInventory'); _sf('refreshLowStockAlerts'); } catch(e) {}
+  // Inventory — renders from current INV_DB (invSyncAll updates it independently)
+  try{_sf('renderInventory');_sf('refreshLowStockAlerts');}catch(e){}
 
-  // ── Dashboard ───────────────────────────────────────────────────────────
-  try { _sf('refreshDashboard'); } catch(e) {}
-  try {
-    if (document.getElementById('tab-exec-dashboard')?.classList.contains('active'))
-      _sf('execDashRefresh');
-  } catch(e) {}
+  // Dashboard
+  try{_sf('refreshDashboard');}catch(e){}
+  try{if(document.getElementById('tab-exec-dashboard')?.classList.contains('active'))
+    _sf('execDashRefresh');}catch(e){}
 
-  // ── Analytics ───────────────────────────────────────────────────────────
-  try {
-    if (document.getElementById('tab-analytics')?.classList.contains('active'))
-      _sf('renderAnSec');
-  } catch(e) {}
+  // Analytics
+  try{if(document.getElementById('tab-analytics')?.classList.contains('active'))
+    _sf('renderAnSec');}catch(e){}
 
-  // ── Sidebar + nav badges + donut ────────────────────────────────────────
-  try { _sf('refreshSidebarAnalytics'); } catch(e) {}
-  try {
-    if (typeof drawSidebarDonut === 'function' && typeof DB !== 'undefined') {
-      drawSidebarDonut([
-        {val:(DB.staff||[]).length,       color:'#3B82F6'},
-        {val:(DB.researchers||[]).length, color:'#10B981'},
-        {val:(DB.faculty||[]).length,     color:'#8B5CF6'},
-        {val:(DB.students||[]).length,    color:'#F59E0B'},
-        {val:(DB.fellows||[]).length,     color:'#06B6D4'},
-      ]);
-    }
-  } catch(e) {}
-  try { _sf('refreshOverviewKPIs'); } catch(e) {}
+  // Sidebar + donut
+  try{_sf('refreshSidebarAnalytics');}catch(e){}
+  try{if(typeof drawSidebarDonut==='function'&&typeof DB!=='undefined'){
+    drawSidebarDonut([
+      {val:(DB.staff||[]).length,color:'#3B82F6'},
+      {val:(DB.researchers||[]).length,color:'#10B981'},
+      {val:(DB.faculty||[]).length,color:'#8B5CF6'},
+      {val:(DB.students||[]).length,color:'#F59E0B'},
+      {val:(DB.fellows||[]).length,color:'#06B6D4'},
+    ]);
+  }}catch(e){}
+  try{_sf('refreshOverviewKPIs');}catch(e){}
+
+  // Exec dashboard full rebuild whenever lab or assets updated
+  try{_sf('execBuildAll');}catch(e){}
 };
 
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// 3. FETCH ALL — single GAS call (GET_ALL_MODULES) with per-module fallbacks
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ─── FETCH ALL: GET_ALL_MODULES fast path + per-module fallbacks ──────────────
 
-window._wsai_fetchAll = async function(opts) {
-  opts = opts || {};
-  if (!window.WS_CONFIG || !WS_CONFIG.webAppUrl) {
-    // No sheet connected — still render from in-memory data
-    window._wsai_renderAll();
-    return false;
+window._wsai_fetchAll=async function(opts){
+  opts=opts||{};
+  if(!window.WS_CONFIG||!WS_CONFIG.webAppUrl){
+    window._wsai_renderAll(); return false;
   }
+  const url=(typeof _resolveUrl==='function'?_resolveUrl('people'):'')||WS_CONFIG.webAppUrl;
 
-  const url = (typeof _resolveUrl==='function' ? _resolveUrl('people') : '') || WS_CONFIG.webAppUrl;
+  // Indicator → syncing
+  const dot=document.getElementById('auto-sync-dot');
+  const label=document.getElementById('auto-sync-label');
+  const timeEl=document.getElementById('auto-sync-time');
+  if(dot) dot.style.background='var(--gold)';
+  if(label) label.textContent='Syncing…';
 
-  // ── Show syncing indicator ───────────────────────────────────────────────
-  const dot   = document.getElementById('auto-sync-dot');
-  const label = document.getElementById('auto-sync-label');
-  const timeEl= document.getElementById('auto-sync-time');
-  if (dot)   dot.style.background = 'var(--gold)';
-  if (label) label.textContent    = 'Syncing…';
+  let anyOk=false;
 
-  let anyOk = false;
+  // ── FAST PATH: single GET_ALL_MODULES call (GAS v22.2+) ──────────────────
+  try{
+    const all=await _jsonpFetch(url,{action:'GET_ALL_MODULES',t:Date.now()});
+    if(all&&all.status==='ok'){
+      anyOk=_ingestPeople(all)||anyOk;
 
-  // ── FAST PATH: GET_ALL_MODULES (GAS v22.2+) ─────────────────────────────
-  try {
-    const all = await _jsonpFetch(url, { action: 'GET_ALL_MODULES', t: Date.now() });
-    if (all && all.status === 'ok') {
-      // People
-      anyOk = _ingestPeople(all) || anyOk;
-      // Assets — assetRows keyed inside response
-      if (all.assetRows) anyOk = _ingestAssets(all) || anyOk;
-      // Expenses
-      if (all.expenses || all.transactions) anyOk = _ingestExpenses(all) || anyOk;
-      // Publications — response has nested .publications = { journals:[], ... }
-      if (all.publications) anyOk = _ingestPublications({ publications: all.publications }) || anyOk;
-      // Biometric
-      if (all.biometric) anyOk = _ingestBiometric({ biometric: all.biometric }) || anyOk;
-      // Lab
-      if (all.lab) anyOk = _ingestLab({ lab: all.lab }) || anyOk;
-      // Inventory — invSyncAll handles its own fetching so skip here;
-      // but if the response includes a top-level inv payload, ingest it
-      if (all.inventory && typeof invSyncAll === 'function') {
-        try { await invSyncAll(); anyOk = true; } catch(e) {}
+      // Assets: wire rows into ASSET_DB and summary into EXEC.assetSummary
+      if(all.assetRows){
+        anyOk=_ingestAssets(all)||anyOk;
+        // Also populate ASSET_DB directly for any render path that reads it
+        var _ar=all.assetRows;
+        if(typeof ASSET_DB!=='undefined'){
+          ['it','nonit','gpu','ilds','books','spares','consumables','vendors'].forEach(function(k){
+            if(Array.isArray(_ar[k])&&_ar[k].length) ASSET_DB[k]=_ar[k];
+          });
+        }
       }
+      // Wire pre-computed financial summary so exec dashboard Financial Summary
+      // section renders correct values on first 30-second poll without needing
+      // a separate GET_EXEC_DASHBOARD call
+      if(all.assetSummary&&typeof EXEC!=='undefined'){
+        EXEC.assetSummary=all.assetSummary;
+      }
+
+      // Expenses: all.expenses = flat array from getExpenses().expenses
+      if(all.expenses||all.transactions) anyOk=_ingestExpenses(all)||anyOk;
+      // Publications: all.publications = { journals:[], conferences:[], ... }
+      if(all.publications) anyOk=_ingestPublications({publications:all.publications})||anyOk;
+      // Biometric: all.biometric = getBiometric() result
+      if(all.biometric) anyOk=_ingestBiometric({biometric:all.biometric})||anyOk;
+      // Lab: all.lab = getLabData() result = { facultyLabs:[], facilityRooms:[], ... }
+      if(all.lab) anyOk=_ingestLab({lab:all.lab})||anyOk;
+      // Inventory: invSyncAll makes its own sub-requests; run it now and await
+      try{ await invSyncAll(); anyOk=true; }catch(e){}
     }
-  } catch(e) {
-    // GET_ALL_MODULES not available (older GAS) — fall through to per-module calls
-    console.warn('[WSAI] GET_ALL_MODULES unavailable, falling back to per-module fetches');
+  }catch(e){
+    console.warn('[WSAI] GET_ALL_MODULES fallback:',e.message);
   }
 
-  // ── FALLBACK: per-module fetches (GAS < v22.2 or URL overrides) ──────────
-  if (!anyOk) {
-    // People
-    try {
-      const d = await _jsonpFetch(url, { action: 'GET_ALL', t: Date.now() });
-      anyOk = _ingestPeople(d) || anyOk;
-    } catch(e) {}
-
-    // Assets
-    try { await assetLoadFromSheet(true); anyOk = true; } catch(e) {}
-
-    // Expenses
-    try {
-      const d = await _jsonpFetch(
-        (typeof _resolveUrl==='function'?_resolveUrl('expenses'):'')||url,
-        { action:'GET_EXPENSES', t:Date.now() }
-      );
-      if (d && (d.expenses||d.transactions)) { anyOk = _ingestExpenses(d)||anyOk; }
-    } catch(e) {}
-
-    // Publications
-    try {
-      const d = await _jsonpFetch(
-        (typeof _resolveUrl==='function'?_resolveUrl('publications'):'')||url,
-        { action:'GET_PUBLICATIONS', t:Date.now() }
-      );
-      if (d && (d.journals||d.conferences)) { anyOk = _ingestPublications(d)||anyOk; }
-    } catch(e) {}
-
-    // Biometric
-    try {
-      const d = await _jsonpFetch(
-        (typeof _resolveUrl==='function'?_resolveUrl('biometric'):'')||url,
-        { action:'GET_BIOMETRIC', t:Date.now() }
-      );
-      anyOk = _ingestBiometric(d) || anyOk;
-    } catch(e) {}
-
-    // Lab
-    try {
-      const d = await _jsonpFetch(
-        (typeof _resolveUrl==='function'?_resolveUrl('labs'):'')||url,
-        { action:'GET_LAB', t:Date.now() }
-      );
-      anyOk = _ingestLab(d) || anyOk;
-    } catch(e) {}
-
-    // Inventory
-    try { await invSyncAll(); anyOk = true; } catch(e) {}
+  // ── FALLBACK: per-module fetches ─────────────────────────────────────────
+  if(!anyOk){
+    try{const d=await _jsonpFetch(url,{action:'GET_ALL',t:Date.now()});anyOk=_ingestPeople(d)||anyOk;}catch(e){}
+    try{await assetLoadFromSheet(true);anyOk=true;}catch(e){}
+    try{const d=await _jsonpFetch(
+      (typeof _resolveUrl==='function'?_resolveUrl('expenses'):'')||url,
+      {action:'GET_EXPENSES',t:Date.now()});
+      if(d&&(d.expenses||d.transactions))anyOk=_ingestExpenses(d)||anyOk;}catch(e){}
+    try{const d=await _jsonpFetch(
+      (typeof _resolveUrl==='function'?_resolveUrl('publications'):'')||url,
+      {action:'GET_PUBLICATIONS',t:Date.now()});
+      if(d&&(d.journals||d.conferences))anyOk=_ingestPublications(d)||anyOk;}catch(e){}
+    try{const d=await _jsonpFetch(
+      (typeof _resolveUrl==='function'?_resolveUrl('biometric'):'')||url,
+      {action:'GET_BIOMETRIC',t:Date.now()});
+      anyOk=_ingestBiometric(d)||anyOk;}catch(e){}
+    try{const d=await _jsonpFetch(
+      (typeof _resolveUrl==='function'?_resolveUrl('labs'):'')||url,
+      {action:'GET_LAB',t:Date.now()});
+      anyOk=_ingestLab(d)||anyOk;}catch(e){}
+    try{await invSyncAll();anyOk=true;}catch(e){}
   }
 
-  // ── Render everything ────────────────────────────────────────────────────
+  // ── Render after all fetches resolve ─────────────────────────────────────
   window._wsai_renderAll();
 
-  // ── Update indicator + timestamps ────────────────────────────────────────
-  const ts = new Date().toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'});
-  if (dot)    dot.style.background = anyOk ? 'var(--green)' : 'var(--red)';
-  if (label)  label.textContent    = anyOk ? 'Auto ↻' : 'Sync failed';
-  if (timeEl) timeEl.textContent   = anyOk ? ts : '';
-  if (anyOk) {
-    ['sys-last-sync','drive-last-sync'].forEach(function(id) {
-      const el = document.getElementById(id); if (el) el.textContent = ts;
+  // ── Indicator update ─────────────────────────────────────────────────────
+  const ts=new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+  if(dot) dot.style.background=anyOk?'var(--green)':'var(--red)';
+  if(label) label.textContent=anyOk?'Auto ↻':'Sync failed';
+  if(timeEl) timeEl.textContent=anyOk?ts:'';
+  if(anyOk){
+    ['sys-last-sync','drive-last-sync'].forEach(function(id){
+      const el=document.getElementById(id);if(el)el.textContent=ts;
     });
-    const ls = document.getElementById('sidebar-last-sync');
-    if (ls) ls.textContent = 'Last sync: ' + ts;
-    if (typeof setSyncStatus==='function') setSyncStatus('ok','Synced ✓ '+ts);
+    const ls=document.getElementById('sidebar-last-sync');
+    if(ls)ls.textContent='Last sync: '+ts;
+    if(typeof setSyncStatus==='function')setSyncStatus('ok','Synced ✓ '+ts);
   }
   return anyOk;
 };
 
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// 4. AUTO-SYNC TIMER — 30 s, replaces the 60 s original
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ─── AUTO-SYNC TIMER: 30 s ───────────────────────────────────────────────────
 
-let _syncTimer = null;
-const _SYNC_INTERVAL = 30000; // 30 seconds
+let _syncTimer=null;
+const _SYNC_INTERVAL=30000;
 
-window._runAutoSync = function() { window._wsai_fetchAll(); };
+window._runAutoSync=function(){ window._wsai_fetchAll(); };
 
-window._startAutoSync = function() {
-  if (!window.WS_CONFIG || !WS_CONFIG.webAppUrl) return;
-  if (_syncTimer) { clearInterval(_syncTimer); _syncTimer = null; }
-  const ind = document.getElementById('auto-sync-indicator');
-  if (ind) ind.style.display = 'flex';
+window._startAutoSync=function(){
+  if(!window.WS_CONFIG||!WS_CONFIG.webAppUrl) return;
+  if(_syncTimer){clearInterval(_syncTimer);_syncTimer=null;}
+  const ind=document.getElementById('auto-sync-indicator');
+  if(ind)ind.style.display='flex';
   window._wsai_fetchAll();
-  _syncTimer = setInterval(window._wsai_fetchAll, _SYNC_INTERVAL);
+  _syncTimer=setInterval(window._wsai_fetchAll,_SYNC_INTERVAL);
 };
 
-window._stopAutoSync = function() {
-  if (_syncTimer) { clearInterval(_syncTimer); _syncTimer = null; }
-  const ind = document.getElementById('auto-sync-indicator');
-  if (ind) ind.style.display = 'none';
+window._stopAutoSync=function(){
+  if(_syncTimer){clearInterval(_syncTimer);_syncTimer=null;}
+  const ind=document.getElementById('auto-sync-indicator');
+  if(ind)ind.style.display='none';
 };
 
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// 5. visibilitychange — re-fetch when user returns to tab after editing sheet
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ─── visibilitychange: re-fetch when user returns after ≥5s ─────────────────
 
-(function() {
-  let _hiddenAt = 0;
-  document.addEventListener('visibilitychange', function() {
-    if (document.hidden) {
-      _hiddenAt = Date.now();
-    } else if (_hiddenAt && Date.now() - _hiddenAt >= 5000 &&
-               window.WS_CONFIG && WS_CONFIG.webAppUrl) {
-      // Away ≥ 5 s → full re-fetch (catches direct sheet edits)
+(function(){
+  var _hiddenAt=0;
+  document.addEventListener('visibilitychange',function(){
+    if(document.hidden){_hiddenAt=Date.now();}
+    else if(_hiddenAt&&Date.now()-_hiddenAt>=5000&&window.WS_CONFIG&&WS_CONFIG.webAppUrl){
       window._wsai_fetchAll();
-    } else if (_hiddenAt) {
-      // Away < 5 s → just re-render from memory
+    } else if(_hiddenAt){
       window._wsai_renderAll();
     }
   });
 })();
 
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// 6. POST-WRITE RE-FETCH — after every syncToSheet write, re-fetch after 3 s
-//    so sheet-calculated values (S.No, timestamps, etc.) appear automatically
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ─── POST-WRITE RE-FETCH: after every syncToSheet, re-fetch after 3 s ────────
 
-(function() {
-  const _origSync = typeof syncToSheet === 'function' ? syncToSheet : null;
-  if (!_origSync) return;
-  let _pending = null;
-  window.syncToSheet = async function(action, payload) {
-    const result = await _origSync.apply(this, arguments);
-    // Render immediately from in-memory data (optimistic)
+(function(){
+  var _orig=typeof syncToSheet==='function'?syncToSheet:null;
+  if(!_orig)return;
+  var _pending=null;
+  window.syncToSheet=async function(action,payload){
+    var result=await _orig.apply(this,arguments);
     window._wsai_renderAll();
-    // Schedule confirmed re-fetch from sheet after 3 s (debounced)
-    if (window.WS_CONFIG && WS_CONFIG.webAppUrl) {
-      if (_pending) clearTimeout(_pending);
-      _pending = setTimeout(function() {
-        _pending = null;
-        window._wsai_fetchAll();
-      }, 3000);
+    if(window.WS_CONFIG&&WS_CONFIG.webAppUrl){
+      if(_pending)clearTimeout(_pending);
+      _pending=setTimeout(function(){_pending=null;window._wsai_fetchAll();},3000);
     }
     return result;
   };
 })();
 
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// 7. PATCH ALL WRITE FUNCTIONS — immediate render after every local store write
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ─── WRAP ALL WRITE FUNCTIONS: immediate render after every local write ───────
 
-(function() {
-  function _wrap(name) {
-    const orig = window[name];
-    if (typeof orig !== 'function') return;
-    window[name] = function() {
-      const r = orig.apply(this, arguments);
-      const doRender = function() { window._wsai_renderAll(); };
-      if (r && typeof r.then === 'function') r.then(doRender);
-      else setTimeout(doRender, 60);
+(function(){
+  function _wrap(name){
+    var orig=window[name];
+    if(typeof orig!=='function')return;
+    window[name]=function(){
+      var r=orig.apply(this,arguments);
+      var doRender=function(){window._wsai_renderAll();};
+      if(r&&typeof r.then==='function')r.then(doRender);
+      else setTimeout(doRender,60);
       return r;
     };
   }
-  // People
   ['submitStaff','submitFaculty','submitAssocFaculty','submitAffilFaculty',
-   'submitResearcher','submitStudent','submitFellow','_submitEdit','deleteRecord']
-  .forEach(_wrap);
-  // Assets
-  ['saveAsset','deleteAsset'].forEach(_wrap);
-  // Expenses
-  ['expSubmitForm','expDeleteRow'].forEach(_wrap);
-  // Publications
-  ['pubSubmitForm','pubDeleteRow'].forEach(_wrap);
-  // Biometric
-  ['bmSubmitAdd','_bmSaveEdit','bmDeleteUser'].forEach(_wrap);
-  // Lab
-  ['labSaveModal','labDeleteRecord'].forEach(_wrap);
+   'submitResearcher','submitStudent','submitFellow','_submitEdit','deleteRecord',
+   'saveAsset','deleteAsset','expSubmitForm','expDeleteRow',
+   'pubSubmitForm','pubDeleteRow','bmSubmitAdd','_bmSaveEdit','bmDeleteUser',
+   'labSaveModal','labDeleteRecord'].forEach(_wrap);
 })();
 
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// 8. PATCH showTab — always render current data when any tab becomes active
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ─── PATCH showTab: always render on tab switch, fetch if store is empty ──────
 
-(function() {
-  const _orig = typeof showTab === 'function' ? showTab : null;
-  if (!_orig) return;
-  window.showTab = function(tabId) {
-    _orig.apply(this, arguments);
-    const hasUrl = window.WS_CONFIG && WS_CONFIG.webAppUrl;
-    setTimeout(function() {
-      try {
-        switch (tabId) {
+(function(){
+  var _orig=typeof showTab==='function'?showTab:null;
+  if(!_orig)return;
+  window.showTab=function(tabId){
+    _orig.apply(this,arguments);
+    var hasUrl=window.WS_CONFIG&&WS_CONFIG.webAppUrl;
+    setTimeout(function(){
+      try{
+        switch(tabId){
           case 'dashboard':
-            _sf('refreshDashboard'); _sf('refreshSidebarAnalytics'); break;
+            _sf('refreshDashboard');_sf('refreshSidebarAnalytics');break;
           case 'analytics':
-            _sf('renderAnSec'); break;
+            _sf('renderAnSec');break;
           case 'exec-dashboard':
-            if (hasUrl && typeof execFetchFromSheet==='function') execFetchFromSheet();
-            else _sf('execDashRefresh');
+            // Always re-fetch so financial/room sections have fresh data
+            if(hasUrl&&typeof execFetchFromSheet==='function')execFetchFromSheet();
+            if(hasUrl&&(!ASSET_DB.it.length&&!ASSET_DB.nonit.length)&&typeof assetLoadFromSheet==='function')
+              assetLoadFromSheet(true).then(function(){_sf('execBuildAll');}).catch(function(){});
+            if(typeof LAB!=='undefined'&&!LAB.loaded&&hasUrl&&typeof labInit==='function')
+              labInit().then(function(){_sf('execBuildAll');}).catch(function(){});
+            _sf('execBuildAll');
             break;
           case 'people':
-            _sf('refreshKPIs'); _sf('refreshPeopleDashboard');
-            if (typeof renderCurrentTab==='function' && typeof currentPeopleTab!=='undefined')
+            _sf('refreshKPIs');_sf('refreshPeopleDashboard');
+            if(typeof renderCurrentTab==='function'&&typeof currentPeopleTab!=='undefined')
               renderCurrentTab(currentPeopleTab);
             break;
           case 'assets':
-            _sf('refreshAssetKPIs'); _sf('populateAssetFilters');
-            _sf('renderITTable'); _sf('renderNonITTable'); _sf('renderGPUTable');
-            if (hasUrl && typeof ASSET_DB!=='undefined' && !(ASSET_DB.it||[]).length)
-              if (typeof assetLoadFromSheet==='function') assetLoadFromSheet(false);
+            _sf('refreshAssetKPIs');_sf('populateAssetFilters');
+            _sf('renderITTable');_sf('renderNonITTable');_sf('renderGPUTable');
+            if(hasUrl&&typeof ASSET_DB!=='undefined'&&!(ASSET_DB.it||[]).length)
+              if(typeof assetLoadFromSheet==='function')assetLoadFromSheet(false);
             break;
           case 'expenses':
-            if (typeof EXP!=='undefined' && EXP.all && EXP.all.length) {
-              _sf('expApplyFilters'); _sf('expUpdateKPIs');
-            } else if (hasUrl) _sf('expLoadFromSheet');
+            if(typeof EXP!=='undefined'&&EXP.all&&EXP.all.length){_sf('expApplyFilters');_sf('expUpdateKPIs');}
+            else if(hasUrl)_sf('expLoadFromSheet');
             break;
           case 'publications':
-            if (typeof PUB!=='undefined' && PUB.all && PUB.all.length) {
-              _sf('pubApplyFilters'); _sf('pubRenderCharts');
-            } else if (hasUrl) _sf('pubLoadFromSheet');
+            if(typeof PUB!=='undefined'&&PUB.all&&PUB.all.length){_sf('pubApplyFilters');_sf('pubRenderCharts');}
+            else if(hasUrl)_sf('pubLoadFromSheet');
             break;
           case 'biometric':
-            if (typeof BM!=='undefined' && BM.raw && typeof bmOnData==='function') bmOnData(BM.raw);
-            else if (hasUrl) _sf('bmLoadData');
-            _sf('refreshBiometricPendingPanel');
-            break;
+            if(typeof BM!=='undefined'&&BM.raw&&typeof bmOnData==='function')bmOnData(BM.raw);
+            else if(hasUrl)_sf('bmLoadData');
+            _sf('refreshBiometricPendingPanel');break;
           case 'labs':
-            if (typeof LAB!=='undefined' && LAB.loaded) {
-              _sf('labRefreshKPIs'); _sf('labRenderFacultyLabs');
-              _sf('labRenderFacilityRooms'); _sf('labRenderResearchers'); _sf('labRenderFacultyRooms');
+            if(typeof LAB!=='undefined'&&!LAB.loaded&&hasUrl&&typeof labInit==='function'){
+              labInit().then(function(){
+                _sf('labRefreshKPIs');_sf('labRenderFacultyLabs');
+                _sf('labRenderFacilityRooms');_sf('labRenderResearchers');_sf('labRenderFacultyRooms');
+              }).catch(function(){});
+            } else if(typeof LAB!=='undefined'&&LAB.data){
+              _sf('labRefreshKPIs');_sf('labRenderFacultyLabs');
+              _sf('labRenderUtilizationRibbons');_sf('labRenderCategoryAnalysis');
+              _sf('labRenderFacilityRooms');_sf('labRenderResearchers');_sf('labRenderFacultyRooms');
             }
             break;
           case 'inventory':
-            _sf('renderInventory'); _sf('refreshLowStockAlerts'); break;
-          case 'dropdown-manager':
-            if (typeof ddm44ShowSection==='function') {
-              var ap = document.querySelector('#ddm-section-pills .an-pill.active');
-              var s = 'people';
-              if (ap) {
-                var t = ap.textContent.toLowerCase();
-                if (t.includes('asset'))  s='assets'; else if (t.includes('exp')) s='expenses';
-                else if (t.includes('pub')) s='publications'; else if (t.includes('bio')) s='biometric';
-                else if (t.includes('lab')) s='lab'; else if (t.includes('inv')) s='inventory';
-              }
-              ddm44ShowSection(s);
-            }
-            break;
+            if(hasUrl&&typeof invSyncAll==='function')
+              invSyncAll().then(function(){_sf('renderInventory');}).catch(function(){_sf('renderInventory');});
+            else _sf('renderInventory');
+            _sf('refreshLowStockAlerts');break;
         }
-      } catch(e) {}
-      _sf('refreshSidebarAnalytics');
-      _sf('refreshOverviewKPIs');
-    }, 40);
+      }catch(e){}
+      _sf('refreshSidebarAnalytics');_sf('refreshOverviewKPIs');
+    },40);
   };
 })();
 
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// 9. PATCH peopleVocabFetch — re-render distributions after vocab loads
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ─── PATCH peopleVocabFetch ──────────────────────────────────────────────────
 
-(function() {
-  const _orig = typeof peopleVocabFetch==='function' ? peopleVocabFetch : null;
-  if (!_orig) return;
-  window.peopleVocabFetch = async function() {
-    await _orig.apply(this, arguments);
-    setTimeout(function() {
-      _sf('refreshPeopleDashboard'); _sf('refreshKPIs');
-      _sf('ddmRenderPeople'); _sf('ddmRenderAssets');
-      if (typeof _v244_wireAllSelects==='function') _v244_wireAllSelects();
-    }, 100);
+(function(){
+  var _orig=typeof peopleVocabFetch==='function'?peopleVocabFetch:null;
+  if(!_orig)return;
+  window.peopleVocabFetch=async function(){
+    await _orig.apply(this,arguments);
+    setTimeout(function(){
+      _sf('refreshPeopleDashboard');_sf('refreshKPIs');
+      _sf('ddmRenderPeople');_sf('ddmRenderAssets');
+      if(typeof _v244_wireAllSelects==='function')_v244_wireAllSelects();
+    },100);
   };
 })();
 
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// 10. BOOT — initial render + start polling if connected
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ─── BOOT ────────────────────────────────────────────────────────────────────
 
-// Expose for use by sysFetchAll / sidebarFetchAll
-window._wsai_renderAllModules = window._wsai_renderAll;
+window._wsai_renderAllModules=window._wsai_renderAll;
 
-// Restart auto-sync if already running (upgrades timer from 60s → 30s)
-if (typeof _stopAutoSync === 'function') try { _stopAutoSync(); } catch(e) {}
+// Stop old 60-second timer if running
+if(typeof _stopAutoSync==='function')try{_stopAutoSync();}catch(e){}
 
-setTimeout(function() {
+setTimeout(function(){
+  // Render immediately from any cached data
   window._wsai_renderAll();
-  if (window.WS_CONFIG && WS_CONFIG.webAppUrl) {
+  // If sheet connected, start polling (triggers immediate fetch + lab/asset/inv loads)
+  if(window.WS_CONFIG&&WS_CONFIG.webAppUrl){
     window._startAutoSync();
+    // Also prime lab and assets if not yet loaded
+    if(typeof LAB!=='undefined'&&!LAB.loaded&&typeof labInit==='function')
+      labInit().catch(function(){});
+    if(typeof ASSET_DB!=='undefined'&&!ASSET_DB.it.length&&typeof assetLoadFromSheet==='function')
+      assetLoadFromSheet(true).catch(function(){});
   }
-}, 600);
+},800);
 
-_log('Auto-refresh engine v24.4r2 loaded — GET_ALL_MODULES fast path · 30s poll · visibilitychange · post-write 3s confirm');
+_log('Auto-refresh v24.4r3 — GET_ALL_MODULES · 30s poll · visibilitychange · post-write confirm · lab/asset boot-prime');
 
 })(); // end _wsaiAutoRefresh
 
