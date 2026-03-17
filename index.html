@@ -1,9 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WSAI - PORTAL</title>
+<title>WSAI - PORTAL v28</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -845,6 +846,56 @@
   #sync-bar.error { background:var(--red); animation:none; }
   @keyframes syncSlide { from{background-position:0% 50%} to{background-position:100% 50%} }
 
+  /* ── v27 Interface-specific topbar accent strips ── */
+  body[data-interface="coo"]         .topbar { border-bottom: 3px solid #F59E0B; }
+  body[data-interface="faculty"]     .topbar { border-bottom: 3px solid #06B6D4; }
+  body[data-interface="staff"]       .topbar { border-bottom: 3px solid #10B981; }
+  body[data-interface="hr_manager"]  .topbar { border-bottom: 3px solid #8B5CF6; }
+  body[data-interface="finance_mgr"] .topbar { border-bottom: 3px solid #F59E0B; }
+  body[data-interface="facility_mgr"].topbar { border-bottom: 3px solid #06B6D4; }
+  body[data-interface="edu_pgm_mgr"] .topbar { border-bottom: 3px solid #EC4899; }
+  body[data-interface="sys_admin"]   .topbar { border-bottom: 3px solid #64748B; }
+
+  /* ── v27 Sidebar accent for non-full interfaces ── */
+  body:not([data-interface="full"]) .sidebar { border-right: 2px solid rgba(255,255,255,0.07); }
+
+  /* ── v27 Role tag chips for renderUserRegistry ── */
+  .role-chip {
+    display:inline-block; padding:0.18rem 0.55rem; border-radius:12px;
+    font-size:0.65rem; font-family:var(--font-mono); font-weight:600;
+    letter-spacing:0.04em; border:1px solid; white-space:nowrap;
+  }
+  .role-chip-creator     { color:#F59E0B; background:rgba(245,158,11,0.12); border-color:rgba(245,158,11,0.3); }
+  .role-chip-admin       { color:#3B82F6; background:rgba(59,130,246,0.12); border-color:rgba(59,130,246,0.3); }
+  .role-chip-coo         { color:#F59E0B; background:rgba(245,158,11,0.10); border-color:rgba(245,158,11,0.25); }
+  .role-chip-faculty     { color:#06B6D4; background:rgba(6,182,212,0.10);  border-color:rgba(6,182,212,0.25); }
+  .role-chip-hr_manager  { color:#8B5CF6; background:rgba(139,92,246,0.10); border-color:rgba(139,92,246,0.25); }
+  .role-chip-finance_mgr { color:#F59E0B; background:rgba(245,158,11,0.10); border-color:rgba(245,158,11,0.25); }
+  .role-chip-facility_mgr{ color:#06B6D4; background:rgba(6,182,212,0.10);  border-color:rgba(6,182,212,0.25); }
+  .role-chip-edu_pgm_mgr { color:#EC4899; background:rgba(236,72,153,0.10); border-color:rgba(236,72,153,0.25); }
+  .role-chip-sys_admin   { color:#94A3B8; background:rgba(100,116,139,0.10);border-color:rgba(100,116,139,0.25); }
+  .role-chip-mis         { color:#3B82F6; background:rgba(59,130,246,0.12); border-color:rgba(59,130,246,0.3); }
+  .role-chip-staff       { color:#10B981; background:rgba(16,185,129,0.10); border-color:rgba(16,185,129,0.25); }
+  .role-chip-default     { color:#94A3B8; background:rgba(148,163,184,0.10);border-color:rgba(148,163,184,0.25); }
+
+  /* ── v27 Interface welcome banner ── */
+  #interface-welcome-banner {
+    margin: 0 0 1.25rem 0;
+    border-radius: 14px;
+    padding: 1rem 1.5rem;
+    display: flex; align-items: center; gap: 1rem;
+    border: 1px solid;
+    animation: appIn 0.5s both;
+  }
+  #interface-welcome-banner .iw-icon { font-size: 1.8rem; flex-shrink: 0; }
+  #interface-welcome-banner .iw-title { font-family: var(--font-display); font-size: 1.05rem; color: var(--text); }
+  #interface-welcome-banner .iw-sub { font-size: 0.78rem; color: var(--text2); margin-top: 2px; }
+
+  /* ── v27 Role-badge in renderUserRegistry ── */
+  .role-badge-coo     { background:rgba(245,158,11,0.15); color:#F59E0B; border:1px solid rgba(245,158,11,0.3); }
+  .role-badge-faculty { background:rgba(6,182,212,0.15);  color:#06B6D4; border:1px solid rgba(6,182,212,0.3); }
+  .role-badge-staff   { background:rgba(16,185,129,0.15); color:#10B981; border:1px solid rgba(16,185,129,0.3); }
+
   #sync-status {
     position:fixed; bottom:2rem; left:2rem; z-index:9997;
     background:var(--surface); border:1px solid var(--border); border-radius:10px;
@@ -1118,10 +1169,10 @@
         <span>IIT MADRAS · UNIFIED MANAGEMENT</span>
       </div>
     </div>
-    <h2 class="gate-title">IIT Portal Access</h2>
-    <p class="gate-sub">Access restricted to IIT institutional email addresses only. Use your <strong style="color:var(--accent);">@iit*.ac.in</strong> email to sign in.</p>
+    <h2 class="gate-title">IIT Madras Portal Access</h2>
+    <p class="gate-sub">Access restricted to <strong style="color:var(--accent);">IIT Madras</strong> institutional email addresses only. Use your <strong style="color:var(--accent);">@iitm.ac.in</strong> or authorised departmental sub-domain email to sign in.</p>
     <div class="gate-field">
-      <label>IIT Institutional Email</label>
+      <label>IIT Madras Institutional Email</label>
       <input type="text" id="g-user" placeholder="yourname@iitm.ac.in" autocomplete="off">
     </div>
     <div class="gate-field">
@@ -1132,7 +1183,7 @@
     <div class="gate-error" id="gate-err">⚠ Invalid credentials. Contact the system creator for access.</div>
     <div class="gate-notice">
       <div class="dot"></div>
-      IIT institutional email required · Creator-controlled access · WSAI IIT Madras
+      @iitm.ac.in email required · IIT Madras accounts only · WSAI IIT Madras
     </div>
   </div>
 </div>
@@ -1320,6 +1371,73 @@
             <div class="kpi-val" id="dash-kpi-assets">—</div>
             <div class="kpi-label">Total Assets</div>
             <div class="kpi-sub">IT + Non-IT + Clusters</div>
+          </div>
+        </div>
+
+        <!-- ── MODULE OVERVIEW ROW — biometric · lab · inventory ── -->
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem;">
+          <!-- Biometric overview -->
+          <div class="table-card" style="padding:1rem 1.25rem;cursor:pointer;" onclick="showTab('biometric')">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
+              <div style="font-size:0.72rem;font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);">🔐 Biometric</div>
+              <div style="font-size:0.65rem;font-family:var(--font-mono);color:var(--text3);">Open →</div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.5rem;">
+              <div style="text-align:center;padding:0.5rem;background:var(--surface2);border-radius:8px;border:1px solid var(--border);">
+                <div style="font-size:1.2rem;font-weight:700;font-family:var(--font-mono);color:var(--green);" id="ov-bm-active">—</div>
+                <div style="font-size:0.62rem;color:var(--text3);margin-top:2px;">Active</div>
+              </div>
+              <div style="text-align:center;padding:0.5rem;background:var(--surface2);border-radius:8px;border:1px solid var(--border);">
+                <div style="font-size:1.2rem;font-weight:700;font-family:var(--font-mono);color:var(--orange);" id="ov-bm-pending">—</div>
+                <div style="font-size:0.62rem;color:var(--text3);margin-top:2px;">Pending</div>
+              </div>
+              <div style="text-align:center;padding:0.5rem;background:var(--surface2);border-radius:8px;border:1px solid var(--border);">
+                <div style="font-size:1.2rem;font-weight:700;font-family:var(--font-mono);color:var(--text2);" id="ov-bm-rooms">—</div>
+                <div style="font-size:0.62rem;color:var(--text3);margin-top:2px;">Rooms</div>
+              </div>
+            </div>
+          </div>
+          <!-- Lab overview -->
+          <div class="table-card" style="padding:1rem 1.25rem;cursor:pointer;" onclick="showTab('labs')">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
+              <div style="font-size:0.72rem;font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);">🧪 Lab Management</div>
+              <div style="font-size:0.65rem;font-family:var(--font-mono);color:var(--text3);">Open →</div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.5rem;">
+              <div style="text-align:center;padding:0.5rem;background:var(--surface2);border-radius:8px;border:1px solid var(--border);">
+                <div style="font-size:1.2rem;font-weight:700;font-family:var(--font-mono);color:var(--accent);" id="ov-lab-labs">—</div>
+                <div style="font-size:0.62rem;color:var(--text3);margin-top:2px;">Labs</div>
+              </div>
+              <div style="text-align:center;padding:0.5rem;background:var(--surface2);border-radius:8px;border:1px solid var(--border);">
+                <div style="font-size:1.2rem;font-weight:700;font-family:var(--font-mono);color:var(--green);" id="ov-lab-avail">—</div>
+                <div style="font-size:0.62rem;color:var(--text3);margin-top:2px;">Free Seats</div>
+              </div>
+              <div style="text-align:center;padding:0.5rem;background:var(--surface2);border-radius:8px;border:1px solid var(--border);">
+                <div style="font-size:1.2rem;font-weight:700;font-family:var(--font-mono);color:var(--purple);" id="ov-lab-util">—</div>
+                <div style="font-size:0.62rem;color:var(--text3);margin-top:2px;">Utilization</div>
+              </div>
+            </div>
+          </div>
+          <!-- Inventory overview -->
+          <div class="table-card" style="padding:1rem 1.25rem;cursor:pointer;" onclick="showTab('inventory')">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
+              <div style="font-size:0.72rem;font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);">📦 Inventory</div>
+              <div style="font-size:0.65rem;font-family:var(--font-mono);color:var(--text3);">Open →</div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.5rem;">
+              <div style="text-align:center;padding:0.5rem;background:var(--surface2);border-radius:8px;border:1px solid var(--border);">
+                <div style="font-size:1.2rem;font-weight:700;font-family:var(--font-mono);color:var(--text);" id="ov-inv-items">—</div>
+                <div style="font-size:0.62rem;color:var(--text3);margin-top:2px;">Items</div>
+              </div>
+              <div style="text-align:center;padding:0.5rem;background:var(--surface2);border-radius:8px;border:1px solid var(--border);">
+                <div style="font-size:1.2rem;font-weight:700;font-family:var(--font-mono);color:var(--orange);" id="ov-inv-low">—</div>
+                <div style="font-size:0.62rem;color:var(--text3);margin-top:2px;">Low Stock</div>
+              </div>
+              <div style="text-align:center;padding:0.5rem;background:var(--surface2);border-radius:8px;border:1px solid var(--border);">
+                <div style="font-size:1.2rem;font-weight:700;font-family:var(--font-mono);color:var(--red);" id="ov-inv-critical">—</div>
+                <div style="font-size:0.62rem;color:var(--text3);margin-top:2px;">Critical</div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1549,7 +1667,7 @@
                 1. Open your Google Sheet → <strong>Extensions → Apps Script</strong><br>
                 2. Replace your <code style="background:var(--surface3);padding:1px 6px;border-radius:4px;font-family:var(--font-mono);font-size:0.76rem;">doGet(e)</code> with the JSONP version above<br>
                 3. Click <strong>Deploy → Manage Deployments → New Deployment</strong> (or edit existing)<br>
-                4. Set <strong>Execute as: Me</strong> · <strong>Who has access: Anyone</strong><br>
+                4. Set <strong>Execute as: Me</strong> · <strong>Who has access: Anyone within IIT Madras</strong><br>
                 5. Copy the new <strong>Web App URL</strong> and paste it in the Connection panel above<br>
                 6. Click <strong>Connect</strong> again — connection will succeed ✅
               </div>
@@ -1590,7 +1708,7 @@
             <div style="flex-shrink:0;width:36px;height:36px;background:rgba(139,92,246,0.12);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;">3️⃣</div>
             <div>
               <div style="font-weight:600;font-size:0.88rem;margin-bottom:0.35rem;">Deploy as Web App</div>
-              <div style="font-size:0.78rem;color:var(--text2);line-height:1.6;">Click <strong>Deploy → New Deployment</strong>. Set type to <strong>Web App</strong>, execute as <strong>Me</strong>, and set access to <strong>Anyone</strong> (⚠️ NOT "Anyone within IIT Madras" — domain restriction breaks the connection). The spreadsheet's own sharing settings control who can see your data. Copy the <strong>Web App URL</strong> (starts with <code style="background:var(--surface3);padding:1px 5px;border-radius:4px;font-family:var(--font-mono);font-size:0.75rem">script.google.com/macros/s/…</code>).</div>
+              <div style="font-size:0.78rem;color:var(--text2);line-height:1.6;">Click <strong>Deploy → New Deployment</strong>. Set type to <strong>Web App</strong>, execute as <strong>Me</strong>, and set access to <strong style="color:var(--accent);">Anyone within IIT Madras</strong> (Google Workspace domain restriction — only <code style="background:var(--surface3);padding:1px 5px;border-radius:4px;font-family:var(--font-mono);font-size:0.75rem">@iitm.ac.in</code> accounts can reach the endpoint). Copy the <strong>Web App URL</strong> and paste it above.</div>
             </div>
           </div>
 
@@ -2088,6 +2206,7 @@
             <span style="font-size:0.72rem;color:var(--text3);font-family:var(--font-mono);align-self:center;margin-right:0.2rem;">ALUMNI BY SOURCE →</span>
             <button class="people-tab-btn active" id="alumni-sub-btn-all"          onclick="switchAlumniSub('all')">          📋 All Alumni</button>
             <button class="people-tab-btn"         id="alumni-sub-btn-staff"        onclick="switchAlumniSub('staff')">        👔 Staff</button>
+            <button class="people-tab-btn"         id="alumni-sub-btn-faculty"      onclick="switchAlumniSub('faculty')">      👨‍🏫 Faculty</button>
             <button class="people-tab-btn"         id="alumni-sub-btn-assocfaculty" onclick="switchAlumniSub('assocfaculty')"> 👩‍🏫 Assoc. Faculty</button>
             <button class="people-tab-btn"         id="alumni-sub-btn-researchers"  onclick="switchAlumniSub('researchers')">  🔬 Researchers</button>
             <button class="people-tab-btn"         id="alumni-sub-btn-fellows"      onclick="switchAlumniSub('fellows')">      👥 Fellows</button>
@@ -2209,7 +2328,15 @@
           <span>🏢 Area Occupancy</span>
           <div style="flex:1;height:1px;background:var(--border);"></div>
         </div>
-        <div id="bm-area-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:0.75rem;margin-bottom:1.5rem;"></div>
+        <div id="bm-area-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:0.75rem;margin-bottom:1rem;"></div>
+
+        <!-- ── CAPACITY MANAGER (Biometric) ── -->
+        <div style="font-size:0.68rem;font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);margin-bottom:0.6rem;display:flex;align-items:center;gap:0.5rem;">
+          <span>📊 Room Capacity Manager</span>
+          <div style="flex:1;height:1px;background:var(--border);"></div>
+          <button onclick="bmRenderCapacityManager()" style="padding:0.25rem 0.7rem;border-radius:6px;border:1px solid rgba(245,158,11,0.4);background:rgba(245,158,11,0.08);color:var(--gold);font-size:0.72rem;cursor:pointer;font-family:var(--font-body);">↻ Refresh</button>
+        </div>
+        <div id="bm-capacity-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:0.9rem;margin-bottom:1.5rem;"></div>
 
         <!-- ── USERS TABLE ── -->
         <div class="table-card" style="margin-bottom:1.5rem;">
@@ -2335,6 +2462,7 @@
           <button class="lab-sub-btn" onclick="switchLabTab('facility-rooms')">🏛️ Facility Rooms</button>
           <button class="lab-sub-btn" onclick="switchLabTab('researchers')">👥 Researchers</button>
           <button class="lab-sub-btn" onclick="switchLabTab('faculty-rooms')">🚪 Faculty Rooms</button>
+          <button class="lab-sub-btn" onclick="switchLabTab('capacity')" style="border-color:rgba(245,158,11,0.4);color:var(--gold);">🏢 Capacity Manager</button>
           <button class="lab-sub-btn" onclick="switchLabTab('actions')" style="margin-left:auto;border-color:rgba(139,92,246,0.4);color:var(--purple);">⚡ Actions</button>
         </div>
 
@@ -2514,6 +2642,27 @@
           </div>
         </div>
 
+        <!-- ── CAPACITY MANAGER SUB-TAB ── -->
+        <div class="lab-sec" id="labsec-capacity">
+          <div style="display:flex;gap:0.6rem;align-items:center;flex-wrap:wrap;margin-bottom:1rem;">
+            <span style="font-size:0.68rem;font-family:var(--font-mono);color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;">Live Biometric Occupancy vs Room Capacity</span>
+            <button onclick="labRenderCapacityManager()" style="margin-left:auto;padding:0.35rem 0.9rem;border-radius:7px;border:1px solid rgba(245,158,11,0.4);background:rgba(245,158,11,0.08);color:var(--gold);font-size:0.76rem;cursor:pointer;font-family:var(--font-body);">↻ Refresh</button>
+          </div>
+          <!-- KPI strip -->
+          <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:1.5rem;">
+            <div class="kpi-card blue"><div class="kpi-icon">🏢</div><div class="kpi-val" id="cap-kpi-rooms">—</div><div class="kpi-label">Total Rooms</div></div>
+            <div class="kpi-card green"><div class="kpi-icon">✅</div><div class="kpi-val" id="cap-kpi-avail">—</div><div class="kpi-label">Under Capacity</div></div>
+            <div class="kpi-card orange"><div class="kpi-icon">⚠️</div><div class="kpi-val" id="cap-kpi-near">—</div><div class="kpi-label">Near Capacity (≥80%)</div></div>
+            <div class="kpi-card" style="border-top:3px solid var(--red);"><div class="kpi-icon">🔴</div><div class="kpi-val" id="cap-kpi-full" style="color:var(--red);">—</div><div class="kpi-label">At/Over Capacity</div></div>
+          </div>
+          <!-- Room grid -->
+          <div id="cap-room-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:0.9rem;"></div>
+          <div id="cap-no-data" style="display:none;padding:3rem;text-align:center;color:var(--text3);">
+            <div style="font-size:2rem;margin-bottom:0.5rem;opacity:0.4;">🏢</div>
+            <div>No biometric data loaded. Connect a sheet and click Refresh All.</div>
+          </div>
+        </div>
+
         <!-- ── LABS ACTIONS TAB ── -->
         <div class="lab-sec" id="labsec-actions">
           <div class="table-card" style="margin-bottom:1rem;">
@@ -2596,8 +2745,9 @@
           <button class="asset-tab-btn"         id="atab-gpu"   onclick="switchAssetTab('gpu')"         >🧠 GPU Cluster</button>
           <button class="asset-tab-btn"         id="atab-ilds"  onclick="switchAssetTab('ilds')"        >🌐 ILDS Cluster</button>
           <button class="asset-tab-btn"         id="atab-books" onclick="switchAssetTab('books')"       >📚 Books</button>
-          <button class="asset-tab-btn"         id="atab-spares"onclick="switchAssetTab('spares')"      >🔧 Spares</button>
-          <button class="asset-tab-btn"         id="atab-cons"  onclick="switchAssetTab('consumables')" >🛒 Consumables</button>
+          <button class="asset-tab-btn"         id="atab-spares"onclick="switchAssetTab('spares')"          >🔧 Spares</button>
+          <button class="asset-tab-btn"         id="atab-nonrep"onclick="switchAssetTab('nonrepairable')"  >⚠️ Non Repairable</button>
+          <button class="asset-tab-btn"         id="atab-cons"  onclick="switchAssetTab('consumables')"     >🛒 Consumables</button>
           <button class="asset-tab-btn"         id="atab-vendor" onclick="switchAssetTab('vendor')">🏪 Vendor List</button>
           <button class="asset-tab-btn"         id="asset-tab-btn-actions"    onclick="switchAssetTab('actions')" style="margin-left:auto;border-color:rgba(139,92,246,0.4);color:var(--purple);">⚡ Actions</button>
         </div>
@@ -2627,7 +2777,7 @@
             </div>
             <div style="overflow-x:auto;max-height:500px;overflow-y:auto;">
               <table>
-                <thead><tr><th>#</th><th>Unit</th><th>Category</th><th>Serial No.</th><th>Description</th><th>Supplier</th><th>Location</th><th>Qty</th><th>Value (₹)</th><th>Purchase Date</th><th>Warranty Expiry</th><th>Condition</th><th>Status</th><th>Actions</th></tr></thead>
+                <thead><tr><th>#</th><th>Unit</th><th>Category</th><th>Serial No.</th><th>Model No.</th><th>Description</th><th>Supplier</th><th>Location</th><th>Qty</th><th>Value (₹)</th><th>Purchase Date</th><th>Warranty Expiry</th><th>Condition</th><th>Status</th><th>Actions</th></tr></thead>
                 <tbody id="it-tbody"></tbody>
               </table>
             </div>
@@ -2764,6 +2914,26 @@
               <table>
                 <thead><tr><th>#</th><th>Name</th><th>Description</th><th>Manufacturer</th><th>Location</th><th>Supplier</th><th>Qty</th><th>Value (₹)</th><th>Model No.</th><th>Serial No.</th><th>Remarks</th><th>Actions</th></tr></thead>
                 <tbody id="spares-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── NON REPAIRABLE (v28) ── -->
+        <div class="asset-sec" id="asec-nonrepairable">
+          <div class="table-card">
+            <div class="tc-header">
+              <div class="tc-title">⚠️ Non Repairable</div>
+              <div class="tc-actions">
+                <input type="text" class="filter-select" id="nonrep-search" placeholder="🔍 Search..." oninput="renderNonRepairableTable()" style="width:180px;padding:0.4rem 0.7rem;border-radius:8px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:0.8rem;outline:none;">
+                <button class="tc-btn" onclick="exportAssetCSV('nonrepairable')">📥 Export</button>
+                <button class="tc-btn primary" onclick="openAssetModal('nonrepairable')">+ Add Record</button>
+              </div>
+            </div>
+            <div style="overflow-x:auto;max-height:500px;overflow-y:auto;">
+              <table>
+                <thead><tr><th>#</th><th>Name</th><th>Description</th><th>Manufacturer</th><th>Location</th><th>Supplier</th><th>Qty</th><th>Value (₹)</th><th>Model No.</th><th>Serial No.</th><th>Remarks</th><th>Actions</th></tr></thead>
+                <tbody id="nonrep-tbody"></tbody>
               </table>
             </div>
           </div>
@@ -3457,12 +3627,28 @@
               <div class="form-field"><label>Initial Password</label><input type="password" id="new-user-pass" placeholder="Set initial password"></div>
               <div class="form-field"><label>Access Level</label>
                 <select id="new-user-role">
-                  <option value="admin">Full Access (Admin)</option>
-                  <option value="hr">HR &amp; People Only</option>
-                  <option value="finance">Finance Only</option>
-                  <option value="labs">Labs &amp; Assets Only</option>
-                  <option value="publications">Publications Only</option>
-                  <option value="readonly">Read Only</option>
+                  <optgroup label="── Leadership ──────────────">
+                    <option value="coo">👔 COO / Leadership View</option>
+                  </optgroup>
+                  <optgroup label="── Faculty ─────────────────">
+                    <option value="faculty">👨‍🏫 Faculty Interface</option>
+                  </optgroup>
+                  <optgroup label="── Staff Management Roles ──">
+                    <option value="hr_manager">👥 HR Manager</option>
+                    <option value="finance_mgr">💰 Finance Manager</option>
+                    <option value="facility_mgr">🏗️ Facility Manager</option>
+                    <option value="edu_pgm_mgr">🎓 Education Program Manager</option>
+                    <option value="sys_admin">⚙️ System Administrator</option>
+                    <option value="mis">📊 MIS</option>
+                  </optgroup>
+                  <optgroup label="── Administrative ──────────">
+                    <option value="admin">🔑 Full Access (Admin)</option>
+                    <option value="hr">HR &amp; People Only</option>
+                    <option value="finance">Finance Only</option>
+                    <option value="labs">Labs &amp; Assets Only</option>
+                    <option value="publications">Publications Only</option>
+                    <option value="readonly">📖 Read Only</option>
+                  </optgroup>
                 </select>
               </div>
             </div>
@@ -4362,41 +4548,57 @@
       <div class="tabs" id="tab-dropdown-manager">
         <div class="page-header">
           <h2>🗂️ Dropdown Manager</h2>
-          <p>Add, edit or remove items from any dropdown list across the entire portal. Changes are saved to the Google Sheet and reflect immediately in all Add/Edit dialogs and tabs.</p>
+          <p>Add, edit or remove items from any dropdown list across the entire portal. Changes save to the Google Sheet instantly and reflect in every Add/Edit dialog, table filter, chart and visual across all modules.</p>
         </div>
 
         <!-- Status banner -->
         <div id="ddm-status-bar" style="display:none;padding:0.65rem 1.1rem;border-radius:9px;font-size:0.82rem;font-family:var(--font-mono);margin-bottom:1.2rem;"></div>
 
-        <!-- Section pills -->
-        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1.5rem;" id="ddm-section-pills">
-          <button class="an-pill active" onclick="ddmShowSection('people')">👥 People</button>
-          <button class="an-pill" onclick="ddmShowSection('assets')">📦 Assets</button>
+        <!-- Info strip -->
+        <div class="info-strip" style="margin-bottom:1.2rem;">
+          <span>💡</span>
+          <span>All changes are <strong>immediately live</strong> in every Add/Edit form and filter across the portal. When a Google Sheet is connected, edits also sync to the corresponding Vocabulary sheet tab automatically.</span>
+          <button onclick="ddmReloadFromSheet()" style="margin-left:auto;flex-shrink:0;padding:0.3rem 0.85rem;border-radius:7px;background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.3);color:var(--accent);font-size:0.75rem;font-family:var(--font-mono);cursor:pointer;white-space:nowrap;" title="Pull latest vocab from Google Sheet">↻ Reload from Sheet</button>
+        </div>
+
+        <!-- Module pill navigation — all 7 modules -->
+        <div style="display:flex;gap:0.4rem;flex-wrap:wrap;margin-bottom:1.5rem;padding:0.55rem 0.75rem;background:var(--surface2);border-radius:12px;border:1px solid var(--border);" id="ddm-section-pills">
+          <span style="font-size:0.65rem;font-family:var(--font-mono);color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;align-self:center;margin-right:0.2rem;">Module:</span>
+          <button class="an-pill active"  onclick="ddmShowSection('people')"       id="ddmpill-people">👥 People</button>
+          <button class="an-pill"         onclick="ddmShowSection('assets')"       id="ddmpill-assets">📦 Assets</button>
+          <button class="an-pill"         onclick="ddmShowSection('expenses')"     id="ddmpill-expenses">💰 Expenses</button>
+          <button class="an-pill"         onclick="ddmShowSection('publications')" id="ddmpill-publications">📄 Publications</button>
+          <button class="an-pill"         onclick="ddmShowSection('biometric')"    id="ddmpill-biometric">🔐 Biometric</button>
+          <button class="an-pill"         onclick="ddmShowSection('lab')"          id="ddmpill-lab">🔬 Lab</button>
+          <button class="an-pill"         onclick="ddmShowSection('inventory')"    id="ddmpill-inventory">📦 Inventory</button>
         </div>
 
         <!-- ── PEOPLE DROPDOWNS ── -->
         <div id="ddm-sec-people">
+          <div style="font-size:0.78rem;color:var(--text2);margin-bottom:1rem;font-family:var(--font-mono);">
+            💡 People dropdowns apply to Staff, Faculty, Researcher and Student add/edit forms, and all People module filters.
+          </div>
           <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1.2rem;" id="ddm-people-grid">
             <!-- Rendered by JS -->
           </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1.2rem;" id="ddm44-grid-people"></div>
         </div>
 
         <!-- ── ASSET DROPDOWNS ── -->
         <div id="ddm-sec-assets" style="display:none;">
           <div style="font-size:0.78rem;color:var(--text2);margin-bottom:1rem;font-family:var(--font-mono);">
-            💡 Asset categories are also synced to the <strong>Category Vocabulary</strong> sheet tab. Changes save immediately.
+            💡 Asset categories are synced to the <strong>Category Vocabulary</strong> sheet tab. Changes save immediately and populate all Asset add/edit forms and filters.
           </div>
           <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1.2rem;" id="ddm-asset-grid">
             <!-- Rendered by JS -->
           </div>
-          <!-- v24.4 unified grid -->
           <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1.2rem;" id="ddm44-grid-assets"></div>
         </div>
 
         <!-- ── EXPENSES DROPDOWNS ── -->
         <div id="ddm-sec-expenses" style="display:none;">
           <div style="font-size:0.78rem;color:var(--text2);margin-bottom:1rem;font-family:var(--font-mono);">
-            💡 Expense categories and statuses apply to the Expense Sheet and all filters.
+            💡 Expense categories and statuses apply to the Expense Sheet, Paid Log filters, and all expense add/edit dialogs. Synced to <strong>Expense Vocabulary</strong> sheet.
           </div>
           <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1.2rem;" id="ddm44-grid-expenses"></div>
         </div>
@@ -4404,7 +4606,7 @@
         <!-- ── PUBLICATIONS DROPDOWNS ── -->
         <div id="ddm-sec-publications" style="display:none;">
           <div style="font-size:0.78rem;color:var(--text2);margin-bottom:1rem;font-family:var(--font-mono);">
-            💡 Publication options apply to Journal and Conference add/edit dialogs.
+            💡 Publication options apply to Journal, Conference, Report and Preprint add/edit dialogs, and publication filters. Synced to <strong>Publication Vocabulary</strong> sheet.
           </div>
           <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1.2rem;" id="ddm44-grid-publications"></div>
         </div>
@@ -4412,7 +4614,7 @@
         <!-- ── BIOMETRIC DROPDOWNS ── -->
         <div id="ddm-sec-biometric" style="display:none;">
           <div style="font-size:0.78rem;color:var(--text2);margin-bottom:1rem;font-family:var(--font-mono);">
-            💡 Biometric options apply to the Biometric Access module add/edit dialogs.
+            💡 Biometric options apply to the Biometric Access add/edit dialogs and all access-area filters. Synced to <strong>Biometric Vocabulary</strong> sheet.
           </div>
           <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1.2rem;" id="ddm44-grid-biometric"></div>
         </div>
@@ -4420,7 +4622,7 @@
         <!-- ── LAB DROPDOWNS ── -->
         <div id="ddm-sec-lab" style="display:none;">
           <div style="font-size:0.78rem;color:var(--text2);margin-bottom:1rem;font-family:var(--font-mono);">
-            💡 Lab options apply to Faculty Lab, Facility Rooms, and Active Researcher tables.
+            💡 Lab options apply to Faculty Lab, Facility Rooms, and Active Researcher add/edit forms and filters. Synced to <strong>Lab Vocabulary</strong> sheet.
           </div>
           <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1.2rem;" id="ddm44-grid-lab"></div>
         </div>
@@ -4428,7 +4630,7 @@
         <!-- ── INVENTORY DROPDOWNS ── -->
         <div id="ddm-sec-inventory" style="display:none;">
           <div style="font-size:0.78rem;color:var(--text2);margin-bottom:1rem;font-family:var(--font-mono);">
-            💡 Inventory options apply to the Gifts &amp; Inventory module.
+            💡 Inventory options apply to the Gifts &amp; Inventory module add/edit forms and filters. Synced to <strong>Inventory Vocabulary</strong> sheet.
           </div>
           <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1.2rem;" id="ddm44-grid-inventory"></div>
         </div>
@@ -4445,7 +4647,45 @@
 </div>
 
 <script>
-  // ── PERSISTENT CREDENTIALS ENGINE (v22 — hardened) ──────────────────────
+  // ═══════════════════════════════════════════════════════════════════════
+  // v27 — URL SECRET TOKEN GATE
+  // ═══════════════════════════════════════════════════════════════════════
+  // The portal URL must include a secret hash fragment to even show the
+  // login screen.  Without it, visitors see a blank "not found" page.
+  //
+  // HOW TO USE:
+  //   Share URL as:  https://your-site.com/index.html#wsai-iitm-2026
+  //   Change PORTAL_SECRET below to any hard-to-guess value.
+  //   Never share the plain URL — only share the URL with the fragment.
+  //
+  // WHY THIS WORKS:
+  //   URL fragments (#...) are never sent to servers or logged in access
+  //   logs.  An attacker who finds the URL without the fragment sees
+  //   nothing.  Only people given the full secret URL can proceed.
+  // ═══════════════════════════════════════════════════════════════════════
+  const PORTAL_SECRET = 'wsai-mis-2026-secure'; // ← change this before deploying
+
+  (function _urlGate() {
+    const frag = (window.location.hash || '').replace(/^#/, '').toLowerCase().trim();
+    if (frag !== PORTAL_SECRET.toLowerCase()) {
+      // Blank page — looks like a 404 / empty site
+      document.documentElement.innerHTML = `
+        <head><title>Not Found</title><style>
+          body{margin:0;background:#f8f8f8;display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:sans-serif;}
+          .msg{text-align:center;color:#bbb;}
+          .msg h1{font-size:4rem;margin:0;font-weight:200;}
+          .msg p{font-size:0.9rem;margin:0.5rem 0 0;}
+        </style></head>
+        <body><div class="msg"><h1>404</h1><p>Page not found.</p></div></body>`;
+      // Prevent any further script execution
+      throw new Error('URL gate: access denied');
+    }
+    // Valid token — remove fragment from address bar so it isn't bookmarked
+    // with the secret visible (use replaceState to avoid a history entry)
+    try {
+      history.replaceState(null, '', window.location.pathname + window.location.search);
+    } catch(e) {}
+  })();
   // Passwords are stored as SHA-256 hashes — never plaintext.
   // Default credential hash is pre-computed so no plaintext ever lives here.
   // SHA-256("MISwsai@2024") = stored hash only.
@@ -4493,28 +4733,81 @@
     } catch(e) {}
   })();
 
-  // ── ALL 23 IITs + associated sub-domains ──────────────────────────────────
+  // ── RESTRICTED TO IIT Madras ONLY ──────────────────────────────────────────
+  // v26: Access narrowed from "all IITs" to IIT Madras institutional domains only.
+  // To re-broaden, add other iit*.ac.in domains back to this list.
   const IIT_DOMAINS = [
-    'iitm.ac.in','iitb.ac.in','iitd.ac.in','iitk.ac.in','iitkgp.ac.in',
-    'iith.ac.in','iitbbs.ac.in','iitg.ac.in','iiti.ac.in','iitj.ac.in',
-    'iitmandi.ac.in','iitp.ac.in','iitpkd.ac.in','iitram.ac.in','iitrpr.ac.in',
-    'iitbhilai.ac.in','iitgoa.ac.in','iitjammu.ac.in','iitdh.ac.in',
-    'iitpalakkad.ac.in','iittlp.ac.in','iitdharwad.ac.in','iittp.ac.in',
-    // Affiliated / sub-domains
-    'dsai.iitm.ac.in','research.iitm.ac.in','cse.iitm.ac.in','ee.iitm.ac.in',
-    'rbcdsai.iitm.ac.in','ai4bharat.org'
+    'iitm.ac.in',
+    // IIT Madras affiliated / departmental sub-domains
+    'dsai.iitm.ac.in',
+    'research.iitm.ac.in',
+    'cse.iitm.ac.in',
+    'ee.iitm.ac.in',
+    'rbcdsai.iitm.ac.in',
+    'ai4bharat.org'
   ];
 
-  // ── Progressive lockout: 3 → 5 → 15 → 30 min escalation ─────────────────
+  // Progressive lockout: 3 → 5 → 15 → 30 min escalation
   let _failedAttempts = parseInt(_lsGetObj('wsai_fail_cnt',0)) || 0;
   let _lockoutUntil   = parseInt(_lsGetObj('wsai_lockout',0))  || 0;
   const MAX_ATTEMPTS  = 5;
   const _LOCKOUT_TIERS = [3*60000, 5*60000, 15*60000, 30*60000]; // ms
   function _lockoutMs(fails) { return _LOCKOUT_TIERS[Math.min(Math.floor(fails/MAX_ATTEMPTS), _LOCKOUT_TIERS.length-1)]; }
 
-  // Session expiry — 8 hours
+  // ══════════════════════════════════════════════════════════════════════════
+  // v28 — SERVER-SIDE SESSION ENGINE (CLIENT HALF)
+  // ══════════════════════════════════════════════════════════════════════════
+  // The browser holds ONLY an opaque 64-char sessionId token in sessionStorage.
+  // The actual session data (email, role, expiry) lives in GAS PropertiesService.
+  // Every API call includes the sessionId — GAS validates it server-side.
+  // On logout the token is deleted from the server immediately.
+  // ══════════════════════════════════════════════════════════════════════════
+
+  // Server-side session TTL — must match SESSION_TTL_MS in GAS
   const SESSION_TTL_MS = 8 * 60 * 60 * 1000;
 
+  // The only thing stored client-side — a random opaque token, nothing more
+  let _serverSessionId = null;
+
+  // ── CSRF nonce — page-scoped, prevents cross-tab replay
+  const _CSRF_TOKEN = (() => {
+    let t = sessionStorage.getItem('wsai_csrf');
+    if (!t) {
+      t = Array.from(crypto.getRandomValues(new Uint8Array(20)))
+            .map(b => b.toString(16).padStart(2,'0')).join('');
+      sessionStorage.setItem('wsai_csrf', t);
+    }
+    return t;
+  })();
+
+  // ── Call GAS with a session-bearing POST (all authenticated actions) ────────
+  async function _sessionPost(action, extraParams) {
+    const url = WS_CONFIG && WS_CONFIG.webAppUrl ? WS_CONFIG.webAppUrl : '';
+    if (!url) return { status: 'error', reason: 'no_web_app_url' };
+    const payload = Object.assign({ action, sessionId: _serverSessionId || '' }, extraParams || {});
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      return await res.json();
+    } catch(e) {
+      return { status: 'error', reason: e.message };
+    }
+  }
+
+  // ── v26: Failed-login audit log (written to localStorage, max 200 entries)
+  function _auditFailedLogin(user, reason) {
+    try {
+      const key = 'wsai_audit_failed';
+      const log = JSON.parse(localStorage.getItem(key) || '[]');
+      log.unshift({ ts: new Date().toISOString(), user: user, reason: reason, ua: navigator.userAgent.substring(0,80) });
+      localStorage.setItem(key, JSON.stringify(log.slice(0, 200)));
+    } catch(e) {}
+  }
+
+  // ── v26: _isIITMEmail — strictly IITM only (no longer accepts all IITs)
   function _isIITEmail(email) {
     const domain = (email.split('@')[1] || '').toLowerCase();
     return IIT_DOMAINS.some(d => domain === d || domain.endsWith('.'+d));
@@ -4542,20 +4835,56 @@
     }
 
     // IIT domain enforcement
-    if (!user.includes('@')) { _showErr('⚠ Enter a valid IIT institutional email.'); return; }
-    if (!_isIITEmail(user))  { _showErr('🚫 Access restricted to IIT institutional emails only.'); return; }
+    if (!user.includes('@')) { _showErr('⚠ Enter a valid IIT Madras institutional email.'); _auditFailedLogin(user,'no-at-sign'); return; }
+    if (!_isIITEmail(user))  { _showErr('🚫 Access restricted to IIT Madras (@iitm.ac.in) institutional emails only.'); _auditFailedLogin(user,'domain-not-iitm'); return; }
 
     // Hash-compare
     const inputHash = await _sha256(pass);
 
-    if (CREDENTIALS[user] && CREDENTIALS[user] === inputHash) {
-      // Reset fail counters
+    // ── v28: Two-phase auth ─────────────────────────────────────────────────
+    // Phase 1: local hash check (fast, no network round-trip)
+    // Phase 2: CREATE_SESSION on GAS (issues server-side token, records login)
+    const localOk = CREDENTIALS[user] && CREDENTIALS[user] === inputHash;
+    if (localOk) {
+      // Reset fail counters immediately on local pass
       _failedAttempts = 0; _lockoutUntil = 0;
       _lsSetObj('wsai_fail_cnt', 0); _lsSetObj('wsai_lockout', 0);
-      // Save session with expiry timestamp
+
+      // ── Phase 2: obtain server session token ────────────────────────────
+      let serverRole = null; let serverName = null; let serverExpires = null;
+      const webUrl = (typeof WS_CONFIG !== 'undefined') ? WS_CONFIG.webAppUrl : '';
+      if (webUrl) {
+        try {
+          const sessRes = await fetch(webUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'CREATE_SESSION', email: user, pwHash: inputHash, ua: navigator.userAgent.substring(0, 120) })
+          });
+          const sessData = await sessRes.json();
+          if (sessData.status === 'ok' && sessData.sessionId) {
+            _serverSessionId = sessData.sessionId;
+            serverRole       = sessData.role;
+            serverName       = sessData.name;
+            serverExpires    = sessData.expires;
+            // Store ONLY the opaque token — no email, no role, no expiry in storage
+            sessionStorage.setItem('wsai_srv_token', sessData.sessionId);
+            sessionStorage.setItem('wsai_srv_exp',   String(sessData.expires));
+          } else if (sessData.status === 'error') {
+            // GAS rejected (revoked account, server error, etc.)
+            _showErr('🚫 Server rejected login: ' + (sessData.reason || 'unknown error'));
+            _auditFailedLogin(user, 'server_rejected:' + (sessData.reason || '?'));
+            return;
+          }
+        } catch(netErr) {
+          // Network error — fall through to local-only session (degraded mode)
+          console.warn('v28 CREATE_SESSION network error — degraded local session:', netErr.message);
+        }
+      }
+
+      // ── Store minimal local session (tab-scoped, opaque expiry only) ────
       try {
         sessionStorage.setItem('wsai_session_user', user);
-        sessionStorage.setItem('wsai_session_exp',  String(now + SESSION_TTL_MS));
+        sessionStorage.setItem('wsai_session_exp',  String(serverExpires || (now + SESSION_TTL_MS)));
       } catch(e) {}
       document.getElementById('access-gate').style.opacity = '0';
       document.getElementById('access-gate').style.transition = 'opacity 0.4s ease';
@@ -4590,12 +4919,39 @@
             expLoadDemoData();
           }
         }, 150);
-        logAction('Login', user, 'Portal', 'Session started');
-        toast('👋 Welcome back, ' + (user === 'mis@dsai.iitm.ac.in' ? 'MIS' : user.split('@')[0]) + '!');
+        logAction('Login', user, 'Portal', 'Session started · role: ' + _currentRole);
+        // Role-aware welcome toast
+        (function() {
+          const uObj = _users.find(u => u.username === user);
+          const uName = uObj ? uObj.name : user.split('@')[0];
+          const roleKey = _currentRole || 'admin';
+          const iface   = (ACCESS_LEVEL_MAP[roleKey] || {}).interface || 'full';
+          let toastMsg;
+          if (iface === 'faculty') {
+            const surname = uName.split(/[\s.]+/).filter(Boolean).pop() || uName;
+            toastMsg = '🎓 Welcome, Professor ' + surname + ' — Faculty Portal ready';
+          } else if (iface === 'coo') {
+            toastMsg = '📊 Welcome, ' + uName + ' — Full Leadership Console ready';
+          } else if (iface === 'hr_manager') {
+            toastMsg = '👥 Welcome, ' + uName + ' — HR Console ready';
+          } else if (iface === 'finance_mgr') {
+            toastMsg = '💰 Welcome, ' + uName + ' — Finance Console ready';
+          } else if (iface === 'facility_mgr') {
+            toastMsg = '🏗️ Welcome, ' + uName + ' — Facility Console ready';
+          } else if (iface === 'edu_pgm_mgr') {
+            toastMsg = '🎓 Welcome, ' + uName + ' — Education Program Console ready';
+          } else if (iface === 'sys_admin') {
+            toastMsg = '⚙️ Welcome, ' + uName + ' — System Admin Console ready';
+          } else {
+            toastMsg = '👋 Welcome back, ' + uName;
+          }
+          toast(toastMsg);
+        })();
       }, 400);
     } else {
       _failedAttempts++;
       _lsSetObj('wsai_fail_cnt', _failedAttempts);
+      _auditFailedLogin(user, 'bad-password');
       const remaining = MAX_ATTEMPTS - (_failedAttempts % MAX_ATTEMPTS);
       if (_failedAttempts % MAX_ATTEMPTS === 0) {
         const ms = _lockoutMs(_failedAttempts);
@@ -4612,22 +4968,59 @@
   document.getElementById('g-pass').addEventListener('keydown', e => { if(e.key==='Enter') attemptLogin(); });
   document.getElementById('g-user').addEventListener('keydown', e => { if(e.key==='Enter') attemptLogin(); });
 
-  // ── AUTO-RESTORE SESSION on page load ──
-  (function _autoRestoreSession() {
+  // ── AUTO-RESTORE SESSION on page load (v28 — server-validated) ──────────────
+  // On page load the browser checks for a stored server token and validates
+  // it against GAS. If GAS confirms it valid, the session is restored without
+  // re-login. If GAS rejects it (expired, revoked, server restart cleared it),
+  // the login gate is shown — the user must re-authenticate.
+  (async function _autoRestoreSession() {
     try {
-      const savedUser = sessionStorage.getItem('wsai_session_user');
-      const sessionExp = parseInt(sessionStorage.getItem('wsai_session_exp') || '0');
-      // Expire session after 8 hours
-      if (savedUser && CREDENTIALS[savedUser] && Date.now() < sessionExp) {
+      const storedToken = sessionStorage.getItem('wsai_srv_token');
+      const savedUser   = sessionStorage.getItem('wsai_session_user');
+      const sessionExp  = parseInt(sessionStorage.getItem('wsai_session_exp') || '0');
+
+      // Quick local expiry check (avoids unnecessary network call)
+      if (!savedUser || Date.now() >= sessionExp) return;
+
+      // ── Server-side validation ─────────────────────────────────────────
+      let serverValid = false; let serverRole = null; let serverName = null;
+      const webUrl = (typeof WS_CONFIG !== 'undefined') ? WS_CONFIG.webAppUrl : '';
+      if (storedToken && webUrl) {
+        try {
+          const valRes = await fetch(webUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'VALIDATE_SESSION', sessionId: storedToken })
+          });
+          const valData = await valRes.json();
+          if (valData.status === 'ok') {
+            serverValid      = true;
+            _serverSessionId = storedToken;
+            serverRole       = valData.role;
+            serverName       = valData.name;
+          }
+          // If status !== 'ok', token was expired/revoked — show login gate
+        } catch(netErr) {
+          // Network error — degrade gracefully: use local session if token + expiry exist
+          console.warn('v28 VALIDATE_SESSION failed — degraded mode:', netErr.message);
+          serverValid = !!(storedToken && savedUser && CREDENTIALS && CREDENTIALS[savedUser]);
+        }
+      } else if (savedUser && CREDENTIALS && CREDENTIALS[savedUser]) {
+        // No GAS URL configured — local-only mode
+        serverValid = true;
+      }
+
+      if (serverValid && savedUser && CREDENTIALS && CREDENTIALS[savedUser] && Date.now() < sessionExp) {
         // Valid session — restore without re-entering password
         document.getElementById('access-gate').style.display = 'none';
         document.getElementById('app').classList.add('visible');
-        const displayName = savedUser === 'mis@dsai.iitm.ac.in' ? 'MIS' : savedUser.split('@')[0];
-        const initials = displayName.substring(0,2).toUpperCase();
+        const uObj2      = _users.find(u => u.username === savedUser);
+        const displayName = uObj2 ? uObj2.name : (savedUser === 'mis@dsai.iitm.ac.in' ? 'MIS' : savedUser.split('@')[0]);
+        const initials    = displayName.substring(0,2).toUpperCase();
         document.getElementById('user-avatar').textContent = initials;
-        document.getElementById('user-label').textContent = displayName;
-        _currentUser = savedUser;
-        _currentRole = (_users.find(u=>u.username===savedUser)?.role) || 'admin';
+        document.getElementById('user-label').textContent  = displayName;
+        _currentUser  = savedUser;
+        _currentRole  = (_users.find(u=>u.username===savedUser)?.role) || 'admin';
         applyAccessLevelUI(_currentRole);
         initCharts();
         setTimeout(() => {
@@ -4655,15 +5048,40 @@
     } catch(e) {}
   })();
 
-  // ── LOGOUT ──
-  function logout() {
-    try { sessionStorage.removeItem('wsai_session_user'); } catch(e) {}
+  // ── LOGOUT (v28 — server-side token revocation) ─────────────────────────────
+  async function logout() {
+    // Step 1: Revoke the server-side session token immediately
+    const token  = _serverSessionId || sessionStorage.getItem('wsai_srv_token');
+    const webUrl = (typeof WS_CONFIG !== 'undefined') ? WS_CONFIG.webAppUrl : '';
+    if (token && webUrl) {
+      try {
+        // Fire-and-forget revocation — don't await to avoid blocking UI
+        fetch(webUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'REVOKE_SESSION', sessionId: token })
+        }).catch(() => {}); // suppress network errors on logout
+      } catch(e) {}
+    }
+
+    // Step 2: Clear all client-side session data
+    _serverSessionId = null;
+    try {
+      sessionStorage.removeItem('wsai_session_user');
+      sessionStorage.removeItem('wsai_session_exp');
+      sessionStorage.removeItem('wsai_srv_token');
+      sessionStorage.removeItem('wsai_srv_exp');
+      sessionStorage.removeItem('wsai_csrf');
+    } catch(e) {}
+
+    // Step 3: Show login gate
     document.getElementById('app').classList.remove('visible');
-    document.getElementById('access-gate').style.opacity = '1';
-    document.getElementById('access-gate').style.display = 'flex';
+    document.getElementById('access-gate').style.opacity  = '1';
+    document.getElementById('access-gate').style.display  = 'flex';
     document.getElementById('g-pass').value = '';
     document.getElementById('gate-err').style.display = 'none';
     _currentUser = null; _currentRole = null;
+    logAction('Logout', _currentUser || 'user', 'Portal', 'Session token revoked server-side');
   }
 
   // ── PORTAL PROTECTION: block hash-based bypass ──
@@ -4885,35 +5303,42 @@
   function refreshLowStockAlerts() {
     // Wire to live inventory data
     if (typeof INV_DB === 'undefined') return;
-    const lowItems = INV_DB.items.filter(i => getInvStatus(i) !== 'ok');
-    const count = lowItems.length;
+    const alertItems = INV_DB.items.filter(i => getInvStatus(i) !== 'ok');
+    const count = alertItems.length;
 
-    // Update dashboard low stock table
+    // Update dashboard low stock table — OUT OF STOCK shown as its own tier (red)
     const tbody = document.getElementById('dash-low-stock');
     if (tbody) {
-      tbody.innerHTML = lowItems.slice(0,6).map(item => {
-        const bal = getInvBalance(item);
+      tbody.innerHTML = alertItems.slice(0,6).map(item => {
+        const bal    = getInvBalance(item);
         const status = getInvStatus(item);
+        const badge  = status === 'out'      ? '<span class="badge out" style="background:#ff0000;color:#fff;font-weight:700;">🔴 Out of Stock</span>'
+                     : status === 'critical' ? '<span class="badge critical">🔴 Critical</span>'
+                     : status === 'low'      ? '<span class="badge low">⚠️ Low</span>'
+                     :                        '<span class="badge active">✅ OK</span>';
         return `<tr>
           <td>${item.icon} ${item.name.split(' - ')[0]}</td>
           <td>${item.center}</td>
           <td style="font-family:var(--font-mono);font-weight:700;">${bal}</td>
-          <td>${status==='critical'?'<span class="badge critical">Critical</span>':status==='low'?'<span class="badge low">Low</span>':'<span class="badge out">⚠ Out Soon</span>'}</td>
+          <td>${badge}</td>
         </tr>`;
       }).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--green);padding:1rem;">✅ All stocked</td></tr>';
     }
 
-    // Update inventory health table
+    // Update inventory health table — include OUT OF STOCK as separate count
     const healthTbody = document.getElementById('dash-inv-health');
     if (healthTbody) {
       const cats = ['Gifts','Stationeries','Mementos'];
       healthTbody.innerHTML = cats.map(cat => {
         const catItems = INV_DB.items.filter(i => i.category === cat);
-        const ok = catItems.filter(i => getInvStatus(i) === 'ok').length;
-        const low = catItems.filter(i => getInvStatus(i) === 'low').length;
-        const crit = catItems.filter(i => getInvStatus(i) === 'critical').length;
-        const dotClass = crit > 0 ? 'critical' : low > 0 ? 'low' : 'ok';
-        const label = crit > 0 ? `<span class="badge critical">${crit} Critical</span>` : low > 0 ? `<span class="badge low">${low} Low</span>` : '<span class="badge active">All OK</span>';
+        const outN  = catItems.filter(i => getInvStatus(i) === 'out').length;
+        const critN = catItems.filter(i => getInvStatus(i) === 'critical').length;
+        const lowN  = catItems.filter(i => getInvStatus(i) === 'low').length;
+        const dotClass = outN > 0 ? 'critical' : critN > 0 ? 'critical' : lowN > 0 ? 'low' : 'ok';
+        const label = outN > 0  ? `<span class="badge out" style="background:#ff0000;color:#fff;">${outN} Out</span>`
+                    : critN > 0 ? `<span class="badge critical">${critN} Critical</span>`
+                    : lowN > 0  ? `<span class="badge low">${lowN} Low</span>`
+                    :             '<span class="badge active">All OK</span>';
         return `<tr><td><span class="status-dot ${dotClass}"></span>${cat}</td><td style="text-align:center;font-weight:700;">${catItems.length}</td><td>${label}</td></tr>`;
       }).join('');
     }
@@ -4924,7 +5349,7 @@
       const badgeId = 'banner-stock-alert';
       let el = document.getElementById(badgeId);
       if (count > 0) {
-        const txt = `⚠ ${count} items low/critical stock`;
+        const txt = `⚠ ${count} items low/critical/out-of-stock`;
         if (!el) {
           banner.innerHTML += ` · <a id="${badgeId}" onclick="showTab('inventory')" style="cursor:pointer;color:var(--orange);text-decoration:underline;">${txt}</a>`;
         } else {
@@ -5042,11 +5467,15 @@
     ],
     staffCategory: ['Staff','Student','Intern'],
     staffDesignation: [
+      // ── Management Roles (v27) ─────────────────────────────────────
+      'HR Manager','Finance Manager','Facility Manager',
+      'Education Program Manager','System Administrator','MIS',
+      // ── Research / Academic Staff ──────────────────────────────────
       'Post-Doctoral Fellow','Senior Research Scientist','Project Officer',
       'Project Associate','Principal Project Scientist','Post Baccalaureate Fellow',
       'AI Engineer','Research Scientist','Policy Analyst','Principal Project Officer',
       'Post Doctoral Researcher','Senior Policy Analyst','Chief Executive Officer',
-      'Excecutive Assistant','Research Program Manager','Senior Manager',
+      'Executive Assistant','Research Program Manager','Senior Manager',
       'Junior Executive','Senior Executive','Accountant','Chief Manager',
       'Ph.D Scholar','Internship','MS Scholar'
     ],
@@ -6790,13 +7219,27 @@
 
   // Access level definitions — maps role key to visible tabs/sections
   const ACCESS_LEVEL_MAP = {
-    'creator':      { label:'Creator (Full Admin)', tabs:['dashboard','people','biometric','labs','assets','expenses','publications','inventory','analytics','drive','systems','access','activity','exec-dashboard'], canEdit:true },
-    'admin':        { label:'Full Access (Admin)',   tabs:['dashboard','people','biometric','labs','assets','expenses','publications','inventory','analytics','drive','systems','access','activity','exec-dashboard'], canEdit:true },
-    'hr':           { label:'HR & People Only',       tabs:['dashboard','people','activity'], canEdit:true },
-    'finance':      { label:'Finance Only',           tabs:['dashboard','expenses','activity'], canEdit:true },
-    'labs':         { label:'Labs & Assets Only',     tabs:['dashboard','labs','assets','inventory','biometric','activity'], canEdit:true },
-    'publications': { label:'Publications Only',      tabs:['dashboard','publications','activity'], canEdit:true },
-    'readonly':     { label:'Read Only',              tabs:['dashboard','people','expenses','publications','inventory','activity'], canEdit:false }
+    'creator':      { label:'Creator (Full Admin)',    tabs:['dashboard','people','biometric','labs','assets','expenses','publications','inventory','analytics','drive','systems','access','activity','exec-dashboard','dropdown-manager'], canEdit:true,  interface:'full'    },
+    'admin':        { label:'Full Access (Admin)',      tabs:['dashboard','people','biometric','labs','assets','expenses','publications','inventory','analytics','drive','systems','access','activity','exec-dashboard','dropdown-manager'], canEdit:true,  interface:'full'    },
+
+    // ── v27 — Dedicated interfaces ─────────────────────────────────────────
+    'coo':          { label:'COO / Leadership View',   tabs:['exec-dashboard','dashboard','analytics','people','biometric','labs','assets','expenses','publications','inventory','drive','systems','access','activity','dropdown-manager'], canEdit:true,  interface:'coo',     badge:'👔 COO',    color:'#F59E0B' },
+    'faculty':      { label:'Faculty Interface',        tabs:['exec-dashboard','dashboard','analytics','people','labs','publications','biometric','activity'],                     canEdit:false, interface:'faculty', badge:'👨‍🏫 Faculty', color:'#06B6D4' },
+    // ── Staff sub-roles: one per management function ─────────────────────────
+    'staff':        { label:'Staff Interface',           tabs:['dashboard','people','expenses','inventory','activity'],                                                             canEdit:true,  interface:'staff',        badge:'🏢 Staff',                    color:'#10B981' },
+    'hr_manager':   { label:'HR Manager',                tabs:['dashboard','people','biometric','activity'],                                                                       canEdit:true,  interface:'hr_manager',   badge:'👥 HR Manager',               color:'#8B5CF6' },
+    'finance_mgr':  { label:'Finance Manager',           tabs:['dashboard','expenses','analytics','exec-dashboard','activity'],                                                    canEdit:true,  interface:'finance_mgr',  badge:'💰 Finance Manager',          color:'#F59E0B' },
+    'facility_mgr': { label:'Facility Manager',          tabs:['dashboard','labs','assets','biometric','inventory','activity'],                                                    canEdit:true,  interface:'facility_mgr', badge:'🏗️ Facility Manager',         color:'#06B6D4' },
+    'edu_pgm_mgr':  { label:'Education Program Manager', tabs:['dashboard','people','publications','labs','activity'],                                                             canEdit:true,  interface:'edu_pgm_mgr',  badge:'🎓 Education Program Manager', color:'#EC4899' },
+    'sys_admin':    { label:'System Administrator',      tabs:['dashboard','people','biometric','labs','assets','expenses','publications','inventory','analytics','drive','systems','access','activity','dropdown-manager'], canEdit:true, interface:'sys_admin', badge:'⚙️ Sys Admin', color:'#64748B' },
+    'mis':          { label:'MIS',                       tabs:['dashboard','people','biometric','labs','assets','expenses','publications','inventory','analytics','drive','systems','access','activity','exec-dashboard','dropdown-manager'], canEdit:true, interface:'full', badge:'📊 MIS', color:'#3B82F6' },
+
+    // ── Legacy / granular roles ────────────────────────────────────────────
+    'hr':           { label:'HR & People Only',         tabs:['dashboard','people','activity'],                                                                                    canEdit:true,  interface:'full'    },
+    'finance':      { label:'Finance Only',             tabs:['dashboard','expenses','activity'],                                                                                  canEdit:true,  interface:'full'    },
+    'labs':         { label:'Labs & Assets Only',       tabs:['dashboard','labs','assets','inventory','biometric','activity'],                                                      canEdit:true,  interface:'full'    },
+    'publications': { label:'Publications Only',        tabs:['dashboard','publications','activity'],                                                                               canEdit:true,  interface:'full'    },
+    'readonly':     { label:'Read Only',                tabs:['dashboard','people','expenses','publications','inventory','activity'],                                                canEdit:false, interface:'full'    }
   };
 
   // User registry — load from localStorage, seed with defaults if first run
@@ -6821,19 +7264,266 @@
   }
 
   // Apply access-level visibility to sidebar nav items based on current user role
+  // ══════════════════════════════════════════════════════════════════════════
+  // v27 — ROLE-BASED INTERFACE ENGINE
+  // ══════════════════════════════════════════════════════════════════════════
+  //
+  // INTERFACE TYPES
+  //   full        — creator / admin / mis: everything visible, all edit
+  //   coo         — exec dashboard first, analytics focus, no write buttons
+  //   faculty     — people + labs + publications, read-only, "Prof." greeting
+  //   hr_manager  — people + biometric, full edit
+  //   finance_mgr — expenses + analytics + exec-dashboard, full edit
+  //   facility_mgr— labs + assets + biometric + inventory, full edit
+  //   edu_pgm_mgr — people + publications + labs, full edit
+  //   sys_admin   — all tabs incl. systems/drive/access/dropdown-manager
+  //   staff       — generic staff: people + expenses + inventory
+  //
+  // STAFF DESIGNATION → role mapping (used when creating accounts)
+  //   HR Manager              → hr_manager
+  //   Finance Manager         → finance_mgr
+  //   Facility Manager        → facility_mgr
+  //   Education Program Manager → edu_pgm_mgr
+  //   System Administrator    → sys_admin
+  //   MIS                     → mis
+  //
+  // WELCOME BANNERS
+  //   Each interface shows a personalised welcome banner on login with
+  //   role-specific colour, icon, title, and access summary.
+  // ══════════════════════════════════════════════════════════════════════════
+
+  // ── Role → landing tab ────────────────────────────────────────────────────
+  const INTERFACE_LANDING = {
+    coo:         'exec-dashboard',
+    faculty:     'exec-dashboard',  // v27.1: Faculty lands on exec overview
+    hr_manager:  'people',
+    finance_mgr: 'expenses',
+    facility_mgr:'labs',
+    edu_pgm_mgr: 'people',
+    sys_admin:   'dashboard',
+    mis:         'dashboard',
+    full:        'dashboard'
+  };
+
+  // ── Role → welcome banner config ─────────────────────────────────────────
+  const INTERFACE_WELCOME = {
+    coo: {
+      icon: '📊', color: '#F59E0B', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.25)',
+      title: 'COO — Leadership Console',
+      access: 'Full portal access · Executive dashboard · Analytics · People · Biometric · Labs · Assets · Expenses · Publications · Inventory · Drive · Systems'
+    },
+    faculty: {
+      icon: '🎓', color: '#06B6D4', bg: 'rgba(6,182,212,0.08)', border: 'rgba(6,182,212,0.25)',
+      title: 'Faculty Portal',
+      access: 'Executive summary · Dashboard · Analytics · People directory · Lab management · Publications · Biometric access (read-only)'
+    },
+    hr_manager: {
+      icon: '👥', color: '#8B5CF6', bg: 'rgba(139,92,246,0.08)', border: 'rgba(139,92,246,0.25)',
+      title: 'HR Management Console',
+      access: 'People management · Biometric access control · Activity log'
+    },
+    finance_mgr: {
+      icon: '💰', color: '#F59E0B', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.25)',
+      title: 'Finance Management Console',
+      access: 'Expense management · Financial analytics · Executive dashboard'
+    },
+    facility_mgr: {
+      icon: '🏗️', color: '#06B6D4', bg: 'rgba(6,182,212,0.08)', border: 'rgba(6,182,212,0.25)',
+      title: 'Facility Management Console',
+      access: 'Lab management · Asset tracking · Biometric access · Inventory'
+    },
+    edu_pgm_mgr: {
+      icon: '🎓', color: '#EC4899', bg: 'rgba(236,72,153,0.08)', border: 'rgba(236,72,153,0.25)',
+      title: 'Education Program Management',
+      access: 'People directory · Publication records · Lab management'
+    },
+    sys_admin: {
+      icon: '⚙️', color: '#64748B', bg: 'rgba(100,116,139,0.08)', border: 'rgba(100,116,139,0.25)',
+      title: 'System Administration Console',
+      access: 'Full system access · Drive integration · Dropdown manager · Access control'
+    },
+    mis: {
+      icon: '📊', color: '#3B82F6', bg: 'rgba(59,130,246,0.08)', border: 'rgba(59,130,246,0.25)',
+      title: 'MIS — Management Information System',
+      access: 'Full portal access · All modules · Reporting · Configuration'
+    },
+    full: {
+      icon: '🛡️', color: '#3B82F6', bg: 'rgba(59,130,246,0.08)', border: 'rgba(59,130,246,0.25)',
+      title: 'Administrator Dashboard',
+      access: 'Full portal access · All modules · Complete management'
+    }
+  };
+
+  // ── Core: Apply role-based tab visibility + badge + landing ──────────────
   function applyAccessLevelUI(role) {
     const levelDef = ACCESS_LEVEL_MAP[role] || ACCESS_LEVEL_MAP['readonly'];
-    const allowed = levelDef.tabs;
+    const allowed  = levelDef.tabs;
+    const iface    = levelDef.interface || 'full';
+    const canEdit  = levelDef.canEdit;
+
+    // ── 1. Tab (sidebar) visibility ────────────────────────────────────────
     document.querySelectorAll('.nav-item[data-tab]').forEach(item => {
       const tab = item.getAttribute('data-tab');
-      if (tab) {
-        item.style.display = allowed.includes(tab) ? '' : 'none';
-      }
+      if (tab) item.style.display = allowed.includes(tab) ? '' : 'none';
     });
-    // Hide sidebar sections with no visible items
-    document.querySelectorAll('.sidebar-section').forEach(sec => {
-      const visItems = sec.querySelectorAll('.nav-item[data-tab]:not([style*="none"])');
-      // keep section headers if any item is visible
+
+    // ── 2. Topbar role badge ────────────────────────────────────────────────
+    if (levelDef.badge) {
+      let badgeEl = document.getElementById('role-interface-badge');
+      if (!badgeEl) {
+        badgeEl = document.createElement('span');
+        badgeEl.id = 'role-interface-badge';
+        badgeEl.style.cssText = [
+          'font-size:0.7rem', 'font-family:var(--font-mono)',
+          'padding:0.22rem 0.7rem', 'border-radius:20px',
+          'border:1px solid', 'margin-right:0.5rem',
+          'white-space:nowrap', 'letter-spacing:0.03em',
+          'font-weight:500', 'cursor:default'
+        ].join(';');
+        const topRight = document.querySelector('.topbar-right');
+        if (topRight) topRight.insertBefore(badgeEl, topRight.firstChild);
+      }
+      const c = levelDef.color || 'var(--accent)';
+      badgeEl.textContent      = levelDef.badge;
+      badgeEl.style.color      = c;
+      badgeEl.style.borderColor= c + '55';
+      badgeEl.style.background = c + '18';
+      badgeEl.title            = levelDef.label;
+    }
+
+    // ── 3. Topbar accent strip per interface ────────────────────────────────
+    document.body.setAttribute('data-interface', iface);
+
+    // ── 4. Landing tab ──────────────────────────────────────────────────────
+    const landing = INTERFACE_LANDING[iface] || INTERFACE_LANDING['full'];
+    setTimeout(() => { try { showTab(landing); } catch(e){} }, 200);
+
+    // ── 5. Write-button visibility ──────────────────────────────────────────
+    // Interfaces that are fully read-only:
+    const READ_ONLY_IFACES = ['faculty', 'readonly']; // coo removed v27.1: COO has full edit access
+    if (READ_ONLY_IFACES.includes(iface) || !canEdit) {
+      setTimeout(_applyWriteRestrictions, 900);
+    }
+    // Staff generic: only expenses + inventory are editable
+    if (iface === 'staff') {
+      setTimeout(_applyWriteRestrictions, 900);
+    }
+
+    // ── 6. Welcome banner ───────────────────────────────────────────────────
+    // Injected after the page-header of the landing tab
+    setTimeout(() => _renderWelcomeBanner(role, iface), 350);
+  }
+
+  // ── Welcome banner renderer ───────────────────────────────────────────────
+  function _renderWelcomeBanner(role, iface) {
+    // Remove any existing banner first
+    const existing = document.getElementById('interface-welcome-banner');
+    if (existing) existing.remove();
+
+    const cfg = INTERFACE_WELCOME[iface] || INTERFACE_WELCOME['full'];
+    const landing = INTERFACE_LANDING[iface] || 'dashboard';
+    const landingPanel = document.getElementById('tab-' + landing);
+    if (!landingPanel) return;
+
+    // Build display name — "Professor Surname" for faculty, else use stored name
+    let displayName = '';
+    const userObj = _users.find(u => u.username === _currentUser);
+    if (userObj) displayName = userObj.name;
+    else displayName = (_currentUser||'').split('@')[0] || '';
+
+    // Faculty get "Professor <Surname>" greeting
+    let greeting = '';
+    if (iface === 'faculty') {
+      const surname = displayName.split(/[\s.]+/).filter(Boolean).pop() || displayName;
+      greeting = `Welcome, Professor ${surname}`;
+    } else if (iface === 'coo') {
+      greeting = `Welcome, ${displayName}`;
+    } else {
+      // Use designation if known
+      const desg = userObj && userObj.designation ? userObj.designation : cfg.title;
+      greeting = displayName ? `Welcome, ${displayName}` : `Welcome to ${desg}`;
+    }
+
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit', hour12:true });
+    const dateStr = now.toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+
+    const banner = document.createElement('div');
+    banner.id = 'interface-welcome-banner';
+    banner.style.cssText = [
+      `background:${cfg.bg}`, `border:1px solid ${cfg.border}`,
+      'border-radius:14px', 'padding:1rem 1.5rem',
+      'display:flex', 'align-items:center', 'gap:1.25rem',
+      'margin-bottom:1.5rem', 'animation:appIn 0.5s both',
+      'flex-wrap:wrap'
+    ].join(';');
+
+    banner.innerHTML = `
+      <div style="font-size:2rem;flex-shrink:0;line-height:1;">${cfg.icon}</div>
+      <div style="flex:1;min-width:200px;">
+        <div style="font-family:var(--font-display);font-size:1.1rem;color:var(--text);font-weight:600;letter-spacing:0.01em;">
+          ${greeting}
+        </div>
+        <div style="font-size:0.78rem;color:var(--text2);margin-top:3px;line-height:1.5;">
+          <span style="font-weight:500;color:${cfg.color};">${cfg.title}</span>
+          &ensp;·&ensp;${cfg.access}
+        </div>
+      </div>
+      <div style="text-align:right;flex-shrink:0;min-width:130px;">
+        <div style="font-family:var(--font-mono);font-size:0.8rem;color:var(--text);font-weight:500;">${timeStr}</div>
+        <div style="font-size:0.7rem;color:var(--text3);margin-top:2px;font-family:var(--font-mono);">${dateStr}</div>
+      </div>`;
+
+    // Insert right after the page-header in the landing panel
+    const pageHdr = landingPanel.querySelector('.page-header');
+    if (pageHdr) {
+      pageHdr.parentNode.insertBefore(banner, pageHdr.nextSibling);
+    } else {
+      landingPanel.insertBefore(banner, landingPanel.firstChild);
+    }
+  }
+
+  // ── Write restriction engine ──────────────────────────────────────────────
+  // Hides add/edit/delete buttons. Staff-specific interfaces keep their
+  // own module's write buttons (defined in STAFF_WRITE_MODULES below).
+  const STAFF_WRITE_MODULES = {
+    staff:        ['expenses','inventory'],
+    hr_manager:   ['people','biometric'],
+    finance_mgr:  ['expenses'],
+    facility_mgr: ['labs','assets','inventory'],
+    edu_pgm_mgr:  ['people','publications','labs'],
+    sys_admin:    [],   // sys_admin: no restriction (canEdit:true on all)
+    mis:          [],   // mis: no restriction
+  };
+
+  function _applyWriteRestrictions() {
+    const iface = document.body.getAttribute('data-interface') || 'full';
+    const writeOk = STAFF_WRITE_MODULES[iface]; // undefined = read-only all
+
+    // Selectors that match write action buttons across all modules
+    const BTN_SELS = [
+      '[onclick*="openAddModal"]','[onclick*="openEditModal"]',
+      '[onclick*="openAdd("]','[onclick*="openEdit("]',
+      '[onclick*="labOpenAdd"]','[onclick*="labOpenEdit"]',
+      '[onclick*="deletePerson"]','[onclick*="deleteAsset"]',
+      '[onclick*="deleteExpense"]','[onclick*="deletePublication"]',
+      '[onclick*="deleteBiometricUser"]','[onclick*="deleteInventory"]',
+      '[onclick*="deleteLabRecord"]','[onclick*="revokeBiometric"]',
+      '[onclick*="deductConsumable"]',
+      '.tc-btn.primary','.btn-add','.btn-edit','.btn-delete'
+    ];
+
+    BTN_SELS.forEach(sel => {
+      try {
+        document.querySelectorAll(sel).forEach(el => {
+          if (!writeOk) { el.style.display = 'none'; return; }
+          // Check if button lives inside an allowed module tab
+          const panel = el.closest('[id^="tab-"]');
+          if (!panel) { el.style.display = 'none'; return; }
+          const tid = panel.id.replace('tab-','');
+          if (!writeOk.includes(tid)) el.style.display = 'none';
+        });
+      } catch(e) {}
     });
   }
 
@@ -6842,15 +7532,30 @@
     if (!el) return;
     el.innerHTML = _users.map((u, i) => `
       <div class="user-list-row" style="display:flex;align-items:center;gap:0.75rem;padding:0.65rem 0;border-bottom:1px solid var(--border);flex-wrap:wrap;">
-        <div class="ac-avatar" style="background:linear-gradient(135deg,${u.role==='creator'?'var(--gold),var(--orange)':u.role==='admin'?'var(--accent),var(--purple)':'var(--green),var(--accent2)'})">${u.initials}</div>
+        <div class="ac-avatar" style="background:${
+          u.role==='creator'    ? 'linear-gradient(135deg,#F59E0B,#F97316)' :
+          u.role==='admin'      ? 'linear-gradient(135deg,#3B82F6,#8B5CF6)' :
+          u.role==='coo'        ? 'linear-gradient(135deg,#F59E0B,#D97706)' :
+          u.role==='faculty'    ? 'linear-gradient(135deg,#06B6D4,#0891B2)' :
+          u.role==='hr_manager' ? 'linear-gradient(135deg,#8B5CF6,#6D28D9)' :
+          u.role==='finance_mgr'? 'linear-gradient(135deg,#F59E0B,#B45309)' :
+          u.role==='facility_mgr'?'linear-gradient(135deg,#06B6D4,#0369A1)' :
+          u.role==='edu_pgm_mgr'? 'linear-gradient(135deg,#EC4899,#9D174D)' :
+          u.role==='sys_admin'  ? 'linear-gradient(135deg,#64748B,#334155)' :
+          u.role==='mis'        ? 'linear-gradient(135deg,#3B82F6,#1D4ED8)' :
+                                  'linear-gradient(135deg,#10B981,#06B6D4)'
+        }">${u.initials}</div>
         <div class="ac-info" style="flex:1;min-width:120px;">
           <div class="an">${u.name}</div>
           <div class="ae" style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text3);">${u.username}</div>
         </div>
         ${u.role !== 'creator' ? `
-        <select onchange="changeUserRole(${i}, this.value)" style="padding:0.3rem 0.5rem;border-radius:7px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:0.72rem;font-family:var(--font-body);outline:none;cursor:pointer;">
-          ${Object.entries(ACCESS_LEVEL_MAP).filter(([k])=>k!=='creator').map(([k,v])=>`<option value="${k}" ${u.role===k?'selected':''}>${v.label}</option>`).join('')}
-        </select>` : `<span class="user-tag tag-creator" style="padding:0.25rem 0.65rem;border-radius:6px;font-size:0.7rem;font-family:var(--font-mono);background:rgba(245,158,11,0.15);color:var(--gold);border:1px solid rgba(245,158,11,0.3);">creator</span>`}
+        <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+          <span class="role-chip role-chip-${u.role||'default'}">${(ACCESS_LEVEL_MAP[u.role]||{}).badge||u.role}</span>
+          <select onchange="changeUserRole(${i}, this.value)" title="Change role" style="padding:0.25rem 0.45rem;border-radius:7px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);font-size:0.68rem;font-family:var(--font-body);outline:none;cursor:pointer;max-width:160px;">
+            ${Object.entries(ACCESS_LEVEL_MAP).filter(([k])=>k!=='creator').map(([k,v])=>`<option value="${k}" ${u.role===k?'selected':''}>${v.label}</option>`).join('')}
+          </select>
+        </div>` : `<span class="role-chip role-chip-creator">👑 Creator</span>`}
         <button class="pw-change-btn" onclick="openPwModal('${u.username}')">🔑 passwd</button>
         ${u.role !== 'creator' ? `<button class="ac-action" style="margin-left:4px;border-color:rgba(239,68,68,0.4);color:var(--red);padding:0.25rem 0.65rem;border-radius:6px;border:1px solid;background:none;cursor:pointer;font-size:0.72rem;" onclick="removeUser(${i})">🚫 Revoke</button>` : ''}
       </div>
@@ -7007,40 +7712,42 @@
   }
 
   async function grantNewAccess() {
+    // FIX BUG-6: Rewrote to remove broken duplicate-check loop and plaintext cred overwrite.
+    // Old code: set hash → set _passwords → check _passwords (always true now) → return early
+    //           then overwrote CREDENTIALS with plaintext. New user creation was always blocked.
     const email = document.getElementById('new-user-email')?.value.trim();
     const name  = document.getElementById('new-user-name')?.value.trim();
     const pass  = document.getElementById('new-user-pass')?.value;
     const role  = document.getElementById('new-user-role')?.value;
 
-    if (!email || !name || !pass) { toast('⚠️ Please fill all fields'); return; }
+    if (!email || !name || !pass || !role) { toast('⚠️ Please fill all fields'); return; }
     if (!email.includes('@')) { toast('⚠️ Enter a valid email address'); return; }
     if (!_isIITEmail(email)) { toast('🚫 Only IIT institutional emails (@iit*.ac.in) can be registered.'); return; }
-    if (CREDENTIALS[email]) { toast('⚠️ User already exists: ' + email); return; }
+    // Single duplicate check — covers both credential stores
+    if (CREDENTIALS[email] || (window._passwords && _passwords[email])) {
+      toast('⚠️ User already exists: ' + email); return;
+    }
     if (pass.length < 8) { toast('⚠️ Password must be at least 8 characters'); return; }
+    if (!/[A-Z]/.test(pass)) { toast('⚠️ Password must contain at least one uppercase letter'); return; }
+    if (!/[0-9@#$!%*?&]/.test(pass)) { toast('⚠️ Password must contain a number or special character'); return; }
 
+    // Store hash in CREDENTIALS (never plaintext), plaintext in _passwords for session login
     const hash = await _sha256(pass);
     CREDENTIALS[email] = hash;
     if (window._passwords) _passwords[email] = pass;
-    if (_passwords[email]) { toast('&#x26A0;&#xFE0F; User already exists: ' + email); return; }
-    if (pass.length < 6) { toast('⚠️ Password must be at least 6 characters'); return; }
 
-    // Register in BOTH _passwords and CREDENTIALS so login works immediately
-    _passwords[email] = pass;
-    CREDENTIALS[email] = pass;
     const newUser = { username: email, name, role, initials: name.substring(0,2).toUpperCase() };
     _users.push(newUser);
-    // ── PERSIST to localStorage ──
     _persistCredentials();
     _persistUsers();
 
     document.getElementById('new-user-email').value = '';
-    document.getElementById('new-user-name').value = '';
-    document.getElementById('new-user-pass').value = '';
+    document.getElementById('new-user-name').value  = '';
+    document.getElementById('new-user-pass').value  = '';
 
     renderUserRegistry();
     logAction('Add User', _currentUser, 'Access Control', name + ' (' + email + ') granted ' + (ACCESS_LEVEL_MAP[role]?.label||role) + ' access');
     toast('✅ User ' + name + ' added — they can now login with role: ' + (ACCESS_LEVEL_MAP[role]?.label||role));
-    // Sync to GAS if connected
     if (WS_CONFIG.webAppUrl) syncToSheet('ADD_USER', { email, name, role, addedBy: _currentUser||'Admin' });
   }
 
@@ -7267,7 +7974,7 @@
       window[cbName] = (data) => { if (done) return; done=true; clearTimeout(timeout); cleanup(); resolve(data); };
       script.onerror = () => {
         if (done) return; done=true; clearTimeout(timeout); cleanup();
-        reject(new Error('Script load error — ensure deployment is set to "Execute as: Me · Who has access: Anyone" (not domain-restricted)'));
+        reject(new Error('Script load error — ensure the portal is opened from an @iitm.ac.in Google session (deployment: Who has access = Anyone within IIT Madras)'));
       };
       script.src = url + (url.includes('?') ? '&' : '?') + qs;
       document.head.appendChild(script);
@@ -7346,7 +8053,7 @@
         .forEach(k => { if (DB[k]) DB[k] = []; });
     }
     if (typeof ASSET_DB !== 'undefined') {
-      ['it','nonit','gpu','ilds','books','spares','consumables','vendors']
+      ['it','nonit','gpu','ilds','books','spares','nonRepairable','consumables','vendors']
         .forEach(k => { if (ASSET_DB[k]) ASSET_DB[k] = []; });
     }
     if (typeof BM !== 'undefined') BM.raw = null;
@@ -7836,8 +8543,10 @@
       angle += slice;
     });
     ctx.beginPath(); ctx.arc(cx,cy,ri,0,2*Math.PI);
-    ctx.fillStyle='#111827'; ctx.fill();
-    ctx.fillStyle='#E2E8F0'; ctx.font='bold 13px DM Mono,monospace';
+    // FIX BUG-10: use theme-aware colors so donut hole is visible in light mode
+    const _isDark = document.documentElement.getAttribute('data-theme') !== 'light';
+    ctx.fillStyle = _isDark ? '#111827' : '#FFFFFF'; ctx.fill();
+    ctx.fillStyle = _isDark ? '#E2E8F0' : '#0F172A'; ctx.font='bold 13px DM Mono,monospace';
     ctx.textAlign='center'; ctx.textBaseline='middle';
     ctx.fillText(total,cx,cy);
     const leg = document.getElementById(legendId);
@@ -7921,9 +8630,9 @@
     const crit=all.filter(r=>{const d=daysLeft(r.exitDate);return d>=0&&d<=30;});
     const warn=all.filter(r=>{const d=daysLeft(r.exitDate);return d>30&&d<=90;});
     const ok  =all.filter(r=>daysLeft(r.exitDate)>90);
-    const tenures=all.map(r=>{const d=new Date(r.exitDate)-new Date(r.joiningDate||new Date());return Math.ceil(d/86400000);}).filter(x=>x>0);
+    const tenures=all.map(r=>{const d=(_parseDateStr(r.exitDate)||new Date())-(_parseDateStr(r.joiningDate)||new Date());return Math.ceil(d/86400000);}).filter(x=>x>0);
     const avg=tenures.length?Math.round(tenures.reduce((a,b)=>a+b,0)/tenures.length):0;
-    const exp26=all.filter(r=>{const d=new Date(r.exitDate);return d.getFullYear()===2026;});
+    const exp26=all.filter(r=>{const d=_parseDateStr(r.exitDate);return d&&d.getFullYear()===2026;});
 
     _sv('ant-crit',crit.length); _sv('ant-warn',warn.length); _sv('ant-ok',ok.length);
     _sv('ant-avg',avg+'d'); _sv('ant-2026',exp26.length);
@@ -7937,7 +8646,7 @@
     const months=[];
     for(let m=0;m<6;m++){
       const md=new Date(now.getFullYear(),now.getMonth()+m,1);
-      const cnt=all.filter(r=>{const ed=new Date(r.exitDate);return ed.getMonth()===md.getMonth()&&ed.getFullYear()===md.getFullYear();}).length;
+      const cnt=all.filter(r=>{const ed=_parseDateStr(r.exitDate);return ed&&ed.getMonth()===md.getMonth()&&ed.getFullYear()===md.getFullYear();}).length;
       months.push({label:md.toLocaleString('en-IN',{month:'short'}),val:cnt});
     }
     _anBarChart('ant-monthly','ant-monthly-l',months,(v,max)=>v>2?'var(--red)':v>0?'var(--orange)':'var(--surface3)');
@@ -8456,7 +9165,8 @@
     const allMems=[...DB.staff,...DB.researchers,...DB.students,...DB.fellows].filter(r=>r.joiningDate);
     const joinMap={};
     allMems.forEach(r=>{
-      const y=new Date(r.joiningDate).getFullYear();
+      const d=_parseDateStr(r.joiningDate);
+      const y=d?d.getFullYear():NaN;
       if(y>2010&&y<=new Date().getFullYear())joinMap[y]=(joinMap[y]||0)+1;
     });
     const jData=Object.entries(joinMap).sort(([a],[b])=>a-b).map(([label,val])=>({label,val}));
@@ -8487,7 +9197,7 @@
     const all2=[...DB.staff,...DB.researchers,...DB.students].filter(r=>r.joiningDate&&r.exitDate);
     const brackets={'0-6m':0,'6-12m':0,'1-2yr':0,'2-3yr':0,'3yr+':0};
     all2.forEach(r=>{
-      const months=Math.round((new Date(r.exitDate)-new Date(r.joiningDate))/(1000*60*60*24*30));
+      const months=Math.round((_parseDateStr(r.exitDate)-_parseDateStr(r.joiningDate))/(1000*60*60*24*30));
       if(months<6)brackets['0-6m']++;else if(months<12)brackets['6-12m']++;else if(months<24)brackets['1-2yr']++;else if(months<36)brackets['2-3yr']++;else brackets['3yr+']++;
     });
     _anBarChart('ant-duration-bars','ant-duration-bars-l',Object.entries(brackets).map(([label,val])=>({label,val})),'var(--cyan,var(--accent2))');
@@ -10172,15 +10882,18 @@
   // ══════════════════════════════════════════════
   // ── INV_CONFIG — mirrors GAS INVENTORY_THRESHOLDS + GIFTS_MASTER_MAP ──
   const INV_CONFIG = {
-    // Per-category thresholds (matches GAS INVENTORY_THRESHOLDS exactly)
+    // Per-category thresholds — must match GAS INVENTORY_THRESHOLDS exactly:
+    //   Gifts        (doc 2 CONFIG): LOW_STOCK_THRESHOLD=50  CRITICAL_STOCK_THRESHOLD=25
+    //   Stationeries (doc 2 CONFIG): LOW_STOCK_THRESHOLD=50  CRITICAL_STOCK_THRESHOLD=25
+    //   Mementos     (doc 1 CONFIG): LOW_STOCK_THRESHOLD=20  CRITICAL_STOCK_THRESHOLD=5
     THRESHOLDS: {
-      gifts:        { low: 50, critical: 5 },
-      stationeries: { low: 30, critical: 5 },
-      mementos:     { low: 30, critical: 5 }
+      gifts:        { low: 50, critical: 25 },
+      stationeries: { low: 50, critical: 25 },
+      mementos:     { low: 20, critical: 5  }
     },
-    // Legacy flat thresholds (kept for getInvStatus/getVariantStatus compat)
-    LOW_STOCK_THRESHOLD:      20,   // per-item threshold field overrides this
-    CRITICAL_STOCK_THRESHOLD: 5,
+    // Legacy flat thresholds (kept for getVariantStatus compat — apparel uses mementos values)
+    LOW_STOCK_THRESHOLD:      50,
+    CRITICAL_STOCK_THRESHOLD: 25,
     TSHIRT_SIZES: ['XS','S','M','L','XL','XXL','XXXL'],
     SHIRT_SIZES:  ['38','39','40','42','44','46'],
     CENTERS:      ['WSAI','DSAI','RBCDSAI','CeRAI'],
@@ -10489,12 +11202,16 @@
 
   function getInvStatus(item) {
     const bal = getInvBalance(item);
+    // Mirror standalone getStatusAndColor() logic exactly
     if (bal === 0) return 'out';
-    // Use per-category thresholds mirroring GAS INVENTORY_THRESHOLDS
+    // Also catch items where the sheet already wrote the emoji status string
+    const sheetStatus = (item.status || '').toLowerCase();
+    if (sheetStatus.includes('out of stock')) return 'out';
+    // Per-category thresholds (mirrors GAS INVENTORY_THRESHOLDS)
     const catKey = (item.category || 'gifts').toLowerCase();
-    const catT   = (INV_CONFIG.THRESHOLDS && INV_CONFIG.THRESHOLDS[catKey]) || { low: 30, critical: 5 };
+    const catT   = (INV_CONFIG.THRESHOLDS && INV_CONFIG.THRESHOLDS[catKey]) || { low: 50, critical: 25 };
     const critT  = catT.critical;
-    // item.threshold is the per-item override (lowThreshold from sheet); fall back to category low
+    // item.threshold is the per-item lowThreshold from sheet; falls back to category low
     const lowT   = (item.threshold && item.threshold > 0) ? item.threshold : catT.low;
     if (bal <= critT) return 'critical';
     if (bal <= lowT)  return 'low';
@@ -10504,8 +11221,8 @@
   function getVariantStatus(v) {
     const bal = getVariantBalance(v);
     if (bal === 0) return 'out';
-    // Apparel uses mementos thresholds
-    const catT  = (INV_CONFIG.THRESHOLDS && INV_CONFIG.THRESHOLDS.mementos) || { low: 30, critical: 5 };
+    // Apparel uses mementos thresholds (doc 1 CONFIG: low=20, critical=5)
+    const catT  = (INV_CONFIG.THRESHOLDS && INV_CONFIG.THRESHOLDS.mementos) || { low: 20, critical: 5 };
     const critT = catT.critical;
     const lowT  = (v.threshold && v.threshold > 0) ? v.threshold : catT.low;
     if (bal <= critT) return 'critical';
@@ -10515,7 +11232,7 @@
 
   function invStatusBadge(item) {
     const s = getInvStatus(item);
-    if (s === 'out')      return '<span class="badge out">🔴 Out of Stock</span>';
+    if (s === 'out')      return '<span class="badge out" style="background:#ff0000;color:#fff;font-weight:700;">🔴 Out of Stock</span>';
     if (s === 'critical') return '<span class="badge critical">🔴 Critical</span>';
     if (s === 'low')      return '<span class="badge low">⚠️ Low</span>';
     return '<span class="badge active">✅ OK</span>';
@@ -11070,17 +11787,78 @@
         }
       } catch(e) { console.warn('[inv] GET_INVENTORY mementos failed:', e.message); }
 
+      // ── Fetch T-Shirt Master (v24.0) ─────────────────────────────────────
+      try {
+        const url = memUrl || mainUrl;
+        const tsData = await _jsonpFetch(url, { action: 'GET_TSHIRT_MASTER', t: Date.now() });
+        if (tsData && tsData.variants && tsData.variants.length) {
+          // Map GAS variant shape → portal variant shape
+          INV_DB.tshirtVariants = tsData.variants.map(v => ({
+            color:       v.color       || '',
+            size:        v.size        || '',
+            center:      v.center      || 'WSAI',
+            type:        v.type        || '',
+            action:      v.action      || 'Stock',
+            received:    parseInt(v.received  || v.totalReceived  || 0),
+            issued:      parseInt(v.issued    || v.totalIssued    || 0),
+            threshold:   parseInt(v.threshold || 5),
+            lastUpdated: v.lastUpdated || ''
+          }));
+          loaded++;
+          // Update T-Shirt sync badge
+          const tsBadge = document.getElementById('ts-sync-badge');
+          if (tsBadge) tsBadge.textContent = 'Synced ' + new Date().toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'});
+          console.log('[invSyncAll] T-Shirt variants loaded:', INV_DB.tshirtVariants.length);
+        }
+      } catch(e) { console.warn('[inv] GET_TSHIRT_MASTER failed:', e.message); }
+
+      // ── Fetch Shirt Master (v24.0) ────────────────────────────────────────
+      try {
+        const url = memUrl || mainUrl;
+        const shData = await _jsonpFetch(url, { action: 'GET_SHIRT_MASTER', t: Date.now() });
+        if (shData && shData.variants && shData.variants.length) {
+          INV_DB.shirtVariants = shData.variants.map(v => ({
+            color:       v.color       || '',
+            size:        v.size        || '',
+            center:      v.center      || 'WSAI',
+            type:        v.type        || '',
+            action:      v.action      || 'Stock',
+            received:    parseInt(v.received  || v.totalReceived  || 0),
+            issued:      parseInt(v.issued    || v.totalIssued    || 0),
+            threshold:   parseInt(v.threshold || 5),
+            lastUpdated: v.lastUpdated || ''
+          }));
+          loaded++;
+          // Update Shirt sync badge
+          const shBadge = document.getElementById('sh-sync-badge');
+          if (shBadge) shBadge.textContent = 'Synced ' + new Date().toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'});
+          console.log('[invSyncAll] Shirt variants loaded:', INV_DB.shirtVariants.length);
+        }
+      } catch(e) { console.warn('[inv] GET_SHIRT_MASTER failed:', e.message); }
+
       invUpdateAllBalances();
       renderInventory();
       if (loaded > 0) {
         _invPersist();           // ← save to localStorage immediately after sheet load
         _invShowCacheStamp();    // ← update "Cached …" label in sync bar
         setSyncStatus('ok', 'Inventory synced ✓');
-        toast('✅ Inventory synced — ' + INV_DB.items.length + ' items across ' + loaded + ' categor' + (loaded===1?'y':'ies'));
+        toast('✅ Inventory synced — ' + INV_DB.items.length + ' items · ' + INV_DB.tshirtVariants.length + ' T-shirt variants · ' + INV_DB.shirtVariants.length + ' shirt variants');
         logAction('Inv Sync All', _currentUser||'Admin', 'Inventory', INV_DB.items.length + ' items loaded (' + loaded + ' categories)');
+        // Re-render apparel tables if active
+        try { if (typeof renderTshirtMaster === 'function') { renderTshirtMaster(); renderTshirtSizeGrid(); } } catch(e) {}
+        try { if (typeof renderShirtMaster  === 'function') { renderShirtMaster();  renderShirtSizeGrid();  } } catch(e) {}
+        // Update apparel alert chips
+        try {
+          const tsChip = document.getElementById('tshirt-alert-chip');
+          const shChip = document.getElementById('shirt-alert-chip');
+          const tsAlerts = (INV_DB.tshirtVariants || []).filter(v => typeof getVariantStatus === 'function' && getVariantStatus(v) !== 'ok').length;
+          const shAlerts = (INV_DB.shirtVariants  || []).filter(v => typeof getVariantStatus === 'function' && getVariantStatus(v) !== 'ok').length;
+          if (tsChip) { tsChip.textContent = tsAlerts > 0 ? tsAlerts : ''; tsChip.style.display = tsAlerts > 0 ? '' : 'none'; }
+          if (shChip) { shChip.textContent = shAlerts > 0 ? shAlerts : ''; shChip.style.display = shAlerts > 0 ? '' : 'none'; }
+        } catch(e) {}
       } else {
         setSyncStatus('ok', 'No new sheet data');
-        toast('ℹ️ Sheet connected but returned no inventory rows — check that the Master Summary sheet has data');
+        toast('ℹ️ Inventory sync complete — no rows returned. Check that the Master Summary sheet exists and has data rows.');
       }
     } catch(e) {
       setSyncStatus('error', 'Sync failed');
@@ -11659,28 +12437,56 @@
   function invUpdateAllBalances() {
     let updated = 0;
     const today = new Date().toISOString().split('T')[0];
+    // ── Recompute locally from ledger — mirrors standalone updateAllBalances ──
     INV_DB.items.forEach(item => {
       if (!item.ledger || !item.ledger.length) { updated++; return; }
-      // Re-derive totals from ledger (mirrors GAS updateInventoryItem running-balance logic)
-      let totalRcv = 0, totalIss = 0;
+      let openingBal = 0, totalRcv = 0, totalIss = 0;
       item.ledger.forEach(tx => {
         const desc = (tx.description || '').toLowerCase();
+        const r = parseFloat(tx.received || 0);
+        const i = parseFloat(tx.issued   || 0);
         if (desc.includes('opening')) {
-          // Opening Balance row sets the floor — don't double-count in received
+          openingBal = Math.max(0, r - i);
         } else {
-          totalRcv += (tx.received || 0);
-          totalIss += (tx.issued   || 0);
+          totalRcv += r;
+          totalIss += i;
         }
       });
       item.totalReceived = totalRcv;
       item.totalIssued   = totalIss;
-      item.lastUpdated   = today;
+      // Recompute balance from opening + transactions (no negatives)
+      const newBal = Math.max(0, openingBal + totalRcv - totalIss);
+      // Update currentBalance field so getInvBalance() reflects it
+      item.openingBal = openingBal;
+      item.lastUpdated = today;
+      // Update status using correct per-category thresholds
+      const catKey = (item.category || 'gifts').toLowerCase();
+      const catT   = (INV_CONFIG.THRESHOLDS && INV_CONFIG.THRESHOLDS[catKey]) || { low: 50, critical: 25 };
+      const lowT   = (item.threshold && item.threshold > 0) ? item.threshold : catT.low;
+      item.status  = newBal === 0           ? '🔴 OUT OF STOCK'
+                   : newBal <= catT.critical ? '🔴 CRITICAL'
+                   : newBal <= lowT          ? '⚠️ LOW'
+                   :                          '✅ OK';
       updated++;
     });
     _invPersist();
     renderInventory();
-    toast('⚡ All balances updated — ' + updated + ' items');
-    logAction('Update Balances', _currentUser||'Admin', 'Inventory', updated + ' item balances recalculated');
+    toast('⚡ ' + updated + ' item balances updated locally');
+    logAction('Update Balances', _currentUser||'Admin', 'Inventory', updated + ' items recalculated');
+
+    // ── Also push UPDATE_ALL_BALANCES to GAS so the sheet stays in sync ─────
+    const url = _resolveUrl('gifts') || _resolveUrl('stationery') || _resolveUrl('mementos') || WS_CONFIG.webAppUrl;
+    if (url) {
+      _jsonpFetch(url, { action: 'UPDATE_ALL_BALANCES', user: _currentUser || 'portal', t: Date.now() })
+        .then(function(res) {
+          if (res && res.updated) {
+            toast('✅ Sheet balances updated — ' + res.updated + ' items synced' + (res.errorCount ? ' (' + res.errorCount + ' warnings)' : ''));
+            // Re-fetch inventory so portal reflects fresh sheet data
+            invSyncAll().catch(function(){});
+          }
+        })
+        .catch(function(e) { console.warn('[invUpdateAllBalances] GAS sync failed:', e.message); });
+    }
   }
 
   // (showTab hook wired at end of script)
@@ -12723,6 +13529,17 @@
     document.querySelectorAll('.lab-sub-btn').forEach(b => {
       if (b.getAttribute('onclick')?.includes("'" + tab + "'")) b.classList.add('active');
     });
+    // FIX BUG-7: removed duplicate 'faculty-rooms' dead-code case (was never reached);
+    // each sub-tab now has a unique branch.
+    try {
+      if      (tab === 'facility-rooms') { labRenderFacilityRooms(); }
+      else if (tab === 'faculty-labs')   { labRenderFacultyLabs(); }
+      else if (tab === 'researchers')    { labRenderResearchers(); }
+      else if (tab === 'faculty-rooms')  { labRenderFacultyRooms(); }  // note: identical tab id to facility-rooms guard above — kept for HTML button parity; HTML buttons use distinct ids
+      else if (tab === 'utilization')    { labRenderUtilizationRibbons(); }
+      else if (tab === 'category')       { labRenderCategoryAnalysis(); }
+      else if (tab === 'capacity')       { labRenderCapacityManager(); }
+    } catch(e) {}
   }
 
   // ── ADD/EDIT MODAL ────────────────────────────────────────────────────
@@ -12924,7 +13741,7 @@
 
   // ── ASSET CONFIG ── sourced from GAS CONFIG in uploaded script
   // Sheet names: IT, NON-IT, Spares, Non Repairable ones, ILDS Cluster, GPU Cluster, Books, Consumables, Vendor List, Movement Register
-  // Column indices: it{sNo:1,unit:2,category:3,serialNumber:4,description:5,supplier:6,location:7,quantity:8,purchaseValue:9,purchaseDate:10,warrantyExpiry:11,comments:12,status:13,condition:14}
+  // Column indices: it{sNo:1,unit:2,category:3,serialNumber:4,modalNo:5,description:6,supplier:7,location:8,quantity:9,purchaseValue:10,purchaseDate:11,warrantyExpiry:12,comments:13,status:14,condition:15}  // v28: modalNo added at col 5
   // nonIT{sNo:1,units:2,category:3,description:4,manufacturer:5,supplier:6,location:7,dateOfPurchase:8,purchaseValue:9,quantity:10,unitValue:11,warrantyExpiration:12,remarks:13,status:14,comments:15}
   // spares{sNo:1,name:2,description:3,manufacturer:4,location:5,date:6,supplier:7,qty:8,value:9,purchaseValue:10,modelNo:11,serialNo:12,remarks:13}
   // ildsCluster{sNo:1,category:2,serialNumber:3,processorDetails:4,hardDiskDetails:5,ramDetails:6,raidController:7,raidConfigured:8,hddSpaceAfterRaid:9,hddUnconfigured:10,yearOfPurchase:11,status:12,dateOfPurchase:13,remarks:14,purchaseValue:15}
@@ -12932,10 +13749,10 @@
   // books{sNo:1,unit:2,textbookTitle:3,costForeign:4,invoiceNo:5,names:6,address:7,date:8,purchaseValue:9,trackingNo:10}
   // consumables{sNo:1,category:2,itemName:3,vendor:4,stockLocation:5,recentQty:6,recentStock:7,totalValue:8,reorderLevel:9,leadTime:10,status:11}
   const ASSET_CONFIG = {
-    units: ['CeRAI','RBCDSAI','AI4BHARAT','DSAI','WSAI'],
-    // Full IT category list from GAS CONFIG.itCategory
+    units: ['CeRAI','RBCDSAI','AI4BHARAT','DSAI','WSAI'],  // CONFIG.units (v28)
+    // IT categories — from CONFIG.itCategory (v28: added Headphone)
     itCategory: [
-      'Desktop','Monitor','Fittings','Server','Mouse',
+      'Desktop','Monitor','Fittings','Headphone','Server','Mouse',
       'Biometric Control System','Biometric Device','Software','Keyboard',
       'C Port Cable','Cartridge','Ceiling Mount Kit','Converter','Decora Plate Extender',
       'Hard Disk','HDMI','Junction Box','Lan Cord','Laptop',
@@ -13032,7 +13849,7 @@
     // Consumables: category, itemNo, itemName, stockLocation, vendor, description,
     // lastOrderDate, recentOrderDate, costOld, costNew, lastQty, recentQty,
     // stockOld, stockRecent, totalValue, totalValueRecent, reorderLevel, leadTime, reorderQty, notes
-    consCategories: ['Electronics','Printer Supplies','Office Supplies','Cleaning','Kitchen','Safety','Other'],
+    consCategories: ['Electronics','Printer Supplies','Office Supplies','Cleaning','Kitchen','Safety','Other'],  // CONFIG.consumablesCategories (v28)
     // Sequence prefixes from SequenceManager: IT, NIT, CONS, BK, SP, GPU, ILDS, VND, MOV
     seqPrefixes: { it:'IT', nonit:'NIT', consumables:'CONS', books:'BK', spares:'SP', gpu:'GPU', ilds:'ILDS' }
   };
@@ -13040,7 +13857,7 @@
   // ASSET_DB — seed data matching GAS sheet column schema exactly
   // Sequence IDs match SequenceManager format: PREFIX-00001
   let ASSET_DB = {
-    // Sheet: IT | cols: sNo,unit,category,serialNumber,description,supplier,location,quantity,purchaseValue,purchaseDate,warrantyExpiry,comments,status,condition
+    // Sheet: IT | cols: sNo,unit,category,serialNumber,modalNo,description,supplier,location,quantity,purchaseValue,purchaseDate,warrantyExpiry,comments,status,condition  (v28: modalNo at col 5)
     it: [
       { id:'IT-00001', sNo:1,  unit:'WSAI',      category:'Workstation',           serialNumber:'DLWST2024001',          description:'Dell Workstation T7920',                    supplier:'Dell India',       location:'Server Room A',          quantity:1,  purchaseValue:240000,   purchaseDate:'2024-01-15', warrantyExpiry:'2027-01-15', comments:'Primary dev workstation',   status:'Active',  condition:'Excellent' },
       { id:'IT-00002', sNo:2,  unit:'CeRAI',     category:'Server',                serialNumber:'NVA100-DGX-001',        description:'NVIDIA DGX A100 640GB Server',              supplier:'NVIDIA India',     location:'GPU Lab — Rack 1',        quantity:1,  purchaseValue:42500000, purchaseDate:'2023-08-20', warrantyExpiry:'2026-08-20', comments:'DGX primary cluster node',  status:'In Use',  condition:'Excellent' },
@@ -13138,6 +13955,9 @@
       { id:'SP-00007', sNo:7, name:'UPS Battery APC RBC33',   description:'APC RBC33 Replacement Battery Cartridge',    manufacturer:'APC',            location:'Store Room B — Shelf 2',   date:'2024-04-01', supplier:'APC India',          qty:6,  value:8200,  purchaseValue:49200,  modelNo:'APCRBC33',          serialNo:'Batch 2024-04', remarks:'UPS battery replacement pool'     },
       { id:'SP-00008', sNo:8, name:'Thermal Paste 100g',      description:'Arctic MX-4 Thermal Compound 100g Syringe',  manufacturer:'Arctic',         location:'Store Room A — Shelf 3',   date:'2024-01-01', supplier:'Arctic India',       qty:3,  value:1200,  purchaseValue:3600,   modelNo:'AC-MX4-100',        serialNo:'N/A',            remarks:'CPU/GPU thermal maintenance'    }
     ],
+    // Sheet: Non Repairable ones (v28) | same col map as Spares
+    nonRepairable: [],  // populated from GAS 'Non Repairable ones' sheet on sync
+
     // Sheet: Consumables | cols: category,itemNo,itemName,stockLocation,vendor,description,lastOrderDate,recentOrderDate,costOld,costNew,lastQty,recentQty,stockOld,stockRecent,totalValue,totalValueRecent,reorderLevel,leadTime,reorderQty,notes
     consumables: [
       { id:'CONS-00001', sNo:1,  category:'Printer Supplies', itemNo:'PS-001', itemName:'HP 508A Black Toner CF360A',    stockLocation:'Supply Closet A',    vendor:'HP India',       description:'Black toner for HP M552/M553/M577 series',       lastOrderDate:'2024-10-01', recentOrderDate:'2025-01-15', costOld:5200, costNew:5500, lastQty:10, recentQty:8,  stockOld:4,  stockRecent:6,  totalValue:20800, totalValueRecent:33000, reorderLevel:3,  leadTime:'7 days',  reorderQty:10, notes:'Monitor toner expiry dates'   },
@@ -13406,8 +14226,10 @@
     CURRENT_ASSET_TAB = tab;
     document.querySelectorAll('.asset-tab-btn').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.asset-sec').forEach(s => s.classList.remove('active'));
-    const btn = document.getElementById('atab-' + (tab==='consumables'?'cons':tab==='vendor'?'vendor':tab));
-    const sec = document.getElementById('asec-' + (tab==='nonit'?'nonit':tab==='consumables'?'consumables':tab));
+    const _btnId = tab==='consumables'?'cons':tab==='nonrepairable'?'nonrep':tab==='vendor'?'vendor':tab;
+    const _secId = tab==='nonrepairable'?'nonrepairable':tab==='consumables'?'consumables':tab;
+    const btn = document.getElementById('atab-' + _btnId);
+    const sec = document.getElementById('asec-' + _secId);
     if (btn) btn.classList.add('active');
     if (sec) sec.classList.add('active');
     // Re-render the category panel for the newly visible tab so it always shows fresh data
@@ -13467,6 +14289,7 @@
       <td><span class="badge process">${r.unit||'—'}</span></td>
       <td style="font-size:0.8rem;">${r.category||'—'}</td>
       <td style="font-family:var(--font-mono);font-size:0.75rem;">${r.serialNumber||'—'}</td>
+      <td style="font-family:var(--font-mono);font-size:0.75rem;color:var(--text3);">${r.modalNo||'—'}</td>
       <td><strong>${r.description||'—'}</strong></td>
       <td style="font-size:0.8rem;color:var(--text3);">${r.supplier||'—'}</td>
       <td style="font-size:0.8rem;">${r.location||'—'}</td>
@@ -13480,7 +14303,7 @@
         <button class="tbl-action-btn" onclick="editAsset('it','${r.id}')">✏️</button>
         <button class="tbl-action-btn danger" onclick="deleteAsset('it','${r.id}')">🗑</button>
       </td>
-    </tr>`).join('') || '<tr><td colspan="14" style="text-align:center;padding:2rem;color:var(--text3);">No records found</td></tr>';
+    </tr>`).join('') || '<tr><td colspan="15" style="text-align:center;padding:2rem;color:var(--text3);">No records found</td></tr>';
   }
 
   function renderNonITTable() {
@@ -13534,7 +14357,7 @@
         <button class="tbl-action-btn" onclick="editAsset('gpu','${r.id}')">✏️</button>
         <button class="tbl-action-btn danger" onclick="deleteAsset('gpu','${r.id}')">🗑</button>
       </td>
-    </tr>`).join('') || '<tr><td colspan="14" style="text-align:center;padding:2rem;color:var(--text3);">No records found</td></tr>';
+    </tr>`).join('') || '<tr><td colspan="15" style="text-align:center;padding:2rem;color:var(--text3);">No records found</td></tr>';
   }
 
   function renderILDSTable() {
@@ -13603,6 +14426,30 @@
         <button class="tbl-action-btn danger" onclick="deleteAsset('spares','${r.id}')">🗑</button>
       </td>
     </tr>`).join('') || '<tr><td colspan="12" style="text-align:center;padding:2rem;color:var(--text3);">No records found</td></tr>';
+  }
+
+  // ── v28: Non Repairable table — same column structure as Spares ─────────────
+  function renderNonRepairableTable() {
+    const tbody = document.getElementById('nonrep-tbody'); if(!tbody) return;
+    const q = (document.getElementById('nonrep-search')?.value||'').toLowerCase();
+    const rows = (ASSET_DB.nonRepairable||[]).filter(r => !q || JSON.stringify(r).toLowerCase().includes(q));
+    tbody.innerHTML = rows.map((r,i) => `<tr>
+      <td style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text3);">${i+1}</td>
+      <td><strong>${r.name||'—'}</strong></td>
+      <td style="font-size:0.8rem;color:var(--text2);">${r.description||'—'}</td>
+      <td style="font-size:0.8rem;color:var(--text3);">${r.manufacturer||'—'}</td>
+      <td style="font-size:0.8rem;">${r.location||'—'}</td>
+      <td style="font-size:0.8rem;color:var(--text3);">${r.supplier||'—'}</td>
+      <td style="text-align:center;font-family:var(--font-mono);font-weight:700;">${r.qty||0}</td>
+      <td style="font-family:var(--font-mono);font-size:0.82rem;">${_assetFmtINR(r.purchaseValue)}</td>
+      <td style="font-family:var(--font-mono);font-size:0.75rem;">${r.modelNo||'—'}</td>
+      <td style="font-family:var(--font-mono);font-size:0.75rem;">${r.serialNo||'—'}</td>
+      <td style="font-size:0.78rem;color:var(--text3);">${r.remarks||'—'}</td>
+      <td style="white-space:nowrap;">
+        <button class="tbl-action-btn" onclick="editAsset('nonrepairable','${r.id}')">✏️</button>
+        <button class="tbl-action-btn danger" onclick="deleteAsset('nonrepairable','${r.id}')">🗑</button>
+      </td>
+    </tr>`).join('') || '<tr><td colspan="12" style="text-align:center;padding:2rem;color:var(--text3);">No non-repairable records</td></tr>';
   }
 
   function renderConsumablesTable() {
@@ -13716,7 +14563,8 @@
     const R = r || {};
     if (type === 'it') return `
       <div class="form-row">${af('unit','Unit',R.unit,'text',ASSET_CONFIG.units)}${af('category','Category',R.category,'text',ASSET_CONFIG.itCategory)}</div>
-      <div class="form-row">${af('serialNumber','Serial Number',R.serialNumber,'text',null,'e.g. DLWST2024001')}${af('description','Description',R.description,'text',null,'e.g. Dell Workstation T7920')}</div>
+      <div class="form-row">${af('serialNumber','Serial Number',R.serialNumber,'text',null,'e.g. DLWST2024001')}${af('modalNo','Model No.',R.modalNo,'text',null,'e.g. T7920-R4')}</div>
+      <div class="form-row">${af('description','Description',R.description,'text',null,'e.g. Dell Workstation T7920')}${af('supplier','Supplier',R.supplier,'text',null,'e.g. Dell India')}</div>
       <div class="form-row">${af('supplier','Supplier',R.supplier,'text',null,'e.g. Dell India')}${af('location','Location',R.location,'text',null,'e.g. Server Room A')}</div>
       <div class="form-row">${af('quantity','Quantity',R.quantity,'number')}${af('purchaseValue','Purchase Value (₹)',R.purchaseValue,'number')}</div>
       <div class="form-row">${af('purchaseDate','Purchase Date',R.purchaseDate,'date')}${af('warrantyExpiry','Warranty Expiry',R.warrantyExpiry,'date')}</div>
@@ -13908,12 +14756,20 @@
     if (!LAB) return [];
     if (LAB.facultyLabs && LAB.facultyLabs.length) return LAB.facultyLabs;
     if (LAB.data && LAB.data.facultyLabs && LAB.data.facultyLabs.length) return LAB.data.facultyLabs;
+    // v24 fallback: exec dashboard data always carries facultyLabs
+    if (typeof EXEC !== 'undefined' && EXEC.sheetData && EXEC.sheetData.facultyLabs && EXEC.sheetData.facultyLabs.length) {
+      return EXEC.sheetData.facultyLabs;
+    }
     return [];
   }
   function _labFacilityRooms() {
     if (!LAB) return [];
     if (LAB.facilityRooms && LAB.facilityRooms.length) return LAB.facilityRooms;
     if (LAB.data && LAB.data.facilityRooms && LAB.data.facilityRooms.length) return LAB.data.facilityRooms;
+    // v24 fallback: exec dashboard data always carries facilityRooms
+    if (typeof EXEC !== 'undefined' && EXEC.sheetData && EXEC.sheetData.facilityRooms && EXEC.sheetData.facilityRooms.length) {
+      return EXEC.sheetData.facilityRooms;
+    }
     return [];
   }
 
@@ -13958,16 +14814,37 @@
   // FIX 1 (v19): Fetch live sheet data when exec tab opens instead of only
   // rendering from whatever stale in-memory data happens to be present.
   function execDashInit() {
-    execBuildAll(); // render immediately with cached data
+    execBuildAll(); // render immediately with whatever cached data exists
     if (WS_CONFIG.webAppUrl) {
-      execFetchFromSheet(); // fetch exec dashboard summary
-      // Also ensure assets and labs are loaded so financial/room sections have data
+      // Always fetch full exec dashboard summary (includes facultyLabs + facilityRooms)
+      // execFetchFromSheet writes results into LAB.data then calls execBuildAll again
+      execFetchFromSheet();
+      // Also ensure assets are in ASSET_DB — if missing, load them independently
       if (!ASSET_DB.it.length && !ASSET_DB.nonit.length) {
         assetLoadFromSheet(true).then(function() { execBuildAll(); }).catch(function(){});
       }
-      if (!LAB.loaded) {
-        labInit().then(function() { execBuildAll(); }).catch(function(){});
-      }
+      // Force a fresh lab fetch for exec dashboard even if LAB.loaded is true,
+      // so Faculty Lab Utilization and Facility Rooms always show current data.
+      // labInit guards itself with LAB.loaded — bypass by hitting GET_LAB directly.
+      try {
+        const labUrl = (typeof _resolveUrl === 'function' ? _resolveUrl('labs') : '') || WS_CONFIG.webAppUrl;
+        _jsonpFetch(labUrl, { action: 'GET_LAB', t: Date.now() }).then(function(labData) {
+          if (!labData) return;
+          const _id = function(arr, prefix) { return (arr||[]).map(function(r){ if(!r.id)r.id=prefix+Math.random().toString(36).slice(2,8); return r; }); };
+          const shaped = {
+            facultyLabs:   _id(labData.facultyLabs,   'FL').map(function(l){ const o=l.occupiedSeats||0, t=l.totalSeats||0; l.availableSeats=Math.max(0,t-o); l.utilizationRate=t>0?o/t:0; if(typeof labGetIndicator==='function')l.statusIndicator=labGetIndicator(l); return l; }),
+            facilityRooms: _id(labData.facilityRooms, 'FR'),
+            researchers:   _id(labData.researchers,   'RS'),
+            facultyRooms:  _id(labData.facultyRooms,  'FRM')
+          };
+          LAB.data = shaped;
+          LAB.facultyLabs   = shaped.facultyLabs;
+          LAB.facilityRooms = shaped.facilityRooms;
+          LAB.researchers   = shaped.researchers;
+          LAB.loaded = true;
+          execBuildAll();
+        }).catch(function(){});
+      } catch(e) {}
     }
   }
   function execDashRefresh() {
@@ -13983,24 +14860,36 @@
       const data = await _jsonpFetch(WS_CONFIG.webAppUrl, { action: 'GET_EXEC_DASHBOARD', t: Date.now() });
       if (data) {
         EXEC.sheetData = data;
-        // ── Labs (backward compat) ───────────────────────────────────────────
-        if (data.facultyLabs)   { LAB.data.facultyLabs   = data.facultyLabs;   LAB.facultyLabs   = data.facultyLabs; }
-        if (data.facilityRooms) { LAB.data.facilityRooms = data.facilityRooms; LAB.facilityRooms = data.facilityRooms; }
-        if (data.researchers)   { LAB.data.researchers   = data.researchers;   LAB.researchers   = data.researchers; }
-        if (data.facultyRooms)  { LAB.data.facultyRooms  = data.facultyRooms;  LAB.facultyRooms  = data.facultyRooms; }
+        // ── Labs — normalise utilizationRate so ribbon sections work ────────
+        const _normLabs = function(arr) {
+          return (arr||[]).map(function(l) {
+            const o = parseInt(l.occupiedSeats||0), t = parseInt(l.totalSeats||0);
+            l.availableSeats  = Math.max(0, t - o);
+            l.utilizationRate = t > 0 ? o / t : 0;
+            if (!l.id) l.id = 'FL' + Math.random().toString(36).slice(2,8);
+            if (typeof labGetIndicator === 'function') l.statusIndicator = labGetIndicator(l);
+            return l;
+          });
+        };
+        const _normRooms = function(arr) {
+          return (arr||[]).map(function(r){ if(!r.id)r.id='FR'+Math.random().toString(36).slice(2,8); return r; });
+        };
+        if (data.facultyLabs)   { const n=_normLabs(data.facultyLabs);   LAB.data.facultyLabs   = n; LAB.facultyLabs   = n; EXEC.sheetData.facultyLabs   = n; }
+        if (data.facilityRooms) { const n=_normRooms(data.facilityRooms);LAB.data.facilityRooms = n; LAB.facilityRooms = n; EXEC.sheetData.facilityRooms = n; }
+        if (data.researchers)   { LAB.data.researchers  = data.researchers;  LAB.researchers  = data.researchers; }
+        if (data.facultyRooms)  { LAB.data.facultyRooms = data.facultyRooms; LAB.facultyRooms = data.facultyRooms; }
         LAB.loaded = true;
         // ── v18: enriched asset / people / biometric / lab summary payloads ─
         if (data.assets)          EXEC.assetSummary    = data.assets;
         // FIX (v24.2): GAS now returns full row arrays in data.assetRows.
-        // Write them into ASSET_DB so category breakdown tables work without
-        // needing a separate manual sync from the Assets tab.
         if (data.assetRows) {
-          if (data.assetRows.it)     ASSET_DB.it     = data.assetRows.it;
-          if (data.assetRows.nonit)  ASSET_DB.nonit  = data.assetRows.nonit;
-          if (data.assetRows.ilds)   ASSET_DB.ilds   = data.assetRows.ilds;
-          if (data.assetRows.gpu)    ASSET_DB.gpu    = data.assetRows.gpu;
-          if (data.assetRows.books)  ASSET_DB.books  = data.assetRows.books;
-          if (data.assetRows.spares) ASSET_DB.spares = data.assetRows.spares;
+          if (data.assetRows.it)             ASSET_DB.it            = data.assetRows.it;
+          if (data.assetRows.nonit)          ASSET_DB.nonit         = data.assetRows.nonit;
+          if (data.assetRows.ilds)           ASSET_DB.ilds          = data.assetRows.ilds;
+          if (data.assetRows.gpu)            ASSET_DB.gpu           = data.assetRows.gpu;
+          if (data.assetRows.books)          ASSET_DB.books         = data.assetRows.books;
+          if (data.assetRows.spares)         ASSET_DB.spares        = data.assetRows.spares;
+          if (data.assetRows.nonRepairable)  ASSET_DB.nonRepairable = data.assetRows.nonRepairable;  // v28
         }
         if (data.peopleTotals)    EXEC.peopleTotals    = data.peopleTotals;
         if (data.biometricTotals) EXEC.biometricTotals = data.biometricTotals;
@@ -14057,10 +14946,12 @@
     const alumniCnt   = _pt ? _pt.alumni : (DB.alumni||[]).length;
     const allPeopleWithDate = [...(DB.staff||[]),...(DB.researchers||[]),...(DB.students||[])].filter(r=>r.exitDate);
     const risk30 = allPeopleWithDate.filter(r=>{
-      const d=Math.ceil((new Date(r.exitDate)-new Date())/86400000); return d>=0&&d<=30;
+      const d=_parseDateStr(r.exitDate); if(!d)return false;
+      const diff=Math.ceil((d-new Date())/86400000); return diff>=0&&diff<=30;
     }).length;
     const expiredCount = allPeopleWithDate.filter(r=>{
-      const d=Math.ceil((new Date(r.exitDate)-new Date())/86400000); return d<0;
+      const d=_parseDateStr(r.exitDate); if(!d)return false;
+      return Math.ceil((d-new Date())/86400000)<0;
     }).length;
     // ── Labs ──
     const labAll = (LAB&&LAB.data&&LAB.data.facultyLabs)||[];
@@ -14585,6 +15476,19 @@
 
   // ── Dashboard KPI cards ─────────────────────────────────────────────────
   function _sv(id, v) { const e=document.getElementById(id); if(e) e.textContent=v; }
+
+  // FIX BUG-11/12: Sheet dates are stored as DD/MM/YYYY which JS Date() cannot parse.
+  // This helper handles DD/MM/YYYY, YYYY-MM-DD, and plain year strings.
+  function _parseDateStr(s) {
+    if (!s) return null;
+    s = String(s).trim();
+    const dmy = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (dmy) return new Date(+dmy[3], +dmy[2]-1, +dmy[1]);
+    const ymd = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (ymd) return new Date(+ymd[1], +ymd[2]-1, +ymd[3]);
+    const d = new Date(s);
+    return isNaN(d.getTime()) ? null : d;
+  }
   function _expFmtShort(n) {
     n = parseFloat(n)||0;
     if (n>=10000000) return '₹'+(n/10000000).toFixed(1)+'Cr';
@@ -14602,7 +15506,8 @@
       _sv('dash-kpi-personnel', total || '—');
       const newThisMonth = [...(DB.staff||[]),...(DB.researchers||[])].filter(r => {
         if (!r.joiningDate) return false;
-        const d = new Date(r.joiningDate);
+        const d = _parseDateStr(r.joiningDate);  // FIX BUG-12: was new Date() — NaN for DD/MM/YYYY
+        if (!d) return false;
         const now = new Date();
         return d.getMonth()===now.getMonth() && d.getFullYear()===now.getFullYear();
       }).length;
@@ -14665,7 +15570,12 @@
     try {
       // Tenure alert
       const tenureAt = [...(DB.staff||[]),...(DB.assocFaculty||[]),...(DB.researchers||[])]
-        .filter(r=>r.exitDate).filter(r=>{const d=new Date(r.exitDate)-new Date(); return d>0&&d<=30*86400000;}).length;
+        .filter(r=>r.exitDate).filter(r=>{
+          const d = _parseDateStr(r.exitDate);  // FIX BUG-11: was new Date() — NaN for DD/MM/YYYY
+          if (!d) return false;
+          const diff = d - new Date();
+          return diff>0 && diff<=30*86400000;
+        }).length;
       _sv('dash-alert-tenure', '⏰ '+tenureAt+' tenure expiration'+(tenureAt===1?'':'s')+' within 30 days');
     } catch(e) {}
     try {
@@ -14698,21 +15608,22 @@
         ...(DB.students||[]).map(r=>({...r,_type:'Student'})),
       ].filter(r=>r.exitDate);
       const warn = all.filter(r=>{
-        const d = Math.ceil((new Date(r.exitDate)-new Date())/86400000);
-        return d>=0 && d<=90;
-      }).sort((a,b)=>new Date(a.exitDate)-new Date(b.exitDate)).slice(0,5);
+        const d = _parseDateStr(r.exitDate); if(!d)return false;
+        const diff = Math.ceil((d-new Date())/86400000);
+        return diff>=0 && diff<=90;
+      }).sort((a,b)=>(_parseDateStr(a.exitDate)||0)-(_parseDateStr(b.exitDate)||0)).slice(0,5);
       if (!warn.length) {
         tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--green);padding:1rem;">✅ No upcoming expirations within 90 days</td></tr>';
         return;
       }
       tbody.innerHTML = warn.map(r => {
-        const d = Math.ceil((new Date(r.exitDate)-new Date())/86400000);
+        const d = Math.ceil((_parseDateStr(r.exitDate)-new Date())/86400000);
         const badge = d<=7   ? `<span class="badge red">${d} days</span>`
                     : d<=30  ? `<span class="badge orange">${d} days</span>`
                     : d<=60  ? `<span class="badge gold">${d} days</span>`
                     :          `<span class="badge active">${d} days</span>`;
-        const dt = new Date(r.exitDate);
-        const fmtExit = isNaN(dt) ? r.exitDate : dt.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+        const dt = _parseDateStr(r.exitDate);
+        const fmtExit = dt ? dt.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : r.exitDate;
         return `<tr><td>${r.name||'—'}</td><td>${r._type}</td><td>${fmtExit}</td><td>${badge}</td></tr>`;
       }).join('');
     } catch(e) { tbody.innerHTML = '<tr><td colspan="4" style="color:var(--text3);font-style:italic;padding:0.75rem;">—</td></tr>'; }
@@ -15414,19 +16325,50 @@ let _ddmCurrentSection = 'people';
 // ── Section switcher ────────────────────────────────────────────────────────
 function ddmShowSection(sec) {
   _ddmCurrentSection = sec;
+  // Update pill highlight
   document.querySelectorAll('#ddm-section-pills .an-pill').forEach(b => b.classList.remove('active'));
-  const btn = document.querySelector(`#ddm-section-pills .an-pill[onclick*="'${sec}'"]`);
+  const btn = document.getElementById('ddmpill-' + sec)
+           || document.querySelector(`#ddm-section-pills .an-pill[onclick*="'${sec}'"]`);
   if (btn) btn.classList.add('active');
-  document.getElementById('ddm-sec-people').style.display = sec === 'people' ? '' : 'none';
-  document.getElementById('ddm-sec-assets').style.display = sec === 'assets' ? '' : 'none';
-  if (sec === 'people') ddmRenderPeople();
-  if (sec === 'assets') ddmRenderAssets();
+  // Show/hide all 7 section panels (FIX: was only toggling people + assets)
+  ['people','assets','expenses','publications','biometric','lab','inventory'].forEach(function(s) {
+    const el = document.getElementById('ddm-sec-' + s);
+    if (el) el.style.display = s === sec ? '' : 'none';
+  });
+  // Trigger render for the active section
+  if (sec === 'people')       { try { ddmRenderPeople(); } catch(e) {} }
+  if (sec === 'assets')       { try { ddmRenderAssets(); } catch(e) {} }
+  // v24.4 DDM grids for the other 5 modules
+  try { if (typeof _v244_ddmRenderSection === 'function') _v244_ddmRenderSection(sec); } catch(e) {}
+}
+
+// ── Reload all vocab from connected Google Sheet ─────────────────────────────
+function ddmReloadFromSheet() {
+  const url = WS_CONFIG && WS_CONFIG.webAppUrl;
+  if (!url) { toast('⚠️ No Google Sheet connected — set a URL in the Google Drive tab first'); return; }
+  toast('↻ Reloading vocab from Sheet…');
+  _jsonpFetch(url, { action: 'GET_ALL_VOCAB', t: Date.now() })
+    .then(function(data) {
+      if (!data || data.status !== 'ok') { toast('⚠️ Vocab reload failed — check Sheet connection'); return; }
+      // Broadcast to all module DDM fields
+      document.dispatchEvent(new CustomEvent('wsai:allVocabLoaded', { detail: data }));
+      // Re-render current section
+      ddmShowSection(_ddmCurrentSection || 'people');
+      toast('✅ Dropdown lists reloaded from Sheet');
+    })
+    .catch(function(e) { toast('❌ Reload failed: ' + e.message); });
 }
 
 // ── Init ────────────────────────────────────────────────────────────────────
 function ddmInit() {
   ddmRenderPeople();
   ddmRenderAssets();
+  // Render v24.4 DDM grids for all 7 modules
+  try { if (typeof _v244_ddmRenderSection === 'function') {
+    ['people','assets','expenses','publications','biometric','lab','inventory'].forEach(function(s) {
+      _v244_ddmRenderSection(s);
+    });
+  }} catch(e) {}
   // Fetch live asset categories from sheet if connected
   if (WS_CONFIG.webAppUrl) {
     _jsonpFetch(WS_CONFIG.webAppUrl, { action: 'GET_ASSET_CATEGORIES', t: Date.now() })
@@ -15441,6 +16383,13 @@ function ddmInit() {
         if (map.ildsClusterCategory) ASSET_CONFIG.ildsClusterCategory = map.ildsClusterCategory;
         if (map.gpuClusterItem)      ASSET_CONFIG.gpuClusterItem      = map.gpuClusterItem;
         ddmRenderAssets();
+        try { if (typeof _v244_ddmRenderSection === 'function') _v244_ddmRenderSection('assets'); } catch(e) {}
+      }).catch(function(){});
+    // Also pull all vocab for the other 5 modules
+    _jsonpFetch(WS_CONFIG.webAppUrl, { action: 'GET_ALL_VOCAB', t: Date.now() })
+      .then(function(data) {
+        if (!data || data.status !== 'ok') return;
+        document.dispatchEvent(new CustomEvent('wsai:allVocabLoaded', { detail: data }));
       }).catch(function(){});
   }
 }
@@ -15797,10 +16746,10 @@ function _stopAutoSync() {
   if (ind) ind.style.display = 'none';
 }
 
-// ── SELECTIVE REFRESH POLICY (v23.0) ─────────────────────────────────────
-// FREQUENT  (~60 s): Assets, Labs, Inventory  — live stock / seat counts
-// LONG-CACHE (30 min): People, Biometric, Publications, Expenses, Exec Dashboard
-const _LONG_CACHE_MS = 30 * 60 * 1000; // 30 minutes
+// ── SELECTIVE REFRESH POLICY (v24.0) ─────────────────────────────────────
+// FREQUENT  (~30 s): Assets, Labs, Inventory, Biometric — live stock / seat / capacity
+// LONG-CACHE (4 hr): People, Publications, Expenses — change at most daily
+const _LONG_CACHE_MS = 4 * 60 * 60 * 1000; // 4 hours (was 30 min)
 let   _lastSlowSync  = 0;              // epoch ms of last slow-module fetch
 
 async function _runAutoSync() {
@@ -15844,6 +16793,20 @@ async function _runAutoSync() {
       const invUrl = _resolveUrl('gifts') || _resolveUrl('stationery') || _resolveUrl('mementos') || url;
       if (invUrl) await invSyncAll();
     } catch(e) { console.warn('[auto-sync] inventory failed:', e.message); }
+
+    // ── ALWAYS: Biometric (v24.0 — needed for live capacity manager) ──────
+    try {
+      const bmUrl = _resolveUrl('biometric') || url;
+      const bmData = await _jsonpFetch(bmUrl, { action: 'GET_BIOMETRIC', t: Date.now() });
+      if (bmData && (bmData.allUsers || bmData.totalActive !== undefined)) {
+        if (typeof BM !== 'undefined') { BM.raw = bmData; }
+        if (document.getElementById('tab-biometric')?.classList.contains('active')) {
+          try { bmOnData(bmData); } catch(e) {}
+        }
+        try { bmRenderCapacityManager(); } catch(e) {}
+        try { labRenderCapacityManager(); } catch(e) {}
+      }
+    } catch(e) { console.warn('[auto-sync] biometric failed:', e.message); }
 
     // ── INFREQUENT: People, Expenses, Publications (max once per 30 min) ──
     const now = Date.now();
@@ -16883,11 +17846,146 @@ function refreshOverviewKPIs() {
   const activeStaff = (DB.staff||[]).filter(r => (r.status||'').toLowerCase() === 'active').length;
   sv('ov-active-staff', activeStaff);
 
+  // ── NEW v24: Module overview mini-cards on dashboard ─────────────────
+  try {
+    // Biometric overview
+    if (typeof BM !== 'undefined' && BM.raw) {
+      sv('ov-bm-active',  BM.raw.totalActive  || 0);
+      sv('ov-bm-pending', BM.raw.authStatus?.pending || 0);
+      sv('ov-bm-rooms',   Object.keys(BM.raw.byArea || {}).length || 0);
+    }
+  } catch(e) {}
+
+  try {
+    // Lab overview
+    if (typeof LAB !== 'undefined' && LAB.data && LAB.data.facultyLabs) {
+      const labs = LAB.data.facultyLabs;
+      const totSeats = labs.reduce((s,l) => s + (parseInt(l.totalSeats)||0), 0);
+      const occSeats = labs.reduce((s,l) => s + (parseInt(l.occupiedSeats)||0), 0);
+      sv('ov-lab-labs',  labs.length);
+      sv('ov-lab-avail', Math.max(0, totSeats - occSeats));
+      sv('ov-lab-util',  totSeats > 0 ? Math.round(occSeats / totSeats * 100) + '%' : '—');
+    }
+  } catch(e) {}
+
+  try {
+    // Inventory overview
+    if (typeof INV_DB !== 'undefined' && typeof getInvStatus === 'function') {
+      const items = INV_DB.items || [];
+      const low      = items.filter(i => getInvStatus(i) === 'low').length;
+      const critical = items.filter(i => getInvStatus(i) === 'critical').length;
+      sv('ov-inv-items',    items.length);
+      sv('ov-inv-low',      low);
+      sv('ov-inv-critical', critical);
+    }
+  } catch(e) {}
+
   // Remove center-level breakdown widgets from overview analytics
   document.querySelectorAll('[data-center-widget]').forEach(el => el.style.display = 'none');
   document.querySelectorAll('.center-analytics, .center-filter, [id*="center-chart"], [id*="center-breakdown"]')
     .forEach(el => el.style.display = 'none');
 }
+
+// ─── CAPACITY MANAGER — shared room data ──────────────────────────────────────
+// Room capacities from GAS BIO_CAPACITY (v24.0 confirmed values)
+const ROOM_CAPACITY = {
+  '603':15,'604':8,'609':30,'610':30,'611':10,
+  '615':30,'616':24,'617':30,'619':24,'620':30,
+  '622':24,'623':30,'625':24,'626':4,'618':24,
+  '664':8,'670':10
+};
+
+function _buildCapacityData() {
+  // Build occupancy map from biometric data
+  const occupancy = {};  // roomKey → count of active users
+  const rawUsers = (typeof BM !== 'undefined' && BM.raw && BM.raw.allUsers) ? BM.raw.allUsers : [];
+  rawUsers.forEach(u => {
+    const area = String(u.primaryAccessArea || '').trim();
+    if (!area) return;
+    occupancy[area] = (occupancy[area] || 0) + 1;
+  });
+
+  // Merge with room capacity map
+  const rooms = Object.entries(ROOM_CAPACITY).map(([room, cap]) => ({
+    room,
+    capacity: cap,
+    occupied: occupancy[room] || 0,
+    pct: cap > 0 ? Math.round((occupancy[room] || 0) / cap * 100) : 0
+  }));
+  return rooms;
+}
+
+function _capacityCard(r) {
+  const pct = r.pct;
+  const barColor = pct >= 100 ? 'var(--red)' : pct >= 80 ? 'var(--orange)' : pct >= 50 ? 'var(--gold)' : 'var(--green)';
+  const statusLabel = pct >= 100 ? 'Full' : pct >= 80 ? 'Near Full' : pct >= 50 ? 'Moderate' : 'Available';
+  const statusColor = pct >= 100 ? 'var(--red)' : pct >= 80 ? 'var(--orange)' : pct >= 50 ? 'var(--gold)' : 'var(--green)';
+  return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1rem;transition:box-shadow 0.2s;" onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,0.2)'" onmouseout="this.style.boxShadow=''">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.6rem;">
+      <div style="font-size:1rem;font-weight:700;font-family:var(--font-mono);color:var(--text);">Room ${r.room}</div>
+      <div style="font-size:0.68rem;font-family:var(--font-mono);color:${statusColor};font-weight:600;">${statusLabel}</div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:0.5rem;">
+      <div style="font-size:1.6rem;font-weight:700;font-family:var(--font-display);color:var(--text);">${r.occupied}<span style="font-size:0.85rem;font-weight:400;color:var(--text3);"> / ${r.capacity}</span></div>
+      <div style="font-size:1rem;font-weight:700;font-family:var(--font-mono);color:${barColor};">${pct}%</div>
+    </div>
+    <div style="height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;">
+      <div style="height:100%;width:${Math.min(pct,100)}%;background:${barColor};border-radius:3px;transition:width 0.4s ease;"></div>
+    </div>
+    <div style="font-size:0.65rem;color:var(--text3);margin-top:0.4rem;font-family:var(--font-mono);">${r.capacity - r.occupied > 0 ? (r.capacity - r.occupied) + ' seats available' : 'No seats available'}</div>
+  </div>`;
+}
+
+// Capacity Manager renderer for Labs tab
+function labRenderCapacityManager() {
+  const rooms = _buildCapacityData();
+  const grid = document.getElementById('cap-room-grid');
+  const noData = document.getElementById('cap-no-data');
+  if (!grid) return;
+
+  if (!rooms.length || !((typeof BM !== 'undefined') && BM.raw && BM.raw.allUsers)) {
+    grid.style.display = 'none';
+    if (noData) noData.style.display = 'block';
+    return;
+  }
+  if (noData) noData.style.display = 'none';
+  grid.style.display = 'grid';
+
+  // KPIs
+  const sv = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  const underCap = rooms.filter(r => r.pct < 80).length;
+  const nearCap  = rooms.filter(r => r.pct >= 80 && r.pct < 100).length;
+  const atCap    = rooms.filter(r => r.pct >= 100).length;
+  sv('cap-kpi-rooms', rooms.length);
+  sv('cap-kpi-avail', underCap);
+  sv('cap-kpi-near',  nearCap);
+  sv('cap-kpi-full',  atCap);
+
+  // Sort: full first, then near, then by room number
+  rooms.sort((a,b) => b.pct - a.pct);
+  grid.innerHTML = rooms.map(_capacityCard).join('');
+}
+
+// Capacity Manager renderer for Biometric tab
+function bmRenderCapacityManager() {
+  const rooms = _buildCapacityData();
+  const grid = document.getElementById('bm-capacity-grid');
+  if (!grid) return;
+  if (!rooms.length) { grid.innerHTML = '<div style="color:var(--text3);font-size:0.8rem;padding:1rem;">No data — connect sheet and refresh.</div>'; return; }
+  rooms.sort((a,b) => b.pct - a.pct);
+  grid.innerHTML = rooms.map(_capacityCard).join('');
+}
+
+// Auto-call bmRenderCapacityManager when biometric data loads
+(function(){
+  var _origBmOnData = typeof bmOnData === 'function' ? bmOnData : null;
+  if (!_origBmOnData) return;
+  window.bmOnData = function(data) {
+    _origBmOnData.apply(this, arguments);
+    try { bmRenderCapacityManager(); } catch(e) {}
+    try { refreshOverviewKPIs(); } catch(e) {}
+  };
+})();
 
 // Hook into switchModule / showTab to refresh overview whenever it's shown
 (function() {
@@ -19095,7 +20193,7 @@ function _v244_ddmRename(secName, fd, oldVal) {
         // Sheet rename
         const url = window.WS_CONFIG && WS_CONFIG.webAppUrl;
         if (url && typeof _jsonpFetch === 'function') {
-          const action = fd.assetKey ? 'RENAME_CATEGORY_VOCAB' : 'RENAME_CATEGORY_VOCAB';
+          const action = fd.assetKey ? 'RENAME_CATEGORY_VOCAB' : 'RENAME_MODULE_VOCAB'; // FIX BUG-18: was identical both branches — non-asset vocab must route to RENAME_MODULE_VOCAB
           _jsonpFetch(url, { action, field: fd.key, oldValue: oldVal, newValue: nv, t: Date.now() })
             .catch(function(e){ console.warn('[v24.4] DDM rename sync error:', e); });
         }
@@ -19137,15 +20235,8 @@ function _v244_injectDDMSections() {
   if (!pillsContainer || pillsContainer.dataset.v244) return; // idempotent
   pillsContainer.dataset.v244 = '1';
 
-  // Replace pills with the full 7-module set
-  pillsContainer.innerHTML = `
-    <button class="an-pill active" onclick="ddm44ShowSection('people')">👥 People</button>
-    <button class="an-pill" onclick="ddm44ShowSection('assets')">📦 Assets</button>
-    <button class="an-pill" onclick="ddm44ShowSection('expenses')">💰 Expenses</button>
-    <button class="an-pill" onclick="ddm44ShowSection('publications')">📚 Publications</button>
-    <button class="an-pill" onclick="ddm44ShowSection('biometric')">🔐 Biometric</button>
-    <button class="an-pill" onclick="ddm44ShowSection('lab')">🏫 Lab</button>
-    <button class="an-pill" onclick="ddm44ShowSection('inventory')">🎁 Inventory</button>`;
+  // Pills are now pre-rendered in static HTML with id="ddmpill-*" — skip injection.
+  // Just ensure onclick delegates use ddm44ShowSection (which is aliased to ddmShowSection).
 
   // Replace the legacy people inner-grid so ddmRenderPeople writes to ddm44-grid-people
   const secPeople = document.getElementById('ddm-sec-people');
@@ -19153,7 +20244,10 @@ function _v244_injectDDMSections() {
     const oldGrid = document.getElementById('ddm-people-grid');
     if (oldGrid) { oldGrid.id = 'ddm44-grid-people'; }
     else {
-      secPeople.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1.2rem;" id="ddm44-grid-people"></div>`;
+      const newGrid = document.createElement('div');
+      newGrid.id = 'ddm44-grid-people';
+      newGrid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1.2rem;';
+      secPeople.appendChild(newGrid);
     }
   }
 
@@ -20118,6 +21212,9 @@ window._wsai_renderAll=function(){
     _sf('labRenderFacilityRooms');_sf('labRenderResearchers');_sf('labRenderFacultyRooms');
   }}catch(e){}
 
+  // Capacity Manager — update both Lab and Biometric capacity panels
+  try{_sf('labRenderCapacityManager');_sf('bmRenderCapacityManager');}catch(e){}
+
   // Inventory — renders from current INV_DB (invSyncAll updates it independently)
   try{_sf('renderInventory');_sf('refreshLowStockAlerts');}catch(e){}
 
@@ -20340,8 +21437,19 @@ window._stopAutoSync=function(){
             if(hasUrl&&typeof execFetchFromSheet==='function')execFetchFromSheet();
             if(hasUrl&&(!ASSET_DB.it.length&&!ASSET_DB.nonit.length)&&typeof assetLoadFromSheet==='function')
               assetLoadFromSheet(true).then(function(){_sf('execBuildAll');}).catch(function(){});
-            if(typeof LAB!=='undefined'&&!LAB.loaded&&hasUrl&&typeof labInit==='function')
+            // v24: always re-fetch labs for exec dashboard (don't rely on LAB.loaded guard)
+            if(hasUrl&&typeof _jsonpFetch==='function'&&typeof _resolveUrl==='function'){
+              var _lUrl=(typeof _resolveUrl==='function'?_resolveUrl('labs'):'')||WS_CONFIG.webAppUrl;
+              _jsonpFetch(_lUrl,{action:'GET_LAB',t:Date.now()}).then(function(d){
+                if(!d)return;
+                var _id=function(a,p){return(a||[]).map(function(r){if(!r.id)r.id=p+Math.random().toString(36).slice(2,8);return r;});};
+                var s={facultyLabs:_id(d.facultyLabs,'FL').map(function(l){var o=l.occupiedSeats||0,t=l.totalSeats||0;l.availableSeats=Math.max(0,t-o);l.utilizationRate=t>0?o/t:0;return l;}),facilityRooms:_id(d.facilityRooms,'FR'),researchers:_id(d.researchers,'RS'),facultyRooms:_id(d.facultyRooms,'FRM')};
+                if(typeof LAB!=='undefined'){LAB.data=s;LAB.facultyLabs=s.facultyLabs;LAB.facilityRooms=s.facilityRooms;LAB.loaded=true;}
+                _sf('execBuildAll');
+              }).catch(function(){});
+            } else if(hasUrl&&typeof LAB!=='undefined'&&!LAB.loaded&&typeof labInit==='function'){
               labInit().then(function(){_sf('execBuildAll');}).catch(function(){});
+            }
             _sf('execBuildAll');
             break;
           case 'people':
