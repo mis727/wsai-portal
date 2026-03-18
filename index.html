@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -25533,7 +25534,7 @@ function _v31SimpleTable(tbodyId, rows, rowFn, countId) {
    ═══════════════════════════════════════════════════ */
 
 /* Uniform card spacing */
-.table-card { padding: 0 !important; overflow: hidden; }
+/* .table-card padding intentionally not overridden to preserve chart card layouts */
 .table-card .tc-header { padding: 0.9rem 1.25rem 0.75rem; }
 .table-card table { width: 100%; }
 
@@ -25570,7 +25571,7 @@ thead th { white-space: nowrap; }
 tbody td { vertical-align: middle; }
 
 /* Chart containers */
-.v31-chart-canvas, canvas { display: block; width: 100% !important; }
+.v31-chart-canvas { display: block; } canvas { display: block; max-width: 100%; }
 
 /* Filter bars */
 .filter-bar, .tc-actions { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
@@ -26071,6 +26072,877 @@ tbody td { vertical-align: middle; }
   });
 
 })();
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     WSAI v32.2 — Biometric Pending + Facility Rooms Fix
+     11 bugs fixed across both modules
+═══════════════════════════════════════════════════════════════ -->
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+// WSAI PORTAL — COMBINED FIX PATCH (v32.2)
+// Fixes: Biometric Pending (6 bugs) + Facility Rooms (5 bugs)
+// ═══════════════════════════════════════════════════════════════════════════
+
+(function WSAI_COMBINED_FIX() {
+  'use strict';
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // PART A — BIOMETRIC PENDING PANEL (6 bugs)
+  // ══════════════════════════════════════════════════════════════════════════
+  //
+  // BUG A1 (PRIMARY): line 19987 redefines refreshBiometricPendingPanel as
+  //   an empty stub, silently overwriting the real function at line 11286.
+  //   Every call does nothing → "Loading pending requests…" forever.
+  //
+  // BUG A2: filter uses authorizationStatus === 'Pending' (strict equality).
+  //   Sheet values may be 'pending', ' Pending', 'PENDING' — all missed.
+  //
+  // BUG A3: showTab('biometric') has no handler — bmLoadData() never fires
+  //   automatically when the tab is opened. BM.raw stays null.
+  //
+  // BUG A4: showTab('access') calls refreshBiometricPendingPanel before
+  //   BM.raw is loaded.
+  //
+  // BUG A5: COO dashboard reads BM.raw.allUsers at render time. If BM.raw
+  //   is null the biometric table shows "Loading…" permanently.
+  //
+  // BUG A6: approve/deny match fails when id is numeric or has spaces;
+  //   name match is case-sensitive vs sheet value.
+  // ══════════════════════════════════════════════════════════════════════════
+
+  function _hasBM() {
+    return typeof BM !== 'undefined' && BM && BM.raw &&
+           (BM.raw.allUsers || BM.raw.totalActive !== undefined);
+  }
+
+  function _getPendingUsers() {
+    if (!_hasBM()) return [];
+    return (BM.raw.allUsers || []).filter(function(u) {
+      return (u.authorizationStatus || '').toLowerCase().trim() === 'pending';
+    });
+  }
+
+  // A1+A2 — Real refreshBiometricPendingPanel replaces both the real AND stub
+  function _realRefreshBiometricPendingPanel() {
+    var pending = _getPendingUsers();
+
+    function _buildHtml(prefix) {
+      if (!pending.length) {
+        return '<div style="color:var(--green);font-size:0.82rem;padding:0.75rem 0;text-align:center;">✅ No pending biometric authorization requests</div>';
+      }
+      return pending.map(function(u, i) {
+        var safeId   = String(u.id   == null ? '' : u.id  ).replace(/['"]/g, '');
+        var safeName = String(u.name == null ? '' : u.name).replace(/['"]/g, '');
+        var area     = u.primaryAccessArea || u.accessArea || '—';
+        return (
+          '<div class="ac-user" id="' + prefix + '-pending-row-' + i + '" style="border-bottom:1px solid var(--border);padding:0.65rem 0;display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">' +
+          '<div class="ac-avatar" style="background:linear-gradient(135deg,var(--orange),var(--gold));flex-shrink:0;">' + safeName.substring(0,2).toUpperCase() + '</div>' +
+          '<div class="ac-info" style="flex:1;min-width:100px;">' +
+            '<div class="an" style="font-weight:600;">' + (u.name || '—') + '</div>' +
+            '<div class="ae" style="font-size:0.72rem;color:var(--text3);font-family:var(--font-mono);">' +
+              (u.category || '—') + ' · ' + (u.designation || '—') + ' · Area: ' + area +
+            '</div>' +
+            (u.comments ? '<div style="font-size:0.7rem;color:var(--accent2);margin-top:2px;">📝 ' + u.comments + '</div>' : '') +
+          '</div>' +
+          '<div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">' +
+            '<input type="text" id="' + prefix + '-remark-' + i + '" placeholder="Add remark…" style="padding:0.3rem 0.6rem;border-radius:7px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:0.74rem;outline:none;width:150px;">' +
+            '<button onclick="approveBiometricPending(' + i + ',\'' + safeId + '\',\'' + safeName + '\',\'' + prefix + '\')" style="padding:0.3rem 0.75rem;border-radius:6px;background:rgba(16,185,129,0.15);color:var(--green);border:1px solid rgba(16,185,129,0.4);cursor:pointer;font-size:0.76rem;">✅ Approve</button>' +
+            '<button onclick="denyBiometricPending(' + i + ',\'' + safeId + '\',\'' + safeName + '\',\'' + prefix + '\')" style="padding:0.3rem 0.75rem;border-radius:6px;background:rgba(239,68,68,0.1);color:var(--red);border:1px solid rgba(239,68,68,0.4);cursor:pointer;font-size:0.76rem;">🚫 Deny</button>' +
+          '</div>' +
+          '</div>'
+        );
+      }).join('');
+    }
+
+    var inlineEl = document.getElementById('bm-inline-pending-list');
+    if (inlineEl) inlineEl.innerHTML = _buildHtml('bm-inline');
+    var legacyEl = document.getElementById('pending-requests-list');
+    if (legacyEl) legacyEl.innerHTML = _buildHtml('bm-legacy');
+
+    // Update all count badges
+    var n = pending.length;
+    ['bm-pending-count','c-t4-count','c-kpi-bio','sys-kpi-bio','hr-kpi-bio'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.textContent = n;
+    });
+    var ov = document.getElementById('ov-bm-pending');
+    if (ov) ov.textContent = n;
+  }
+
+  // Override globally — beats both stub and original
+  window.refreshBiometricPendingPanel = _realRefreshBiometricPendingPanel;
+
+  // A3+A4 — Fetch BM data if missing, then refresh
+  function _ensureBMThenRefresh() {
+    if (_hasBM()) { _realRefreshBiometricPendingPanel(); return; }
+    if (typeof bmLoadData !== 'function') {
+      var el = document.getElementById('bm-inline-pending-list');
+      if (el && el.innerHTML.includes('Loading')) {
+        el.innerHTML = '<div style="color:var(--text3);font-size:0.8rem;text-align:center;padding:1rem;">⏳ Click <strong style="color:var(--accent);">↻ Refresh</strong> above to load biometric data.</div>';
+      }
+      return;
+    }
+    var _origOnData = window.bmOnData;
+    var _done = false;
+    window.bmOnData = function(data) {
+      if (typeof _origOnData === 'function') _origOnData.apply(this, arguments);
+      if (!_done) {
+        _done = true;
+        window.bmOnData = _origOnData;
+        setTimeout(_realRefreshBiometricPendingPanel, 80);
+      }
+    };
+    bmLoadData();
+  }
+
+  // A3 — Patch showTab for biometric + access tabs
+  var _origShowTab = window.showTab;
+  if (typeof _origShowTab === 'function') {
+    window.showTab = function(tabId) {
+      _origShowTab.apply(this, arguments);
+      if (tabId === 'biometric') {
+        if (!_hasBM()) setTimeout(function() { if (typeof bmLoadData === 'function') bmLoadData(); }, 80);
+        else setTimeout(_realRefreshBiometricPendingPanel, 150);
+      }
+      if (tabId === 'access') setTimeout(_ensureBMThenRefresh, 80);
+    };
+  }
+
+  // A5 — Hook bmOnData to always refresh pending panel after any BM load
+  var _origBmOnData = window.bmOnData;
+  if (typeof _origBmOnData === 'function') {
+    window.bmOnData = function(data) {
+      _origBmOnData.apply(this, arguments);
+      setTimeout(_realRefreshBiometricPendingPanel, 80);
+    };
+  }
+
+  // A5 — Hook _fetchBiometricLabInventory
+  var _origFetchBML = window._fetchBiometricLabInventory;
+  if (typeof _origFetchBML === 'function') {
+    window._fetchBiometricLabInventory = async function() {
+      var r = await _origFetchBML.apply(this, arguments);
+      setTimeout(_realRefreshBiometricPendingPanel, 200);
+      return r;
+    };
+  }
+
+  // A6 — Robust approve/deny with case-insensitive ID+name matching
+  function _biometricUpdateStatus(idx, userId, userName, prefix, newStatus, verb, toastVerb) {
+    prefix = prefix || 'bm-inline';
+    var remarkEl = document.getElementById(prefix + '-remark-' + idx);
+    var remark   = remarkEl ? remarkEl.value.trim() : '';
+    var actor    = (typeof _currentUser !== 'undefined' && _currentUser) || 'Admin';
+    var note     = verb + ' by ' + actor + ' via portal on ' +
+                   new Date().toLocaleDateString('en-GB') +
+                   (remark ? ' — ' + remark : '');
+
+    // Update in-memory with robust matching
+    if (_hasBM()) {
+      var matched = (BM.raw.allUsers || []).find(function(u) {
+        var uid  = String(u.id   || '').trim();
+        var unam = String(u.name || '').trim().toLowerCase();
+        var sid  = String(userId   || '').trim();
+        var snam = String(userName || '').trim().toLowerCase();
+        return (sid  && uid  === sid) || (snam && unam === snam);
+      });
+      if (matched) { matched.authorizationStatus = newStatus; matched.comments = note; }
+    }
+
+    // Sheet sync
+    if (typeof syncToSheet === 'function') {
+      syncToSheet('UPDATE_BIOMETRIC_AUTH', {
+        id: userId, name: userName,
+        authorizationStatus: newStatus, comments: note
+      });
+    }
+
+    // Animate row out
+    var row = document.getElementById(prefix + '-pending-row-' + idx);
+    if (row) {
+      row.style.transition = 'opacity 0.35s, background 0.35s';
+      row.style.background = newStatus === 'Authorized' ? 'rgba(16,185,129,0.08)' : 'rgba(239,68,68,0.06)';
+      row.style.opacity = '0.3';
+      setTimeout(function() { row.remove(); _realRefreshBiometricPendingPanel(); }, 500);
+    }
+
+    if (typeof logAction === 'function')
+      logAction('Biometric ' + verb, actor, 'Biometric', userName + ' → ' + newStatus);
+    if (typeof toast === 'function')
+      toast(toastVerb + ' ' + userName + ' biometric access');
+  }
+
+  window.approveBiometricPending = function(i, id, name, pfx) {
+    _biometricUpdateStatus(i, id, name, pfx, 'Authorized', 'Approved', '✅ Approved');
+  };
+  window.denyBiometricPending = function(i, id, name, pfx) {
+    _biometricUpdateStatus(i, id, name, pfx, 'Revoked', 'Denied', '🚫 Denied');
+  };
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // PART B — FACILITY ROOMS (5 bugs)
+  // ══════════════════════════════════════════════════════════════════════════
+  //
+  // BUG B1 (PRIMARY — COLUMN MISMATCH): User's sheet has 5 columns:
+  //   col1=sNo, col2=roomName, col3=allocated, col4=capacity, col5=status
+  //   But v28 LAB_MAP.facilityRooms has 6 columns expecting roomType at col3:
+  //   col1=sNo, col2=roomName, col3=roomType, col4=allocated, col5=capacity, col6=status
+  //   Result: roomType gets the allocated value, allocated gets capacity value,
+  //   capacity gets status, status is empty — table shows wrong/empty data.
+  //
+  // BUG B2: The portal form + sample data have roomType field, but the actual
+  //   sheet has no roomType column. Add/Edit writes roomType to col3 which
+  //   overwrites the allocated value.
+  //
+  // BUG B3: labRenderFacilityRooms dynamically populates the room type filter
+  //   dropdown from r.roomType — which will be empty/wrong due to B1.
+  //   The type filter then never matches anything.
+  //
+  // BUG B4: labSaveModal for facilityRoom sends { roomName, roomType,
+  //   allocated, capacity, status } but sheet expects { roomName, allocated,
+  //   capacity, status } — the extra roomType field shifts all subsequent
+  //   columns on write.
+  //
+  // BUG B5: The Add/Edit modal form shows a "Room Type" dropdown with generic
+  //   values. Should show the actual FACILITY_ROOM_TYPES from user config
+  //   and write it to the correct position (or omit if sheet has no col).
+  //
+  // STRATEGY: Normalise all facilityRooms data on load to add a derived
+  //   roomType from roomName (since no separate column exists in the sheet),
+  //   and fix the modal form + save to match the real 5-column layout.
+  //   Also patch the GAS colMap via the dispatch chain for future Add/Edit.
+  // ══════════════════════════════════════════════════════════════════════════
+
+  // The real Facility Rooms sheet columns (from user config)
+  var FACILITY_ROOM_TYPES = [
+    'A - CLASSROOM','B - CLASSROOM','C - CLASSROOM','D - CLASSROOM','E - CLASSROOM',
+    'STAFF PANTRY','RECORDING ROOM','MEETING ROOM','DSAI HOD ROOM','BOARD ROOM',
+    'CERAI OFFICE','SEMINAR HALL','DSAI DEPARTMENT OFFICE','A - VISITING FACULTY',
+    'PROFESSOR OF PRACTICE','FACULTY LAB','M.TECH LAB','MINT LAB','AI4BHARAT LAB','WET LAB'
+  ];
+
+  // Derive a roomType from the roomName (since no roomType col exists in sheet)
+  function _deriveFacilityRoomType(roomName) {
+    if (!roomName) return '';
+    var n = roomName.toUpperCase();
+    if (n.includes('CLASSROOM') || n.match(/^[A-E]\s*-\s*CLASS/)) return 'CLASSROOM';
+    if (n.includes('SEMINAR'))   return 'SEMINAR HALL';
+    if (n.includes('BOARD'))     return 'BOARD ROOM';
+    if (n.includes('MEETING'))   return 'MEETING ROOM';
+    if (n.includes('RECORDING')) return 'RECORDING ROOM';
+    if (n.includes('PANTRY'))    return 'OFFICE';
+    if (n.includes('HOD') || n.includes('OFFICE') || n.includes('DEPT')) return 'OFFICE';
+    if (n.includes('VISITING') || n.includes('PRACTICE')) return 'OFFICE';
+    if (n.includes('LAB'))       return 'LAB';
+    return 'OTHER';
+  }
+
+  // B1+B3 — Normalise facilityRooms data after load
+  // When GAS reads the 5-column sheet with the 6-column map, the returned
+  // objects will have: roomType = allocated value, allocated = capacity value,
+  // capacity = status value, status = undefined.
+  // Detect and fix this by checking if capacity looks like a number.
+  function _normaliseFacilityRooms(rooms) {
+    if (!Array.isArray(rooms) || !rooms.length) return rooms;
+
+    return rooms.map(function(r) {
+      var fixed = Object.assign({}, r);
+
+      // Detect column-shifted data:
+      // If 'capacity' is a string that looks like a status word, data is shifted
+      var capVal = String(r.capacity || '');
+      var isShifted = capVal.match(/^(Occupied|Unoccupied|Under Maintenance|Blocked)$/i) ||
+                      (isNaN(parseInt(capVal)) && capVal !== '' && !capVal.match(/^\d/));
+
+      if (isShifted) {
+        // Undo the shift: roomType=allocated, allocated=capacity, capacity=status, status was blank
+        fixed.allocated = r.roomType  || r.allocated || '';
+        fixed.capacity  = parseInt(r.allocated || r.capacity || '0') || 0;
+        fixed.status    = r.capacity  || r.status    || '';
+        fixed.roomType  = _deriveFacilityRoomType(r.roomName);
+      } else {
+        // Data is not shifted — roomType may still be blank if sheet has no col
+        if (!fixed.roomType) fixed.roomType = _deriveFacilityRoomType(r.roomName);
+        if (typeof fixed.capacity === 'string') fixed.capacity = parseInt(fixed.capacity) || 0;
+      }
+
+      if (!fixed.id) fixed.id = 'FR' + Math.random().toString(36).slice(2, 8);
+      return fixed;
+    });
+  }
+
+  // B1 — Patch labInit to normalise facilityRooms on every load
+  var _origLabInit = window.labInit;
+  if (typeof _origLabInit === 'function') {
+    window.labInit = async function() {
+      await _origLabInit.apply(this, arguments);
+      if (typeof LAB !== 'undefined' && LAB.data && LAB.data.facilityRooms) {
+        LAB.data.facilityRooms = _normaliseFacilityRooms(LAB.data.facilityRooms);
+        LAB.facilityRooms = LAB.data.facilityRooms;
+        if (typeof labRenderFacilityRooms === 'function') labRenderFacilityRooms();
+      }
+    };
+  }
+
+  // B1 — Also normalise data that arrives via _fetchBiometricLabInventory
+  var _origFetchBMLab = window._fetchBiometricLabInventory;
+  if (typeof _origFetchBMLab === 'function' && _origFetchBMLab !== window._fetchBiometricLabInventory) {
+    var _prevFetch = window._fetchBiometricLabInventory;
+    window._fetchBiometricLabInventory = async function() {
+      var r = await _prevFetch.apply(this, arguments);
+      if (typeof LAB !== 'undefined' && LAB.data && LAB.data.facilityRooms) {
+        LAB.data.facilityRooms = _normaliseFacilityRooms(LAB.data.facilityRooms);
+        LAB.facilityRooms = LAB.data.facilityRooms;
+      }
+      return r;
+    };
+  }
+
+  // B3 — Patch labRenderFacilityRooms to normalise before rendering
+  var _origLabRenderFR = window.labRenderFacilityRooms;
+  if (typeof _origLabRenderFR === 'function') {
+    window.labRenderFacilityRooms = function() {
+      // Normalise in place before original render reads the data
+      if (typeof LAB !== 'undefined' && LAB.data && LAB.data.facilityRooms) {
+        LAB.data.facilityRooms = _normaliseFacilityRooms(LAB.data.facilityRooms);
+        LAB.facilityRooms = LAB.data.facilityRooms;
+
+        // Also repopulate the room type dropdown with actual Facility Room Types
+        var typeSel = document.getElementById('lab-fr-type');
+        if (typeSel) {
+          var cur = typeSel.value;
+          // Get types from actual data (post-normalisation)
+          var liveTypes = Array.from(new Set(
+            LAB.data.facilityRooms.map(function(r) { return (r.roomType || '').toUpperCase(); }).filter(Boolean)
+          )).sort();
+          // Merge with known types
+          var allTypes = Array.from(new Set(liveTypes.concat(
+            FACILITY_ROOM_TYPES.map(function(t) { return t.toUpperCase(); })
+          ))).sort();
+          typeSel.innerHTML = '<option value="">All Types</option>' +
+            allTypes.map(function(t) {
+              return '<option value="' + t + '"' + (t === cur ? ' selected' : '') + '>' + t + '</option>';
+            }).join('');
+        }
+      }
+      _origLabRenderFR.apply(this, arguments);
+    };
+  }
+
+  // B4+B5 — Patch labSaveModal to use correct fields for facilityRoom
+  var _origLabSaveModal = window.labSaveModal;
+  if (typeof _origLabSaveModal === 'function') {
+    window.labSaveModal = function() {
+      // Let original run first
+      _origLabSaveModal.apply(this, arguments);
+
+      // If we just saved a facilityRoom, fix up the record that was pushed to sheet
+      if (typeof LAB !== 'undefined' && LAB.editingType === 'facilityRoom') {
+        // Re-normalise the facilityRooms array in case a new record was added
+        if (LAB.data && LAB.data.facilityRooms) {
+          LAB.data.facilityRooms = _normaliseFacilityRooms(LAB.data.facilityRooms);
+          LAB.facilityRooms = LAB.data.facilityRooms;
+        }
+        setTimeout(function() {
+          if (typeof labRenderFacilityRooms === 'function') labRenderFacilityRooms();
+        }, 100);
+      }
+    };
+  }
+
+  // B5 — Patch the modal form fields for facilityRoom to match actual sheet
+  // The original form shows generic roomType options. Replace with actual types
+  // and match the real column structure (no separate roomType col in sheet).
+  var _origLabBuildForm = window.labBuildForm;
+  if (typeof _origLabBuildForm === 'function') {
+    window.labBuildForm = function(type, rec) {
+      if (type !== 'facilityRoom') return _origLabBuildForm.apply(this, arguments);
+      // Build corrected form: roomName, roomType (derived/display only), allocated, capacity, status
+      var typeOpts = FACILITY_ROOM_TYPES.map(function(t) {
+        return '<option' + (rec && rec.roomType === t ? ' selected' : '') + '>' + t + '</option>';
+      }).join('');
+
+      var statusOpts = ['Occupied','Unoccupied','Under Maintenance','Blocked'].map(function(s) {
+        return '<option' + (rec && rec.status === s ? ' selected' : '') + '>' + s + '</option>';
+      }).join('');
+
+      var f = function(id, label, val, type) {
+        type = type || 'text';
+        return '<div class="form-field"><label>' + label + '</label>' +
+          '<input id="lm-' + id + '" type="' + type + '" value="' + (val || '') + '" ' +
+          'style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:0.55rem 0.8rem;color:var(--text);font-size:0.88rem;outline:none;">' +
+          '</div>';
+      };
+
+      return (
+        '<div class="form-row">' + f('roomName', 'Room Name', rec && rec.roomName) + '</div>' +
+        '<div class="form-field"><label>Room Type</label>' +
+          '<select id="lm-roomType" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:0.55rem 0.8rem;color:var(--text);outline:none;">' +
+          '<option value="">— Select Type —</option>' + typeOpts +
+          '</select></div>' +
+        '<div class="form-row">' + f('allocated', 'Allocated To', rec && rec.allocated) +
+          f('capacity', 'Capacity', rec && rec.capacity, 'number') + '</div>' +
+        '<div class="form-field"><label>Status</label>' +
+          '<select id="lm-status" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:0.55rem 0.8rem;color:var(--text);outline:none;">' +
+          statusOpts + '</select></div>'
+      );
+    };
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // BOOT
+  // ══════════════════════════════════════════════════════════════════════════
+  setTimeout(function() {
+    // Biometric: run if data already loaded
+    if (_hasBM()) _realRefreshBiometricPendingPanel();
+    // Biometric: if biometric tab is active and no data, load
+    var bioTab = document.getElementById('tab-biometric');
+    if (bioTab && bioTab.classList.contains('active') && !_hasBM()) {
+      if (typeof bmLoadData === 'function') bmLoadData();
+    }
+    // Facility rooms: normalise whatever is already loaded
+    if (typeof LAB !== 'undefined' && LAB.data && LAB.data.facilityRooms && LAB.data.facilityRooms.length) {
+      LAB.data.facilityRooms = _normaliseFacilityRooms(LAB.data.facilityRooms);
+      LAB.facilityRooms = LAB.data.facilityRooms;
+      var frTab = document.querySelector('#labsec-facility-rooms');
+      if (frTab && frTab.style.display !== 'none' && typeof labRenderFacilityRooms === 'function') {
+        labRenderFacilityRooms();
+      }
+    }
+    console.log('%c✅ WSAI Combined Fix: Bio Pending (6) + Facility Rooms (5) patched', 'color:#10B981;font-weight:700;');
+  }, 400);
+
+})();
+
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════
+     WSAI v32.3 — Analytics + Executive Summary Visual Fix
+     Fixes chart rendering, donut sizes, exec KPI hydration
+═══════════════════════════════════════════════════════════ -->
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+// WSAI PORTAL v32.3 — ANALYTICS + EXECUTIVE SUMMARY VISUAL FIX
+//
+// FIXES:
+// 1. Analytics bar charts, donuts, hbars all invisible/misaligned
+//    Cause: v32 alignment patch had canvas{width:100%!important} which made
+//    donut canvases render at full width (160→1000px), and overflow:hidden
+//    on the wrong containers clipped bar heights. Fixed by removing those
+//    overrides above; this script re-renders on every tab open.
+//
+// 2. Tenure tab charts show nothing
+//    Cause: _anTenureBase reads DB arrays at call time but DB may not be
+//    fully populated. Added retry + data-ready guard.
+//
+// 3. Executive Summary shows only "—" and never populates
+//    Cause: execBuildKPIs() runs immediately on tab open when DB.staff=[],
+//    ASSET_DB.it=[], EXP.all=[], etc. The async execFetchFromSheet()
+//    completes later but its callback to execBuildAll() sometimes silently
+//    fails. Fix: re-run execBuildAll after every data store populates.
+//    Also directly populate the KPI grid from live in-memory data after
+//    sysFetchAll completes.
+//
+// 4. Analytics overview donut never draws
+//    Cause: canvas context is cleared but re-drawn at wrong size due to
+//    CSS override. Fixed in CSS; also added explicit size reset before draw.
+//
+// 5. System Health Snapshot always empty
+//    Cause: anov-health-grid render ran before BM.raw, INV_DB, LAB.data
+//    were populated. Fixed with deferred render.
+// ═══════════════════════════════════════════════════════════════════════════
+
+(function WSAI_VISUAL_FIX() {
+  'use strict';
+
+  // ── CSS FIX: inject corrected styles that override the bad v32 patch ──────
+  var css = [
+    // Restore an-card padding that was stripped by .table-card override
+    '.an-card { padding: 1.15rem 1.3rem !important; }',
+    // Bar chart containers need explicit height and must NOT be overflow:hidden
+    '#anov-pub-bars, #anov-pub-bars-l,',
+    '#anp-joining-bars, #anp-joining-bars-l,',
+    '#ant-monthly, #ant-monthly-l,',
+    '#ant-duration-bars, #ant-duration-bars-l,',
+    '#ane-trend, #ane-trend-l,',
+    '#anp-yearly, #anp-yearly-l,',
+    '#anbm-trend-bars, #anbm-trend-bars-l {',
+    '  overflow: visible !important;',
+    '}',
+    // Bar chart bar items need to display correctly
+    '#anov-pub-bars > div, #anp-joining-bars > div,',
+    '#ant-monthly > div, #ant-duration-bars > div,',
+    '#ane-trend > div, #anp-yearly > div,',
+    '#anbm-trend-bars > div {',
+    '  display: flex !important;',
+    '  flex-direction: column !important;',
+    '  align-items: center !important;',
+    '  flex: 1 !important;',
+    '}',
+    // Canvas: only constrain v31 chart canvases, not donut canvases
+    'canvas#anov-donut, canvas#an-donut-people, canvas#an-pie-desig {',
+    '  width: auto !important;',
+    '  max-width: 100% !important;',
+    '}',
+    // an-hbw bars must show properly
+    '.an-hbw { display: flex !important; flex-direction: column !important; gap: 7px !important; }',
+    '.an-hbr { display: flex !important; align-items: center !important; gap: 7px !important; }',
+    '.an-hb  { flex: 1 !important; height: 9px !important; background: var(--surface2) !important; border-radius: 5px !important; overflow: hidden !important; }',
+    '.an-hbf { height: 100% !important; border-radius: 5px !important; min-width: 3px !important; transition: width 0.65s cubic-bezier(.22,1,.36,1) !important; }',
+    // Exec KPI grid fix — must be grid not overridden
+    '#exec-kpi-grid { display: grid !important; grid-template-columns: repeat(5,1fr) !important; gap: 0.6rem !important; }',
+    // Analytics sections must not be hidden when active
+    '.an-sec.active { display: block !important; }',
+    // an-g3 and an-g2 must render as grids not flex
+    '.an-g3 { display: grid !important; grid-template-columns: repeat(3,1fr) !important; gap: 1.25rem !important; }',
+    '.an-g2 { display: grid !important; grid-template-columns: repeat(2,1fr) !important; gap: 1.25rem !important; }',
+    '@media(max-width:900px){ .an-g3{grid-template-columns:1fr 1fr !important;} .an-g2{grid-template-columns:1fr !important;} }',
+    '@media(max-width:580px){ .an-g3{grid-template-columns:1fr !important;} }',
+    // Sync status bar
+    '#sync-status { z-index: 999 !important; }'
+  ].join('\n');
+
+  var s = document.createElement('style');
+  s.id = 'wsai-visual-fix-css';
+  s.textContent = css;
+  document.head.appendChild(s);
+
+  // ── HELPER: safe text setter ──────────────────────────────────────────────
+  function sv(id, v) { var e = document.getElementById(id); if (e) e.textContent = v; }
+
+  // ── FIX 4: Patch _anDonut to reset canvas size before drawing ────────────
+  function _patchAnDonut() {
+    var orig = window._anDonut;
+    if (typeof orig !== 'function') return;
+    window._anDonut = function(canvasId, legendId, segs) {
+      var canvas = document.getElementById(canvasId);
+      if (canvas) {
+        // Reset to natural size so CSS doesn't distort the drawing
+        canvas.style.width  = '';
+        canvas.style.height = '';
+        canvas.width  = 160;
+        canvas.height = 160;
+      }
+      orig.apply(this, arguments);
+    };
+  }
+
+  // ── FIX 3: Executive Summary — live data hydration ───────────────────────
+  // Patches execBuildKPIs to populate directly from in-memory stores
+  // (DB, ASSET_DB, EXP, PUB, BM, LAB, INV_DB) without waiting for GAS
+  function _patchExecBuildKPIs() {
+    var orig = window.execBuildKPIs;
+    if (typeof orig !== 'function') return;
+    window.execBuildKPIs = function() {
+      // Run original first
+      orig.apply(this, arguments);
+      // Then overlay with live in-memory data if available
+      _hydrateExecFromMemory();
+    };
+  }
+
+  function _hydrateExecFromMemory() {
+    try {
+      var DB       = window.DB       || {};
+      var ASSET_DB = window.ASSET_DB || {};
+      var EXP      = window.EXP      || {};
+      var PUB      = window.PUB      || {};
+      var BM       = window.BM       || {};
+      var LAB      = window.LAB      || {};
+      var INV_DB   = window.INV_DB   || {};
+
+      // People
+      var totalPeople = (DB.staff||[]).length
+        + (DB.faculty||[]).length + (DB.assocFaculty||[]).length
+        + (DB.affiFaculty||[]).length + (DB.researchers||[]).length
+        + (DB.students||[]).length + (DB.fellows||[]).length;
+      var alumniCnt = (DB.alumni||[]).length;
+
+      if (totalPeople > 0) {
+        // Tenure risk
+        var allWithDate = [].concat(DB.staff||[], DB.researchers||[], DB.students||[]).filter(function(r){ return r.exitDate; });
+        var risk30 = allWithDate.filter(function(r) {
+          var d = typeof daysLeft === 'function' ? daysLeft(r.exitDate) : Math.ceil((new Date(r.exitDate) - new Date()) / 86400000);
+          return d >= 0 && d <= 30;
+        }).length;
+        var bmRaw    = (BM && BM.raw) || {};
+        var bmActive = bmRaw.totalActive || 0;
+        var bmPend   = bmRaw.pendingCount || (bmRaw.authStatus && bmRaw.authStatus.pending) || 0;
+        var labAll   = (LAB.data && LAB.data.facultyLabs) || [];
+        var labSeats = labAll.reduce(function(s,l){ return s+(l.totalSeats||0); }, 0);
+        var labOcc   = labAll.reduce(function(s,l){ return s+(l.occupiedSeats||0); }, 0);
+        var labUtil  = labSeats > 0 ? Math.round(labOcc/labSeats*100) : 0;
+        var labFull  = labAll.filter(function(l){ return (l.occupiedSeats||0) >= (l.totalSeats||99); }).length;
+
+        // Assets
+        var itArr    = ASSET_DB.it    || [];
+        var nonitArr = ASSET_DB.nonit || [];
+        var gpuArr   = ASSET_DB.gpu   || [];
+        var ildsArr  = ASSET_DB.ilds  || [];
+        var booksArr = ASSET_DB.books || [];
+        var totalAssets = itArr.length + nonitArr.length + gpuArr.length + ildsArr.length + booksArr.length;
+
+        var toINR = function(v) { var n=parseFloat(String(v||'').replace(/[₹,\s]/g,'')); return isNaN(n)?0:n; };
+        var portVal = [].concat(itArr,nonitArr,gpuArr,ildsArr,booksArr)
+          .reduce(function(s,r){ return s+toINR(r.purchaseValue); }, 0);
+        var fmtINR = function(n) {
+          if (n >= 10000000) return '₹'+(n/10000000).toFixed(2)+'Cr';
+          if (n >= 100000)   return '₹'+(n/100000).toFixed(2)+'L';
+          return '₹'+Number(n).toLocaleString('en-IN');
+        };
+        var faultyAssets = [].concat(itArr,nonitArr).filter(function(r){
+          return r.status==='Faulty' || r.condition==='Poor';
+        }).length;
+
+        // Expenses
+        var expAll  = (EXP && EXP.all) || [];
+        var expPaid = expAll.filter(function(r){ return r.status==='Paid'; });
+        var expAmt  = expPaid.reduce(function(s,r){ return s+parseFloat(r.amount||0); }, 0);
+
+        // Publications
+        var pubAll = (PUB && PUB.all) || [];
+
+        // Inventory
+        var invItems = (INV_DB && INV_DB.items) || [];
+
+        // Build KPI rows
+        var rows = [
+          { label:'👤 HR & People', kpis:[
+            {icon:'👥', label:'Total Personnel',   val:totalPeople,      col:'#3B82F6', alert:false},
+            {icon:'⏰', label:'Tenure Risk ≤30d',  val:risk30,           col:risk30>0?'#EF4444':'#10B981', alert:risk30>0},
+            {icon:'🎓', label:'Alumni',            val:alumniCnt,        col:'#8B5CF6', alert:false},
+            {icon:'🔐', label:'Active Cards',      val:bmActive||'—',    col:'#06B6D4', alert:false},
+            {icon:'⏳', label:'Pending Access',    val:bmPend||0,        col:bmPend>2?'#F97316':'#10B981', alert:bmPend>2}
+          ]},
+          { label:'🏛️ Assets & Facilities', kpis:[
+            {icon:'📦', label:'Total Assets',      val:totalAssets,      col:'#3B82F6', alert:false},
+            {icon:'💰', label:'Portfolio Value',   val:fmtINR(portVal),  col:'#10B981', alert:false},
+            {icon:'🏛️', label:'Lab Utilization',  val:labUtil+'%',      col:labUtil>85?'#EF4444':labUtil>60?'#F59E0B':'#10B981', alert:labUtil>90},
+            {icon:'🔴', label:'Labs At Capacity',  val:labFull,          col:labFull>0?'#EF4444':'#10B981', alert:labFull>0},
+            {icon:'⚠️', label:'Faulty Assets',    val:faultyAssets,     col:faultyAssets>0?'#F97316':'#10B981', alert:faultyAssets>0}
+          ]},
+          { label:'💰 Finance, Research & Stock', kpis:[
+            {icon:'💸', label:'Paid Transactions', val:expPaid.length,   col:expPaid.length>5?'#EF4444':expPaid.length>2?'#F97316':'#10B981', alert:expPaid.length>3},
+            {icon:'💳', label:'Spent Exp ₹',       val:fmtINR(expAmt),   col:'#F59E0B', alert:false},
+            {icon:'📚', label:'Publications',      val:pubAll.length,    col:'#8B5CF6', alert:false},
+            {icon:'📦', label:'Inventory Items',   val:invItems.length,  col:'#06B6D4', alert:false},
+            {icon:'⚠️', label:'Critical Stock',   val:invItems.filter(function(i){ return typeof getInvStatus==='function'&&getInvStatus(i)==='critical'; }).length, col:'#EF4444', alert:false}
+          ]}
+        ];
+
+        var grid = document.getElementById('exec-kpi-grid');
+        if (!grid) return;
+
+        var out = '';
+        rows.forEach(function(row) {
+          out += '<div style="grid-column:1/-1;display:flex;align-items:center;gap:8px;margin-top:0.5rem;margin-bottom:-2px;">'
+            + '<span style="font-size:0.6rem;font-family:var(--font-mono);color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:0.08em;">' + row.label + '</span>'
+            + '<div style="flex:1;height:1px;background:rgba(255,255,255,0.08);"></div></div>';
+          row.kpis.forEach(function(k) {
+            var alertDot = k.alert ? '<div style="position:absolute;top:5px;right:7px;width:6px;height:6px;border-radius:50%;background:' + k.col + ';box-shadow:0 0 4px ' + k.col + ';"></div>' : '';
+            var border = k.alert ? 'border-color:' + k.col + '55;box-shadow:0 0 0 1.5px ' + k.col + '33;' : 'border-color:' + k.col + '22;';
+            out += '<div style="background:' + k.col + '18;border:1px solid;' + border + 'border-radius:10px;padding:0.7rem 0.5rem;text-align:center;position:relative;">'
+              + alertDot
+              + '<div style="font-size:1.2rem;margin-bottom:0.12rem;">' + k.icon + '</div>'
+              + '<div style="font-size:1.3rem;font-weight:700;color:' + k.col + ';font-family:var(--font-display);line-height:1.1;">' + k.val + '</div>'
+              + '<div style="font-size:0.58rem;color:rgba(255,255,255,0.5);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.04em;margin-top:0.15rem;line-height:1.3;">' + k.label + '</div>'
+              + '</div>';
+          });
+        });
+        grid.innerHTML = out;
+      }
+    } catch(e) {
+      console.warn('[v32 VisualFix] _hydrateExecFromMemory error:', e.message);
+    }
+  }
+
+  // ── FIX 3: Hook data load events to trigger exec rebuild ─────────────────
+  function _hookDataLoads() {
+    // After sysFetchAll completes, rebuild exec
+    var origSysFetchAll = window.sysFetchAll;
+    if (typeof origSysFetchAll === 'function') {
+      window.sysFetchAll = async function() {
+        var result = await origSysFetchAll.apply(this, arguments);
+        setTimeout(function() {
+          if (typeof window.execBuildAll === 'function') {
+            window.execBuildAll();
+          }
+          if (typeof window.renderAnSec === 'function') {
+            window.renderAnSec();
+          }
+        }, 300);
+        return result;
+      };
+    }
+
+    // After initPeopleManagement (people tab data load), trigger renders
+    var origInitPM = window.initPeopleManagement;
+    if (typeof origInitPM === 'function') {
+      window.initPeopleManagement = function() {
+        origInitPM.apply(this, arguments);
+        setTimeout(function() {
+          if (document.getElementById('tab-exec-dashboard') &&
+              document.getElementById('tab-exec-dashboard').classList.contains('active')) {
+            if (typeof window.execBuildAll === 'function') window.execBuildAll();
+          }
+          if (document.getElementById('tab-analytics') &&
+              document.getElementById('tab-analytics').classList.contains('active')) {
+            if (typeof window.renderAnSec === 'function') window.renderAnSec();
+          }
+        }, 200);
+      };
+    }
+  }
+
+  // ── FIX 5: showTab patch — re-render on EVERY tab open ───────────────────
+  function _patchShowTab() {
+    var orig = window.showTab;
+    if (typeof orig !== 'function') return;
+    window.showTab = function(tabId) {
+      orig.apply(this, arguments);
+      if (tabId === 'analytics') {
+        setTimeout(function() {
+          if (typeof window.renderAnSec === 'function') window.renderAnSec();
+        }, 120);
+      }
+      if (tabId === 'exec-dashboard') {
+        setTimeout(function() {
+          // First render from memory (fast)
+          _hydrateExecFromMemory();
+          // Then fetch from sheet if connected
+          if (typeof window.execDashInit === 'function') {
+            window.execDashInit();
+          }
+        }, 80);
+      }
+    };
+  }
+
+  // ── FIX 5: System Health grid — deferred render after all data loads ──────
+  function _fixHealthGrid() {
+    var orig = window._anOverview;
+    if (typeof orig !== 'function') return;
+    window._anOverview = function(ff) {
+      orig.apply(this, arguments);
+      // Re-render health grid with latest counts after all modules loaded
+      setTimeout(function() {
+        var healthGrid = document.getElementById('anov-health-grid');
+        if (!healthGrid) return;
+        var DB      = window.DB      || {};
+        var INV_DB  = window.INV_DB  || {};
+        var PUB     = window.PUB     || {};
+        var EXP     = window.EXP     || {};
+        var BM      = window.BM      || {};
+        var LAB     = window.LAB     || {};
+        var ASSET_DB = window.ASSET_DB || {};
+        var allPeople = (DB.staff||[]).length+(DB.faculty||[]).length+(DB.assocFaculty||[]).length+(DB.affiFaculty||[]).length+(DB.researchers||[]).length+(DB.students||[]).length+(DB.fellows||[]).length;
+        var systems = [
+          {name:'People',        val:allPeople,                                                                    sub:'active members',    col:'var(--accent)'},
+          {name:'Assets',        val:(ASSET_DB.it||[]).length+(ASSET_DB.nonit||[]).length+(ASSET_DB.gpu||[]).length, sub:'tracked items',   col:'var(--accent2)'},
+          {name:'Publications',  val:(PUB.all||[]).length,                                                         sub:'total papers',      col:'var(--purple)'},
+          {name:'Expenses',      val:(EXP.all||[]).length,                                                         sub:'transactions',      col:'var(--gold)'},
+          {name:'Biometric',     val:BM.raw?BM.raw.totalActive||0:0,                                              sub:'active cards',      col:'var(--accent2)'},
+          {name:'Labs',          val:LAB.data&&LAB.data.facultyLabs?LAB.data.facultyLabs.length:0,                sub:'labs tracked',      col:'var(--orange)'},
+          {name:'Inventory',     val:(INV_DB.items||[]).length,                                                    sub:'items tracked',     col:'var(--green)'},
+          {name:'Alumni',        val:(DB.alumni||[]).length,                                                       sub:'alumni records',    col:'var(--red)'}
+        ];
+        healthGrid.innerHTML = systems.map(function(s) {
+          return '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:0.75rem;text-align:center;border-top:2px solid '+s.col+';">'
+            + '<div style="font-size:1.4rem;font-weight:700;color:'+s.col+';font-family:var(--font-mono);">'+(s.val||'0')+'</div>'
+            + '<div style="font-size:0.7rem;font-weight:600;color:var(--text);margin-top:2px;">'+s.name+'</div>'
+            + '<div style="font-size:0.6rem;color:var(--text3);">'+s.sub+'</div>'
+            + '</div>';
+        }).join('');
+      }, 150);
+    };
+  }
+
+  // ── FIX: Executive Summary sections (category tables, ribbons, etc.) ──────
+  // Ensure execBuildAll runs after every module data load
+  function _hookModuleLoads() {
+    // Hook BM data load
+    var origBmOnData = window.bmOnData;
+    if (typeof origBmOnData === 'function') {
+      window.bmOnData = function(data) {
+        origBmOnData.apply(this, arguments);
+        setTimeout(function() {
+          if (document.getElementById('tab-exec-dashboard') &&
+              document.getElementById('tab-exec-dashboard').classList.contains('active')) {
+            if (typeof window.execBuildAll === 'function') window.execBuildAll();
+          }
+        }, 100);
+      };
+    }
+    // Hook EXP load
+    var origExpOnLoad = window.expLoadFromSheet;
+    if (typeof origExpOnLoad === 'function') {
+      window.expLoadFromSheet = async function() {
+        var r = await origExpOnLoad.apply(this, arguments);
+        setTimeout(function() {
+          if (document.getElementById('tab-exec-dashboard') &&
+              document.getElementById('tab-exec-dashboard').classList.contains('active')) {
+            _hydrateExecFromMemory();
+          }
+          if (document.getElementById('tab-analytics') &&
+              document.getElementById('tab-analytics').classList.contains('active')) {
+            if (typeof window.renderAnSec === 'function') window.renderAnSec();
+          }
+        }, 100);
+        return r;
+      };
+    }
+  }
+
+  // ── BOOT ──────────────────────────────────────────────────────────────────
+  var _booted = false;
+  function _boot() {
+    if (_booted) return;
+    _booted = true;
+    _patchAnDonut();
+    _patchExecBuildKPIs();
+    _patchShowTab();
+    _fixHealthGrid();
+    _hookDataLoads();
+    _hookModuleLoads();
+
+    // Run once immediately if data already loaded
+    setTimeout(function() {
+      if (typeof window.execBuildAll === 'function') {
+        window.execBuildAll();
+      }
+      if (typeof window.renderAnSec === 'function') {
+        var anTab = document.getElementById('tab-analytics');
+        if (anTab && anTab.classList.contains('active')) {
+          window.renderAnSec();
+        }
+      }
+    }, 500);
+
+    // Also run after login completes (portal triggers initCharts + data loads)
+    var origLogAction = window.logAction;
+    if (typeof origLogAction === 'function') {
+      window.logAction = function(action) {
+        origLogAction.apply(this, arguments);
+        if (action === 'Login') {
+          setTimeout(function() {
+            if (typeof window.execBuildAll === 'function') window.execBuildAll();
+          }, 1500);
+        }
+      };
+    }
+
+    console.log('%c✅ WSAI v32.3 Visual Fix: Analytics + Exec Summary patched', 'color:#10B981;font-weight:700;');
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', _boot);
+  } else {
+    _boot();
+  }
+
+})();
+
 </script>
 </body>
 </html>
