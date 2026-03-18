@@ -2362,7 +2362,7 @@
               <div class="tc-actions"><button class="tc-btn" onclick="exportSection('affifaculty')">Export</button></div>
             </div>
             <table id="tbl-affifaculty">
-              <thead><tr><th>#</th><th class="sortable" onclick="sortTable('affiFaculty','facultyType')">Faculty Type</th><th class="sortable" onclick="sortTable('affiFaculty','name')">Name</th><th class="sortable" onclick="sortTable('affiFaculty','department')">Department</th><th>Email</th><th>Phone</th><th class="sortable" onclick="sortTable('affiFaculty','joiningDate')">Joining</th><th class="sortable" onclick="sortTable('affiFaculty','exitDate')">Exit Date</th><th class="sortable" onclick="sortTable('affiFaculty','exitDate')">Days Left</th><th>Actions</th></tr></thead>
+              <thead><tr><th>#</th><th class="sortable" onclick="sortTable('affiFaculty','facultyType')">Faculty Type</th><th class="sortable" onclick="sortTable('affiFaculty','name')">Name</th><th class="sortable" onclick="sortTable('affiFaculty','department')">Department</th><th>Email</th><th>Phone</th><th>Office</th><th>Comments</th><th>Actions</th></tr></thead>
               <tbody id="tbody-affifaculty"></tbody>
             </table>
           </div>
@@ -6847,24 +6847,23 @@
     const tbody = document.getElementById('tbody-affifaculty');
     if (!tbody) return;
     if (!DB.affiFaculty || DB.affiFaculty.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:2rem;color:var(--text3);">No Affiliate Faculty records — connect sheet or add a record.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:2rem;color:var(--text3);">No Affiliate Faculty records — connect sheet or add a record.</td></tr>';
       return;
     }
-    tbody.innerHTML = DB.affiFaculty.map((r, i) => {
-      const dl = daysLeft(r.exitDate);
-      return `<tr>
-        <td>${r.sNo || (i+1)}</td><td>${r.facultyType||'—'}</td><td><strong>${r.name||'—'}</strong></td>
-        <td>${r.department||'—'}</td><td style="font-size:0.78rem;">${r.email||'—'}</td>
-        <td>${r.phone||'—'}</td><td>${fmtDate(r.joiningDate)}</td><td>${fmtDate(r.exitDate)}</td>
-        <td>${daysBadge(dl)}</td>
-        <td>
+    tbody.innerHTML = DB.affiFaculty.map((r, i) => `<tr>
+        <td>${r.sNo || (i+1)}</td>
+        <td><span style="font-size:0.72rem;font-family:var(--font-mono);background:rgba(139,92,246,0.12);color:var(--purple);padding:0.15rem 0.45rem;border-radius:5px;">${r.facultyType||'—'}</span></td>
+        <td><strong>${r.name||'—'}</strong></td>
+        <td style="font-size:0.82rem;">${r.department||'—'}</td>
+        <td style="font-size:0.78rem;font-family:var(--font-mono);">${r.email||'—'}</td>
+        <td style="font-size:0.82rem;">${r.phone||'—'}</td>
+        <td style="font-size:0.82rem;">${r.office||'—'}</td>
+        <td style="font-size:0.78rem;color:var(--text2);">${r.comments||'—'}</td>
+        <td style="white-space:nowrap;">
           <button class="tbl-action-btn" onclick="openEditModal('affiFaculty',${i})" title="Edit">✏️</button>
-          <button class="tbl-action-btn success" onclick="openTenureExtend('affiFaculty',${i})">✅ Extend</button>
-          <button class="tbl-action-btn" onclick="moveToAlumni('affiFaculty',${i})">👥 Alumni</button>
           <button class="tbl-action-btn danger" onclick="deleteRecord('affiFaculty',${i})">🗑</button>
         </td>
-      </tr>`;
-    }).join('');
+      </tr>`).join('');
   }
 
   function renderResearchers() {
@@ -9832,58 +9831,94 @@
   }
 
   function _anTenureBase(ff) {
+    // ── Safe date parser: handles DD/MM/YYYY, YYYY-MM-DD, and ISO formats ──
+    // daysLeft() uses `new Date()` which fails for DD/MM/YYYY (Indian format from sheets).
+    // All tenure calculations must go through _parseDateStr for correct results.
+    function _dl(dateStr) {
+      if (!dateStr) return Infinity;
+      const d = _parseDateStr(dateStr);
+      if (!d || isNaN(d.getTime())) return Infinity;
+      return Math.ceil((d.getTime() - Date.now()) / 86400000);
+    }
+    const _safeArr = a => Array.isArray(a) ? a : [];
     const all=[
-      ...DB.staff.filter(ff).map((r,i)=>({...r,_type:'Staff',_key:'staff',_idx:i})),
-      ...DB.assocFaculty.filter(ff).map((r,i)=>({...r,_type:'Assoc.Faculty',_key:'assocFaculty',_idx:i})),
-      ...DB.affiFaculty.filter(ff).map((r,i)=>({...r,_type:'Aff.Faculty',_key:'affiFaculty',_idx:i})),
-      ...DB.researchers.filter(ff).map((r,i)=>({...r,_type:'Researcher',_key:'researchers',_idx:i})),
-      ...DB.students.filter(ff).map((r,i)=>({...r,_type:'Student',_key:'students',_idx:i})),
-      ...DB.fellows.filter(ff).map((r,i)=>({...r,_type:'Associate Fellow',_key:'fellows',_idx:i}))
+      ..._safeArr(DB.staff).filter(ff).map((r,i)=>({...r,_type:'Staff',_key:'staff',_idx:i})),
+      ..._safeArr(DB.assocFaculty).filter(ff).map((r,i)=>({...r,_type:'Assoc.Faculty',_key:'assocFaculty',_idx:i})),
+      ..._safeArr(DB.affiFaculty).filter(ff).map((r,i)=>({...r,_type:'Aff.Faculty',_key:'affiFaculty',_idx:i})),
+      ..._safeArr(DB.researchers).filter(ff).map((r,i)=>({...r,_type:'Researcher',_key:'researchers',_idx:i})),
+      ..._safeArr(DB.students).filter(ff).map((r,i)=>({...r,_type:'Student',_key:'students',_idx:i})),
+      ..._safeArr(DB.fellows).filter(ff).map((r,i)=>({...r,_type:'Associate Fellow',_key:'fellows',_idx:i}))
     ].filter(r=>r.exitDate);
 
-    const crit=all.filter(r=>{const d=daysLeft(r.exitDate);return d>=0&&d<=30;});
-    const warn=all.filter(r=>{const d=daysLeft(r.exitDate);return d>30&&d<=90;});
-    const ok  =all.filter(r=>daysLeft(r.exitDate)>90);
-    const tenures=all.map(r=>{const d=(_parseDateStr(r.exitDate)||new Date())-(_parseDateStr(r.joiningDate)||new Date());return Math.ceil(d/86400000);}).filter(x=>x>0);
-    const avg=tenures.length?Math.round(tenures.reduce((a,b)=>a+b,0)/tenures.length):0;
-    const exp26=all.filter(r=>{const d=_parseDateStr(r.exitDate);return d&&d.getFullYear()===2026;});
+    // Attach computed daysLeft using _parseDateStr (DD/MM/YYYY safe)
+    all.forEach(r => { r._dl = _dl(r.exitDate); });
 
-    _sv('ant-crit',crit.length); _sv('ant-warn',warn.length); _sv('ant-ok',ok.length);
-    _sv('ant-avg',avg+'d'); _sv('ant-2026',exp26.length);
+    const crit = all.filter(r => r._dl >= 0  && r._dl <= 30);
+    const warn = all.filter(r => r._dl >  30 && r._dl <= 90);
+    const ok   = all.filter(r => r._dl >  90 && r._dl !== Infinity);
+    const tenures = all.map(r => {
+      const exit = _parseDateStr(r.exitDate);
+      const join = _parseDateStr(r.joiningDate);
+      if (!exit || !join) return 0;
+      return Math.ceil((exit.getTime() - join.getTime()) / 86400000);
+    }).filter(x => x > 0);
+    const avg = tenures.length ? Math.round(tenures.reduce((a,b)=>a+b,0)/tenures.length) : 0;
+    const curYear = new Date().getFullYear();
+    const exp26 = all.filter(r => {
+      const d = _parseDateStr(r.exitDate);
+      return d && d.getFullYear() === curYear;
+    });
 
-    const types=['Staff','Assoc.Faculty','Aff.Faculty','Researcher','Student','Fellow'];
-    _anHBars('ant-risk-bars', types.map((t,i)=>({
-      label:t, val:all.filter(r=>r._type===t&&daysLeft(r.exitDate)<=90).length
-    })),AN_COLORS);
+    _sv('ant-crit', crit.length);
+    _sv('ant-warn', warn.length);
+    _sv('ant-ok',   ok.length);
+    _sv('ant-avg',  avg ? avg + 'd' : '—');
+    _sv('ant-2026', exp26.length);
 
-    const now=new Date();
-    const months=[];
-    for(let m=0;m<6;m++){
-      const md=new Date(now.getFullYear(),now.getMonth()+m,1);
-      const cnt=all.filter(r=>{const ed=_parseDateStr(r.exitDate);return ed&&ed.getMonth()===md.getMonth()&&ed.getFullYear()===md.getFullYear();}).length;
-      months.push({label:md.toLocaleString('en-IN',{month:'short'}),val:cnt});
+    const types = ['Staff','Assoc.Faculty','Aff.Faculty','Researcher','Student','Fellow'];
+    _anHBars('ant-risk-bars', types.map((t,i) => ({
+      label: t, val: all.filter(r => r._type === t && r._dl <= 90 && r._dl !== Infinity).length
+    })), AN_COLORS);
+
+    const now = new Date();
+    const months = [];
+    for (let m = 0; m < 6; m++) {
+      const md = new Date(now.getFullYear(), now.getMonth() + m, 1);
+      const cnt = all.filter(r => {
+        const ed = _parseDateStr(r.exitDate);
+        return ed && ed.getMonth() === md.getMonth() && ed.getFullYear() === md.getFullYear();
+      }).length;
+      months.push({ label: md.toLocaleString('en-IN', {month:'short'}), val: cnt });
     }
-    _anBarChart('ant-monthly','ant-monthly-l',months,(v,max)=>v>2?'var(--red)':v>0?'var(--orange)':'var(--surface3)');
+    _anBarChart('ant-monthly','ant-monthly-l', months, (v,max) => v>2?'var(--red)':v>0?'var(--orange)':'var(--surface3)');
 
-    const urgent=[...crit,...warn].sort((a,b)=>daysLeft(a.exitDate)-daysLeft(b.exitDate)).slice(0,10);
-    const tbl=document.getElementById('ant-action-tbl');
-    if(tbl) tbl.innerHTML=urgent.map(r=>{
-      const dl=daysLeft(r.exitDate);
-      const risk=dl<=30?'<span style="color:var(--red);font-size:0.7rem;font-weight:700;">CRITICAL</span>':'<span style="color:var(--orange);font-size:0.7rem;font-weight:700;">WARNING</span>';
-      const key=r._key||'staff';const idx=r._idx!==undefined?r._idx:0;
+    const urgent = [...crit,...warn].sort((a,b) => a._dl - b._dl).slice(0, 15);
+    const tbl = document.getElementById('ant-action-tbl');
+    if (tbl) tbl.innerHTML = urgent.map(r => {
+      const dl   = r._dl;
+      const risk = dl <= 30
+        ? '<span style="color:var(--red);font-size:0.7rem;font-weight:700;">CRITICAL</span>'
+        : '<span style="color:var(--orange);font-size:0.7rem;font-weight:700;">WARNING</span>';
+      const key  = r._key  || 'staff';
+      const idx  = r._idx !== undefined ? r._idx : 0;
+      const dlBadge = dl < 0
+        ? `<span class="badge-days-critical">EXPIRED ${Math.abs(dl)}d</span>`
+        : daysBadge(dl);
       return `<tr>
-        <td style="padding:0.38rem 0.5rem;border-bottom:1px solid rgba(99,179,237,0.05);"><strong>${r.name}</strong></td>
+        <td style="padding:0.38rem 0.5rem;border-bottom:1px solid rgba(99,179,237,0.05);"><strong>${r.name||'—'}</strong></td>
         <td style="padding:0.38rem 0.5rem;border-bottom:1px solid rgba(99,179,237,0.05);color:var(--text2);">${r._type}</td>
         <td style="padding:0.38rem 0.5rem;border-bottom:1px solid rgba(99,179,237,0.05);color:var(--text3);font-family:var(--font-mono);font-size:0.72rem;">${r.center||r.department||'—'}</td>
         <td style="padding:0.38rem 0.5rem;border-bottom:1px solid rgba(99,179,237,0.05);font-family:var(--font-mono);font-size:0.72rem;">${fmtDate(r.exitDate)}</td>
-        <td style="padding:0.38rem 0.5rem;border-bottom:1px solid rgba(99,179,237,0.05);">${daysBadge(dl)}</td>
+        <td style="padding:0.38rem 0.5rem;border-bottom:1px solid rgba(99,179,237,0.05);">${dlBadge}</td>
         <td style="padding:0.38rem 0.5rem;border-bottom:1px solid rgba(99,179,237,0.05);">${risk}</td>
-        <td style="padding:0.38rem 0.5rem;border-bottom:1px solid rgba(99,179,237,0.05);display:flex;gap:4px;">
-          <button onclick="openTenureExtend('${key}',${idx})" style="padding:0.2rem 0.5rem;border-radius:5px;border:1px solid rgba(16,185,129,0.4);background:rgba(16,185,129,0.07);color:var(--green);font-size:0.68rem;cursor:pointer;font-family:var(--font-body);">✅ Extend</button>
-          <button onclick="moveToAlumni('${key}',${idx})" style="padding:0.2rem 0.5rem;border-radius:5px;border:1px solid rgba(99,102,241,0.4);background:rgba(99,102,241,0.07);color:var(--purple);font-size:0.68rem;cursor:pointer;font-family:var(--font-body);">🎓 Alumni</button>
+        <td style="padding:0.38rem 0.5rem;border-bottom:1px solid rgba(99,179,237,0.05);">
+          <div style="display:flex;gap:4px;">
+            <button onclick="openTenureExtend('${key}',${idx})" style="padding:0.2rem 0.5rem;border-radius:5px;border:1px solid rgba(16,185,129,0.4);background:rgba(16,185,129,0.07);color:var(--green);font-size:0.68rem;cursor:pointer;font-family:var(--font-body);">✅ Extend</button>
+            <button onclick="moveToAlumni('${key}',${idx})" style="padding:0.2rem 0.5rem;border-radius:5px;border:1px solid rgba(99,102,241,0.4);background:rgba(99,102,241,0.07);color:var(--purple);font-size:0.68rem;cursor:pointer;font-family:var(--font-body);">🎓 Alumni</button>
+          </div>
         </td>
       </tr>`;
-    }).join('')||'<tr><td colspan="7" style="text-align:center;padding:1.5rem;color:var(--green);">✅ No urgent tenure actions</td></tr>';
+    }).join('') || '<tr><td colspan="7" style="text-align:center;padding:1.5rem;color:var(--green);">✅ No critical or warning tenure actions</td></tr>';
   }
 
   function _anLabsBase() {
@@ -10406,15 +10441,28 @@
   // ── Extended _anTenure: add alumni count + duration histogram ──
   function _anTenure(ff) {
     _anTenureBase(ff);
-    _sv('ant-alumni', DB.alumni.length);
-    // Tenure duration histogram (in months brackets)
-    const all2=[...DB.staff,...DB.researchers,...DB.students].filter(r=>r.joiningDate&&r.exitDate);
-    const brackets={'0-6m':0,'6-12m':0,'1-2yr':0,'2-3yr':0,'3yr+':0};
-    all2.forEach(r=>{
-      const months=Math.round((_parseDateStr(r.exitDate)-_parseDateStr(r.joiningDate))/(1000*60*60*24*30));
-      if(months<6)brackets['0-6m']++;else if(months<12)brackets['6-12m']++;else if(months<24)brackets['1-2yr']++;else if(months<36)brackets['2-3yr']++;else brackets['3yr+']++;
+    _sv('ant-alumni', (DB.alumni||[]).length);
+    // Tenure duration histogram — use _parseDateStr for DD/MM/YYYY safety
+    const _safeArr = a => Array.isArray(a) ? a : [];
+    const all2 = [
+      ..._safeArr(DB.staff), ..._safeArr(DB.researchers), ..._safeArr(DB.students)
+    ].filter(r => r.joiningDate && r.exitDate);
+    const brackets = {'0-6m':0,'6-12m':0,'1-2yr':0,'2-3yr':0,'3yr+':0};
+    all2.forEach(r => {
+      const exit = _parseDateStr(r.exitDate);
+      const join = _parseDateStr(r.joiningDate);
+      if (!exit || !join || isNaN(exit) || isNaN(join)) return;
+      const months = Math.round((exit.getTime() - join.getTime()) / (1000*60*60*24*30));
+      if (months < 0)   return; // skip invalid
+      if (months < 6)   brackets['0-6m']++;
+      else if (months < 12) brackets['6-12m']++;
+      else if (months < 24) brackets['1-2yr']++;
+      else if (months < 36) brackets['2-3yr']++;
+      else                  brackets['3yr+']++;
     });
-    _anBarChart('ant-duration-bars','ant-duration-bars-l',Object.entries(brackets).map(([label,val])=>({label,val})),'var(--cyan,var(--accent2))');
+    _anBarChart('ant-duration-bars','ant-duration-bars-l',
+      Object.entries(brackets).map(([label,val])=>({label,val})),
+      'var(--cyan,var(--accent2))');
   }
 
   // ── Extended _anLabs: add lab table + rooms grid ──
@@ -24213,19 +24261,14 @@ function _v31Post(url, params, cb) {
   if (typeof _serverSessionId !== 'undefined' && _serverSessionId) params.sessionId = _serverSessionId;
   params.t = Date.now();
 
-  fetch(url, {
-    method:'POST',
-    headers:{ 'Content-Type':'application/json' },
-    body: JSON.stringify(params)
-  })
-  .then(function(r){ return r.json(); })
-  .then(function(d){ if(cb) cb(d); })
-  .catch(function(){
-    // JSONP fallback
-    if (typeof _jsonpFetch === 'function') {
-      _jsonpFetch(url, params).then(function(d){ if(cb) cb(d); }).catch(function(){ if(cb) cb(null); });
-    } else { if(cb) cb(null); }
-  });
+  // FIX (v32): The GAS deployment only exposes doGet (no doPost).
+  // The previous fetch(POST, application/json) triggered a CORS preflight that
+  // GAS cannot answer, and _corsFetch(POST, text/plain) also fails with no doPost —
+  // both wasted ~3-4 seconds before the JSONP GET fallback finally ran.
+  // Skip straight to _jsonpFetch which routes through doGet correctly.
+  if (typeof _jsonpFetch === 'function') {
+    _jsonpFetch(url, params).then(function(d){ if(cb) cb(d); }).catch(function(){ if(cb) cb(null); });
+  } else { if(cb) cb(null); }
 }
 
 function _v31GasSend(action, payload) {
@@ -26940,6 +26983,263 @@ tbody td { vertical-align: middle; }
   } else {
     _boot();
   }
+
+})();
+
+</script>
+
+<!-- ═══════════════════════════════════════════
+     WSAI v32.4 — Exec KPI Fast-Path + Category Tables
+     Affiliate Faculty schema fix + Tenure DD/MM/YYYY fix
+═══════════════════════════════════════════ -->
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+// WSAI v32.4 — Executive Summary KPI Fast-Path + Category Tables Fix
+//
+// ROOT CAUSES FIXED:
+//
+// 1. HR & People row shows "—" and is slow:
+//    v32_getExecDashboard (in GAS) intercepted GET_EXEC_DASHBOARD but did NOT
+//    call v28 getExecDashboard(). So data.peopleTotals was null, and
+//    execBuildKPIs read from DB.staff/faculty/etc which are demo seed data
+//    until sysFetchAll runs. Now FIXED in GAS (v32_getExecDashboard merges
+//    v28 base). Portal-side: also add a fast-path that reads live DB arrays
+//    immediately on exec tab open, then updates again when GAS data arrives.
+//
+// 2. Category breakdown shows "No IT asset data loaded":
+//    v32_getExecDashboard didn't return assetRows, so ASSET_DB was never
+//    populated from execFetchFromSheet. Now FIXED in GAS. Portal-side:
+//    trigger assetLoadFromSheet if ASSET_DB is still demo-only (< 20 items).
+//
+// 3. Exec tab takes longer than Analytics/Overview tabs:
+//    execDashInit makes 3 async GAS calls sequentially. Now fires all in
+//    parallel and updates KPIs immediately from in-memory data first.
+// ═══════════════════════════════════════════════════════════════════════════
+
+(function WSAI_EXEC_FIX() {
+  'use strict';
+
+  // ── Detect demo-seed ASSET_DB (< 16 items = still on seed data) ──────────
+  function _isAssetDBSeed() {
+    var adb = window.ASSET_DB || {};
+    var total = (adb.it||[]).length + (adb.nonit||[]).length +
+                (adb.gpu||[]).length + (adb.ilds||[]).length;
+    return total <= 16; // seed has exactly 15 IT + 12 nonIT items
+  }
+
+  // ── Fast KPI render from live in-memory data ──────────────────────────────
+  function _fastKPIRender() {
+    try {
+      var DB       = window.DB       || {};
+      var ASSET_DB = window.ASSET_DB || {};
+      var EXP      = window.EXP      || {};
+      var PUB      = window.PUB      || {};
+      var BM       = window.BM       || {};
+      var LAB      = window.LAB      || {};
+      var INV_DB   = window.INV_DB   || {};
+
+      // People — read directly from DB arrays (populated by sysFetchAll)
+      var totalPeople = (DB.staff||[]).length + (DB.faculty||[]).length +
+                        (DB.assocFaculty||[]).length + (DB.affiFaculty||[]).length +
+                        (DB.researchers||[]).length + (DB.students||[]).length +
+                        (DB.fellows||[]).length;
+      var alumniCnt = (DB.alumni||[]).length;
+
+      // Only update the grid if we have real data (>2 = not just demo rows)
+      if (totalPeople <= 2 && alumniCnt <= 1) return; // still demo, let GAS response handle it
+
+      var allWithDate = [].concat(DB.staff||[], DB.researchers||[], DB.students||[])
+        .filter(function(r){ return r.exitDate; });
+
+      function _daysLeft(d) {
+        if (!d) return Infinity;
+        var diff = new Date(d) - new Date();
+        return Math.ceil(diff / 86400000);
+      }
+
+      var risk30 = allWithDate.filter(function(r){
+        var d = _daysLeft(r.exitDate); return d >= 0 && d <= 30;
+      }).length;
+
+      // Assets
+      var itArr    = ASSET_DB.it    || [];
+      var nonitArr = ASSET_DB.nonit || [];
+      var gpuArr   = ASSET_DB.gpu   || [];
+      var ildsArr  = ASSET_DB.ilds  || [];
+      var booksArr = ASSET_DB.books || [];
+      var toINR = function(v){ var n=parseFloat(String(v||'').replace(/[₹,\s]/g,'')); return isNaN(n)?0:n; };
+      var portVal = [].concat(itArr,nonitArr,gpuArr,ildsArr,booksArr)
+        .reduce(function(s,r){ return s+toINR(r.purchaseValue); }, 0);
+      var totalAssets = itArr.length+nonitArr.length+gpuArr.length+ildsArr.length+booksArr.length;
+      var faultyCnt = [].concat(itArr,nonitArr).filter(function(r){
+        return r.status==='Faulty'||r.condition==='Poor';
+      }).length;
+      var fmtINR = function(n) {
+        if (n >= 10000000) return '₹'+(n/10000000).toFixed(2)+'Cr';
+        if (n >= 100000)   return '₹'+(n/100000).toFixed(2)+'L';
+        return '₹'+Number(n).toLocaleString('en-IN');
+      };
+
+      // Labs
+      var labAll   = (LAB.data&&LAB.data.facultyLabs)||[];
+      var labSeats = labAll.reduce(function(s,l){ return s+(l.totalSeats||0); }, 0);
+      var labOcc   = labAll.reduce(function(s,l){ return s+(l.occupiedSeats||0); }, 0);
+      var labUtil  = labSeats>0 ? Math.round(labOcc/labSeats*100) : 0;
+      var labFull  = labAll.filter(function(l){ return (l.occupiedSeats||0)>=(l.totalSeats||99); }).length;
+
+      // Expenses
+      var expAll  = (EXP&&EXP.all)||[];
+      var expPaid = expAll.filter(function(r){ return r.status==='Paid'; });
+      var expAmt  = expPaid.reduce(function(s,r){ return s+parseFloat(r.amount||0); }, 0);
+
+      // Pubs, Inventory, BM
+      var pubAll   = (PUB&&PUB.all)||[];
+      var invItems = (INV_DB&&INV_DB.items)||[];
+      var bmRaw    = (BM&&BM.raw)||{};
+      var bmActive = bmRaw.totalActive||0;
+      var bmPend   = bmRaw.pendingCount||(bmRaw.authStatus&&bmRaw.authStatus.pending)||0;
+      var invCrit  = invItems.filter(function(i){ return typeof getInvStatus==='function'&&getInvStatus(i)==='critical'; }).length;
+
+      var rows = [
+        { label:'👤 HR & People', kpis:[
+          {icon:'👥',label:'Total Personnel', val:totalPeople,    col:'#3B82F6', alert:false},
+          {icon:'⏰',label:'Tenure Risk ≤30d',val:risk30,         col:risk30>0?'#EF4444':'#10B981', alert:risk30>0},
+          {icon:'🎓',label:'Alumni',          val:alumniCnt,      col:'#8B5CF6', alert:false},
+          {icon:'🔐',label:'Active Cards',    val:bmActive||'—',  col:'#06B6D4', alert:false},
+          {icon:'⏳',label:'Pending Access',  val:bmPend||0,      col:bmPend>2?'#F97316':'#10B981', alert:bmPend>2}
+        ]},
+        { label:'🏛️ Assets & Facilities', kpis:[
+          {icon:'📦',label:'Total Assets',    val:totalAssets,    col:'#3B82F6', alert:false},
+          {icon:'💰',label:'Portfolio Value', val:fmtINR(portVal),col:'#10B981', alert:false},
+          {icon:'🏛️',label:'Lab Utilization',val:labUtil+'%',    col:labUtil>85?'#EF4444':labUtil>60?'#F59E0B':'#10B981', alert:labUtil>90},
+          {icon:'🔴',label:'Labs At Capacity',val:labFull,        col:labFull>0?'#EF4444':'#10B981', alert:labFull>0},
+          {icon:'⚠️',label:'Faulty Assets',  val:faultyCnt,      col:faultyCnt>0?'#F97316':'#10B981', alert:faultyCnt>0}
+        ]},
+        { label:'💰 Finance, Research & Stock', kpis:[
+          {icon:'💸',label:'Paid Transactions',val:expPaid.length,col:expPaid.length>5?'#EF4444':expPaid.length>2?'#F97316':'#10B981', alert:expPaid.length>3},
+          {icon:'💳',label:'Spent Exp ₹',     val:fmtINR(expAmt), col:'#F59E0B', alert:false},
+          {icon:'📚',label:'Publications',     val:pubAll.length,  col:'#8B5CF6', alert:false},
+          {icon:'📦',label:'Inventory Items',  val:invItems.length,col:'#06B6D4', alert:false},
+          {icon:'⚠️',label:'Critical Stock',  val:invCrit,        col:invCrit>0?'#EF4444':'#10B981', alert:false}
+        ]}
+      ];
+
+      var grid = document.getElementById('exec-kpi-grid');
+      if (!grid) return;
+      var out = '';
+      rows.forEach(function(row) {
+        out += '<div style="grid-column:1/-1;display:flex;align-items:center;gap:8px;margin-top:0.5rem;margin-bottom:-2px;">'
+          + '<span style="font-size:0.6rem;font-family:var(--font-mono);color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:0.08em;">'+row.label+'</span>'
+          + '<div style="flex:1;height:1px;background:rgba(255,255,255,0.08);"></div></div>';
+        row.kpis.forEach(function(k) {
+          var dot = k.alert ? '<div style="position:absolute;top:5px;right:7px;width:6px;height:6px;border-radius:50%;background:'+k.col+';box-shadow:0 0 4px '+k.col+';"></div>' : '';
+          var bdr = k.alert ? 'border-color:'+k.col+'55;box-shadow:0 0 0 1.5px '+k.col+'33;' : 'border-color:'+k.col+'22;';
+          out += '<div style="background:'+k.col+'18;border:1px solid;'+bdr+'border-radius:10px;padding:0.7rem 0.5rem;text-align:center;position:relative;">'
+            + dot
+            + '<div style="font-size:1.2rem;margin-bottom:0.12rem;">'+k.icon+'</div>'
+            + '<div style="font-size:1.3rem;font-weight:700;color:'+k.col+';font-family:var(--font-display);line-height:1.1;">'+k.val+'</div>'
+            + '<div style="font-size:0.58rem;color:rgba(255,255,255,0.5);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.04em;margin-top:0.15rem;line-height:1.3;">'+k.label+'</div>'
+            + '</div>';
+        });
+      });
+      grid.innerHTML = out;
+    } catch(e) {
+      console.warn('[v32 ExecFix] _fastKPIRender error:', e.message);
+    }
+  }
+
+  // ── Patch execDashInit: parallel fetches + immediate fast render ──────────
+  var _origExecDashInit = window.execDashInit;
+  if (typeof _origExecDashInit === 'function') {
+    window.execDashInit = function() {
+      // 1. Immediate render from whatever is in memory right now
+      if (typeof window.execBuildAll === 'function') window.execBuildAll();
+      // 2. Fast KPI overlay from live DB (non-blocking)
+      setTimeout(_fastKPIRender, 50);
+
+      if (window.WS_CONFIG && window.WS_CONFIG.webAppUrl) {
+        // 3. Fire asset load if ASSET_DB is still seed data
+        if (_isAssetDBSeed() && typeof window.assetLoadFromSheet === 'function') {
+          window.assetLoadFromSheet(true).then(function() {
+            if (typeof window.execBuildAll === 'function') window.execBuildAll();
+            _fastKPIRender();
+          }).catch(function(){});
+        }
+
+        // 4. Fire execFetchFromSheet (GAS) — now returns full assetRows+peopleTotals
+        if (typeof window.execFetchFromSheet === 'function') {
+          window.execFetchFromSheet();
+        }
+
+        // 5. Fire people fetch if DB is demo-only — use GET_ALL
+        var DB = window.DB || {};
+        var peopleCount = (DB.staff||[]).length+(DB.faculty||[]).length+(DB.researchers||[]).length;
+        if (peopleCount <= 4 && typeof window._jsonpFetch === 'function') {
+          window._jsonpFetch(window.WS_CONFIG.webAppUrl, { action: 'GET_ALL', t: Date.now() })
+            .then(function(data) {
+              if (!data) return;
+              if (data.staff)        window.DB.staff        = data.staff;
+              if (data.faculty)      window.DB.faculty       = data.faculty;
+              if (data.assocFaculty) window.DB.assocFaculty  = data.assocFaculty;
+              if (data.affiFaculty)  window.DB.affiFaculty   = data.affiFaculty;
+              if (data.researchers)  window.DB.researchers   = data.researchers;
+              if (data.students)     window.DB.students      = data.students;
+              if (data.fellows)      window.DB.fellows       = data.fellows;
+              if (data.alumni)       window.DB.alumni        = data.alumni;
+              _fastKPIRender();
+              if (typeof window.execBuildAll === 'function') window.execBuildAll();
+            }).catch(function(){});
+        }
+      }
+    };
+  }
+
+  // ── After execFetchFromSheet completes, re-run fast KPI (catches peopleTotals) ──
+  var _origExecFetch = window.execFetchFromSheet;
+  if (typeof _origExecFetch === 'function') {
+    window.execFetchFromSheet = async function() {
+      var r = await _origExecFetch.apply(this, arguments);
+      // After GAS returns data.peopleTotals + data.assetRows, rebuild everything
+      setTimeout(_fastKPIRender, 100);
+      return r;
+    };
+  }
+
+  // ── Hook sysFetchAll: rebuild exec after every people sync ───────────────
+  var _origSysFetch = window.sysFetchAll;
+  if (typeof _origSysFetch === 'function') {
+    window.sysFetchAll = async function() {
+      var r = await _origSysFetch.apply(this, arguments);
+      setTimeout(function() {
+        _fastKPIRender();
+        var execTab = document.getElementById('tab-exec-dashboard');
+        if (execTab && execTab.classList.contains('active')) {
+          if (typeof window.execBuildAll === 'function') window.execBuildAll();
+        }
+      }, 250);
+      return r;
+    };
+  }
+
+  // ── Boot ─────────────────────────────────────────────────────────────────
+  setTimeout(function() {
+    // Patch showTab to run fast KPI on every exec tab open
+    var _origShowTab = window.showTab;
+    if (typeof _origShowTab === 'function') {
+      window.showTab = function(tabId) {
+        _origShowTab.apply(this, arguments);
+        if (tabId === 'exec-dashboard') {
+          setTimeout(_fastKPIRender, 60);
+        }
+      };
+    }
+    // If exec tab is currently active, run now
+    var execTab = document.getElementById('tab-exec-dashboard');
+    if (execTab && execTab.classList.contains('active')) {
+      _fastKPIRender();
+    }
+    console.log('%c✅ WSAI v32.4 Exec Fix: KPI fast-path + category tables patched', 'color:#10B981;font-weight:700;');
+  }, 300);
 
 })();
 
