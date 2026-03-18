@@ -22299,6 +22299,17 @@ function _renderAllModules() {
 
   // Sidebar
   _sf('refreshSidebarAnalytics');
+
+  // FIX: Re-render role dashboard with live data now that DB[], EXP, BM etc are populated.
+  // v31Init() fires at 600ms (before sysFetchAll's 800ms delay even starts), so it always
+  // hits empty arrays and renders dashes. _renderAllModules() is called after all data
+  // loads — this is the correct moment to re-trigger the role dashboard.
+  try {
+    if (typeof window.v31FetchAll === 'function' &&
+        typeof _currentUser !== 'undefined' && _currentUser) {
+      window.v31FetchAll();
+    }
+  } catch(e) {}
 }
 
 // Expose so _fetchBiometricLabInventory can call it too
@@ -24260,12 +24271,8 @@ function _v31Post(url, params, cb) {
   // Add session token for auth
   if (typeof _serverSessionId !== 'undefined' && _serverSessionId) params.sessionId = _serverSessionId;
   params.t = Date.now();
-
-  // FIX (v32): The GAS deployment only exposes doGet (no doPost).
-  // The previous fetch(POST, application/json) triggered a CORS preflight that
-  // GAS cannot answer, and _corsFetch(POST, text/plain) also fails with no doPost —
-  // both wasted ~3-4 seconds before the JSONP GET fallback finally ran.
-  // Skip straight to _jsonpFetch which routes through doGet correctly.
+  // FIX: GAS exposes only doGet. Skipping fetch(POST) which triggers a CORS
+  // preflight GAS cannot answer — go straight to _jsonpFetch (GET transport).
   if (typeof _jsonpFetch === 'function') {
     _jsonpFetch(url, params).then(function(d){ if(cb) cb(d); }).catch(function(){ if(cb) cb(null); });
   } else { if(cb) cb(null); }
