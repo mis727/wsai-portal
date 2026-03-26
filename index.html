@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1437,9 +1436,7 @@
         <div class="nav-item" data-tab="exec-dashboard" onclick="showTab('exec-dashboard')">
           <span class="ni-icon">🏛️</span> Executive Summary
         </div>
-        <div class="nav-item" data-tab="role-dashboard" onclick="showTab('role-dashboard')" id="nav-role-dashboard" style="display:none;">
-          <span class="ni-icon" id="nav-role-icon">📊</span> <span id="nav-role-label">My Dashboard</span>
-        </div>
+
       </div>
       <div class="sidebar-divider"></div>
       <div class="sidebar-section">
@@ -1547,12 +1544,7 @@
         </div>
 
         <div class="kpi-grid">
-          <div class="kpi-card blue">
-            <div class="kpi-icon">👥</div>
-            <div class="kpi-val" id="dash-kpi-personnel">—</div>
-            <div class="kpi-label">Total Personnel</div>
-            <div class="kpi-sub" id="dash-kpi-personnel-sub">Loading…</div>
-          </div>
+
           <div class="kpi-card green">
             <div class="kpi-icon">🔬</div>
             <div class="kpi-val" id="dash-kpi-researchers">—</div>
@@ -2181,90 +2173,15 @@
             </div>
           </div>
 
-          <!-- Row 3: Executive Summary + Total Counts Active+Alumni -->
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;align-items:start;margin-bottom:1rem;">
-            <div class="table-card" style="padding:0;border-top:3px solid #1976D2;">
-              <div class="tc-header" style="background:rgba(25,118,210,0.08);">
-                <div class="tc-title" style="color:#64B5F6;">📊 Executive Summary — Active &amp; Alumni</div>
-              </div>
-              <table>
-                <thead><tr><th>Category</th><th>Active</th><th>Alumni</th></tr></thead>
-                <tbody>
-                  <tr><td>👥 Staff</td><td id="dash-exec-staff-active" style="font-weight:700;text-align:center;">—</td><td id="dash-exec-staff-alumni" style="text-align:center;">—</td></tr>
-                  <tr><td>🏫 Associate Faculty</td><td id="dash-exec-assocfac-active" style="font-weight:700;text-align:center;">—</td><td id="dash-exec-assocfac-alumni" style="text-align:center;">—</td></tr>
-                  <tr><td>🔬 Researchers (On-Going)</td><td id="dash-exec-res-active" style="font-weight:700;text-align:center;">—</td><td id="dash-exec-res-alumni" style="text-align:center;">—</td></tr>
-                  <tr><td>🟢 Faculty</td><td id="dash-exec-fac-active" style="font-weight:700;text-align:center;">—</td><td style="text-align:center;color:var(--text3);">—</td></tr>
-                  <tr style="background:rgba(25,118,210,0.12);font-weight:700;"><td>🧮 Grand Total</td><td id="dash-exec-total-active" style="text-align:center;color:var(--accent);">—</td><td id="dash-exec-total-alumni" style="text-align:center;color:var(--accent);">—</td></tr>
-                </tbody>
-              </table>
-            </div>
-            <div class="table-card" style="padding:0;border-top:3px solid #1f4788;">
-              <div class="tc-header" style="background:rgba(31,71,136,0.08);">
-                <div class="tc-title" style="color:#90CAF9;">📈 Total Counts (Active + Alumni)</div>
-              </div>
-              <table>
-                <thead><tr><th>Category</th><th>Total</th><th>Status</th></tr></thead>
-                <tbody>
-                  <tr><td>👥 Staff</td><td id="dash-total-staff" style="font-weight:700;text-align:center;">—</td><td id="dash-total-staff-status" style="text-align:center;">—</td></tr>
-                  <tr><td>🏫 Associate Faculty</td><td id="dash-total-assocfac" style="font-weight:700;text-align:center;">—</td><td id="dash-total-assocfac-status" style="text-align:center;">—</td></tr>
-                  <tr><td>🔬 Researchers</td><td id="dash-total-res" style="font-weight:700;text-align:center;">—</td><td id="dash-total-res-status" style="text-align:center;">—</td></tr>
-                  <tr><td>🟢 Faculty</td><td id="dash-total-fac" style="font-weight:700;text-align:center;">—</td><td style="text-align:center;color:var(--text3);">—</td></tr>
-                  <tr style="background:rgba(31,71,136,0.15);font-weight:700;"><td>🧮 Grand Total (All)</td><td id="dash-grand-total" style="text-align:center;color:var(--accent);">—</td><td id="dash-grand-status" style="text-align:center;">—</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
 
-          <!-- Row 4: Center Utilization + Staff Category + Researcher Analytics -->
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;align-items:start;margin-bottom:1rem;">
+          <!-- Row 3: Center Utilization + System Health -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;align-items:start;margin-bottom:1rem;">
             <div class="table-card" style="padding:0;border-top:3px solid #388e3c;">
               <div class="tc-header" style="background:rgba(56,142,60,0.08);">
                 <div class="tc-title" style="color:#66BB6A;">📍 Capacity Utilization — Centers</div>
               </div>
               <table><thead><tr><th>Center</th><th>Active</th><th>% of Total</th></tr></thead>
               <tbody id="dash-center-dist"></tbody></table>
-            </div>
-            <div class="table-card" style="padding:0;border-top:3px solid #1E88E5;">
-              <div class="tc-header" style="background:rgba(30,136,229,0.08);">
-                <div class="tc-title" style="color:#42A5F5;">👥 Staff — Category Distribution</div>
-              </div>
-              <table>
-                <thead><tr><th>Category</th><th>Count</th></tr></thead>
-                <tbody>
-                  <tr><td>👥 Staff</td><td id="dash-cat-staff" style="font-weight:700;text-align:center;">—</td></tr>
-                  <tr><td>🔬 Researchers (via Staff)</td><td id="dash-cat-researcher" style="font-weight:700;text-align:center;">—</td></tr>
-                  <tr style="background:rgba(25,118,210,0.12);font-weight:700;"><td>🧮 Grand Total</td><td id="dash-cat-total" style="text-align:center;color:var(--accent);">—</td></tr>
-                </tbody>
-              </table>
-            </div>
-            <div class="table-card" style="padding:0;border-top:3px solid #34a853;">
-              <div class="tc-header" style="background:rgba(52,168,83,0.08);">
-                <div class="tc-title" style="color:#66BB6A;">🔬 Researcher Analytics</div>
-              </div>
-              <table>
-                <thead><tr><th>Status</th><th>Count</th><th>Trend</th></tr></thead>
-                <tbody>
-                  <tr><td>🟢 On-Going (Active)</td><td id="dash-res-ongoing" style="font-weight:700;text-align:center;">—</td><td style="text-align:center;font-size:0.75rem;color:var(--green);">Growing</td></tr>
-                  <tr><td>🔴 Completed (Alumni)</td><td id="dash-res-alumni" style="font-weight:700;text-align:center;">—</td><td style="text-align:center;font-size:0.75rem;color:var(--text3);">Archive</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <!-- Row 5: Tenure Intelligence + System Health -->
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;align-items:start;">
-            <div class="table-card" style="padding:0;border-top:3px solid #f57c00;">
-              <div class="tc-header" style="background:rgba(245,124,0,0.08);">
-                <div class="tc-title" style="color:#FFA726;">⏳ Tenure &amp; Retention Intelligence</div>
-              </div>
-              <table>
-                <thead><tr><th>Metric</th><th>Value</th><th>Status</th></tr></thead>
-                <tbody>
-                  <tr><td>Avg Staff Tenure (Days)</td><td id="dash-tenure-avg" style="font-weight:700;text-align:center;font-family:var(--font-mono);">—</td><td style="text-align:center;font-size:0.75rem;color:var(--text2);">Monitor</td></tr>
-                  <tr><td>High Risk (&gt;90 days remaining)</td><td id="dash-tenure-risk" style="font-weight:700;text-align:center;font-family:var(--font-mono);">—</td><td id="dash-tenure-risk-status" style="text-align:center;font-size:0.8rem;">—</td></tr>
-                  <tr><td>Recent Joins (last 30 days)</td><td id="dash-recent-joins" style="font-weight:700;text-align:center;font-family:var(--font-mono);">—</td><td style="text-align:center;font-size:0.75rem;color:var(--green);">Growth</td></tr>
-                </tbody>
-              </table>
             </div>
             <div class="table-card" style="padding:0;border-top:3px solid #424242;">
               <div class="tc-header" style="background:rgba(66,66,66,0.15);">
@@ -2662,14 +2579,12 @@
         </div>
 
         <!-- KPI STRIP -->
-        <div class="kpi-grid" style="grid-template-columns:repeat(7,1fr);margin-bottom:1.5rem;" id="lab-kpi-grid">
+        <div class="kpi-grid" style="grid-template-columns:repeat(5,1fr);margin-bottom:1.5rem;" id="lab-kpi-grid">
           <div class="kpi-card blue"><div class="kpi-icon">🧪</div><div class="kpi-val" id="lab-kpi-labs">—</div><div class="kpi-label">Total Labs</div></div>
           <div class="kpi-card cyan"><div class="kpi-icon">🏛️</div><div class="kpi-val" id="lab-kpi-rooms">—</div><div class="kpi-label">Facility Rooms</div></div>
           <div class="kpi-card green"><div class="kpi-icon">✨</div><div class="kpi-val" id="lab-kpi-avail">—</div><div class="kpi-label">Available Seats</div></div>
           <div class="kpi-card orange"><div class="kpi-icon">👨‍🔬</div><div class="kpi-val" id="lab-kpi-occ">—</div><div class="kpi-label">Occupied Seats</div></div>
-          <div class="kpi-card purple"><div class="kpi-icon">📊</div><div class="kpi-val" id="lab-kpi-util">—</div><div class="kpi-label">Utilization</div></div>
-          <div class="kpi-card gold"><div class="kpi-icon">🔬</div><div class="kpi-val" id="lab-kpi-researchers">—</div><div class="kpi-label">Active Researchers</div></div>
-          <div class="kpi-card" style="border-top:3px solid var(--red);"><div class="kpi-icon">⚠️</div><div class="kpi-val" id="lab-kpi-overcap" style="color:var(--red);">—</div><div class="kpi-label">Over Capacity</div></div>
+          <div class="kpi-card purple"><div class="kpi-icon">🚪</div><div class="kpi-val" id="lab-kpi-faculty-rooms">—</div><div class="kpi-label">Faculty Rooms</div></div>
         </div>
 
         <!-- SUB-NAV TABS -->
@@ -2680,7 +2595,6 @@
           <button class="lab-sub-btn" onclick="switchLabTab('facility-rooms')">🏛️ Facility Rooms</button>
           <button class="lab-sub-btn" onclick="switchLabTab('researchers')">👥 Researchers</button>
           <button class="lab-sub-btn" onclick="switchLabTab('faculty-rooms')">🚪 Faculty Rooms</button>
-          <button class="lab-sub-btn" onclick="switchLabTab('capacity')" style="border-color:rgba(245,158,11,0.4);color:var(--gold);">🏢 Capacity Manager</button>
           <button class="lab-sub-btn" onclick="switchLabTab('actions')" style="margin-left:auto;border-color:rgba(139,92,246,0.4);color:var(--purple);">⚡ Actions</button>
         </div>
 
@@ -2845,39 +2759,50 @@
 
         <!-- ── FACULTY ROOMS SUB-TAB ── -->
         <div class="lab-sec" id="labsec-faculty-rooms">
-          <div class="table-card" style="padding:0;">
-            <div class="tc-header">
-              <div class="tc-title">🚪 Faculty Room Allocations</div>
-              <div class="tc-actions">
-                <button class="tc-btn primary" onclick="labOpenAddModal('facultyRoom')">+ Add</button>
-                <button class="tc-btn" onclick="labExportCSV('facultyRooms')">Export</button>
-              </div>
+          <!-- KPI header strip for Faculty Rooms -->
+          <div style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-bottom:1rem;">
+            <div class="kpi-card purple" style="flex:1;min-width:130px;padding:0.75rem 1rem;">
+              <div class="kpi-icon">🚪</div>
+              <div class="kpi-val" id="fr-kpi-total">—</div>
+              <div class="kpi-label">Total Faculty Rooms</div>
             </div>
+            <div class="kpi-card green" style="flex:1;min-width:130px;padding:0.75rem 1rem;">
+              <div class="kpi-icon">✅</div>
+              <div class="kpi-val" id="fr-kpi-occupied">—</div>
+              <div class="kpi-label">Occupied</div>
+            </div>
+            <div class="kpi-card orange" style="flex:1;min-width:130px;padding:0.75rem 1rem;">
+              <div class="kpi-icon">⬜</div>
+              <div class="kpi-val" id="fr-kpi-unoccupied">—</div>
+              <div class="kpi-label">Unoccupied</div>
+            </div>
+            <!-- Donut chart -->
+            <div style="flex:0 0 160px;display:flex;align-items:center;justify-content:center;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:0.75rem;">
+              <canvas id="fr-donut" width="120" height="120"></canvas>
+            </div>
+          </div>
+          <!-- Filters -->
+          <div style="display:flex;gap:0.6rem;flex-wrap:wrap;align-items:center;margin-bottom:0.9rem;">
+            <input type="text" id="fr-search" placeholder="🔍 Search faculty, room…" oninput="labRenderFacultyRooms()" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0.45rem 1rem;color:var(--text);font-size:0.85rem;outline:none;min-width:200px;">
+            <select id="fr-filter-status" onchange="labRenderFacultyRooms()" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0.45rem 0.8rem;color:var(--text);font-size:0.82rem;outline:none;cursor:pointer;">
+              <option value="">All Statuses</option>
+              <option>Occupied</option>
+              <option>Unoccupied</option>
+            </select>
+            <button class="tc-btn primary" onclick="labOpenAddModal('facultyRoom')" style="margin-left:auto;">+ Add Faculty Room</button>
+            <button class="tc-btn" onclick="labExportCSV('facultyRooms')">Export CSV</button>
+          </div>
+          <div class="table-card" style="padding:0;">
             <table>
-              <thead><tr><th>#</th><th class="sortable" onclick="labSort('facultyRooms','facultyName')">Faculty Name</th><th class="sortable" onclick="labSort('facultyRooms','room')">Room Allocated</th><th class="sortable" onclick="labSort('facultyRooms','status')">Status</th><th>Actions</th></tr></thead>
+              <thead><tr>
+                <th>#</th>
+                <th class="sortable" onclick="labSort('facultyRooms','facultyName')">Faculty Name</th>
+                <th class="sortable" onclick="labSort('facultyRooms','room')">Room Allocated</th>
+                <th class="sortable" onclick="labSort('facultyRooms','status')">Status</th>
+                <th>Actions</th>
+              </tr></thead>
               <tbody id="lab-froom-tbody"></tbody>
             </table>
-          </div>
-        </div>
-
-        <!-- ── CAPACITY MANAGER SUB-TAB ── -->
-        <div class="lab-sec" id="labsec-capacity">
-          <div style="display:flex;gap:0.6rem;align-items:center;flex-wrap:wrap;margin-bottom:1rem;">
-            <span style="font-size:0.68rem;font-family:var(--font-mono);color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;">Live Biometric Occupancy vs Room Capacity</span>
-            <button onclick="labRenderCapacityManager()" style="margin-left:auto;padding:0.35rem 0.9rem;border-radius:7px;border:1px solid rgba(245,158,11,0.4);background:rgba(245,158,11,0.08);color:var(--gold);font-size:0.76rem;cursor:pointer;font-family:var(--font-body);">↻ Refresh</button>
-          </div>
-          <!-- KPI strip -->
-          <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:1.5rem;">
-            <div class="kpi-card blue"><div class="kpi-icon">🏢</div><div class="kpi-val" id="cap-kpi-rooms">—</div><div class="kpi-label">Total Rooms</div></div>
-            <div class="kpi-card green"><div class="kpi-icon">✅</div><div class="kpi-val" id="cap-kpi-avail">—</div><div class="kpi-label">Under Capacity</div></div>
-            <div class="kpi-card orange"><div class="kpi-icon">⚠️</div><div class="kpi-val" id="cap-kpi-near">—</div><div class="kpi-label">Near Capacity (≥80%)</div></div>
-            <div class="kpi-card" style="border-top:3px solid var(--red);"><div class="kpi-icon">🔴</div><div class="kpi-val" id="cap-kpi-full" style="color:var(--red);">—</div><div class="kpi-label">At/Over Capacity</div></div>
-          </div>
-          <!-- Room grid -->
-          <div id="cap-room-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:0.9rem;"></div>
-          <div id="cap-no-data" style="display:none;padding:3rem;text-align:center;color:var(--text3);">
-            <div style="font-size:2rem;margin-bottom:0.5rem;opacity:0.4;">🏢</div>
-            <div>No biometric data loaded. Connect a sheet and click Refresh All.</div>
           </div>
         </div>
 
@@ -3346,39 +3271,6 @@
                 <tfoot id="exec-books-tfoot"></tfoot>
               </table>
             </div>
-          </div>
-        </div>
-
-        <!-- ── SECTION 4: FINANCIAL SUMMARY ── -->
-        <div class="table-card" style="margin-bottom:1rem;">
-          <div class="tc-header">
-            <div class="tc-title">💼 Financial Summary — Asset Portfolio</div>
-          </div>
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;padding:0.5rem 0 1rem;" id="exec-finance-grid">
-            <!-- Populated by JS -->
-          </div>
-        </div>
-
-        <!-- ── SECTION 5: ROOM CATEGORY BREAKDOWN ── -->
-        <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:1rem;margin-bottom:1rem;">
-          <div class="table-card">
-            <div class="tc-header">
-              <div class="tc-title" style="color:var(--orange);">📂 Room Category Breakdown</div>
-            </div>
-            <table>
-              <thead><tr><th>Category</th><th style="text-align:center;">Rooms</th><th style="text-align:center;">Total Seats</th><th style="text-align:center;">Occupied</th><th style="text-align:center;">Available</th><th style="text-align:center;">Util %</th></tr></thead>
-              <tbody id="exec-room-cat-tbody"></tbody>
-            </table>
-          </div>
-          <!-- Seats Utilization -->
-          <div class="table-card">
-            <div class="tc-header">
-              <div class="tc-title" style="color:var(--green);">👥 Seats Utilization</div>
-            </div>
-            <table>
-              <thead><tr><th>Status</th><th style="text-align:center;">Count</th></tr></thead>
-              <tbody id="exec-seats-tbody"></tbody>
-            </table>
           </div>
         </div>
 
@@ -4909,7 +4801,6 @@
           <button class="an-pill" onclick="switchAnSec('an-expenses',this)">💰 Expenses</button>
           <button class="an-pill" onclick="switchAnSec('an-pubs',this)">📚 Publications</button>
           <button class="an-pill" onclick="switchAnSec('an-inventory-an',this)">📦 Inventory</button>
-          <button class="an-pill" onclick="switchAnSec('an-biometric-an',this)">🔒 Biometric</button>
         </div>
 
         <!-- ══════════════════════════════════════════════
@@ -5343,58 +5234,6 @@
           </div>
         </div>
 
-        <!-- ══════════════════════════════════════════════
-             BIOMETRIC ANALYTICS SECTION (new)
-        ══════════════════════════════════════════════ -->
-        <div class="an-sec" id="an-biometric-an">
-          <div class="an-kpi-row">
-            <div class="an-kpi bl"><div class="an-kpi-v" id="anbm-total">—</div><div class="an-kpi-l">Total Users</div></div>
-            <div class="an-kpi gr"><div class="an-kpi-v" id="anbm-active">—</div><div class="an-kpi-l">Active Cards</div></div>
-            <div class="an-kpi go"><div class="an-kpi-v" id="anbm-pending">—</div><div class="an-kpi-l">Pending Requests</div></div>
-            <div class="an-kpi re"><div class="an-kpi-v" id="anbm-revoked">—</div><div class="an-kpi-l">Revoked</div></div>
-            <div class="an-kpi pu"><div class="an-kpi-v" id="anbm-areas">—</div><div class="an-kpi-l">Access Areas</div></div>
-            <div class="an-kpi cy"><div class="an-kpi-v" id="anbm-today">—</div><div class="an-kpi-l">Today's Logs</div></div>
-          </div>
-          <div class="an-g2" style="margin-bottom:1.25rem;">
-            <div class="an-card bl2">
-              <div class="an-ch">🔒 Access Level Distribution</div>
-              <div style="display:flex;justify-content:center;margin:0.5rem 0;"><canvas id="anbm-level-donut" width="150" height="150"></canvas></div>
-              <div class="an-leg" id="anbm-level-leg" style="font-size:0.65rem;"></div>
-            </div>
-            <div class="an-card gr2">
-              <div class="an-ch">📍 Occupancy by Area</div>
-              <div class="an-hbw" id="anbm-area-bars" style="margin-top:0.5rem;gap:9px;"></div>
-            </div>
-          </div>
-          <div class="an-g2" style="margin-bottom:1.25rem;">
-            <div class="an-card go2">
-              <div class="an-ch">📋 Pending Access Requests</div>
-              <div id="anbm-pending-list" style="margin-top:0.6rem;display:flex;flex-direction:column;gap:7px;max-height:220px;overflow-y:auto;"></div>
-            </div>
-            <div class="an-card pu2">
-              <div class="an-ch">📅 Access Events — Last 7 Days</div>
-              <div id="anbm-trend-bars" style="display:flex;align-items:flex-end;gap:6px;height:90px;margin-top:0.75rem;padding-bottom:0.5rem;border-bottom:1px solid var(--border);"></div>
-              <div id="anbm-trend-bars-l" style="display:flex;gap:6px;margin-top:4px;"></div>
-            </div>
-          </div>
-          <!-- User access table -->
-          <div class="an-card cy2">
-            <div class="an-ch">👤 Registered Users — Access Summary</div>
-            <div style="overflow-x:auto;margin-top:0.5rem;">
-              <table style="width:100%;border-collapse:collapse;font-size:0.76rem;">
-                <thead><tr>
-                  <th style="text-align:left;padding:0.35rem 0.5rem;font-size:0.6rem;font-family:var(--font-mono);text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);">Name</th>
-                  <th style="text-align:left;padding:0.35rem 0.5rem;font-size:0.6rem;font-family:var(--font-mono);text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);">Dept</th>
-                  <th style="text-align:center;padding:0.35rem 0.5rem;font-size:0.6rem;font-family:var(--font-mono);text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);">Access Level</th>
-                  <th style="text-align:center;padding:0.35rem 0.5rem;font-size:0.6rem;font-family:var(--font-mono);text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);">Areas</th>
-                  <th style="text-align:center;padding:0.35rem 0.5rem;font-size:0.6rem;font-family:var(--font-mono);text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);">Status</th>
-                  <th style="text-align:left;padding:0.35rem 0.5rem;font-size:0.6rem;font-family:var(--font-mono);text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);">Last Access</th>
-                </tr></thead>
-                <tbody id="anbm-user-tbl"></tbody>
-              </table>
-            </div>
-          </div>
-        </div>
 
       </div>
 
@@ -8432,27 +8271,27 @@
 
   // Access level definitions — maps role key to visible tabs/sections
   const ACCESS_LEVEL_MAP = {
-    'creator':      { label:'Creator (Full Admin)',    tabs:['dashboard','people','biometric','labs','assets','expenses','publications','inventory','analytics','drive','systems','access','activity','exec-dashboard','dropdown-manager'], canEdit:true,  interface:'full'    },
-    'admin':        { label:'Full Access (Admin)',      tabs:['dashboard','people','biometric','labs','assets','expenses','publications','inventory','analytics','drive','systems','access','activity','exec-dashboard','dropdown-manager'], canEdit:true,  interface:'full'    },
+    'creator':      { label:'Creator (Full Admin)',    tabs:['role-dashboard','dashboard','people','biometric','labs','assets','expenses','publications','inventory','analytics','drive','systems','access','activity','exec-dashboard','dropdown-manager'], canEdit:true,  interface:'full'    },
+    'admin':        { label:'Full Access (Admin)',      tabs:['role-dashboard','dashboard','people','biometric','labs','assets','expenses','publications','inventory','analytics','drive','systems','access','activity','exec-dashboard','dropdown-manager'], canEdit:true,  interface:'full'    },
 
     // ── v27 — Dedicated interfaces ─────────────────────────────────────────
-    'coo':          { label:'COO / Leadership View',   tabs:['exec-dashboard','dashboard','analytics','people','biometric','labs','assets','expenses','publications','inventory','drive','systems','access','activity','dropdown-manager'], canEdit:true,  interface:'coo',     badge:'👔 COO',    color:'#F59E0B' },
-    'faculty':      { label:'Faculty Interface',        tabs:['exec-dashboard','dashboard','analytics','people','labs','publications','biometric','activity'],                     canEdit:false, interface:'faculty', badge:'👨‍🏫 Faculty', color:'#06B6D4' },
+    'coo':          { label:'COO / Leadership View',   tabs:['role-dashboard','exec-dashboard','dashboard','analytics','people','biometric','labs','assets','expenses','publications','inventory','drive','systems','access','activity','dropdown-manager'], canEdit:true,  interface:'coo',     badge:'👔 COO',    color:'#F59E0B' },
+    'faculty':      { label:'Faculty Interface',        tabs:['role-dashboard','exec-dashboard','dashboard','analytics','people','labs','publications','biometric','activity'],                     canEdit:false, interface:'faculty', badge:'👨‍🏫 Faculty', color:'#06B6D4' },
     // ── Staff sub-roles: one per management function ─────────────────────────
-    'staff':        { label:'Staff Interface',           tabs:['dashboard','people','expenses','inventory','activity'],                                                             canEdit:true,  interface:'staff',        badge:'🏢 Staff',                    color:'#10B981' },
-    'hr_manager':   { label:'HR Manager',                tabs:['dashboard','people','biometric','activity'],                                                                       canEdit:true,  interface:'hr_manager',   badge:'👥 HR Manager',               color:'#8B5CF6' },
-    'finance_mgr':  { label:'Accounts / Procurement Manager',           tabs:['dashboard','expenses','analytics','exec-dashboard','activity'],                                                    canEdit:true,  interface:'finance_mgr',  badge:'💰 Accounts / Procurement Manager',          color:'#F59E0B' },
-    'facility_mgr': { label:'Facility Manager',          tabs:['dashboard','labs','assets','biometric','inventory','activity'],                                                    canEdit:true,  interface:'facility_mgr', badge:'🏗️ Facility Manager',         color:'#06B6D4' },
-    'edu_pgm_mgr':  { label:'Education Program Manager', tabs:['dashboard','people','publications','labs','activity'],                                                             canEdit:true,  interface:'edu_pgm_mgr',  badge:'🎓 Education Program Manager', color:'#EC4899' },
-    'sys_admin':    { label:'System Administrator',      tabs:['dashboard','people','biometric','labs','assets','expenses','publications','inventory','analytics','drive','systems','access','activity','dropdown-manager'], canEdit:true, interface:'sys_admin', badge:'⚙️ Sys Admin', color:'#64748B' },
-    'mis':          { label:'MIS',                       tabs:['dashboard','people','biometric','labs','assets','expenses','publications','inventory','analytics','drive','systems','access','activity','exec-dashboard','dropdown-manager'], canEdit:true, interface:'full', badge:'📊 MIS', color:'#3B82F6' },
+    'staff':        { label:'Staff Interface',           tabs:['role-dashboard','dashboard','people','expenses','inventory','activity'],                                                             canEdit:true,  interface:'staff',        badge:'🏢 Staff',                    color:'#10B981' },
+    'hr_manager':   { label:'HR Manager',                tabs:['role-dashboard','dashboard','people','biometric','activity'],                                                                       canEdit:true,  interface:'hr_manager',   badge:'👥 HR Manager',               color:'#8B5CF6' },
+    'finance_mgr':  { label:'Accounts / Procurement Manager',           tabs:['role-dashboard','dashboard','expenses','analytics','exec-dashboard','activity'],                                                    canEdit:true,  interface:'finance_mgr',  badge:'💰 Accounts / Procurement Manager',          color:'#F59E0B' },
+    'facility_mgr': { label:'Facility Manager',          tabs:['role-dashboard','dashboard','labs','assets','biometric','inventory','activity'],                                                    canEdit:true,  interface:'facility_mgr', badge:'🏗️ Facility Manager',         color:'#06B6D4' },
+    'edu_pgm_mgr':  { label:'Education Program Manager', tabs:['role-dashboard','dashboard','people','publications','labs','activity'],                                                             canEdit:true,  interface:'edu_pgm_mgr',  badge:'🎓 Education Program Manager', color:'#EC4899' },
+    'sys_admin':    { label:'System Administrator',      tabs:['role-dashboard','dashboard','people','biometric','labs','assets','expenses','publications','inventory','analytics','drive','systems','access','activity','dropdown-manager'], canEdit:true, interface:'sys_admin', badge:'⚙️ Sys Admin', color:'#64748B' },
+    'mis':          { label:'MIS',                       tabs:['role-dashboard','dashboard','people','biometric','labs','assets','expenses','publications','inventory','analytics','drive','systems','access','activity','exec-dashboard','dropdown-manager'], canEdit:true, interface:'full', badge:'📊 MIS', color:'#3B82F6' },
 
     // ── Legacy / granular roles ────────────────────────────────────────────
-    'hr':           { label:'HR & People Only',         tabs:['dashboard','people','activity'],                                                                                    canEdit:true,  interface:'full'    },
-    'finance':      { label:'Finance Only',             tabs:['dashboard','expenses','activity'],                                                                                  canEdit:true,  interface:'full'    },
-    'labs':         { label:'Labs & Assets Only',       tabs:['dashboard','labs','assets','inventory','biometric','activity'],                                                      canEdit:true,  interface:'full'    },
-    'publications': { label:'Publications Only',        tabs:['dashboard','publications','activity'],                                                                               canEdit:true,  interface:'full'    },
-    'readonly':     { label:'Read Only',                tabs:['dashboard','people','expenses','publications','inventory','activity'],                                                canEdit:false, interface:'full'    }
+    'hr':           { label:'HR & People Only',         tabs:['role-dashboard','dashboard','people','activity'],                                                                                    canEdit:true,  interface:'full'    },
+    'finance':      { label:'Finance Only',             tabs:['role-dashboard','dashboard','expenses','activity'],                                                                                  canEdit:true,  interface:'full'    },
+    'labs':         { label:'Labs & Assets Only',       tabs:['role-dashboard','dashboard','labs','assets','inventory','biometric','activity'],                                                      canEdit:true,  interface:'full'    },
+    'publications': { label:'Publications Only',        tabs:['role-dashboard','dashboard','publications','activity'],                                                                               canEdit:true,  interface:'full'    },
+    'readonly':     { label:'Read Only',                tabs:['role-dashboard','dashboard','people','expenses','publications','inventory','activity'],                                                canEdit:false, interface:'full'    }
   };
 
   // User registry — load from localStorage, seed with defaults if first run
@@ -8507,15 +8346,16 @@
 
   // ── Role → landing tab ────────────────────────────────────────────────────
   const INTERFACE_LANDING = {
-    coo:         'exec-dashboard',
-    faculty:     'exec-dashboard',  // v27.1: Faculty lands on exec overview
-    hr_manager:  'people',
-    finance_mgr: 'expenses',
-    facility_mgr:'labs',
-    edu_pgm_mgr: 'people',
-    sys_admin:   'dashboard',
-    mis:         'dashboard',
-    full:        'dashboard'
+    coo:         'role-dashboard',
+    faculty:     'role-dashboard',
+    hr_manager:  'role-dashboard',
+    finance_mgr: 'role-dashboard',
+    facility_mgr:'role-dashboard',
+    event_mgr:   'role-dashboard',
+    edu_pgm_mgr: 'role-dashboard',
+    sys_admin:   'role-dashboard',
+    mis:         'role-dashboard',
+    full:        'role-dashboard'
   };
 
   // ── Role → welcome banner config ─────────────────────────────────────────
@@ -9706,7 +9546,7 @@
     else if (secId === 'an-expenses')      _anExpenses();
     else if (secId === 'an-pubs')          _anPubs();
     else if (secId === 'an-inventory-an')  _anInventory();
-    else if (secId === 'an-biometric-an')  _anBiometric();
+
   }
 
   const _sv = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
@@ -10313,100 +10153,6 @@
   }
 
   // ── BIOMETRIC analytics (new) ──
-  function _anBiometric() {
-    // If no BM data loaded yet, use demo only when no sheet configured
-    if (!BM.raw) {
-      if (!WS_CONFIG.webAppUrl) {
-        BM.raw = typeof bmSampleData === 'function' ? bmSampleData() : null;
-      }
-    }
-    const bm=BM.raw;
-    if (!bm) {
-      ['anbm-total','anbm-active','anbm-pending','anbm-revoked','anbm-areas','anbm-today'].forEach(id=>_sv(id,'—'));
-      const noData='<div style="color:var(--text3);text-align:center;padding:1.5rem;font-size:0.8rem;">Connect a Google Sheet to load biometric data</div>';
-      const pList=document.getElementById('anbm-pending-list');if(pList)pList.innerHTML=noData;
-      const uTbl=document.getElementById('anbm-user-tbl');if(uTbl)uTbl.innerHTML='<tr><td colspan="6" style="text-align:center;padding:1rem;color:var(--text3);">No data</td></tr>';
-      return;
-    }
-    // Revoke count — pull from inactiveUsers where authorizationStatus = Revoked/Inactive
-    const inactiveUsers = bm.inactiveUsers || [];
-    const revokedCount = inactiveUsers.filter(u => {
-      const s = (u.authorizationStatus||u.accountStatus||'').toLowerCase();
-      return s === 'revoked' || s === 'inactive' || s === 'terminated';
-    }).length || bm.revokedCount || bm.authStatus?.revoked || 0;
-    _sv('anbm-total', (bm.totalActive||0) + (bm.totalInactive||0) || bm.totalUsers || bm.total || '—');
-    _sv('anbm-active', bm.totalActive || bm.active || '—');
-    _sv('anbm-pending', bm.pendingCount || bm.authStatus?.pending || (bm.pendingRequests||[]).length || '—');
-    _sv('anbm-revoked', revokedCount || '—');
-    _sv('anbm-areas', (bm.accessAreas||Object.keys(bm.byArea||bm.areaData||{})).length || (bm.areas||[]).length || '—');
-    _sv('anbm-today', bm.todayLogs||bm.todayCount||'—');
-
-    // Access Level Distribution donut — read Access Level column from allUsers
-    const allUsers = bm.allUsers || bm.users || [];
-    const accessLevelMap = {};
-    allUsers.forEach(u => {
-      const lvl = u.accessLevel || u.authorizationStatus || 'Unknown';
-      accessLevelMap[lvl] = (accessLevelMap[lvl] || 0) + 1;
-    });
-    const hasLevelData = Object.keys(accessLevelMap).length > 0;
-    const authSt = bm.authStatus || {};
-    // Fallback to authStatus counts if no accessLevel column data
-    const authData = hasLevelData ? accessLevelMap
-      : (authSt.authorized !== undefined
-        ? { Authorized: authSt.authorized||0, Pending: authSt.pending||0, Revoked: authSt.revoked||0 }
-        : { L1: 0, L2: 0, L3: 0, Admin: 0 });
-    const levSegs = Object.entries(authData).map(([label, val], i) => ({ label, val, color: AN_COLORS[i % 7] }));
-    _anDonut('anbm-level-donut', 'anbm-level-leg', levSegs);
-
-    // Area occupancy bars — support both array and object formats
-    const areaObj = bm.byArea || bm.areaData || {};
-    const areaArr = bm.areas || bm.areaOccupancy || [];
-    let areaBars = [];
-    if (areaArr.length) {
-      areaBars = areaArr.map(a=>({label:a.name||a.area||'Area',val:a.occupancy||a.count||0}));
-    } else if (Object.keys(areaObj).length) {
-      areaBars = Object.entries(areaObj).map(([k,v])=>({label:'Area '+k, val: typeof v==='object'?(v.active||0):v}));
-    }
-    if (areaBars.length) {
-      _anHBars('anbm-area-bars', areaBars.slice(0,10), AN_COLORS);
-    } else {
-      _anHBars('anbm-area-bars',[{label:'No area data',val:0}],['var(--text3)']);
-    }
-
-    // Pending requests list
-    const pList=document.getElementById('anbm-pending-list');
-    const pendReqs=bm.pendingRequests||[];
-    if (pList) {
-      pList.innerHTML=pendReqs.length?pendReqs.slice(0,8).map(r=>`
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:0.4rem 0.6rem;background:var(--surface2);border-radius:7px;font-size:0.75rem;border-left:2px solid var(--gold);">
-          <div><strong>${r.name||r.userName||'—'}</strong><div style="color:var(--text3);font-size:0.65rem;">${r.dept||r.department||'—'} · ${r.requestDate||'—'}</div></div>
-          <span style="background:rgba(245,158,11,0.15);color:var(--gold);padding:0.2rem 0.5rem;border-radius:5px;font-size:0.65rem;font-family:var(--font-mono);">Pending</span>
-        </div>`).join(''):'<div style="color:var(--green);text-align:center;padding:1rem;font-size:0.8rem;">✅ No pending requests</div>';
-    }
-
-    // 7-day trend (mock or real)
-    const trend7=bm.weeklyTrend||[{label:'Mon',val:0},{label:'Tue',val:0},{label:'Wed',val:0},{label:'Thu',val:0},{label:'Fri',val:0},{label:'Sat',val:0},{label:'Sun',val:0}];
-    _anBarChart('anbm-trend-bars','anbm-trend-bars-l',trend7,'var(--accent2)');
-
-    // User table
-    const uTbl=document.getElementById('anbm-user-tbl');
-    const users=bm.allUsers||bm.users||[];
-    if (uTbl) {
-      uTbl.innerHTML=users.length?users.slice(0,15).map(u=>{
-        const status = u.accountStatus||u.status||'Active';
-        const stCol=status==='Active'?'var(--green)':status==='Terminated'||status==='Revoked'?'var(--red)':'var(--gold)';
-        return `<tr>
-          <td style="padding:0.3rem 0.5rem;font-weight:600;">${u.name||'—'}</td>
-          <td style="padding:0.3rem 0.5rem;color:var(--text3);">${u.category||u.dept||u.department||'—'}</td>
-          <td style="text-align:center;padding:0.3rem 0.5rem;"><span style="background:rgba(59,130,246,0.1);color:var(--accent);padding:0.15rem 0.4rem;border-radius:5px;font-size:0.7rem;font-family:var(--font-mono);">${u.authorizationStatus||u.accessLevel||'L1'}</span></td>
-          <td style="text-align:center;padding:0.3rem 0.5rem;font-family:var(--font-mono);font-size:0.72rem;">${u.primaryAccessArea||(u.accessAreas||[]).length||u.areaCount||'—'}</td>
-          <td style="text-align:center;padding:0.3rem 0.5rem;"><span style="color:${stCol};font-size:0.75rem;font-weight:600;">${status}</span></td>
-          <td style="padding:0.3rem 0.5rem;color:var(--text3);font-family:var(--font-mono);font-size:0.7rem;">${u.joiningDate||u.lastAccess||u.lastSeen||'—'}</td>
-        </tr>`;
-      }).join(''):'<tr><td colspan="6" style="text-align:center;padding:1.5rem;color:var(--text3);">No users registered</td></tr>';
-    }
-  }
-
   // ── Extended _anPeople: add joining trend + designation table ──
   function _anPeople(ff) {
     _anPeopleBase(ff);
@@ -14694,16 +14440,16 @@
     const totalSeats = fl.reduce((s,l)=>s+l.totalSeats,0);
     const occSeats   = fl.reduce((s,l)=>s+l.occupiedSeats,0);
     const availSeats = fl.reduce((s,l)=>s+l.availableSeats,0);
-    const util = totalSeats > 0 ? occSeats/totalSeats : 0;
-    const overCap = fl.filter(l=>l.statusIndicator==='OVER-CAPACITY').length;
-    const activeRes = res.filter(r=>r.status==='Active').length;
     document.getElementById('lab-kpi-labs').textContent = fl.length;
     document.getElementById('lab-kpi-rooms').textContent = fr.length;
     document.getElementById('lab-kpi-avail').textContent = availSeats;
     document.getElementById('lab-kpi-occ').textContent = occSeats;
-    document.getElementById('lab-kpi-util').textContent = Math.round(util*100)+'%';
-    document.getElementById('lab-kpi-researchers').textContent = activeRes;
-    document.getElementById('lab-kpi-overcap').textContent = overCap;
+    // Faculty Rooms KPI — populated here and also by labRenderFacultyRooms()
+    const frKpiEl = document.getElementById('lab-kpi-faculty-rooms');
+    if (frKpiEl) {
+      const frData = LAB.data.facultyRooms || [];
+      frKpiEl.textContent = frData.length;
+    }
   }
 
   // ── Sort helper ───────────────────────────────────────────────────────
@@ -14987,7 +14733,64 @@
 
   // ── FACULTY ROOMS RENDER ──────────────────────────────────────────────
   function labRenderFacultyRooms() {
-    let data = labSortData(LAB.data.facultyRooms, 'facultyRooms');
+    let all = LAB.data.facultyRooms || [];
+
+    // KPI counters
+    const occupied   = all.filter(r => (r.status||'').toLowerCase() === 'occupied').length;
+    const unoccupied = all.length - occupied;
+    const _sv = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    _sv('fr-kpi-total',      all.length);
+    _sv('fr-kpi-occupied',   occupied);
+    _sv('fr-kpi-unoccupied', unoccupied);
+
+    // Donut chart
+    try {
+      const canvas = document.getElementById('fr-donut');
+      if (canvas && all.length) {
+        const ctx = canvas.getContext('2d');
+        const colors = ['#10B981','#F97316'];
+        const vals   = [occupied, unoccupied];
+        const total  = occupied + unoccupied || 1;
+        let angle = -Math.PI / 2;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        vals.forEach((v, i) => {
+          const slice = (v / total) * 2 * Math.PI;
+          ctx.beginPath();
+          ctx.moveTo(60, 60);
+          ctx.arc(60, 60, 50, angle, angle + slice);
+          ctx.closePath();
+          ctx.fillStyle = colors[i];
+          ctx.fill();
+          angle += slice;
+        });
+        // Centre hole
+        ctx.beginPath();
+        ctx.arc(60, 60, 28, 0, 2 * Math.PI);
+        ctx.fillStyle = getComputedStyle(canvas.closest('.lab-sec') || document.body).getPropertyValue('--surface') || '#1e1e2e';
+        ctx.fill();
+        // Label
+        ctx.fillStyle = '#e2e8f0';
+        ctx.font = 'bold 13px monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(all.length, 60, 60);
+      }
+    } catch(e) {}
+
+    // Apply filters
+    const search  = (document.getElementById('fr-search')?.value || '').toLowerCase();
+    const statF   = document.getElementById('fr-filter-status')?.value || '';
+    let data = all.filter(r => {
+      const matchSearch = !search || [r.facultyName, r.room, r.status].some(v => (v||'').toLowerCase().includes(search));
+      const matchStat   = !statF  || (r.status||'') === statF;
+      return matchSearch && matchStat;
+    });
+    data = labSortData(data, 'facultyRooms');
+
+    // Update the Lab KPI strip Faculty Rooms counter
+    const frKpi = document.getElementById('lab-kpi-faculty-rooms');
+    if (frKpi) { frKpi.textContent = all.length; frKpi.dataset.sub = `${occupied} Occupied · ${unoccupied} Unoccupied`; }
+
     const tbody = document.getElementById('lab-froom-tbody');
     if (!tbody) return;
     tbody.innerHTML = data.map((r, i) => `<tr>
@@ -14997,9 +14800,18 @@
       <td>${labBadge(r.status, labStatusBg(r.status))}</td>
       <td style="white-space:nowrap;">
         <button class="tbl-action-btn" onclick="labEditRecord('facultyRoom','${r.id}')">✏️ Edit</button>
+        <button class="tbl-action-btn" onclick="labToggleFacultyRoomStatus('${r.id}')">🔄 Toggle</button>
         <button class="tbl-action-btn danger" onclick="labDeleteRecord('facultyRooms','${r.id}')">🗑</button>
       </td>
-    </tr>`).join('') || '<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--text3);">No records</td></tr>';
+    </tr>`).join('') || '<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--text3);">No records found.</td></tr>';
+  }
+
+  function labToggleFacultyRoomStatus(id) {
+    const rec = (LAB.data.facultyRooms||[]).find(r => r.id === id);
+    if (!rec) return;
+    const newStatus = (rec.status||'').toLowerCase() === 'occupied' ? 'Unoccupied' : 'Occupied';
+    rec.status = newStatus;
+    labRenderFacultyRooms();
   }
 
   // ── SUB-TAB SWITCHING ─────────────────────────────────────────────────
@@ -15019,7 +14831,6 @@
       else if (tab === 'faculty-rooms')  { labRenderFacultyRooms(); }  // note: identical tab id to facility-rooms guard above — kept for HTML button parity; HTML buttons use distinct ids
       else if (tab === 'utilization')    { labRenderUtilizationRibbons(); }
       else if (tab === 'category')       { labRenderCategoryAnalysis(); }
-      else if (tab === 'capacity')       { labRenderCapacityManager(); }
     } catch(e) {}
   }
 
@@ -15583,7 +15394,10 @@
 
   function refreshAssetKPIs() {
     const set = (id, val) => { const el=document.getElementById(id); if(el) el.textContent=val; };
-    set('akpi-it', ASSET_DB.it.length);
+    // FIX 5: sum quantity per row so IT Assets KPI matches the "Total Items" in category breakdown.
+    // Using .length (row count) diverged whenever a row has quantity > 1.
+    const _sumQty = arr => arr.reduce((s,r) => { const q = parseFloat(String(r.quantity||'').replace(/[,\s]/g,''))||1; return s+q; }, 0);
+    set('akpi-it', _sumQty(ASSET_DB.it));
     // FIX (v20): NON-IT count = sum of quantity per row, not row count
     set('akpi-nonit', ASSET_DB.nonit.length); // FIX (v24.3): row count, not sum(quantity)
     set('akpi-gpu', ASSET_DB.gpu.length);
@@ -16514,10 +16328,12 @@
 
     // ── IT ──────────────────────────────────────────────────────────────────
     const itByCategory = {};
+    // FIX 6: sum quantity per row (not count++) so exec IT total matches Asset Management KPI.
+    const _itQty = r => { const q = parseFloat(String(r.quantity||'').replace(/[,\s]/g,'')); return (isNaN(q)||q<1) ? 1 : q; };
     (adb.it || []).forEach(r => {
       const cat = (r.category && String(r.category).trim()) ? String(r.category).trim() : 'Other';
       if (!itByCategory[cat]) itByCategory[cat] = { count:0, value:0 };
-      itByCategory[cat].count++;
+      itByCategory[cat].count += _itQty(r);
       itByCategory[cat].value += _toINRNum(r.purchaseValue);
     });
     const itRows = Object.entries(itByCategory).sort((a,b) => b[1].count - a[1].count);
@@ -18284,8 +18100,7 @@ async function _runAutoSync() {
         if (document.getElementById('tab-biometric')?.classList.contains('active')) {
           try { bmOnData(bmData); } catch(e) {}
         }
-        try { bmRenderCapacityManager(); } catch(e) {}
-        try { labRenderCapacityManager(); } catch(e) {}
+
       }
     } catch(e) { console.warn('[auto-sync] biometric failed:', e.message); }
 
@@ -19367,117 +19182,9 @@ function refreshOverviewKPIs() {
     .forEach(el => el.style.display = 'none');
 }
 
-// ─── CAPACITY MANAGER — shared room data ──────────────────────────────────────
-// Room capacities from GAS BIO_CAPACITY (v24.0 confirmed values)
-const ROOM_CAPACITY = {
-  '603':15,'604':8,'609':30,'610':30,'611':10,
-  '615':30,'616':24,'617':30,'619':24,'620':30,
-  '622':24,'623':30,'625':24,'626':4,'618':24,
-  '664':8,'670':10
-};
 
-function _buildCapacityData() {
-  // Build occupancy map from biometric data
-  const occupancy = {};  // roomKey → count of active users
-  const rawUsers = (typeof BM !== 'undefined' && BM.raw && BM.raw.allUsers) ? BM.raw.allUsers : [];
-  rawUsers.forEach(u => {
-    const area = String(u.primaryAccessArea || '').trim();
-    if (!area) return;
-    occupancy[area] = (occupancy[area] || 0) + 1;
-  });
 
-  // Merge with room capacity map
-  const rooms = Object.entries(ROOM_CAPACITY).map(([room, cap]) => ({
-    room,
-    capacity: cap,
-    occupied: occupancy[room] || 0,
-    pct: cap > 0 ? Math.round((occupancy[room] || 0) / cap * 100) : 0
-  }));
-  return rooms;
-}
 
-function _capacityCard(r) {
-  const pct = r.pct;
-  const barColor = pct >= 100 ? 'var(--red)' : pct >= 80 ? 'var(--orange)' : pct >= 50 ? 'var(--gold)' : 'var(--green)';
-  const statusLabel = pct >= 100 ? 'Full' : pct >= 80 ? 'Near Full' : pct >= 50 ? 'Moderate' : 'Available';
-  const statusColor = pct >= 100 ? 'var(--red)' : pct >= 80 ? 'var(--orange)' : pct >= 50 ? 'var(--gold)' : 'var(--green)';
-  return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1rem;transition:box-shadow 0.2s;" onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,0.2)'" onmouseout="this.style.boxShadow=''">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.6rem;">
-      <div style="font-size:1rem;font-weight:700;font-family:var(--font-mono);color:var(--text);">Room ${r.room}</div>
-      <div style="font-size:0.68rem;font-family:var(--font-mono);color:${statusColor};font-weight:600;">${statusLabel}</div>
-    </div>
-    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:0.5rem;">
-      <div style="font-size:1.6rem;font-weight:700;font-family:var(--font-display);color:var(--text);">${r.occupied}<span style="font-size:0.85rem;font-weight:400;color:var(--text3);"> / ${r.capacity}</span></div>
-      <div style="font-size:1rem;font-weight:700;font-family:var(--font-mono);color:${barColor};">${pct}%</div>
-    </div>
-    <div style="height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;">
-      <div style="height:100%;width:${Math.min(pct,100)}%;background:${barColor};border-radius:3px;transition:width 0.4s ease;"></div>
-    </div>
-    <div style="font-size:0.65rem;color:var(--text3);margin-top:0.4rem;font-family:var(--font-mono);">${r.capacity - r.occupied > 0 ? (r.capacity - r.occupied) + ' seats available' : 'No seats available'}</div>
-  </div>`;
-}
-
-// Capacity Manager renderer for Labs tab
-function labRenderCapacityManager() {
-  const rooms = _buildCapacityData();
-  const grid = document.getElementById('cap-room-grid');
-  const noData = document.getElementById('cap-no-data');
-  if (!grid) return;
-
-  if (!rooms.length || !((typeof BM !== 'undefined') && BM.raw && BM.raw.allUsers)) {
-    grid.style.display = 'none';
-    if (noData) noData.style.display = 'block';
-    return;
-  }
-  if (noData) noData.style.display = 'none';
-  grid.style.display = 'grid';
-
-  // KPIs
-  const sv = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-  const underCap = rooms.filter(r => r.pct < 80).length;
-  const nearCap  = rooms.filter(r => r.pct >= 80 && r.pct < 100).length;
-  const atCap    = rooms.filter(r => r.pct >= 100).length;
-  sv('cap-kpi-rooms', rooms.length);
-  sv('cap-kpi-avail', underCap);
-  sv('cap-kpi-near',  nearCap);
-  sv('cap-kpi-full',  atCap);
-
-  // Sort: full first, then near, then by room number
-  rooms.sort((a,b) => b.pct - a.pct);
-  grid.innerHTML = rooms.map(_capacityCard).join('');
-}
-
-// Capacity Manager renderer for Biometric tab
-function bmRenderCapacityManager() {
-  const rooms = _buildCapacityData();
-  const grid = document.getElementById('bm-capacity-grid');
-  if (!grid) return;
-  if (!rooms.length) { grid.innerHTML = '<div style="color:var(--text3);font-size:0.8rem;padding:1rem;">No data — connect sheet and refresh.</div>'; return; }
-  rooms.sort((a,b) => b.pct - a.pct);
-  grid.innerHTML = rooms.map(_capacityCard).join('');
-}
-
-// Auto-call bmRenderCapacityManager when biometric data loads
-(function(){
-  var _origBmOnData = typeof bmOnData === 'function' ? bmOnData : null;
-  if (!_origBmOnData) return;
-  window.bmOnData = function(data) {
-    _origBmOnData.apply(this, arguments);
-    try { bmRenderCapacityManager(); } catch(e) {}
-    try { refreshOverviewKPIs(); } catch(e) {}
-  };
-})();
-
-// Hook into switchModule / showTab to refresh overview whenever it's shown
-(function() {
-  const origSwitch = typeof switchModule === 'function' ? switchModule : null;
-  if (origSwitch) {
-    window.switchModule = function(mod) {
-      origSwitch(mod);
-      if (mod === 'overview' || mod === 'dashboard') setTimeout(refreshOverviewKPIs, 150);
-    };
-  }
-})();
 
 // ═══════════════════════════════════════════════════════════════════
 // FIX 4 (v29) — Edit must update original row in sheet
@@ -22300,14 +22007,43 @@ function _renderAllModules() {
   // Sidebar
   _sf('refreshSidebarAnalytics');
 
-  // FIX: Re-render role dashboard with live data now that DB[], EXP, BM etc are populated.
-  // v31Init() fires at 600ms (before sysFetchAll's 800ms delay even starts), so it always
-  // hits empty arrays and renders dashes. _renderAllModules() is called after all data
-  // loads — this is the correct moment to re-trigger the role dashboard.
+  // FIX 2: Re-render role dashboard with live data now that DB[], EXP, BM etc are populated.
+  // v31Init fires at 50ms but sysFetchAll starts at 800ms and takes 2-5s to complete.
+  // _renderAllModules() is the correct moment to re-trigger so role panel shows live data.
   try {
     if (typeof window.v31FetchAll === 'function' &&
         typeof _currentUser !== 'undefined' && _currentUser) {
       window.v31FetchAll();
+    }
+  } catch(e) {}
+
+  // FIX 4b: Re-run joining trend + designation frequency now that DB[] is populated.
+  // These show "connect sheet" at portal-ready time because DB[] is empty then.
+  try {
+    if (typeof _fixJoiningTrend === 'function')     _fixJoiningTrend();
+    if (typeof _fixDesignationTable === 'function') _fixDesignationTable();
+  } catch(e) {}
+
+  // FIX 4c: If analytics tab is currently visible, re-render its active section.
+  try {
+    const _anTab = document.getElementById('tab-analytics');
+    if (_anTab && _anTab.classList.contains('active')) {
+      if (typeof _renderAnSection === 'function' && typeof _anCurrentSec !== 'undefined') {
+        setTimeout(function(){ try { _renderAnSection(_anCurrentSec); } catch(e){} }, 100);
+      } else {
+        const _pill = document.querySelector('#tab-analytics .an-pill.active');
+        if (_pill) setTimeout(function(){ try { _pill.click(); } catch(e){} }, 100);
+      }
+    }
+  } catch(e) {}
+
+  // FIX 7: Rebuild exec dashboard category breakdown with fresh ASSET_DB so new
+  // categories added via sheet appear without a manual refresh.
+  try {
+    if (typeof execBuildAll === 'function' &&
+        typeof EXEC !== 'undefined' && EXEC &&
+        typeof ASSET_DB !== 'undefined' && ASSET_DB.it && ASSET_DB.it.length) {
+      execBuildAll();
     }
   } catch(e) {}
 }
@@ -22681,9 +22417,6 @@ window._wsai_renderAll=function(){
     _sf('labRenderUtilizationRibbons');_sf('labRenderCategoryAnalysis');
     _sf('labRenderFacilityRooms');_sf('labRenderResearchers');_sf('labRenderFacultyRooms');
   }}catch(e){}
-
-  // Capacity Manager — update both Lab and Biometric capacity panels
-  try{_sf('labRenderCapacityManager');_sf('bmRenderCapacityManager');}catch(e){}
 
   // Inventory — renders from current INV_DB (invSyncAll updates it independently)
   try{_sf('renderInventory');_sf('refreshLowStockAlerts');}catch(e){}
@@ -23150,7 +22883,11 @@ window.v31Init = function() {
   if (role === 'faculty' && V31.facType) subLine = V31.facType + (V31.facDept ? ' · ' + V31.facDept : '');
   _sbSet('v31-sub', subLine + ' · WSAI, IIT Madras');
 
-  // Load data
+  // Load data — render immediately from local DB for instant display,
+  // then fire GAS call in background to update with live sheet data.
+  if (typeof _v31BuildFromLocalDB === 'function') {
+    try { _v31BuildFromLocalDB(role); } catch(e) {}
+  }
   v31FetchAll();
 
   // Start auto-sync
@@ -24363,7 +24100,9 @@ function _v31SimpleTable(tbodyId, rows, rowFn, countId) {
   if (_origApply) {
     window.applyAccessLevelUI = function(role) {
       _origApply.apply(this, arguments);
-      setTimeout(function(){ try { v31Init(); } catch(e){ console.warn('v31Init error:',e); } }, 600);
+      // Reduced from 600ms → 50ms so banner is populated before the user sees it
+      // (landing tab now opens at 200ms, this fires at 250ms — no visible flash)
+      setTimeout(function(){ try { v31Init(); } catch(e){ console.warn('v31Init error:',e); } }, 50);
     };
   } else {
     // applyAccessLevelUI not defined yet — wait for it
@@ -24373,7 +24112,7 @@ function _v31SimpleTable(tbodyId, rows, rowFn, countId) {
         var _orig2 = applyAccessLevelUI;
         window.applyAccessLevelUI = function(role) {
           _orig2.apply(this, arguments);
-          setTimeout(function(){ try { v31Init(); } catch(e){} }, 600);
+          setTimeout(function(){ try { v31Init(); } catch(e){} }, 50);
         };
         window.applyAccessLevelUI._v31patched = true;
       }
@@ -25075,26 +24814,8 @@ function _v31SimpleTable(tbodyId, rows, rowFn, countId) {
   function _removeBiometricTodayLogs() {
     // Remove the HTML element
     const todayKpiEl = _id('anbm-today');
-    if (todayKpiEl) {
-      const card = todayKpiEl.closest('.an-kpi');
-      if (card) {
-        card.remove();
-        _log('Removed "Today\'s Logs" KPI card from biometric analytics');
-      }
-    }
 
-    // Patch _anBiometric to not set the removed element
-    const origAnBiometric = window._anBiometric;
-    // It's defined inside a closure — we patch it via the analytics refresh chain
-    // by removing the element permanently and intercepting _sv for anbm-today
-    const origSv = window._sv;
-    if (typeof origSv === 'function') {
-      window._sv = function(id, val) {
-        if (id === 'anbm-today') return; // suppress
-        return origSv.apply(this, arguments);
-      };
-    }
-  }
+  
 
   // ─────────────────────────────────────────────────────────────────────────────
   // SECTION 9 — DARK & LIGHT THEME VISUAL POLISH
@@ -25697,27 +25418,6 @@ tbody td { vertical-align: middle; }
       }
     }, 2000);
     setTimeout(() => clearInterval(checkInterval), 60000); // stop after 1 min
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────────
-  // SECTION 15 — BIOMETRIC TODAY LOGS REMOVAL (belt + suspenders)
-  // CSS already hides it; this removes it from the DOM and JS arrays
-  // ─────────────────────────────────────────────────────────────────────────────
-  function _removeTodayLogsFromDOM() {
-    // Remove HTML node
-    const card = _qs('.an-kpi:has(#anbm-today), .an-kpi cy:has(#anbm-today)');
-    if (card) card.remove();
-
-    // Also find it by iterating the KPI row
-    const kpiRow = _qs('#an-biometric-an .an-kpi-row');
-    if (kpiRow) {
-      kpiRow.querySelectorAll('.an-kpi').forEach(kpi => {
-        if (kpi.querySelector('#anbm-today') || kpi.textContent.includes("Today's Logs")) {
-          kpi.remove();
-        }
-      });
-    }
-    _log('Today\'s Logs KPI removed from biometric');
   }
 
   // ─────────────────────────────────────────────────────────────────────────────
