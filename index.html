@@ -1325,6 +1325,99 @@
     #v31-auto-sync-bar { height:2px;background:transparent;border-radius:2px;overflow:hidden;margin-bottom:0.75rem;transition:opacity 0.3s; }
     #v31-auto-sync-bar.syncing { background:linear-gradient(90deg,var(--accent),var(--accent2),var(--purple),var(--accent));background-size:300% 100%;animation:syncSlide 1s linear infinite; }
     #v31-auto-sync-bar.done    { background:var(--green);animation:none; }
+
+    /* ── MY DASHBOARD (v35) ── */
+    .myd-kpi-section { margin-bottom: 1.75rem; }
+    .myd-sec-hdr {
+      font-size: 0.78rem;
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text2);
+      margin-bottom: 0.75rem;
+      padding: 0.4rem 0.75rem;
+      background: var(--surface2);
+      border-radius: 8px;
+      border-left: 3px solid var(--accent);
+      font-weight: 600;
+    }
+    .myd-kpi-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+    .myd-kpi-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 0.85rem 1rem;
+      min-width: 110px;
+      cursor: pointer;
+      transition: transform 0.18s, box-shadow 0.18s, border-color 0.18s;
+      position: relative;
+      flex: 1 1 110px;
+      max-width: 160px;
+    }
+    .myd-kpi-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(59,130,246,0.18);
+      border-color: var(--accent);
+    }
+    .myd-kpi-card.myd-kpi-alert { border-color: rgba(239,68,68,0.3); background: rgba(239,68,68,0.04); }
+    .myd-kpi-card.myd-kpi-green { border-color: rgba(16,185,129,0.3); background: rgba(16,185,129,0.04); }
+    .myd-kpi-card.myd-kpi-orange { border-color: rgba(249,115,22,0.3); background: rgba(249,115,22,0.04); }
+    .myd-kpi-icon { font-size: 1.1rem; margin-bottom: 0.3rem; }
+    .myd-kpi-val { font-size: 1.4rem; font-weight: 700; color: var(--text); font-family: var(--font-mono); line-height: 1.1; }
+    .myd-kpi-lbl { font-size: 0.7rem; color: var(--text2); margin-top: 0.2rem; font-weight: 500; }
+    .myd-kpi-sub { font-size: 0.62rem; color: var(--text3); margin-top: 0.15rem; font-family: var(--font-mono); }
+
+    /* Drilldown overlay */
+    #myd-drilldown-overlay {
+      display: none;
+      position: fixed; inset: 0; z-index: 9000;
+      background: rgba(0,0,0,0.78);
+      backdrop-filter: blur(5px);
+      align-items: flex-start;
+      justify-content: center;
+      padding: 1.5rem;
+      overflow-y: auto;
+    }
+    #myd-drilldown-overlay.open { display: flex; }
+    #myd-drilldown-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      width: 100%;
+      max-width: 1100px;
+      position: relative;
+      animation: slideUp 0.3s cubic-bezier(.22,1,.36,1);
+      margin: auto;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    #myd-drilldown-box::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2), var(--purple));
+      border-radius: 18px 18px 0 0;
+    }
+    .myd-dd-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1.25rem 1.5rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; background: var(--surface); z-index: 1;
+      border-radius: 18px 18px 0 0;
+    }
+    .myd-dd-title { font-size: 1.1rem; font-weight: 700; color: var(--text); }
+    .myd-dd-close {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text2); cursor: pointer; font-size: 1.1rem;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.18s;
+    }
+    .myd-dd-close:hover { background: rgba(239,68,68,0.12); color: var(--red); }
+    .myd-dd-body { padding: 1.25rem 1.5rem 1.5rem; }
     </style>
 </head>
 <body>
@@ -1431,13 +1524,7 @@
           <span class="ni-icon">🏠</span> My Dashboard
         </div>
         <div class="nav-item" data-tab="dashboard" onclick="showTab('dashboard')">
-          <span class="ni-icon">⚡</span> Command Center
-        </div>
-        <div class="nav-item" data-tab="analytics" onclick="showTab('analytics')">
-          <span class="ni-icon">📊</span> Analytics
-        </div>
-        <div class="nav-item" data-tab="exec-dashboard" onclick="showTab('exec-dashboard')">
-          <span class="ni-icon">🏛️</span> Executive Summary
+          <span class="ni-icon">📊</span> Dashboard
         </div>
         <div class="nav-item" data-tab="role-dashboard" onclick="showTab('role-dashboard')" id="nav-role-dashboard" style="display:none !important;">
           <span class="ni-icon" id="nav-role-icon">📊</span> <span id="nav-role-label">Role Dashboard</span>
@@ -1537,664 +1624,8 @@
     <!-- MAIN CONTENT -->
     <main class="main">
 
-      <!-- ══════════════════════════════════════════════════════
-           MY DASHBOARD — Professional Landing Page with KPI Modules
-      ══════════════════════════════════════════════════════════ -->
-      <div class="tabs active" id="tab-my-dashboard">
-        <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:1.5rem;">
-          <div>
-            <h2 style="font-size:1.6rem;margin-bottom:0.3rem;">🏠 My Dashboard</h2>
-            <p id="my-dash-subtitle">Unified overview · All modules · IIT Madras WSAI Portal</p>
-          </div>
-          <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
-            <div id="my-dash-clock" style="font-family:var(--font-mono);font-size:0.82rem;color:var(--text2);padding:0.4rem 0.9rem;background:var(--surface2);border:1px solid var(--border);border-radius:8px;"></div>
-            <button onclick="myDashRefreshAll()" style="padding:0.4rem 1rem;border-radius:8px;border:1px solid rgba(59,130,246,0.35);background:rgba(59,130,246,0.08);color:var(--accent);font-size:0.78rem;cursor:pointer;font-family:var(--font-body);font-weight:600;">⟳ Refresh All</button>
-          </div>
-        </div>
-
-        <!-- ── STYLE FOR MY DASHBOARD ── -->
-        <style>
-        /* ── My Dashboard Module Cards ── */
-        .myd-module {
-          background: var(--surface);
-          border: 1px solid var(--border);
-          border-radius: 16px;
-          overflow: hidden;
-          transition: box-shadow 0.2s;
-          margin-bottom: 1rem;
-        }
-        .myd-module:hover { box-shadow: 0 6px 24px rgba(0,0,0,0.18); }
-        [data-theme="light"] .myd-module { box-shadow: 0 1px 4px rgba(15,23,42,0.06); }
-        [data-theme="light"] .myd-module:hover { box-shadow: 0 4px 16px rgba(15,23,42,0.12); }
-
-        .myd-header {
-          padding: 1rem 1.25rem;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          cursor: pointer;
-          border-bottom: 1px solid transparent;
-          transition: border-color 0.2s, background 0.2s;
-          user-select: none;
-        }
-        .myd-header:hover { background: rgba(255,255,255,0.03); }
-        [data-theme="light"] .myd-header:hover { background: rgba(15,23,42,0.02); }
-        .myd-header.expanded { border-bottom-color: var(--border); }
-
-        .myd-header-left { display: flex; align-items: center; gap: 0.75rem; }
-        .myd-icon {
-          width: 38px; height: 38px; border-radius: 10px;
-          display: flex; align-items: center; justify-content: center;
-          font-size: 1.1rem; flex-shrink: 0;
-        }
-        .myd-title { font-size: 0.95rem; font-weight: 700; color: var(--text); }
-        .myd-subtitle { font-size: 0.72rem; color: var(--text3); font-family: var(--font-mono); margin-top: 1px; }
-
-        .myd-header-right { display: flex; align-items: center; gap: 0.75rem; }
-        .myd-kpi-strip { display: flex; gap: 0.5rem; flex-wrap: wrap; }
-        .myd-kpi-pill {
-          padding: 0.28rem 0.7rem;
-          border-radius: 20px;
-          font-size: 0.72rem;
-          font-family: var(--font-mono);
-          font-weight: 700;
-          display: flex; align-items: center; gap: 0.3rem;
-          white-space: nowrap;
-        }
-        .myd-chevron {
-          font-size: 0.8rem; color: var(--text3);
-          transition: transform 0.25s cubic-bezier(.4,0,.2,1);
-          margin-left: 0.25rem;
-        }
-        .myd-chevron.open { transform: rotate(180deg); }
-        .myd-open-btn {
-          font-size: 0.7rem; padding: 0.28rem 0.65rem; border-radius: 6px;
-          border: 1px solid var(--border); background: none; color: var(--text3);
-          cursor: pointer; font-family: var(--font-mono); transition: all 0.15s;
-        }
-        .myd-open-btn:hover { border-color: var(--accent); color: var(--accent); }
-
-        .myd-body {
-          display: none;
-          padding: 1rem 1.25rem 1.25rem;
-          animation: myd-fadein 0.22s ease;
-        }
-        .myd-body.open { display: block; }
-        @keyframes myd-fadein { from { opacity:0; transform:translateY(-6px); } }
-
-        /* KPI Grid inside expanded panel */
-        .myd-kpi-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-          gap: 0.6rem;
-          margin-bottom: 1rem;
-        }
-        .myd-kpi-card {
-          background: var(--surface2);
-          border: 1px solid var(--border);
-          border-radius: 10px;
-          padding: 0.75rem 0.9rem;
-          text-align: center;
-          transition: transform 0.15s;
-        }
-        .myd-kpi-card:hover { transform: translateY(-2px); }
-        .myd-kpi-val { font-size: 1.4rem; font-weight: 800; font-family: var(--font-mono); line-height: 1.1; }
-        .myd-kpi-lbl { font-size: 0.65rem; color: var(--text3); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.06em; }
-        .myd-kpi-card.c-blue  .myd-kpi-val { color: var(--accent); }
-        .myd-kpi-card.c-green .myd-kpi-val { color: var(--green); }
-        .myd-kpi-card.c-gold  .myd-kpi-val { color: var(--gold); }
-        .myd-kpi-card.c-purple .myd-kpi-val { color: var(--purple); }
-        .myd-kpi-card.c-orange .myd-kpi-val { color: var(--orange); }
-        .myd-kpi-card.c-red   .myd-kpi-val { color: var(--red); }
-        .myd-kpi-card.c-cyan  .myd-kpi-val { color: var(--accent2); }
-
-        /* Visual charts in expanded panels */
-        .myd-chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 0.75rem; }
-        @media (max-width: 700px) { .myd-chart-row { grid-template-columns: 1fr; } }
-        .myd-chart-box {
-          background: var(--surface2); border: 1px solid var(--border);
-          border-radius: 10px; padding: 0.75rem 1rem;
-        }
-        .myd-chart-label { font-size: 0.7rem; font-family: var(--font-mono); color: var(--text3); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 0.6rem; }
-
-        /* Area occupancy bars */
-        .myd-area-bar-row { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.45rem; }
-        .myd-area-name { font-size: 0.72rem; color: var(--text2); min-width: 110px; font-family: var(--font-mono); }
-        .myd-area-track { flex: 1; height: 8px; background: var(--surface3); border-radius: 4px; overflow: hidden; }
-        .myd-area-fill { height: 100%; border-radius: 4px; transition: width 0.8s cubic-bezier(.4,0,.2,1); }
-        .myd-area-pct { font-size: 0.68rem; font-family: var(--font-mono); color: var(--text3); min-width: 36px; text-align: right; }
-
-        /* Category breakdown chips */
-        .myd-cat-chip {
-          display: inline-flex; align-items: center; gap: 0.3rem;
-          padding: 0.3rem 0.7rem; border-radius: 6px;
-          font-size: 0.72rem; font-family: var(--font-mono); font-weight: 600;
-          background: var(--surface3); border: 1px solid var(--border);
-          color: var(--text2); margin: 0.15rem;
-        }
-        .myd-cat-chip .chip-count { color: var(--accent); }
-        </style>
-
-        <!-- ════ GLOBAL SUMMARY ROW ════ -->
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:0.75rem;margin-bottom:1.5rem;">
-          <div style="background:linear-gradient(135deg,rgba(59,130,246,0.15),rgba(6,182,212,0.08));border:1px solid rgba(59,130,246,0.25);border-radius:12px;padding:1rem;text-align:center;">
-            <div style="font-size:2rem;font-weight:900;font-family:var(--font-mono);color:var(--accent);" id="myd-gkpi-people">—</div>
-            <div style="font-size:0.65rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;margin-top:3px;">Total People</div>
-          </div>
-          <div style="background:linear-gradient(135deg,rgba(16,185,129,0.15),rgba(5,150,105,0.08));border:1px solid rgba(16,185,129,0.25);border-radius:12px;padding:1rem;text-align:center;">
-            <div style="font-size:2rem;font-weight:900;font-family:var(--font-mono);color:var(--green);" id="myd-gkpi-assets">—</div>
-            <div style="font-size:0.65rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;margin-top:3px;">Total Assets</div>
-          </div>
-          <div style="background:linear-gradient(135deg,rgba(245,158,11,0.15),rgba(217,119,6,0.08));border:1px solid rgba(245,158,11,0.25);border-radius:12px;padding:1rem;text-align:center;">
-            <div style="font-size:2rem;font-weight:900;font-family:var(--font-mono);color:var(--gold);" id="myd-gkpi-expenses">—</div>
-            <div style="font-size:0.65rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;margin-top:3px;">Pending Expenses</div>
-          </div>
-          <div style="background:linear-gradient(135deg,rgba(139,92,246,0.15),rgba(109,40,217,0.08));border:1px solid rgba(139,92,246,0.25);border-radius:12px;padding:1rem;text-align:center;">
-            <div style="font-size:2rem;font-weight:900;font-family:var(--font-mono);color:var(--purple);" id="myd-gkpi-pubs">—</div>
-            <div style="font-size:0.65rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;margin-top:3px;">Publications</div>
-          </div>
-          <div style="background:linear-gradient(135deg,rgba(249,115,22,0.15),rgba(234,88,12,0.08));border:1px solid rgba(249,115,22,0.25);border-radius:12px;padding:1rem;text-align:center;">
-            <div style="font-size:2rem;font-weight:900;font-family:var(--font-mono);color:var(--orange);" id="myd-gkpi-labs">—</div>
-            <div style="font-size:0.65rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;margin-top:3px;">Lab Util%</div>
-          </div>
-          <div style="background:linear-gradient(135deg,rgba(239,68,68,0.12),rgba(185,28,28,0.06));border:1px solid rgba(239,68,68,0.2);border-radius:12px;padding:1rem;text-align:center;">
-            <div style="font-size:2rem;font-weight:900;font-family:var(--font-mono);color:var(--red);" id="myd-gkpi-bio">—</div>
-            <div style="font-size:0.65rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;margin-top:3px;">Bio Pending</div>
-          </div>
-        </div>
-
-        <!-- ════ MODULE 1: PEOPLE MANAGEMENT ════ -->
-        <div class="myd-module">
-          <div class="myd-header" onclick="myDashToggle('people')" id="myd-hdr-people">
-            <div class="myd-header-left">
-              <div class="myd-icon" style="background:rgba(59,130,246,0.15);">👥</div>
-              <div>
-                <div class="myd-title">People Management</div>
-                <div class="myd-subtitle">Staff · Faculty · Researchers · Students · Alumni</div>
-              </div>
-            </div>
-            <div class="myd-header-right">
-              <div class="myd-kpi-strip">
-                <div class="myd-kpi-pill" style="background:rgba(59,130,246,0.12);color:var(--accent);">👔 Staff <span id="myd-pill-staff">—</span></div>
-                <div class="myd-kpi-pill" style="background:rgba(16,185,129,0.12);color:var(--green);">🔬 Researchers <span id="myd-pill-res">—</span></div>
-                <div class="myd-kpi-pill" style="background:rgba(139,92,246,0.12);color:var(--purple);">🎓 Students <span id="myd-pill-stu">—</span></div>
-              </div>
-              <button class="myd-open-btn" onclick="event.stopPropagation();showTab('people')">Open →</button>
-              <span class="myd-chevron" id="myd-chev-people">▼</span>
-            </div>
-          </div>
-          <div class="myd-body" id="myd-body-people">
-            <div class="myd-kpi-grid">
-              <div class="myd-kpi-card c-blue"><div class="myd-kpi-val" id="myd-kpi-staff">—</div><div class="myd-kpi-lbl">Staff</div></div>
-              <div class="myd-kpi-card c-cyan"><div class="myd-kpi-val" id="myd-kpi-faculty">—</div><div class="myd-kpi-lbl">Faculty</div></div>
-              <div class="myd-kpi-card c-green"><div class="myd-kpi-val" id="myd-kpi-researchers">—</div><div class="myd-kpi-lbl">Researchers</div></div>
-              <div class="myd-kpi-card c-purple"><div class="myd-kpi-val" id="myd-kpi-students">—</div><div class="myd-kpi-lbl">Students</div></div>
-              <div class="myd-kpi-card c-gold"><div class="myd-kpi-val" id="myd-kpi-assocfac">—</div><div class="myd-kpi-lbl">Assoc. Faculty</div></div>
-              <div class="myd-kpi-card c-orange"><div class="myd-kpi-val" id="myd-kpi-alumni-p">—</div><div class="myd-kpi-lbl">Alumni</div></div>
-            </div>
-            <div class="myd-chart-row">
-              <div class="myd-chart-box">
-                <div class="myd-chart-label">Executive Summary — Active & Alumni</div>
-                <div id="myd-exec-table" style="font-size:0.78rem;">
-                  <div style="display:grid;grid-template-columns:1fr auto auto;gap:0.3rem 0.75rem;align-items:center;">
-                    <div style="color:var(--text3);font-size:0.65rem;font-family:var(--font-mono);text-transform:uppercase;padding-bottom:0.3rem;border-bottom:1px solid var(--border);">Category</div>
-                    <div style="color:var(--text3);font-size:0.65rem;font-family:var(--font-mono);text-transform:uppercase;text-align:right;padding-bottom:0.3rem;border-bottom:1px solid var(--border);">Active</div>
-                    <div style="color:var(--text3);font-size:0.65rem;font-family:var(--font-mono);text-transform:uppercase;text-align:right;padding-bottom:0.3rem;border-bottom:1px solid var(--border);">Alumni</div>
-                    <div>👔 Staff</div><div style="text-align:right;font-weight:700;font-family:var(--font-mono);color:var(--accent);" id="myd-es-staff-a">—</div><div style="text-align:right;font-family:var(--font-mono);color:var(--text3);" id="myd-es-staff-al">—</div>
-                    <div>🏫 Assoc. Faculty</div><div style="text-align:right;font-weight:700;font-family:var(--font-mono);color:var(--accent);" id="myd-es-af-a">—</div><div style="text-align:right;font-family:var(--font-mono);color:var(--text3);" id="myd-es-af-al">—</div>
-                    <div>🔬 Researchers</div><div style="text-align:right;font-weight:700;font-family:var(--font-mono);color:var(--green);" id="myd-es-res-a">—</div><div style="text-align:right;font-family:var(--font-mono);color:var(--text3);" id="myd-es-res-al">—</div>
-                    <div>🟢 Faculty</div><div style="text-align:right;font-weight:700;font-family:var(--font-mono);color:var(--accent2);" id="myd-es-fac-a">—</div><div style="text-align:right;font-family:var(--font-mono);color:var(--text3);">—</div>
-                    <div style="font-weight:700;">🧮 Grand Total</div><div style="text-align:right;font-weight:800;font-family:var(--font-mono);color:var(--accent);font-size:0.95rem;" id="myd-es-tot-a">—</div><div style="text-align:right;font-weight:800;font-family:var(--font-mono);color:var(--accent);font-size:0.95rem;" id="myd-es-tot-al">—</div>
-                  </div>
-                </div>
-              </div>
-              <div class="myd-chart-box">
-                <div class="myd-chart-label">Tenure & Retention Intelligence</div>
-                <div style="display:grid;grid-template-columns:1fr auto;gap:0.4rem 0.75rem;font-size:0.78rem;align-items:center;">
-                  <div style="color:var(--text2);">⏳ Avg Staff Tenure (Days)</div><div style="font-family:var(--font-mono);font-weight:700;text-align:right;color:var(--gold);" id="myd-ten-avg">—</div>
-                  <div style="color:var(--text2);">⚠ High Risk (&gt;90 days)</div><div style="font-family:var(--font-mono);font-weight:700;text-align:right;color:var(--orange);" id="myd-ten-risk">—</div>
-                  <div style="color:var(--text2);">🌱 Recent Joins (30 days)</div><div style="font-family:var(--font-mono);font-weight:700;text-align:right;color:var(--green);" id="myd-ten-joins">—</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- ════ MODULE 2: BIOMETRIC ACCESS ════ -->
-        <div class="myd-module">
-          <div class="myd-header" onclick="myDashToggle('biometric')" id="myd-hdr-biometric">
-            <div class="myd-header-left">
-              <div class="myd-icon" style="background:rgba(16,185,129,0.15);">🔐</div>
-              <div>
-                <div class="myd-title">Biometric Access</div>
-                <div class="myd-subtitle">Room access · User management · Area capacity</div>
-              </div>
-            </div>
-            <div class="myd-header-right">
-              <div class="myd-kpi-strip">
-                <div class="myd-kpi-pill" style="background:rgba(16,185,129,0.12);color:var(--green);">✅ Active <span id="myd-pill-bm-active">—</span></div>
-                <div class="myd-kpi-pill" style="background:rgba(245,158,11,0.12);color:var(--gold);">⏳ Pending <span id="myd-pill-bm-pending">—</span></div>
-              </div>
-              <button class="myd-open-btn" onclick="event.stopPropagation();showTab('biometric')">Open →</button>
-              <span class="myd-chevron" id="myd-chev-biometric">▼</span>
-            </div>
-          </div>
-          <div class="myd-body" id="myd-body-biometric">
-            <div class="myd-kpi-grid">
-              <div class="myd-kpi-card c-blue"><div class="myd-kpi-val" id="myd-bm-total">—</div><div class="myd-kpi-lbl">Total Active</div></div>
-              <div class="myd-kpi-card c-cyan"><div class="myd-kpi-val" id="myd-bm-inactive">—</div><div class="myd-kpi-lbl">Inactive</div></div>
-              <div class="myd-kpi-card c-green"><div class="myd-kpi-val" id="myd-bm-auth">—</div><div class="myd-kpi-lbl">Authorized</div></div>
-              <div class="myd-kpi-card c-orange"><div class="myd-kpi-val" id="myd-bm-pend">—</div><div class="myd-kpi-lbl">Pending</div></div>
-              <div class="myd-kpi-card c-red"><div class="myd-kpi-val" id="myd-bm-rev">—</div><div class="myd-kpi-lbl">Revoked</div></div>
-              <div class="myd-kpi-card c-purple"><div class="myd-kpi-val" id="myd-bm-students">—</div><div class="myd-kpi-lbl">Students</div></div>
-            </div>
-            <!-- Area Occupancy (like the biometric module's bm-area-grid) -->
-            <div class="myd-chart-box" style="margin-top:0.5rem;">
-              <div class="myd-chart-label">🏢 Area Occupancy</div>
-              <div id="myd-area-bars">
-                <div style="color:var(--text3);font-size:0.78rem;font-family:var(--font-mono);text-align:center;padding:0.75rem 0;">Load biometric data to see area occupancy</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- ════ MODULE 3: FACILITY & ROOM MANAGEMENT ════ -->
-        <div class="myd-module">
-          <div class="myd-header" onclick="myDashToggle('labs')" id="myd-hdr-labs">
-            <div class="myd-header-left">
-              <div class="myd-icon" style="background:rgba(6,182,212,0.15);">🏛️</div>
-              <div>
-                <div class="myd-title">Facility & Room Management</div>
-                <div class="myd-subtitle">Faculty labs · Facility rooms · Utilization</div>
-              </div>
-            </div>
-            <div class="myd-header-right">
-              <div class="myd-kpi-strip">
-                <div class="myd-kpi-pill" style="background:rgba(59,130,246,0.12);color:var(--accent);">🏢 Labs <span id="myd-pill-labs">—</span></div>
-                <div class="myd-kpi-pill" style="background:rgba(249,115,22,0.12);color:var(--orange);">📈 Util% <span id="myd-pill-util">—</span></div>
-              </div>
-              <button class="myd-open-btn" onclick="event.stopPropagation();showTab('labs')">Open →</button>
-              <span class="myd-chevron" id="myd-chev-labs">▼</span>
-            </div>
-          </div>
-          <div class="myd-body" id="myd-body-labs">
-            <div class="myd-kpi-grid">
-              <div class="myd-kpi-card c-blue"><div class="myd-kpi-val" id="myd-lab-labs">—</div><div class="myd-kpi-lbl">Faculty Labs</div></div>
-              <div class="myd-kpi-card c-cyan"><div class="myd-kpi-val" id="myd-lab-rooms">—</div><div class="myd-kpi-lbl">Facility Rooms</div></div>
-              <div class="myd-kpi-card c-orange"><div class="myd-kpi-val" id="myd-lab-occ">—</div><div class="myd-kpi-lbl">Occupied Seats</div></div>
-              <div class="myd-kpi-card c-green"><div class="myd-kpi-val" id="myd-lab-avail">—</div><div class="myd-kpi-lbl">Available</div></div>
-              <div class="myd-kpi-card c-purple"><div class="myd-kpi-val" id="myd-lab-util">—</div><div class="myd-kpi-lbl">Utilization</div></div>
-              <div class="myd-kpi-card c-red"><div class="myd-kpi-val" id="myd-lab-overcap">—</div><div class="myd-kpi-lbl">Over Capacity</div></div>
-            </div>
-            <div class="myd-chart-box" style="margin-top:0.5rem;">
-              <div class="myd-chart-label">Utilization Color Scale</div>
-              <div style="display:flex;flex-wrap:wrap;gap:0.4rem;">
-                <span style="font-size:0.68rem;padding:2px 8px;border-radius:4px;background:#FFCDD2;color:#B71C1C;font-family:var(--font-mono);font-weight:700;">🔴 &gt;100% Over</span>
-                <span style="font-size:0.68px;padding:2px 8px;border-radius:4px;background:#FFCCBC;color:#BF360C;font-family:var(--font-mono);font-weight:700;">🟠 80-100% High</span>
-                <span style="font-size:0.68rem;padding:2px 8px;border-radius:4px;background:#FFF9C4;color:#827717;font-family:var(--font-mono);font-weight:700;">🟡 50-80% Medium</span>
-                <span style="font-size:0.68rem;padding:2px 8px;border-radius:4px;background:#DCEDC8;color:#33691E;font-family:var(--font-mono);font-weight:700;">🟢 20-50% Low</span>
-                <span style="font-size:0.68rem;padding:2px 8px;border-radius:4px;background:#E8F5E9;color:#1B5E20;font-family:var(--font-mono);font-weight:700;">🔵 0-20% Very Low</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- ════ MODULE 4: ASSET MANAGEMENT ════ -->
-        <div class="myd-module">
-          <div class="myd-header" onclick="myDashToggle('assets')" id="myd-hdr-assets">
-            <div class="myd-header-left">
-              <div class="myd-icon" style="background:rgba(16,185,129,0.15);">📦</div>
-              <div>
-                <div class="myd-title">Asset Management</div>
-                <div class="myd-subtitle">IT · Non-IT · GPU Cluster · ILDS · Books · Consumables</div>
-              </div>
-            </div>
-            <div class="myd-header-right">
-              <div class="myd-kpi-strip">
-                <div class="myd-kpi-pill" style="background:rgba(59,130,246,0.12);color:var(--accent);">💻 IT <span id="myd-pill-it">—</span></div>
-                <div class="myd-kpi-pill" style="background:rgba(6,182,212,0.12);color:var(--accent2);">🏢 Non-IT <span id="myd-pill-nonit">—</span></div>
-                <div class="myd-kpi-pill" style="background:rgba(245,158,11,0.12);color:var(--gold);">💰 <span id="myd-pill-val">—</span></div>
-              </div>
-              <button class="myd-open-btn" onclick="event.stopPropagation();showTab('assets')">Open →</button>
-              <span class="myd-chevron" id="myd-chev-assets">▼</span>
-            </div>
-          </div>
-          <div class="myd-body" id="myd-body-assets">
-            <div class="myd-kpi-grid">
-              <div class="myd-kpi-card c-blue"><div class="myd-kpi-val" id="myd-a-it">—</div><div class="myd-kpi-lbl">IT Assets</div></div>
-              <div class="myd-kpi-card c-cyan"><div class="myd-kpi-val" id="myd-a-nonit">—</div><div class="myd-kpi-lbl">Non-IT</div></div>
-              <div class="myd-kpi-card c-purple"><div class="myd-kpi-val" id="myd-a-gpu">—</div><div class="myd-kpi-lbl">GPU Nodes</div></div>
-              <div class="myd-kpi-card c-green"><div class="myd-kpi-val" id="myd-a-ilds">—</div><div class="myd-kpi-lbl">ILDS</div></div>
-              <div class="myd-kpi-card c-gold"><div class="myd-kpi-val" id="myd-a-books">—</div><div class="myd-kpi-lbl">Books</div></div>
-              <div class="myd-kpi-card c-orange"><div class="myd-kpi-val" id="myd-a-spares">—</div><div class="myd-kpi-lbl">Spares</div></div>
-            </div>
-            <div class="myd-chart-row">
-              <div class="myd-chart-box">
-                <div class="myd-chart-label">IT Assets — Category Breakdown</div>
-                <div id="myd-it-cats" style="display:flex;flex-wrap:wrap;gap:0.3rem;">
-                  <span style="color:var(--text3);font-size:0.75rem;font-family:var(--font-mono);">Sync assets sheet to view breakdown</span>
-                </div>
-              </div>
-              <div class="myd-chart-box">
-                <div class="myd-chart-label">Non-IT Assets — Category Breakdown</div>
-                <div id="myd-nonit-cats" style="display:flex;flex-wrap:wrap;gap:0.3rem;">
-                  <span style="color:var(--text3);font-size:0.75rem;font-family:var(--font-mono);">Sync assets sheet to view breakdown</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- ════ MODULE 5: EXPENSE MANAGEMENT ════ -->
-        <div class="myd-module">
-          <div class="myd-header" onclick="myDashToggle('expenses')" id="myd-hdr-expenses">
-            <div class="myd-header-left">
-              <div class="myd-icon" style="background:rgba(245,158,11,0.15);">💰</div>
-              <div>
-                <div class="myd-title">Expense Management</div>
-                <div class="myd-subtitle">Transactions · Approvals · YTD · 24 categories</div>
-              </div>
-            </div>
-            <div class="myd-header-right">
-              <div class="myd-kpi-strip">
-                <div class="myd-kpi-pill" style="background:rgba(59,130,246,0.12);color:var(--accent);">Total <span id="myd-pill-exp-total">—</span></div>
-                <div class="myd-kpi-pill" style="background:rgba(249,115,22,0.12);color:var(--orange);">⏳ Pending <span id="myd-pill-exp-pend">—</span></div>
-              </div>
-              <button class="myd-open-btn" onclick="event.stopPropagation();showTab('expenses')">Open →</button>
-              <span class="myd-chevron" id="myd-chev-expenses">▼</span>
-            </div>
-          </div>
-          <div class="myd-body" id="myd-body-expenses">
-            <div class="myd-kpi-grid">
-              <div class="myd-kpi-card c-blue"><div class="myd-kpi-val" id="myd-exp-total">—</div><div class="myd-kpi-lbl">Total Spend</div></div>
-              <div class="myd-kpi-card c-green"><div class="myd-kpi-val" id="myd-exp-paid">—</div><div class="myd-kpi-lbl">Paid</div></div>
-              <div class="myd-kpi-card c-orange"><div class="myd-kpi-val" id="myd-exp-pend">—</div><div class="myd-kpi-lbl">Pending</div></div>
-              <div class="myd-kpi-card c-cyan"><div class="myd-kpi-val" id="myd-exp-up">—</div><div class="myd-kpi-lbl">Under-process</div></div>
-              <div class="myd-kpi-card c-purple"><div class="myd-kpi-val" id="myd-exp-avg">—</div><div class="myd-kpi-lbl">Avg Transaction</div></div>
-              <div class="myd-kpi-card c-gold"><div class="myd-kpi-val" id="myd-exp-ytd">—</div><div class="myd-kpi-lbl">YTD Spend</div></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- ════ MODULE 6: PUBLICATIONS ════ -->
-        <div class="myd-module">
-          <div class="myd-header" onclick="myDashToggle('pubs')" id="myd-hdr-pubs">
-            <div class="myd-header-left">
-              <div class="myd-icon" style="background:rgba(139,92,246,0.15);">📚</div>
-              <div>
-                <div class="myd-title">Publications</div>
-                <div class="myd-subtitle">Research papers · Journals · Conferences</div>
-              </div>
-            </div>
-            <div class="myd-header-right">
-              <div class="myd-kpi-strip">
-                <div class="myd-kpi-pill" style="background:rgba(139,92,246,0.12);color:var(--purple);">Total <span id="myd-pill-pubs">—</span></div>
-              </div>
-              <button class="myd-open-btn" onclick="event.stopPropagation();showTab('publications')">Open →</button>
-              <span class="myd-chevron" id="myd-chev-pubs">▼</span>
-            </div>
-          </div>
-          <div class="myd-body" id="myd-body-pubs">
-            <div class="myd-kpi-grid">
-              <div class="myd-kpi-card c-purple"><div class="myd-kpi-val" id="myd-pub-total">—</div><div class="myd-kpi-lbl">Total Publications</div></div>
-              <div class="myd-kpi-card c-blue"><div class="myd-kpi-val" id="myd-pub-journals">—</div><div class="myd-kpi-lbl">Journals</div></div>
-              <div class="myd-kpi-card c-cyan"><div class="myd-kpi-val" id="myd-pub-conf">—</div><div class="myd-kpi-lbl">Conferences</div></div>
-              <div class="myd-kpi-card c-green"><div class="myd-kpi-val" id="myd-pub-books-ch">—</div><div class="myd-kpi-lbl">Books/Chapters</div></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- ════ MODULE 7: INVENTORY ════ -->
-        <div class="myd-module">
-          <div class="myd-header" onclick="myDashToggle('inventory')" id="myd-hdr-inventory">
-            <div class="myd-header-left">
-              <div class="myd-icon" style="background:rgba(249,115,22,0.15);">📦</div>
-              <div>
-                <div class="myd-title">Inventory</div>
-                <div class="myd-subtitle">Gifts · Stationeries · Mementos</div>
-              </div>
-            </div>
-            <div class="myd-header-right">
-              <div class="myd-kpi-strip">
-                <div class="myd-kpi-pill" style="background:rgba(239,68,68,0.12);color:var(--red);" id="myd-pill-inv-alert" style="display:none;">⚠ Low Stock</div>
-              </div>
-              <button class="myd-open-btn" onclick="event.stopPropagation();showTab('inventory')">Open →</button>
-              <span class="myd-chevron" id="myd-chev-inventory">▼</span>
-            </div>
-          </div>
-          <div class="myd-body" id="myd-body-inventory">
-            <div class="myd-kpi-grid">
-              <div class="myd-kpi-card c-blue"><div class="myd-kpi-val" id="myd-inv-gifts">—</div><div class="myd-kpi-lbl">Gifts</div></div>
-              <div class="myd-kpi-card c-cyan"><div class="myd-kpi-val" id="myd-inv-stat">—</div><div class="myd-kpi-lbl">Stationeries</div></div>
-              <div class="myd-kpi-card c-gold"><div class="myd-kpi-val" id="myd-inv-mem">—</div><div class="myd-kpi-lbl">Mementos</div></div>
-              <div class="myd-kpi-card c-red"><div class="myd-kpi-val" id="myd-inv-low">—</div><div class="myd-kpi-lbl">Low Stock</div></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- ════ JS: My Dashboard logic ════ -->
-        <script>
-        (function(){
-          // ── Clock ──
-          function updateClock(){
-            var d = new Date();
-            var el = document.getElementById('my-dash-clock');
-            if(el) el.textContent = d.toLocaleString('en-IN',{weekday:'short',day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
-          }
-          updateClock(); setInterval(updateClock,30000);
-
-          // ── Toggle expand/collapse ──
-          window.myDashToggle = function(mod){
-            var body = document.getElementById('myd-body-'+mod);
-            var hdr = document.getElementById('myd-hdr-'+mod);
-            var chev = document.getElementById('myd-chev-'+mod);
-            if(!body) return;
-            var isOpen = body.classList.contains('open');
-            body.classList.toggle('open');
-            if(hdr) hdr.classList.toggle('expanded');
-            if(chev) chev.classList.toggle('open');
-            if(!isOpen) myDashPopulate(mod);
-          };
-
-          // ── Populate a module from DB ──
-          window.myDashPopulate = function(mod){
-            var DB = window.DB || {};
-            var set = function(id, val){ var el = document.getElementById(id); if(el) el.textContent = val; };
-
-            if(mod==='people'){
-              var staff = (DB.staff||[]).filter(r=>r.status!=='Alumni'&&r.status!=='Inactive');
-              var alumni = (DB.staff||[]).filter(r=>r.status==='Alumni');
-              var fac = (DB.faculty||[]);
-              var af = (DB.assocFaculty||[]);
-              var res = (DB.researchers||[]);
-              var stu = (DB.students||[]);
-              set('myd-kpi-staff', staff.length);
-              set('myd-kpi-faculty', fac.length);
-              set('myd-kpi-researchers', res.length);
-              set('myd-kpi-students', stu.length);
-              set('myd-kpi-assocfac', af.length);
-              set('myd-kpi-alumni-p', alumni.length);
-              // exec summary mirrors
-              var execActStaff = (DB.staff||[]).filter(r=>r.status!=='Alumni').length;
-              var execAlStaff  = (DB.staff||[]).filter(r=>r.status==='Alumni').length;
-              var execActAF    = (DB.assocFaculty||[]).filter(r=>r.status!=='Alumni').length;
-              var execAlAF     = (DB.assocFaculty||[]).filter(r=>r.status==='Alumni').length;
-              var execActRes   = (DB.researchers||[]).filter(r=>r.status==='On-Going'||r.status==='Active').length;
-              var execAlRes    = (DB.researchers||[]).filter(r=>r.status==='Completed'||r.status==='Alumni').length;
-              set('myd-es-staff-a', execActStaff); set('myd-es-staff-al', execAlStaff);
-              set('myd-es-af-a', execActAF);       set('myd-es-af-al', execAlAF);
-              set('myd-es-res-a', execActRes);     set('myd-es-res-al', execAlRes);
-              set('myd-es-fac-a', fac.length);
-              set('myd-es-tot-a', execActStaff+execActAF+execActRes+fac.length);
-              set('myd-es-tot-al', execAlStaff+execAlAF+execAlRes);
-              // tenure
-              var now = Date.now();
-              var tenures = (DB.staff||[]).filter(r=>r.exitDate).map(r=>{
-                var d = new Date(r.exitDate);
-                return isNaN(d)?null:Math.round((d-now)/(86400000));
-              }).filter(v=>v!==null&&v>0);
-              var avgTen = tenures.length ? Math.round(tenures.reduce((a,b)=>a+b,0)/tenures.length) : 0;
-              var highRisk = tenures.filter(v=>v>90).length;
-              var thirtyAgo = Date.now()-2592000000;
-              var recentJoins = (DB.staff||[]).filter(r=>{var d=new Date(r.joiningDate);return !isNaN(d)&&d>thirtyAgo;}).length;
-              set('myd-ten-avg', avgTen||'—'); set('myd-ten-risk', highRisk||'—'); set('myd-ten-joins', recentJoins||'—');
-            }
-
-            if(mod==='biometric'){
-              var bmData = (window._bmActiveData||[]);
-              set('myd-bm-total', bmData.length);
-              set('myd-bm-inactive', (window._bmInactiveData||[]).length);
-              set('myd-bm-auth', bmData.filter(r=>r.authStatus==='Authorized').length);
-              set('myd-bm-pend', bmData.filter(r=>r.authStatus==='Pending').length);
-              set('myd-bm-rev',  bmData.filter(r=>r.authStatus==='Revoked').length);
-              set('myd-bm-students', bmData.filter(r=>r.category==='Student').length);
-              // Area occupancy bars
-              var areaMap = {};
-              bmData.forEach(function(r){
-                var areas = (r.areas||r.primaryArea||'').split(',').map(function(a){return a.trim();}).filter(Boolean);
-                areas.forEach(function(a){ areaMap[a] = (areaMap[a]||0)+1; });
-              });
-              var areaCapMap = {};
-              try{ (window._bmAreas||[]).forEach(function(a){ areaCapMap[a.name||a.area||a] = a.capacity||50; }); }catch(e){}
-              var areaList = Object.keys(areaMap).sort(function(a,b){return areaMap[b]-areaMap[a];}).slice(0,8);
-              var barsEl = document.getElementById('myd-area-bars');
-              if(barsEl && areaList.length>0){
-                barsEl.innerHTML = areaList.map(function(area){
-                  var occ = areaMap[area];
-                  var cap = areaCapMap[area]||Math.max(occ,30);
-                  var pct = Math.min(Math.round(occ/cap*100),100);
-                  var color = pct>=100?'var(--red)':pct>=80?'var(--orange)':pct>=50?'var(--gold)':'var(--green)';
-                  return '<div class="myd-area-bar-row"><div class="myd-area-name">'+area+'</div><div class="myd-area-track"><div class="myd-area-fill" style="width:'+pct+'%;background:'+color+';"></div></div><div class="myd-area-pct" style="color:'+color+';">'+occ+'/'+(cap)+'</div></div>';
-                }).join('');
-              } else if(barsEl) {
-                barsEl.innerHTML = '<div style="color:var(--text3);font-size:0.75rem;font-family:var(--font-mono);text-align:center;padding:0.75rem 0;">Load biometric data to see area occupancy</div>';
-              }
-            }
-
-            if(mod==='labs'){
-              set('myd-lab-labs', document.getElementById('lab-kpi-labs')?.textContent||'—');
-              set('myd-lab-rooms', document.getElementById('lab-kpi-rooms')?.textContent||'—');
-              set('myd-lab-occ', document.getElementById('lab-kpi-occ')?.textContent||'—');
-              set('myd-lab-avail', document.getElementById('lab-kpi-avail')?.textContent||'—');
-              set('myd-lab-util', document.getElementById('lab-kpi-util')?.textContent||'—');
-              set('myd-lab-overcap', document.getElementById('lab-kpi-overcap')?.textContent||'—');
-            }
-
-            if(mod==='assets'){
-              set('myd-a-it',    document.getElementById('akpi-it')?.textContent||'—');
-              set('myd-a-nonit', document.getElementById('akpi-nonit')?.textContent||'—');
-              set('myd-a-gpu',   document.getElementById('akpi-gpu')?.textContent||'—');
-              set('myd-a-ilds',  document.getElementById('akpi-ilds')?.textContent||'—');
-              set('myd-a-books', document.getElementById('akpi-books')?.textContent||'—');
-              set('myd-a-spares',document.getElementById('akpi-spares')?.textContent||'—');
-              // category chips from IT category grid
-              var itCatGrid = document.getElementById('it-cat-grid');
-              var itDest = document.getElementById('myd-it-cats');
-              if(itDest && itCatGrid && itCatGrid.innerHTML.trim()){
-                itDest.innerHTML = itCatGrid.innerHTML;
-              }
-              var nonitCatGrid = document.getElementById('nonit-cat-grid');
-              var nonitDest = document.getElementById('myd-nonit-cats');
-              if(nonitDest && nonitCatGrid && nonitCatGrid.innerHTML.trim()){
-                nonitDest.innerHTML = nonitCatGrid.innerHTML;
-              }
-            }
-
-            if(mod==='expenses'){
-              set('myd-exp-total', document.getElementById('exp-kpi-total')?.textContent||'—');
-              set('myd-exp-paid',  document.getElementById('exp-kpi-paid')?.textContent||'—');
-              set('myd-exp-pend',  document.getElementById('exp-kpi-pend')?.textContent||'—');
-              set('myd-exp-up',    document.getElementById('exp-kpi-up')?.textContent||'—');
-              set('myd-exp-avg',   document.getElementById('exp-kpi-avg')?.textContent||'—');
-              set('myd-exp-ytd',   document.getElementById('exp-kpi-ytd')?.textContent||'—');
-            }
-
-            if(mod==='pubs'){
-              var pubs = (DB.publications||[]);
-              set('myd-pub-total', pubs.length);
-              set('myd-pub-journals',  pubs.filter(r=>(r.type||r.pubType||'').toLowerCase().includes('journal')).length||'—');
-              set('myd-pub-conf',      pubs.filter(r=>(r.type||r.pubType||'').toLowerCase().includes('conf')).length||'—');
-              set('myd-pub-books-ch',  pubs.filter(r=>{var t=(r.type||r.pubType||'').toLowerCase();return t.includes('book')||t.includes('chapter');}).length||'—');
-            }
-
-            if(mod==='inventory'){
-              var inv = window.INV_DB||{};
-              set('myd-inv-gifts', (inv.gifts||[]).length);
-              set('myd-inv-stat',  (inv.stationeries||[]).length);
-              set('myd-inv-mem',   (inv.mementos||[]).length);
-              var lowStock = [...(inv.gifts||[]),...(inv.stationeries||[]),...(inv.mementos||[])].filter(r=>parseInt(r.quantity||r.qty||0)<=5).length;
-              set('myd-inv-low', lowStock||'—');
-            }
-          };
-
-          // ── Global header pills ──
-          window.myDashUpdateGlobal = function(){
-            var DB = window.DB||{};
-            var set = function(id,v){ var el=document.getElementById(id);if(el)el.textContent=v; };
-            var totalPeople = (DB.staff||[]).length+(DB.faculty||[]).length+(DB.researchers||[]).length+(DB.students||[]).length+(DB.assocFaculty||[]).length;
-            set('myd-gkpi-people', totalPeople||'—');
-            set('myd-gkpi-assets', (parseInt(document.getElementById('akpi-it')?.textContent||0)||0)+(parseInt(document.getElementById('akpi-nonit')?.textContent||0)||0) || '—');
-            set('myd-gkpi-expenses', document.getElementById('exp-kpi-pend')?.textContent||'—');
-            set('myd-gkpi-pubs', (DB.publications||[]).length||'—');
-            set('myd-gkpi-labs', document.getElementById('lab-kpi-util')?.textContent||'—');
-            set('myd-gkpi-bio', (window._bmActiveData||[]).filter(r=>r.authStatus==='Pending').length||'—');
-            // Sidebar pills
-            set('myd-pill-staff', (DB.staff||[]).filter(r=>r.status!=='Alumni').length||'—');
-            set('myd-pill-res',   (DB.researchers||[]).length||'—');
-            set('myd-pill-stu',   (DB.students||[]).length||'—');
-            set('myd-pill-bm-active',  (window._bmActiveData||[]).length||'—');
-            set('myd-pill-bm-pending', (window._bmActiveData||[]).filter(r=>r.authStatus==='Pending').length||'—');
-            set('myd-pill-labs', document.getElementById('lab-kpi-labs')?.textContent||'—');
-            set('myd-pill-util', document.getElementById('lab-kpi-util')?.textContent||'—');
-            set('myd-pill-it',   document.getElementById('akpi-it')?.textContent||'—');
-            set('myd-pill-nonit',document.getElementById('akpi-nonit')?.textContent||'—');
-            set('myd-pill-val',  document.getElementById('akpi-value')?.textContent||'—');
-            set('myd-pill-exp-total', document.getElementById('exp-kpi-total')?.textContent||'—');
-            set('myd-pill-exp-pend',  document.getElementById('exp-kpi-pend')?.textContent||'—');
-            set('myd-pill-pubs', (DB.publications||[]).length||'—');
-            // Refresh expanded panels
-            ['people','biometric','labs','assets','expenses','pubs','inventory'].forEach(function(m){
-              if(document.getElementById('myd-body-'+m)?.classList.contains('open')) myDashPopulate(m);
-            });
-          };
-
-          // ── Refresh all ──
-          window.myDashRefreshAll = function(){
-            myDashUpdateGlobal();
-            if(typeof sysFetchAll === 'function') sysFetchAll();
-            else if(typeof v31FetchAll === 'function') v31FetchAll();
-          };
-
-          // Patch all fetch functions to update My Dashboard after data loads
-          ['DB','_bmActiveData'].forEach(function(prop){
-            var orig = window[prop];
-            Object.defineProperty(window, prop, {
-              set: function(v){ window['_myd_internal_'+prop]=v; setTimeout(myDashUpdateGlobal,500); },
-              get: function(){ return window['_myd_internal_'+prop]; },
-              configurable: true
-            });
-            if(orig) window[prop] = orig;
-          });
-
-          // Run after DOM ready
-          setTimeout(myDashUpdateGlobal, 1200);
-          // Poll until data appears
-          var pollCount=0;
-          var pollInterval = setInterval(function(){
-            if(++pollCount>30) { clearInterval(pollInterval); return; }
-            var DB = window.DB||{};
-            if((DB.staff||[]).length>0 || (window._bmActiveData||[]).length>0){
-              clearInterval(pollInterval);
-              myDashUpdateGlobal();
-            }
-          }, 1000);
-        })();
-        </script>
-
-      </div><!-- /tab-my-dashboard -->
-
       <!-- ── DASHBOARD ── -->
-      <div class="tabs" id="tab-dashboard">
+      <div class="tabs active" id="tab-dashboard">
         <div class="page-header">
           <h2>Command Center</h2>
           <p>Real-time overview of all WSAI management systems · IIT Madras</p>
@@ -2934,6 +2365,21 @@
 
         </div>
 
+        <!-- TENURE ACTIONS REQUIRED -->
+        <div class="table-card" style="margin-bottom:1.5rem;">
+          <div class="tc-header">
+            <div class="tc-title">⏰ Tenure Actions Required</div>
+            <div class="tc-actions">
+              <button class="tc-btn" onclick="runTenureCheck()">🔄 Refresh Tenure Check</button>
+            </div>
+          </div>
+          <table>
+            <thead><tr><th>Name</th><th>Type</th><th>Center/Dept</th><th>Exit Date</th><th>Days Left</th><th>Decision</th></tr></thead>
+            <tbody id="tbody-tenure-actions"></tbody>
+          </table>
+          <div id="tenure-no-action" style="display:none;padding:2rem;text-align:center;color:var(--text2);font-size:0.9rem;">✅ No urgent tenure actions required</div>
+        </div>
+
         <!-- PEOPLE SUB-NAV -->
         <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1.5rem;">
           <button class="people-tab-btn active" onclick="switchPeopleTab('staff')">👔 Staff</button>
@@ -3128,20 +2574,6 @@
           </div>
         </div>
 
-        <!-- TENURE ACTIONS REQUIRED -->
-        <div class="table-card" style="margin-top:1.5rem;">
-          <div class="tc-header">
-            <div class="tc-title">⏰ Tenure Actions Required</div>
-            <div class="tc-actions">
-              <button class="tc-btn" onclick="runTenureCheck()">🔄 Refresh Tenure Check</button>
-            </div>
-          </div>
-          <table>
-            <thead><tr><th>Name</th><th>Type</th><th>Center/Dept</th><th>Exit Date</th><th>Days Left</th><th>Decision</th></tr></thead>
-            <tbody id="tbody-tenure-actions"></tbody>
-          </table>
-          <div id="tenure-no-action" style="display:none;padding:2rem;text-align:center;color:var(--text2);font-size:0.9rem;">✅ No urgent tenure actions required</div>
-        </div>
       </div>
 
 
@@ -3362,7 +2794,6 @@
           <button class="lab-sub-btn" onclick="switchLabTab('category')">📂 Category Analysis</button>
           <button class="lab-sub-btn" onclick="switchLabTab('facility-rooms')">🏛️ Facility Rooms</button>
           <button class="lab-sub-btn" onclick="switchLabTab('faculty-rooms')">🚪 Faculty Rooms</button>
-          <button class="lab-sub-btn" onclick="switchLabTab('researchers')">👥 Researchers</button>
           <button class="lab-sub-btn" onclick="switchLabTab('validation')" style="border-color:rgba(16,185,129,0.4);color:var(--green);">✅ Validation</button>
         </div>
 
@@ -3502,7 +2933,7 @@
         </div>
 
         <!-- ── RESEARCHERS SUB-TAB ── -->
-        <div class="lab-sec" id="labsec-researchers">
+        <div class="lab-sec" id="labsec-researchers" style="display:none!important;">
           <div style="display:flex;gap:0.6rem;flex-wrap:wrap;align-items:center;margin-bottom:1rem;">
             <input type="text" id="lab-res-search" placeholder="🔍 Search researcher, faculty..." oninput="labRenderResearchers()" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0.45rem 1rem;color:var(--text);font-size:0.85rem;outline:none;min-width:200px;">
             <select id="lab-res-status" onchange="labRenderResearchers()" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0.45rem 0.8rem;color:var(--text);font-size:0.83rem;outline:none;">
@@ -3644,111 +3075,6 @@
         <div style="display:flex;justify-content:flex-end;margin-bottom:0.75rem;">
           <button onclick="assetLoadFromSheet(false)" style="padding:0.38rem 1rem;border-radius:7px;border:1px solid rgba(16,185,129,0.4);background:rgba(16,185,129,0.07);color:var(--green);font-size:0.76rem;cursor:pointer;font-family:var(--font-body);transition:all 0.2s;" onmouseover="this.style.background='rgba(16,185,129,0.15)'" onmouseout="this.style.background='rgba(16,185,129,0.07)'">↻ Sync from Sheet</button>
         </div>
-
-        <!-- ── CATEGORY BREAKDOWN PANEL (from Executive Summary) ── -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem;" id="asset-cat-breakdown-row">
-          <div class="table-card" style="padding:0;border-top:3px solid var(--accent);">
-            <div class="tc-header" style="background:rgba(59,130,246,0.06);">
-              <div class="tc-title">💻 IT Assets — Category Breakdown</div>
-              <div style="font-size:0.65rem;color:var(--text3);font-family:var(--font-mono);">Auto-updated from Sheet</div>
-            </div>
-            <div style="padding:0.75rem 1.25rem;">
-              <div id="asset-cat-it-breakdown" style="display:flex;flex-wrap:wrap;gap:0.4rem;">
-                <span style="color:var(--text3);font-size:0.75rem;font-family:var(--font-mono);">Sync sheet to view breakdown</span>
-              </div>
-            </div>
-          </div>
-          <div class="table-card" style="padding:0;border-top:3px solid var(--accent2);">
-            <div class="tc-header" style="background:rgba(6,182,212,0.06);">
-              <div class="tc-title">🏢 Non-IT Assets — Category Breakdown</div>
-              <div style="font-size:0.65rem;color:var(--text3);font-family:var(--font-mono);">Auto-updated from Sheet</div>
-            </div>
-            <div style="padding:0.75rem 1.25rem;">
-              <div id="asset-cat-nonit-breakdown" style="display:flex;flex-wrap:wrap;gap:0.4rem;">
-                <span style="color:var(--text3);font-size:0.75rem;font-family:var(--font-mono);">Sync sheet to view breakdown</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        <style>
-        .asset-cat-chip-item {
-          display:inline-flex;align-items:center;gap:0.3rem;
-          padding:0.3rem 0.75rem;border-radius:6px;
-          background:var(--surface2);border:1px solid var(--border);
-          font-size:0.73rem;font-family:var(--font-mono);color:var(--text2);
-          transition:background 0.15s,box-shadow 0.15s;cursor:default;
-        }
-        .asset-cat-chip-item:hover{background:var(--surface3);box-shadow:0 2px 8px rgba(0,0,0,0.12);}
-        .asset-cat-chip-item .chip-n{font-weight:800;color:var(--accent);}
-        [data-theme="light"] .asset-cat-chip-item .chip-n{color:var(--accent);}
-        </style>
-        <script>
-        (function(){
-          // Mirror category breakdown chips from internal category grids
-          function syncAssetCatBreakdown(){
-            var itGrid = document.getElementById('it-cat-grid');
-            var itDest = document.getElementById('asset-cat-it-breakdown');
-            if(itDest && itGrid && itGrid.children.length>0){
-              itDest.innerHTML = '';
-              Array.from(itGrid.children).forEach(function(chip){
-                var cl = chip.cloneNode(true);
-                cl.className = 'asset-cat-chip-item';
-                itDest.appendChild(cl);
-              });
-            }
-            var nonitGrid = document.getElementById('nonit-cat-grid');
-            var nonitDest = document.getElementById('asset-cat-nonit-breakdown');
-            if(nonitDest && nonitGrid && nonitGrid.children.length>0){
-              nonitDest.innerHTML = '';
-              Array.from(nonitGrid.children).forEach(function(chip){
-                var cl = chip.cloneNode(true);
-                cl.className = 'asset-cat-chip-item';
-                nonitDest.appendChild(cl);
-              });
-            }
-            // Also build from raw ASSET_DB if cat-grid not populated
-            if(window.ASSET_DB){
-              var adb = window.ASSET_DB||[];
-              function buildBreakdown(destId, filter){
-                var dest = document.getElementById(destId);
-                if(!dest) return;
-                var catCount = {};
-                adb.filter(filter).forEach(function(r){
-                  var cat = r.category||r.type||'Unknown';
-                  catCount[cat]=(catCount[cat]||0)+(parseInt(r.qty||r.quantity||1)||1);
-                });
-                var entries = Object.entries(catCount).sort(function(a,b){return b[1]-a[1];});
-                if(entries.length>0){
-                  dest.innerHTML = entries.map(function(e){
-                    return '<div class="asset-cat-chip-item"><span class="chip-n">'+e[1]+'</span> '+e[0]+'</div>';
-                  }).join('');
-                }
-              }
-              buildBreakdown('asset-cat-it-breakdown', function(r){var t=(r.assetType||r.type||r.category||'').toLowerCase();return t.includes('it')||t.includes('laptop')||t.includes('server')||t.includes('computer');});
-              buildBreakdown('asset-cat-nonit-breakdown', function(r){var t=(r.assetType||r.type||r.category||'').toLowerCase();return !t.includes('gpu')&&!t.includes('cluster')&&!t.includes('book')&&!t.includes('it')&&!t.includes('laptop')&&!t.includes('server');});
-            }
-          }
-          // Run when assets tab becomes active
-          var origShowTab = window.showTab;
-          if(typeof origShowTab==='function' && !origShowTab._assetCatPatched){
-            window.showTab = function(tabId){
-              origShowTab.apply(this,arguments);
-              if(tabId==='assets') setTimeout(syncAssetCatBreakdown,400);
-            };
-            window.showTab._assetCatPatched = true;
-          }
-          // Also patch assetLoadFromSheet
-          var origALFS = window.assetLoadFromSheet;
-          if(typeof origALFS==='function'){
-            window.assetLoadFromSheet = function(){
-              var r = origALFS.apply(this,arguments);
-              setTimeout(syncAssetCatBreakdown,1500);
-              return r;
-            };
-          }
-          setTimeout(syncAssetCatBreakdown,2000);
-        })();
-        </script>
 
         <!-- Sub-tabs -->
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1.25rem;">
@@ -4174,6 +3500,147 @@
         </div>
 
       </div><!-- /tab-exec-dashboard -->
+
+<!-- ══════════════════════════════════════════════════════
+     MY DASHBOARD TAB — v35 Role-Adaptive Dashboard
+══════════════════════════════════════════════════════ -->
+<div class="tabs" id="tab-my-dashboard">
+
+  <!-- Welcome Banner (reused from role-dashboard logic) -->
+  <div id="myd-role-banner" style="background:linear-gradient(135deg,var(--surface),var(--surface2));border:1px solid var(--border);border-radius:14px;padding:1.25rem 1.5rem;margin-bottom:1.5rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;">
+    <div style="display:flex;align-items:center;gap:1rem;">
+      <div id="myd-avatar" style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:1.3rem;font-weight:700;color:white;flex-shrink:0;">?</div>
+      <div>
+        <div id="myd-greeting" style="font-size:1.1rem;font-weight:700;color:var(--text);">Welcome</div>
+        <div id="myd-sub" style="font-size:0.78rem;color:var(--text2);margin:0.15rem 0;">Loading profile…</div>
+        <div id="myd-quote" style="font-size:0.72rem;color:var(--text3);font-style:italic;margin-top:0.2rem;max-width:480px;"></div>
+      </div>
+    </div>
+    <div style="text-align:right;">
+      <div id="myd-clock-time" style="font-size:1.4rem;font-weight:700;color:var(--accent);font-family:var(--font-mono);">--:--</div>
+      <div id="myd-clock-date" style="font-size:0.72rem;color:var(--text2);font-family:var(--font-mono);"></div>
+    </div>
+  </div>
+
+  <!-- COO DASHBOARD (shown when role = coo / admin / creator) -->
+  <div id="myd-coo-panel" style="display:none;">
+
+    <!-- ── KPI ROW 1: HR & People ── -->
+    <div class="myd-kpi-section">
+      <div class="myd-sec-hdr">👤 HR &amp; People</div>
+      <div class="myd-kpi-row" id="myd-hr-kpi-row">
+        <div class="myd-kpi-card" onclick="mydOpenDrilldown('hr-people','staff')"><div class="myd-kpi-icon">👔</div><div class="myd-kpi-val" id="myd-hr-staff">—</div><div class="myd-kpi-lbl">Staff</div></div>
+        <div class="myd-kpi-card" onclick="mydOpenDrilldown('hr-people','faculty')"><div class="myd-kpi-icon">👨‍🏫</div><div class="myd-kpi-val" id="myd-hr-faculty">—</div><div class="myd-kpi-lbl">Faculty</div></div>
+        <div class="myd-kpi-card" onclick="mydOpenDrilldown('hr-people','affifaculty')"><div class="myd-kpi-icon">🔗</div><div class="myd-kpi-val" id="myd-hr-affifac">—</div><div class="myd-kpi-lbl">Affiliate Faculty</div></div>
+        <div class="myd-kpi-card" onclick="mydOpenDrilldown('hr-people','assocfaculty')"><div class="myd-kpi-icon">👩‍🏫</div><div class="myd-kpi-val" id="myd-hr-assocfac">—</div><div class="myd-kpi-lbl">Associate Faculty</div></div>
+        <div class="myd-kpi-card" onclick="mydOpenDrilldown('hr-people','researchers')"><div class="myd-kpi-icon">🔬</div><div class="myd-kpi-val" id="myd-hr-researchers">—</div><div class="myd-kpi-lbl">Active Researchers</div></div>
+        <div class="myd-kpi-card" onclick="mydOpenDrilldown('hr-people','fellows')"><div class="myd-kpi-icon">👥</div><div class="myd-kpi-val" id="myd-hr-fellows">—</div><div class="myd-kpi-lbl">Associate Fellows</div></div>
+        <div class="myd-kpi-card" onclick="mydOpenDrilldown('hr-people','students')"><div class="myd-kpi-icon">🎓</div><div class="myd-kpi-val" id="myd-hr-students">—</div><div class="myd-kpi-lbl">Students</div></div>
+        <div class="myd-kpi-card myd-kpi-alert" onclick="mydOpenDrilldown('hr-people','tenure')"><div class="myd-kpi-icon">⏰</div><div class="myd-kpi-val" id="myd-hr-tenure">—</div><div class="myd-kpi-lbl">Tenure Risk</div><div class="myd-kpi-sub">Tenure Actions Required</div></div>
+      </div>
+    </div>
+
+    <!-- ── KPI ROW 2: Asset ── -->
+    <div class="myd-kpi-section">
+      <div class="myd-sec-hdr">📦 Asset</div>
+      <div class="myd-kpi-row">
+        <div class="myd-kpi-card" onclick="mydOpenDrilldown('asset','it')"><div class="myd-kpi-icon">💻</div><div class="myd-kpi-val" id="myd-ast-it">—</div><div class="myd-kpi-lbl">IT Assets</div></div>
+        <div class="myd-kpi-card" onclick="mydOpenDrilldown('asset','nonit')"><div class="myd-kpi-icon">🏢</div><div class="myd-kpi-val" id="myd-ast-nonit">—</div><div class="myd-kpi-lbl">Non-IT Assets</div></div>
+        <div class="myd-kpi-card" onclick="mydOpenDrilldown('asset','ilds')"><div class="myd-kpi-icon">🌐</div><div class="myd-kpi-val" id="myd-ast-ilds">—</div><div class="myd-kpi-lbl">ILDS Cluster</div></div>
+        <div class="myd-kpi-card" onclick="mydOpenDrilldown('asset','gpu')"><div class="myd-kpi-icon">🧠</div><div class="myd-kpi-val" id="myd-ast-gpu">—</div><div class="myd-kpi-lbl">GPU Cluster</div></div>
+        <div class="myd-kpi-card" onclick="mydOpenDrilldown('asset','books')"><div class="myd-kpi-icon">📚</div><div class="myd-kpi-val" id="myd-ast-books">—</div><div class="myd-kpi-lbl">Books Inventory</div></div>
+        <div class="myd-kpi-card" onclick="mydOpenDrilldown('asset','spares')"><div class="myd-kpi-icon">🔧</div><div class="myd-kpi-val" id="myd-ast-spares">—</div><div class="myd-kpi-lbl">Spares</div></div>
+        <div class="myd-kpi-card" onclick="mydOpenDrilldown('asset','consumables')"><div class="myd-kpi-icon">🛒</div><div class="myd-kpi-val" id="myd-ast-consumables">—</div><div class="myd-kpi-lbl">Consumables</div></div>
+        <div class="myd-kpi-card" onclick="mydOpenDrilldown('asset','nonrepairable')"><div class="myd-kpi-icon">⚠️</div><div class="myd-kpi-val" id="myd-ast-nonrep">—</div><div class="myd-kpi-lbl">Non Repairable</div></div>
+        <div class="myd-kpi-card" onclick="mydOpenDrilldown('asset','vendor')"><div class="myd-kpi-icon">🏪</div><div class="myd-kpi-val" id="myd-ast-vendor">—</div><div class="myd-kpi-lbl">Vendor List</div></div>
+      </div>
+    </div>
+
+    <!-- ── KPI ROW 3: Biometric Access ── -->
+    <div class="myd-kpi-section">
+      <div class="myd-sec-hdr">🔐 Biometric Access</div>
+      <div class="myd-kpi-row">
+        <div id="myd-bio-area-cards" style="display:contents;"></div>
+        <div class="myd-kpi-card myd-kpi-alert" onclick="mydOpenDrilldown('biometric','pending')"><div class="myd-kpi-icon">⏳</div><div class="myd-kpi-val" id="myd-bio-pending">—</div><div class="myd-kpi-lbl">Pending Requests</div><div class="myd-kpi-sub">Biometric Auth</div></div>
+      </div>
+    </div>
+
+    <!-- ── KPI ROW 4: Facility and Room Management ── -->
+    <div class="myd-kpi-section">
+      <div class="myd-sec-hdr">🏛️ Facility and Room Management</div>
+      <div class="myd-kpi-row">
+        <div class="myd-kpi-card" onclick="mydOpenDrilldown('facility','faculty-labs')"><div class="myd-kpi-icon">🔬</div><div class="myd-kpi-val" id="myd-fac-faclabs">—</div><div class="myd-kpi-lbl">Faculty Labs</div></div>
+        <div class="myd-kpi-card" onclick="mydOpenDrilldown('facility','facility-rooms')"><div class="myd-kpi-icon">🏛️</div><div class="myd-kpi-val" id="myd-fac-facrooms">—</div><div class="myd-kpi-lbl">Facility Rooms</div></div>
+        <div class="myd-kpi-card myd-kpi-ribbons" onclick="mydOpenDrilldown('facility','faculty-rooms')">
+          <div class="myd-kpi-icon">🚪</div><div class="myd-kpi-val" id="myd-fac-facroomscount">—</div><div class="myd-kpi-lbl">Faculty Rooms</div>
+          <div id="myd-fac-ribbons" style="display:flex;gap:2px;margin-top:4px;flex-wrap:wrap;"></div>
+        </div>
+        <div class="myd-kpi-card" onclick="mydOpenDrilldown('facility','faculty-labs')"><div class="myd-kpi-icon">🪑</div><div class="myd-kpi-val" id="myd-fac-occupied">—</div><div class="myd-kpi-lbl">Occupied Seats</div></div>
+        <div class="myd-kpi-card" onclick="mydOpenDrilldown('facility','faculty-labs')"><div class="myd-kpi-icon">🟢</div><div class="myd-kpi-val" id="myd-fac-available">—</div><div class="myd-kpi-lbl">Available Seats</div></div>
+      </div>
+    </div>
+
+    <!-- ── KPI ROW 5: Expenses ── -->
+    <div class="myd-kpi-section">
+      <div class="myd-sec-hdr">💰 Expenses</div>
+      <div class="myd-kpi-row">
+        <div class="myd-kpi-card myd-kpi-green" onclick="mydOpenDrilldown('expenses','paid')"><div class="myd-kpi-icon">✅</div><div class="myd-kpi-val" id="myd-exp-paid">—</div><div class="myd-kpi-lbl">Paid</div></div>
+        <div class="myd-kpi-card myd-kpi-alert" onclick="mydOpenDrilldown('expenses','pending')"><div class="myd-kpi-icon">⏳</div><div class="myd-kpi-val" id="myd-exp-pending">—</div><div class="myd-kpi-lbl">Pending</div></div>
+        <div class="myd-kpi-card myd-kpi-orange" onclick="mydOpenDrilldown('expenses','underprocess')"><div class="myd-kpi-icon">⚙️</div><div class="myd-kpi-val" id="myd-exp-process">—</div><div class="myd-kpi-lbl">Under-Process</div></div>
+      </div>
+    </div>
+
+    <!-- ── KPI ROW 6: Publications ── -->
+    <div class="myd-kpi-section">
+      <div class="myd-sec-hdr">📚 Publications</div>
+      <div class="myd-kpi-row">
+        <div class="myd-kpi-card" onclick="mydOpenDrilldown('publications','journals')"><div class="myd-kpi-icon">📰</div><div class="myd-kpi-val" id="myd-pub-journals">—</div><div class="myd-kpi-lbl">Journal Papers</div></div>
+        <div class="myd-kpi-card" onclick="mydOpenDrilldown('publications','conferences')"><div class="myd-kpi-icon">🎤</div><div class="myd-kpi-val" id="myd-pub-conf">—</div><div class="myd-kpi-lbl">Conference Papers</div></div>
+        <div class="myd-kpi-card" onclick="mydOpenDrilldown('publications','reports')"><div class="myd-kpi-icon">📋</div><div class="myd-kpi-val" id="myd-pub-reports">—</div><div class="myd-kpi-lbl">Reports</div></div>
+        <div class="myd-kpi-card" onclick="mydOpenDrilldown('publications','preprints')"><div class="myd-kpi-icon">📄</div><div class="myd-kpi-val" id="myd-pub-preprints">—</div><div class="myd-kpi-lbl">Preprints / ArXiv</div></div>
+      </div>
+    </div>
+
+    <!-- ── KPI ROW 7: Inventory Management ── -->
+    <div class="myd-kpi-section">
+      <div class="myd-sec-hdr">📦 Inventory Management</div>
+      <div class="myd-kpi-row">
+        <div class="myd-kpi-card" onclick="mydOpenDrilldown('inventory','all')"><div class="myd-kpi-icon">📦</div><div class="myd-kpi-val" id="myd-inv-all">—</div><div class="myd-kpi-lbl">All Items</div></div>
+        <div class="myd-kpi-card" onclick="mydOpenDrilldown('inventory','gifts')"><div class="myd-kpi-icon">🎁</div><div class="myd-kpi-val" id="myd-inv-gifts">—</div><div class="myd-kpi-lbl">Gifts</div></div>
+        <div class="myd-kpi-card" onclick="mydOpenDrilldown('inventory','stationeries')"><div class="myd-kpi-icon">✏️</div><div class="myd-kpi-val" id="myd-inv-stat">—</div><div class="myd-kpi-lbl">Stationeries</div></div>
+        <div class="myd-kpi-card" onclick="mydOpenDrilldown('inventory','mementos')"><div class="myd-kpi-icon">🏆</div><div class="myd-kpi-val" id="myd-inv-mem">—</div><div class="myd-kpi-lbl">Mementos</div></div>
+      </div>
+    </div>
+
+  </div><!-- /myd-coo-panel -->
+
+  <!-- FACULTY DASHBOARD PANEL -->
+  <div id="myd-faculty-panel" style="display:none;">
+    <div class="v31-sec-hdr"><div class="v31-sec-title">🔗 My Affiliations</div></div>
+    <div class="v31-affil-grid">
+      <div class="v31-affil-card" style="border-top-color:var(--accent);"><div style="font-size:0.7rem;color:var(--text3);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.3rem;">🔬 Researchers</div><div class="v31-affil-num" id="f-affil-res">—</div><div class="v31-affil-label">Under my supervision</div></div>
+      <div class="v31-affil-card" style="border-top-color:var(--green);"><div style="font-size:0.7rem;color:var(--text3);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.3rem;">🎓 Students</div><div class="v31-affil-num" id="f-affil-stu">—</div><div class="v31-affil-label">Under my mentorship</div></div>
+      <div class="v31-affil-card" style="border-top-color:var(--purple);"><div style="font-size:0.7rem;color:var(--text3);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.3rem;">📚 Publications</div><div class="v31-affil-num" id="f-affil-pub">—</div><div class="v31-affil-label">My published works</div></div>
+      <div class="v31-affil-card" style="border-top-color:var(--gold);"><div style="font-size:0.7rem;color:var(--text3);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.3rem;">💰 Expense Claims</div><div class="v31-affil-num" id="f-affil-exp">—</div><div class="v31-affil-label">Pending approval</div></div>
+    </div>
+    <div class="v31-kpi-grid">
+      <div class="v31-kpi-card k-cyan"><div class="v31-kpi-icon">🎓</div><div class="v31-kpi-val" id="f-kpi-stu">—</div><div class="v31-kpi-lbl">My Students</div><div class="v31-kpi-sub">Active mentorship</div></div>
+      <div class="v31-kpi-card k-blue"><div class="v31-kpi-icon">🔬</div><div class="v31-kpi-val" id="f-kpi-res">—</div><div class="v31-kpi-lbl">My Researchers</div><div class="v31-kpi-sub">On-going projects</div></div>
+      <div class="v31-kpi-card k-gold"><div class="v31-kpi-icon">💰</div><div class="v31-kpi-val" id="f-kpi-exp">—</div><div class="v31-kpi-lbl">Pending Claims</div><div class="v31-kpi-sub">Awaiting approval</div></div>
+      <div class="v31-kpi-card k-green"><div class="v31-kpi-icon">📚</div><div class="v31-kpi-val" id="f-kpi-pub">—</div><div class="v31-kpi-lbl">Publications</div><div class="v31-kpi-sub">All time</div></div>
+      <div class="v31-kpi-card k-purple"><div class="v31-kpi-icon">🔐</div><div class="v31-kpi-val" id="f-kpi-bio">—</div><div class="v31-kpi-lbl">Bio Auth Status</div><div class="v31-kpi-sub">My auth requests</div></div>
+      <div class="v31-kpi-card k-orange"><div class="v31-kpi-icon">🏆</div><div class="v31-kpi-val" id="f-kpi-tenure">Active</div><div class="v31-kpi-lbl">Tenure Status</div><div class="v31-kpi-sub">My tenure</div></div>
+    </div>
+  </div><!-- /myd-faculty-panel -->
+
+  <!-- STAFF DASHBOARD PANEL -->
+  <div id="myd-staff-panel" style="display:none;">
+    <div id="myd-staff-content">
+      <!-- Populated dynamically by mydInitStaff() based on logged-in staff designation -->
+    </div>
+  </div><!-- /myd-staff-panel -->
+
+</div><!-- /tab-my-dashboard -->
 
       <!-- ══════════════════════════════════════════════════════
            v33: KPI DRILL-DOWN MODAL (HR & People, Tenure Risk)
@@ -9245,27 +8712,27 @@
 
   // Access level definitions — maps role key to visible tabs/sections
   const ACCESS_LEVEL_MAP = {
-    'creator':      { label:'Creator (Full Admin)',    tabs:['role-dashboard','dashboard','people','biometric','labs','assets','expenses','publications','inventory','analytics','drive','systems','access','activity','exec-dashboard','dropdown-manager'], canEdit:true,  interface:'full'    },
-    'admin':        { label:'Full Access (Admin)',      tabs:['role-dashboard','dashboard','people','biometric','labs','assets','expenses','publications','inventory','analytics','drive','systems','access','activity','exec-dashboard','dropdown-manager'], canEdit:true,  interface:'full'    },
+    'creator':      { label:'Creator (Full Admin)',    tabs:['my-dashboard','dashboard','people','biometric','labs','assets','expenses','publications','inventory','drive','systems','access','activity','dropdown-manager'], canEdit:true,  interface:'full'    },
+    'admin':        { label:'Full Access (Admin)',      tabs:['my-dashboard','dashboard','people','biometric','labs','assets','expenses','publications','inventory','drive','systems','access','activity','dropdown-manager'], canEdit:true,  interface:'full'    },
 
     // ── v27 — Dedicated interfaces ─────────────────────────────────────────
-    'coo':          { label:'COO / Leadership View',   tabs:['role-dashboard','exec-dashboard','dashboard','analytics','people','biometric','labs','assets','expenses','publications','inventory','drive','systems','access','activity','dropdown-manager'], canEdit:true,  interface:'coo',     badge:'👔 COO',    color:'#F59E0B' },
-    'faculty':      { label:'Faculty Interface',        tabs:['role-dashboard','exec-dashboard','dashboard','analytics','people','labs','publications','biometric','activity'],                     canEdit:false, interface:'faculty', badge:'👨‍🏫 Faculty', color:'#06B6D4' },
+    'coo':          { label:'COO / Leadership View',   tabs:['my-dashboard','dashboard','people','biometric','labs','assets','expenses','publications','inventory','drive','systems','access','activity','dropdown-manager'], canEdit:true,  interface:'coo',     badge:'👔 COO',    color:'#F59E0B' },
+    'faculty':      { label:'Faculty Interface',        tabs:['my-dashboard','dashboard','people','labs','publications','biometric','activity'],                     canEdit:false, interface:'faculty', badge:'👨‍🏫 Faculty', color:'#06B6D4' },
     // ── Staff sub-roles: one per management function ─────────────────────────
-    'staff':        { label:'Staff Interface',           tabs:['role-dashboard','dashboard','people','expenses','inventory','activity'],                                                             canEdit:true,  interface:'staff',        badge:'🏢 Staff',                    color:'#10B981' },
-    'hr_manager':   { label:'HR Manager',                tabs:['role-dashboard','dashboard','people','biometric','activity'],                                                                       canEdit:true,  interface:'hr_manager',   badge:'👥 HR Manager',               color:'#8B5CF6' },
-    'finance_mgr':  { label:'Accounts / Procurement Manager',           tabs:['role-dashboard','dashboard','expenses','analytics','exec-dashboard','activity'],                                                    canEdit:true,  interface:'finance_mgr',  badge:'💰 Accounts / Procurement Manager',          color:'#F59E0B' },
-    'facility_mgr': { label:'Facility Manager',          tabs:['role-dashboard','dashboard','labs','assets','biometric','inventory','activity'],                                                    canEdit:true,  interface:'facility_mgr', badge:'🏗️ Facility Manager',         color:'#06B6D4' },
-    'edu_pgm_mgr':  { label:'Education Program Manager', tabs:['role-dashboard','dashboard','people','publications','labs','activity'],                                                             canEdit:true,  interface:'edu_pgm_mgr',  badge:'🎓 Education Program Manager', color:'#EC4899' },
-    'sys_admin':    { label:'System Administrator',      tabs:['role-dashboard','dashboard','people','biometric','labs','assets','expenses','publications','inventory','analytics','drive','systems','access','activity','dropdown-manager'], canEdit:true, interface:'sys_admin', badge:'⚙️ Sys Admin', color:'#64748B' },
-    'mis':          { label:'MIS',                       tabs:['role-dashboard','dashboard','people','biometric','labs','assets','expenses','publications','inventory','analytics','drive','systems','access','activity','exec-dashboard','dropdown-manager'], canEdit:true, interface:'full', badge:'📊 MIS', color:'#3B82F6' },
+    'staff':        { label:'Staff Interface',           tabs:['my-dashboard','dashboard','people','expenses','inventory','activity'],                                                             canEdit:true,  interface:'staff',        badge:'🏢 Staff',                    color:'#10B981' },
+    'hr_manager':   { label:'HR Manager',                tabs:['my-dashboard','dashboard','people','biometric','activity'],                                                                       canEdit:true,  interface:'hr_manager',   badge:'👥 HR Manager',               color:'#8B5CF6' },
+    'finance_mgr':  { label:'Accounts / Procurement Manager',           tabs:['my-dashboard','dashboard','expenses','activity'],                                                    canEdit:true,  interface:'finance_mgr',  badge:'💰 Accounts / Procurement Manager',          color:'#F59E0B' },
+    'facility_mgr': { label:'Facility Manager',          tabs:['my-dashboard','dashboard','labs','assets','biometric','inventory','activity'],                                                    canEdit:true,  interface:'facility_mgr', badge:'🏗️ Facility Manager',         color:'#06B6D4' },
+    'edu_pgm_mgr':  { label:'Education Program Manager', tabs:['my-dashboard','dashboard','people','publications','labs','activity'],                                                             canEdit:true,  interface:'edu_pgm_mgr',  badge:'🎓 Education Program Manager', color:'#EC4899' },
+    'sys_admin':    { label:'System Administrator',      tabs:['my-dashboard','dashboard','people','biometric','labs','assets','expenses','publications','inventory','drive','systems','access','activity','dropdown-manager'], canEdit:true, interface:'sys_admin', badge:'⚙️ Sys Admin', color:'#64748B' },
+    'mis':          { label:'MIS',                       tabs:['my-dashboard','dashboard','people','biometric','labs','assets','expenses','publications','inventory','drive','systems','access','activity','dropdown-manager'], canEdit:true, interface:'full', badge:'📊 MIS', color:'#3B82F6' },
 
     // ── Legacy / granular roles ────────────────────────────────────────────
-    'hr':           { label:'HR & People Only',         tabs:['role-dashboard','dashboard','people','activity'],                                                                                    canEdit:true,  interface:'full'    },
-    'finance':      { label:'Finance Only',             tabs:['role-dashboard','dashboard','expenses','activity'],                                                                                  canEdit:true,  interface:'full'    },
-    'labs':         { label:'Labs & Assets Only',       tabs:['role-dashboard','dashboard','labs','assets','inventory','biometric','activity'],                                                      canEdit:true,  interface:'full'    },
-    'publications': { label:'Publications Only',        tabs:['role-dashboard','dashboard','publications','activity'],                                                                               canEdit:true,  interface:'full'    },
-    'readonly':     { label:'Read Only',                tabs:['role-dashboard','dashboard','people','expenses','publications','inventory','activity'],                                                canEdit:false, interface:'full'    }
+    'hr':           { label:'HR & People Only',         tabs:['my-dashboard','dashboard','people','activity'],                                                                                    canEdit:true,  interface:'full'    },
+    'finance':      { label:'Finance Only',             tabs:['my-dashboard','dashboard','expenses','activity'],                                                                                  canEdit:true,  interface:'full'    },
+    'labs':         { label:'Labs & Assets Only',       tabs:['my-dashboard','dashboard','labs','assets','inventory','biometric','activity'],                                                      canEdit:true,  interface:'full'    },
+    'publications': { label:'Publications Only',        tabs:['my-dashboard','dashboard','publications','activity'],                                                                               canEdit:true,  interface:'full'    },
+    'readonly':     { label:'Read Only',                tabs:['my-dashboard','dashboard','people','expenses','publications','inventory','activity'],                                                canEdit:false, interface:'full'    }
   };
 
   // User registry — load from localStorage, seed with defaults if first run
@@ -9320,16 +8787,16 @@
 
   // ── Role → landing tab ────────────────────────────────────────────────────
   const INTERFACE_LANDING = {
-    coo:         'role-dashboard',
-    faculty:     'role-dashboard',
-    hr_manager:  'role-dashboard',
-    finance_mgr: 'role-dashboard',
-    facility_mgr:'role-dashboard',
-    event_mgr:   'role-dashboard',
-    edu_pgm_mgr: 'role-dashboard',
-    sys_admin:   'role-dashboard',
-    mis:         'role-dashboard',
-    full:        'role-dashboard'
+    coo:         'my-dashboard',
+    faculty:     'my-dashboard',
+    hr_manager:  'my-dashboard',
+    finance_mgr: 'my-dashboard',
+    facility_mgr:'my-dashboard',
+    event_mgr:   'my-dashboard',
+    edu_pgm_mgr: 'my-dashboard',
+    sys_admin:   'my-dashboard',
+    mis:         'my-dashboard',
+    full:        'my-dashboard'
   };
 
   // ── Role → welcome banner config ─────────────────────────────────────────
@@ -10514,7 +9981,7 @@
     const cf = document.getElementById('an-ctr-filter')?.value || '';
     const ff = r => !cf || r.center === cf || r.department === cf;
     if      (secId === 'an-overview')      _anOverview(ff);
-    else if (secId === 'an-people')        _anPeople(ff);
+    else if (secId === 'an-people')        { _anPeople(ff); setTimeout(function(){ try { _fixJoiningTrend(); _fixDesignationTable(); } catch(e){} }, 120); }
     else if (secId === 'an-tenure')        _anTenure(ff);
     else if (secId === 'an-labs')          _anLabs();
     else if (secId === 'an-expenses')      _anExpenses();
@@ -18450,19 +17917,7 @@
 
   function _refreshDashKPIs() {
     try {
-      // Personnel
-      const total = (DB.staff||[]).length + (DB.faculty||[]).length +
-        (DB.assocFaculty||[]).length + (DB.affiFaculty||[]).length +
-        (DB.researchers||[]).length + (DB.students||[]).length + (DB.fellows||[]).length;
-      _sv('dash-kpi-personnel', total || '—');
-      const newThisMonth = [...(DB.staff||[]),...(DB.researchers||[])].filter(r => {
-        if (!r.joiningDate) return false;
-        const d = _parseDateStr(r.joiningDate);  // FIX BUG-12: was new Date() — NaN for DD/MM/YYYY
-        if (!d) return false;
-        const now = new Date();
-        return d.getMonth()===now.getMonth() && d.getFullYear()===now.getFullYear();
-      }).length;
-      _sv('dash-kpi-personnel-sub', newThisMonth > 0 ? '↑ '+newThisMonth+' this month' : 'Across all centers');
+      // Personnel (removed Total Personnel KPI per v35)
     } catch(e) {}
 
     try {
@@ -25850,7 +25305,7 @@ function _v31SimpleTable(tbodyId, rows, rowFn, countId) {
       var origST = window.showTab;
       window.showTab = function(tabId) {
         origST.apply(this, arguments);
-        if (tabId === 'role-dashboard') {
+        if (tabId === 'role-dashboard' || tabId === 'my-dashboard') {
           setTimeout(function(){
             if (typeof _currentUser !== 'undefined' && _currentUser) {
               v31FetchAll();
@@ -26094,22 +25549,22 @@ function _v31SimpleTable(tbodyId, rows, rowFn, countId) {
   // Maps each role to exactly the sidebar sections + nav tabs it should access
   // ─────────────────────────────────────────────────────────────────────────────
   const V32_ROLE_ACCESS = {
-    creator:      { tabs: ['dashboard','people','biometric','labs','assets','expenses','publications','inventory','analytics','drive','systems','access','activity','exec-dashboard','dropdown-manager','role-dashboard'], canEdit: true  },
-    admin:        { tabs: ['dashboard','people','biometric','labs','assets','expenses','publications','inventory','analytics','drive','systems','access','activity','exec-dashboard','dropdown-manager','role-dashboard'], canEdit: true  },
-    coo:          { tabs: ['exec-dashboard','dashboard','analytics','people','biometric','labs','assets','expenses','publications','inventory','drive','systems','access','activity','role-dashboard'], canEdit: true  },
-    faculty:      { tabs: ['exec-dashboard','dashboard','analytics','people','labs','publications','biometric','activity','role-dashboard'], canEdit: false },
-    hr_manager:   { tabs: ['dashboard','people','analytics','activity','role-dashboard'], canEdit: true  },
-    finance_mgr:  { tabs: ['dashboard','expenses','analytics','exec-dashboard','activity','role-dashboard'], canEdit: true  },
-    facility_mgr: { tabs: ['dashboard','analytics','activity','role-dashboard'], canEdit: true  },
-    event_mgr:    { tabs: ['dashboard','analytics','activity','role-dashboard'], canEdit: true  },
-    mis:          { tabs: ['dashboard','people','biometric','labs','assets','expenses','publications','inventory','analytics','drive','systems','access','activity','exec-dashboard','dropdown-manager','role-dashboard'], canEdit: true  },
-    sys_admin:    { tabs: ['dashboard','biometric','systems','analytics','activity','role-dashboard'], canEdit: true  },
-    edu_pgm_mgr:  { tabs: ['dashboard','people','analytics','activity','role-dashboard'], canEdit: true  },
-    hr:           { tabs: ['dashboard','people','analytics','activity'], canEdit: true  },
-    finance:      { tabs: ['dashboard','expenses','analytics','activity'], canEdit: true  },
-    labs:         { tabs: ['dashboard','labs','assets','analytics','activity'], canEdit: true  },
-    publications: { tabs: ['dashboard','publications','analytics','activity'], canEdit: false },
-    readonly:     { tabs: ['dashboard','analytics'], canEdit: false },
+    creator:      { tabs: ['my-dashboard','dashboard','people','biometric','labs','assets','expenses','publications','inventory','drive','systems','access','activity','dropdown-manager'], canEdit: true  },
+    admin:        { tabs: ['my-dashboard','dashboard','people','biometric','labs','assets','expenses','publications','inventory','drive','systems','access','activity','dropdown-manager'], canEdit: true  },
+    coo:          { tabs: ['my-dashboard','dashboard','people','biometric','labs','assets','expenses','publications','inventory','drive','systems','access','activity'], canEdit: true  },
+    faculty:      { tabs: ['my-dashboard','dashboard','people','labs','publications','biometric','activity'], canEdit: false },
+    hr_manager:   { tabs: ['my-dashboard','dashboard','people','activity'], canEdit: true  },
+    finance_mgr:  { tabs: ['my-dashboard','dashboard','expenses','activity'], canEdit: true  },
+    facility_mgr: { tabs: ['my-dashboard','dashboard','activity'], canEdit: true  },
+    event_mgr:    { tabs: ['my-dashboard','dashboard','activity'], canEdit: true  },
+    mis:          { tabs: ['my-dashboard','dashboard','people','biometric','labs','assets','expenses','publications','inventory','drive','systems','access','activity','dropdown-manager'], canEdit: true  },
+    sys_admin:    { tabs: ['my-dashboard','dashboard','biometric','systems','activity'], canEdit: true  },
+    edu_pgm_mgr:  { tabs: ['my-dashboard','dashboard','people','activity'], canEdit: true  },
+    hr:           { tabs: ['my-dashboard','dashboard','people','activity'], canEdit: true  },
+    finance:      { tabs: ['my-dashboard','dashboard','expenses','activity'], canEdit: true  },
+    labs:         { tabs: ['my-dashboard','dashboard','labs','assets','activity'], canEdit: true  },
+    publications: { tabs: ['my-dashboard','dashboard','publications','activity'], canEdit: false },
+    readonly:     { tabs: ['my-dashboard','dashboard'], canEdit: false },
   };
 
   function _applyV32RoleAccess(role) {
@@ -28220,7 +27675,6 @@ tbody td { vertical-align: middle; }
         // Build KPI rows
         var rows = [
           { label:'👤 HR & People', kpis:[
-            {icon:'👥', label:'Total Personnel',   val:totalPeople,      col:'#3B82F6', alert:false},
             {icon:'⏰', label:'Tenure Risk ≤30d',  val:risk30,           col:risk30>0?'#EF4444':'#10B981', alert:risk30>0},
             {icon:'🎓', label:'Alumni',            val:alumniCnt,        col:'#8B5CF6', alert:false},
             {icon:'🔐', label:'Active Cards',      val:bmActive||'—',    col:'#06B6D4', alert:false},
@@ -28570,7 +28024,6 @@ tbody td { vertical-align: middle; }
 
       var rows = [
         { label:'👤 HR & People', kpis:[
-          {icon:'👥',label:'Total Personnel', val:totalPeople,    col:'#3B82F6', alert:false},
           {icon:'⏰',label:'Tenure Risk ≤30d',val:risk30,         col:risk30>0?'#EF4444':'#10B981', alert:risk30>0},
           {icon:'🎓',label:'Alumni',          val:alumniCnt,      col:'#8B5CF6', alert:false},
           {icon:'🔐',label:'Active Cards',    val:bmActive||'—',  col:'#06B6D4', alert:false},
@@ -29313,7 +28766,7 @@ tbody td { vertical-align: middle; }
     const allowed = STAFF_ACCESS_MAP[role];
     if (allowed === null || allowed === undefined) return; // full access
     const allTabItems = _qsa('.nav-item[data-tab]');
-    const alwaysShow = ['role-dashboard','dashboard'];
+    const alwaysShow = ['my-dashboard','role-dashboard','dashboard'];
     allTabItems.forEach(item => {
       const tab = item.getAttribute('data-tab');
       if (!tab) return;
@@ -29656,7 +29109,7 @@ tbody td { vertical-align: middle; }
     if (typeof origShowTab === 'function' && !origShowTab._v34showPatched) {
       window.showTab = function(tabId) {
         origShowTab.apply(this, arguments);
-        if (tabId === 'role-dashboard') {
+        if (tabId === 'role-dashboard' || tabId === 'my-dashboard') {
           setTimeout(_populateCOOKPIs, 500);
         }
         if (tabId === 'people') {
@@ -29684,5 +29137,538 @@ tbody td { vertical-align: middle; }
 
 })();
 
+// ══════════════════════════════════════════════════════
+//  MY DASHBOARD — v35
+// ══════════════════════════════════════════════════════
+
+const MYD_QUOTES = {
+  coo: [
+    "Your leadership steers the institution forward. Here's today's overview.",
+    "Great institutions are built by great leaders — welcome back.",
+    "Vision without execution is hallucination. Let's execute today.",
+    "The best way to predict the future is to create it.",
+    "Leadership is not about being in charge — it's about taking care of those in your charge.",
+    "Excellence is never an accident. It is always the result of high intention and skilled execution.",
+    "A leader is one who knows the way, goes the way, and shows the way.",
+    "Your decisions today shape the institution of tomorrow.",
+    "Data drives clarity. Clarity drives action. Action drives impact.",
+    "The strength of a team is each individual member. The strength of each member is the team.",
+    "Innovation distinguishes between a leader and a follower.",
+    "Good leadership consists of showing average people how to do the work of superior ones."
+  ],
+  faculty: [
+    "Knowledge is the light that guides every student's journey.",
+    "A great teacher inspires, a great researcher discovers — you do both.",
+    "The art of teaching is the art of assisting discovery.",
+    "Education is not the filling of a pail, but the lighting of a fire.",
+    "Research is creating new knowledge. Teaching is sharing it. You are the bridge.",
+    "The mediocre teacher tells. The good teacher explains. The great teacher inspires.",
+    "Your research today becomes tomorrow's textbook.",
+    "Every student you inspire carries your legacy forward.",
+    "Teaching is the one profession that creates all other professions.",
+    "In the pursuit of knowledge, your curiosity is contagious.",
+    "The best teachers are those who show you where to look, but don't tell you what to see.",
+    "Science is not only a disciple of reason but also one of romance and passion."
+  ],
+  staff: [
+    "Every great institution runs on the dedication of its people.",
+    "The details are not the details — they make the design.",
+    "Excellence is doing ordinary things extraordinarily well.",
+    "Behind every successful initiative is a team that made it happen.",
+    "Your contribution matters more than you know.",
+    "The strength of the institution is the strength of its staff.",
+    "Quality is never an accident — it is always the result of intelligent effort.",
+    "The secret of getting ahead is getting started.",
+    "Success is the sum of small efforts, repeated day in and day out.",
+    "Hard work beats talent when talent doesn't work hard."
+  ]
+};
+
+function mydGetQuote(role) {
+  const pool = MYD_QUOTES[role] || MYD_QUOTES.staff;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+let _mydClockInterval = null;
+function mydStartClock() {
+  function _tick() {
+    const now = new Date();
+    const timeEl = document.getElementById('myd-clock-time');
+    const dateEl = document.getElementById('myd-clock-date');
+    if (timeEl) {
+      let h = now.getHours(), m = now.getMinutes();
+      const ampm = h >= 12 ? 'pm' : 'am';
+      h = h % 12 || 12;
+      timeEl.textContent = h + ':' + String(m).padStart(2,'0') + ' ' + ampm;
+    }
+    if (dateEl) {
+      const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+      const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+      dateEl.textContent = days[now.getDay()] + ', ' + String(now.getDate()).padStart(2,'0') + ' ' + months[now.getMonth()] + ' ' + now.getFullYear();
+    }
+  }
+  _tick();
+  if (_mydClockInterval) clearInterval(_mydClockInterval);
+  _mydClockInterval = setInterval(_tick, 1000);
+}
+
+function mydInit() {
+  mydStartClock();
+  const role = (window._currentRole || 'staff').toLowerCase();
+  const loginData = window._loginData || {};
+  const name = loginData.name || loginData.fullName || 'User';
+
+  const greetEl = document.getElementById('myd-greeting');
+  const subEl = document.getElementById('myd-sub');
+  const quoteEl = document.getElementById('myd-quote');
+  const avatarEl = document.getElementById('myd-avatar');
+
+  if (avatarEl) avatarEl.textContent = name.charAt(0).toUpperCase();
+
+  if (greetEl) {
+    if (role === 'coo' || role === 'admin' || role === 'creator') {
+      greetEl.textContent = 'Welcome, ' + name + ' Sir';
+    } else if (role === 'faculty') {
+      greetEl.textContent = 'Welcome, Prof. ' + name;
+    } else {
+      greetEl.textContent = 'Welcome, ' + name;
+    }
+  }
+
+  const roleLabels = { coo:'Chief Operating Officer · WSAI', faculty:'Faculty · WSAI', staff:'Staff · WSAI', hr_manager:'HR Manager · WSAI', finance_mgr:'Accounts / Procurement Manager · WSAI', facility_mgr:'Facility Manager · WSAI', edu_pgm_mgr:'Education Program Manager · WSAI', sys_admin:'System Administrator · WSAI', mis:'MIS · WSAI' };
+  if (subEl) subEl.textContent = roleLabels[role] || (role.toUpperCase() + ' · WSAI');
+  if (quoteEl) {
+    const qRole = (role === 'coo' || role === 'admin' || role === 'creator') ? 'coo' : (role === 'faculty' ? 'faculty' : 'staff');
+    quoteEl.textContent = '"' + mydGetQuote(qRole) + '"';
+  }
+
+  document.getElementById('myd-coo-panel').style.display = 'none';
+  document.getElementById('myd-faculty-panel').style.display = 'none';
+  document.getElementById('myd-staff-panel').style.display = 'none';
+
+  if (role === 'coo' || role === 'admin' || role === 'creator') {
+    document.getElementById('myd-coo-panel').style.display = 'block';
+    mydRefreshCOO();
+  } else if (role === 'faculty') {
+    document.getElementById('myd-faculty-panel').style.display = 'block';
+    try { if (typeof v31PopulateFaculty === 'function') v31PopulateFaculty(); } catch(e) {}
+  } else {
+    document.getElementById('myd-staff-panel').style.display = 'block';
+    mydInitStaff(role);
+  }
+}
+
+function mydRefreshCOO() {
+  const DB = window.DB || {};
+  const sv = (id, v) => { const el = document.getElementById(id); if(el) el.textContent = v; };
+  sv('myd-hr-staff',       (DB.staff||[]).filter(r=>r.status!=='Alumni'&&r.status!=='Inactive').length || (DB.staff||[]).length || '—');
+  sv('myd-hr-faculty',     (DB.faculty||[]).length || '—');
+  sv('myd-hr-affifac',     (DB.affiFaculty||[]).length || '—');
+  sv('myd-hr-assocfac',    (DB.assocFaculty||[]).length || '—');
+  sv('myd-hr-researchers', (DB.researchers||[]).filter(r=>r.status==='On-going'||r.status==='Active').length || (DB.researchers||[]).length || '—');
+  sv('myd-hr-fellows',     (DB.fellows||[]).length || '—');
+  sv('myd-hr-students',    (DB.students||[]).length || '—');
+
+  const today = new Date();
+  const tenureCount = [...(DB.researchers||[]),...(DB.assocFaculty||[]),...(DB.affiFaculty||[])].filter(r => {
+    if (!r.exitDate) return false;
+    const parts = String(r.exitDate).split('/');
+    const exit = parts.length===3 ? new Date(parts[2],parts[1]-1,parts[0]) : new Date(r.exitDate);
+    const days = (exit - today) / 86400000;
+    return days >= 0 && days <= 90;
+  }).length;
+  sv('myd-hr-tenure', tenureCount || '—');
+
+  const ASSET = window.ASSET || {};
+  sv('myd-ast-it',          (ASSET.it||[]).length || '—');
+  sv('myd-ast-nonit',       (ASSET.nonit||[]).length || '—');
+  sv('myd-ast-ilds',        (ASSET.ilds||[]).length || '—');
+  sv('myd-ast-gpu',         (ASSET.gpu||[]).length || '—');
+  sv('myd-ast-books',       (ASSET.books||[]).length || '—');
+  sv('myd-ast-spares',      (ASSET.spares||[]).length || '—');
+  sv('myd-ast-consumables', (ASSET.consumables||[]).length || '—');
+  sv('myd-ast-nonrep',      (ASSET.nonrepairable||[]).length || '—');
+  sv('myd-ast-vendor',      (ASSET.vendor||[]).length || '—');
+
+  mydRefreshBiometric();
+
+  const LAB = window.LAB || {};
+  const fLabs = (LAB.facultyLabs || LAB.data?.facultyLabs || []);
+  const fRooms = (LAB.facilityRooms || LAB.data?.facilityRooms || []);
+  const facRooms = (LAB.facultyRooms || LAB.data?.facultyRooms || []);
+  sv('myd-fac-faclabs',      fLabs.length || '—');
+  sv('myd-fac-facrooms',     fRooms.length || '—');
+  sv('myd-fac-facroomscount',facRooms.length || '—');
+  const occ = fLabs.reduce((s,r) => s + (parseInt(r.occupiedSeats)||0), 0);
+  const tot = fLabs.reduce((s,r) => s + (parseInt(r.totalSeats)||0), 0);
+  sv('myd-fac-occupied',  occ || '—');
+  sv('myd-fac-available', tot > occ ? (tot - occ) : '—');
+
+  const ribbonsEl = document.getElementById('myd-fac-ribbons');
+  if (ribbonsEl && fLabs.length) {
+    ribbonsEl.innerHTML = fLabs.slice(0,8).map(r => {
+      const pct = r.utilizationRate ? Math.round(r.utilizationRate * 100) : (r.occupiedSeats && r.totalSeats ? Math.round(r.occupiedSeats/r.totalSeats*100) : 0);
+      const color = pct > 80 ? 'var(--red)' : pct >= 50 ? 'var(--green)' : 'var(--gold)';
+      return `<div title="${r.facultyName||''}: ${pct}%" style="width:${Math.max(4,pct*0.6)}px;height:6px;background:${color};border-radius:2px;flex-shrink:0;"></div>`;
+    }).join('');
+  }
+
+  const EXP = window.EXP || window._expenses || [];
+  const expAll = Array.isArray(EXP) ? EXP : (EXP.all || []);
+  sv('myd-exp-paid',    expAll.filter(e => (e.status||'').toLowerCase() === 'paid').length || '—');
+  sv('myd-exp-pending', expAll.filter(e => (e.status||'').toLowerCase() === 'pending').length || '—');
+  sv('myd-exp-process', expAll.filter(e => (e.status||'').toLowerCase().includes('process')).length || '—');
+
+  const PUB = window.PUB || window._publications || {};
+  const pubAll = Array.isArray(PUB) ? PUB : (PUB.all || []);
+  sv('myd-pub-journals',  pubAll.filter(p => (p.type||p.publicationType||'').toLowerCase().includes('journal')).length || '—');
+  sv('myd-pub-conf',      pubAll.filter(p => (p.type||p.publicationType||'').toLowerCase().includes('conference')).length || '—');
+  sv('myd-pub-reports',   pubAll.filter(p => (p.type||p.publicationType||'').toLowerCase().includes('report')).length || '—');
+  sv('myd-pub-preprints', pubAll.filter(p => (p.type||p.publicationType||'').toLowerCase().includes('preprint')||((p.type||'').toLowerCase().includes('arxiv'))).length || '—');
+
+  const INV = window.INV || {};
+  const gifts = INV.gifts || [];
+  const stat  = INV.stationeries || INV.stat || [];
+  const mem   = INV.mementos || INV.mem || [];
+  sv('myd-inv-all',    gifts.length + stat.length + mem.length || '—');
+  sv('myd-inv-gifts',  gifts.length || '—');
+  sv('myd-inv-stat',   stat.length || '—');
+  sv('myd-inv-mem',    mem.length || '—');
+}
+
+function mydRefreshBiometric() {
+  const BM = window.BM || window._biometricData || {};
+  const areas = BM.areaOccupancy || BM.areas || [];
+  const container = document.getElementById('myd-bio-area-cards');
+  if (container) {
+    if (areas.length) {
+      container.innerHTML = areas.slice(0,6).map(a => {
+        const pct = a.capacity > 0 ? Math.round((a.occupied||0)/a.capacity*100) : 0;
+        const color = pct > 80 ? 'var(--red)' : pct >= 50 ? 'var(--gold)' : 'var(--green)';
+        return `<div class="myd-kpi-card" onclick="mydOpenDrilldown('biometric','area')" style="border-color:${color}20;">
+          <div class="myd-kpi-icon">🏢</div>
+          <div class="myd-kpi-val" style="font-size:1.1rem;color:${color};">${a.occupied||0}/${a.capacity||0}</div>
+          <div class="myd-kpi-lbl">${a.area||a.name||'Area'}</div>
+          <div class="myd-kpi-sub">${pct}% occupied</div>
+        </div>`;
+      }).join('');
+    }
+  }
+  const pending = (BM.pendingRequests || []).filter(r => (r.status||'').toLowerCase() === 'pending').length;
+  const el = document.getElementById('myd-bio-pending');
+  if (el) el.textContent = pending || (BM.pendingCount) || '—';
+}
+
+function mydOpenDrilldown(module, sub) {
+  let overlay = document.getElementById('myd-drilldown-overlay');
+  if (!overlay) {
+    const div = document.createElement('div');
+    div.id = 'myd-drilldown-overlay';
+    div.innerHTML = `<div id="myd-drilldown-box"><div class="myd-dd-header"><div class="myd-dd-title" id="myd-dd-title">Detail View</div><button class="myd-dd-close" onclick="mydCloseDrilldown()">✕</button></div><div class="myd-dd-body" id="myd-dd-body"></div></div>`;
+    div.onclick = function(e){ if(e.target===div) mydCloseDrilldown(); };
+    document.body.appendChild(div);
+    overlay = div;
+  }
+  overlay.classList.add('open');
+  mydRenderDrilldown(module, sub);
+}
+
+function mydCloseDrilldown() {
+  const ov = document.getElementById('myd-drilldown-overlay');
+  if (ov) ov.classList.remove('open');
+}
+
+function mydRenderDrilldown(module, sub) {
+  const titleEl = document.getElementById('myd-dd-title');
+  const bodyEl  = document.getElementById('myd-dd-body');
+  if (!titleEl || !bodyEl) return;
+
+  const DB    = window.DB    || {};
+  const ASSET = window.ASSET || {};
+  const LAB   = window.LAB   || {};
+  const INV   = window.INV   || {};
+  const BM    = window.BM    || window._biometricData || {};
+  const EXP   = window.EXP   || window._expenses || {};
+  const PUB   = window.PUB   || window._publications || {};
+
+  if (module === 'hr-people') {
+    titleEl.textContent = '👤 HR & People — ' + sub.charAt(0).toUpperCase() + sub.slice(1);
+    let distHTML = '';
+    const facTypes = {};
+    [...(DB.faculty||[]),...(DB.assocFaculty||[]),...(DB.affiFaculty||[])].forEach(r => {
+      const t = r.facultyType || r._type || 'Faculty';
+      facTypes[t] = (facTypes[t]||0)+1;
+    });
+    distHTML += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+      <div class="table-card"><div class="tc-header"><div class="tc-title" style="color:#4CAF50;">🎓 Faculty Category Distribution</div></div>
+        <table><thead><tr><th>Faculty Type</th><th>Count</th></tr></thead><tbody>
+        ${Object.entries(facTypes).map(([t,c])=>`<tr><td>${t}</td><td style="text-align:center;font-weight:700;">${c}</td></tr>`).join('')||'<tr><td colspan="2" style="text-align:center;color:var(--text3);">No data</td></tr>'}
+        </tbody></table></div>`;
+    const resTypes = {};
+    (DB.researchers||[]).forEach(r => { const d=r.designation||'Other'; resTypes[d]=(resTypes[d]||0)+1; });
+    distHTML += `<div class="table-card"><div class="tc-header"><div class="tc-title" style="color:#42A5F5;">🔬 Researcher Designation Distribution</div></div>
+        <table><thead><tr><th>Designation</th><th>Count</th></tr></thead><tbody>
+        ${Object.entries(resTypes).sort((a,b)=>b[1]-a[1]).map(([t,c])=>`<tr><td>${t}</td><td style="text-align:center;font-weight:700;">${c}</td></tr>`).join('')||'<tr><td colspan="2" style="text-align:center;color:var(--text3);">No data</td></tr>'}
+        </tbody></table></div></div>`;
+    const staffTypes = {};
+    (DB.staff||[]).forEach(r => { const d=r.designation||'Staff'; staffTypes[d]=(staffTypes[d]||0)+1; });
+    const stuTypes = {};
+    (DB.students||[]).forEach(r => { const d=r.designation||'Student'; stuTypes[d]=(stuTypes[d]||0)+1; });
+    distHTML += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+      <div class="table-card"><div class="tc-header"><div class="tc-title" style="color:#FB8C00;">👥 Staff Designation Distribution</div></div>
+        <table><thead><tr><th>Designation</th><th>Count</th></tr></thead><tbody>
+        ${Object.entries(staffTypes).sort((a,b)=>b[1]-a[1]).map(([t,c])=>`<tr><td>${t}</td><td style="text-align:center;font-weight:700;">${c}</td></tr>`).join('')||'<tr><td colspan="2" style="text-align:center;color:var(--text3);">No data</td></tr>'}
+        </tbody></table></div>
+      <div class="table-card"><div class="tc-header"><div class="tc-title" style="color:#7E57C2;">🎓 Student Designation Distribution</div></div>
+        <table><thead><tr><th>Designation</th><th>Count</th></tr></thead><tbody>
+        ${Object.entries(stuTypes).sort((a,b)=>b[1]-a[1]).map(([t,c])=>`<tr><td>${t}</td><td style="text-align:center;font-weight:700;">${c}</td></tr>`).join('')||'<tr><td colspan="2" style="text-align:center;color:var(--text3);">No data</td></tr>'}
+        </tbody></table></div></div>`;
+    if (sub === 'tenure') {
+      distHTML += `<div class="table-card" style="margin-bottom:1rem;">
+        <div class="tc-header"><div class="tc-title">⏰ Tenure Actions Required</div></div>
+        <table><thead><tr><th>Name</th><th>Type</th><th>Center/Dept</th><th>Exit Date</th><th>Days Left</th><th>Decision</th></tr></thead>
+        <tbody id="myd-dd-tenure-tbody"></tbody></table></div>`;
+    }
+    const typeMap = {
+      staff: DB.staff||[], faculty: DB.faculty||[], assocfaculty: DB.assocFaculty||[],
+      affifaculty: DB.affiFaculty||[], researchers: DB.researchers||[],
+      fellows: DB.fellows||[], students: DB.students||[], tenure: []
+    };
+    const rows = typeMap[sub] || [];
+    distHTML += `<div class="table-card">
+      <div class="tc-header">
+        <div class="tc-title">📋 ${sub.charAt(0).toUpperCase()+sub.slice(1)} Registry</div>
+        <div class="tc-actions">
+          <input type="text" placeholder="🔍 Search..." oninput="mydDDSearch(this.value)" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0.4rem 0.9rem;color:var(--text);font-size:0.82rem;outline:none;min-width:180px;">
+          <button class="tc-btn primary" onclick="openAddModal('${sub === 'assocfaculty' ? 'assocfaculty' : sub === 'affifaculty' ? 'affifaculty' : sub === 'researchers' ? 'researcher' : sub === 'fellows' ? 'fellow' : sub}')">+ Add</button>
+        </div>
+      </div>
+      <div style="overflow-x:auto;max-height:350px;overflow-y:auto;">
+        <table><thead><tr><th>#</th><th>Name</th><th>Designation / Type</th><th>Department</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="myd-dd-reg-tbody">
+          ${rows.slice(0,50).map((r,i)=>`<tr>
+            <td>${i+1}</td>
+            <td>${r.name||'—'}</td>
+            <td>${r.designation||r.facultyType||r.category||r._type||'—'}</td>
+            <td>${r.department||r.center||'—'}</td>
+            <td><span class="badge badge-${(r.status||'active').toLowerCase()}">${r.status||'Active'}</span></td>
+            <td><button class="tc-btn" onclick="openEditModal('${sub}','${r.id||''}')">Edit</button> <button class="tc-btn" style="color:var(--red);" onclick="confirmDelete('${sub}','${r.id||''}')">Del</button></td>
+          </tr>`).join('')||`<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text3);">Connect sheet to load data</td></tr>`}
+        </tbody></table>
+      </div>
+    </div>`;
+    bodyEl.innerHTML = distHTML;
+    if (sub === 'tenure') {
+      const today = new Date();
+      const at = [...(DB.researchers||[]),...(DB.assocFaculty||[]),...(DB.affiFaculty||[])].filter(r => {
+        if (!r.exitDate) return false;
+        const parts = String(r.exitDate).split('/');
+        const exit = parts.length===3 ? new Date(parts[2],parts[1]-1,parts[0]) : new Date(r.exitDate);
+        return (exit - today)/86400000 <= 90;
+      }).sort((a,b) => new Date(a.exitDate) - new Date(b.exitDate));
+      const tb = document.getElementById('myd-dd-tenure-tbody');
+      if (tb) {
+        tb.innerHTML = at.map(r => {
+          const parts = String(r.exitDate).split('/');
+          const exit = parts.length===3 ? new Date(parts[2],parts[1]-1,parts[0]) : new Date(r.exitDate);
+          const days = Math.round((exit-today)/86400000);
+          const urgency = days < 30 ? 'var(--red)' : days < 60 ? 'var(--orange)' : 'var(--gold)';
+          return `<tr><td>${r.name||'—'}</td><td>${r._type||r.designation||'—'}</td><td>${r.center||r.department||'—'}</td><td>${r.exitDate||'—'}</td><td style="color:${urgency};font-weight:700;">${days}d</td><td>—</td></tr>`;
+        }).join('') || '<tr><td colspan="6" style="text-align:center;padding:1.5rem;color:var(--text3);">No tenure actions</td></tr>';
+      }
+    }
+  }
+  else if (module === 'asset') {
+    const assetMap = { it: ASSET.it||[], nonit: ASSET.nonit||[], ilds: ASSET.ilds||[], gpu: ASSET.gpu||[], books: ASSET.books||[], spares: ASSET.spares||[], consumables: ASSET.consumables||[], nonrepairable: ASSET.nonrepairable||[], vendor: ASSET.vendor||[] };
+    const titleMap = { it:'💻 IT Assets', nonit:'🏢 Non-IT Assets', ilds:'🌐 ILDS Cluster', gpu:'🧠 GPU Cluster', books:'📚 Books Inventory', spares:'🔧 Spares', consumables:'🛒 Consumables', nonrepairable:'⚠️ Non-Repairable', vendor:'🏪 Vendor List' };
+    titleEl.textContent = titleMap[sub] || ('📦 Asset — ' + sub);
+    const rows = assetMap[sub] || [];
+    let catHTML = '';
+    const catMap = {};
+    rows.forEach(r => { const c = r.category||r.type||'Other'; catMap[c]=(catMap[c]||0)+1; });
+    if (Object.keys(catMap).length) {
+      catHTML = `<div class="table-card" style="margin-bottom:1rem;">
+        <div class="tc-header"><div class="tc-title">${titleMap[sub]||''} — Category Breakdown</div></div>
+        <table><thead><tr><th>Category</th><th style="text-align:center;">Count</th></tr></thead>
+        <tbody>${Object.entries(catMap).sort((a,b)=>b[1]-a[1]).map(([c,n])=>`<tr><td>${c}</td><td style="text-align:center;font-weight:700;">${n}</td></tr>`).join('')}</tbody></table></div>`;
+    }
+    bodyEl.innerHTML = catHTML + `<div class="table-card">
+      <div class="tc-header">
+        <div class="tc-title">📋 ${titleMap[sub]||'Asset'} Registry</div>
+        <div class="tc-actions">
+          <input type="text" placeholder="🔍 Search..." style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0.4rem 0.9rem;color:var(--text);font-size:0.82rem;outline:none;min-width:180px;">
+          <button class="tc-btn primary" onclick="openAssetAddModal('${sub}')">+ Add</button>
+        </div>
+      </div>
+      <div style="overflow-x:auto;max-height:400px;overflow-y:auto;">
+        <table><thead><tr><th>#</th><th>Name / Label</th><th>Category</th><th>Status</th><th>Value ₹</th><th>Actions</th></tr></thead>
+        <tbody>
+          ${rows.slice(0,50).map((r,i)=>`<tr><td>${i+1}</td><td>${r.name||r.label||r.assetName||'—'}</td><td>${r.category||r.type||'—'}</td><td><span class="badge">${r.status||'Active'}</span></td><td>${r.value||r.purchaseValue||'—'}</td><td><button class="tc-btn" onclick="openAssetEditModal('${sub}','${r.id||''}')">Edit</button></td></tr>`).join('')||`<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text3);">Connect sheet to load data</td></tr>`}
+        </tbody></table>
+      </div>
+    </div>`;
+  }
+  else if (module === 'biometric') {
+    titleEl.textContent = '🔐 Biometric Access';
+    const areas = BM.areaOccupancy || BM.areas || [];
+    const pending = BM.pendingRequests || [];
+    bodyEl.innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:0.75rem;margin-bottom:1.25rem;">
+        ${areas.map(a => {
+          const pct = a.capacity > 0 ? Math.round((a.occupied||0)/a.capacity*100) : 0;
+          const color = pct>80?'var(--red)':pct>=50?'var(--gold)':'var(--green)';
+          return `<div class="table-card" style="padding:0.85rem;border-color:${color}30;"><div style="font-size:0.7rem;color:var(--text3);text-transform:uppercase;margin-bottom:0.3rem;">${a.area||a.name||'Area'}</div><div style="font-size:1.3rem;font-weight:700;color:${color};">${a.occupied||0}/${a.capacity||0}</div><div style="font-size:0.72rem;color:var(--text3);">${pct}% occupied</div></div>`;
+        }).join('')||'<div style="color:var(--text3);font-size:0.85rem;">No biometric area data — connect sheet</div>'}
+      </div>
+      <div class="table-card">
+        <div class="tc-header"><div class="tc-title">⏳ Biometric Auth — Pending Requests</div></div>
+        <div style="overflow-x:auto;"><table><thead><tr><th>Req ID</th><th>Employee Name</th><th>Role</th><th>Department</th><th>Request Date</th><th>Auth Type</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+          ${pending.filter(r=>(r.status||'').toLowerCase()==='pending').slice(0,50).map((r,i)=>`<tr><td>${r.id||r.biometricId||i+1}</td><td>${r.name||r.employeeName||'—'}</td><td>${r.category||r.role||'—'}</td><td>${r.department||'—'}</td><td>${r.lastAccess||r.requestDate||'—'}</td><td>${r.accessArea||r.authType||'—'}</td><td><span class="badge badge-pending">Pending</span></td><td><button class="tc-btn" style="color:var(--green);">✓ Auth</button> <button class="tc-btn" style="color:var(--red);">✕ Deny</button></td></tr>`).join('')||'<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--text3);">No pending requests</td></tr>'}
+        </tbody></table></div>
+      </div>`;
+  }
+  else if (module === 'facility') {
+    const subMap = { 'faculty-labs': LAB.facultyLabs||LAB.data?.facultyLabs||[], 'facility-rooms': LAB.facilityRooms||LAB.data?.facilityRooms||[], 'faculty-rooms': LAB.facultyRooms||LAB.data?.facultyRooms||[] };
+    titleEl.textContent = '🏛️ Facility & Room Management — ' + sub;
+    const rows = subMap[sub] || [];
+    bodyEl.innerHTML = `<div class="table-card">
+      <div class="tc-header">
+        <div class="tc-title">📋 ${sub.charAt(0).toUpperCase()+sub.slice(1).replace('-',' ')} Registry</div>
+        <div class="tc-actions">
+          <input type="text" placeholder="🔍 Search..." style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0.4rem 0.9rem;color:var(--text);font-size:0.82rem;outline:none;min-width:180px;">
+          <button class="tc-btn primary" onclick="labOpenAddModal('${sub==='faculty-labs'?'facultyLab':sub==='facility-rooms'?'facilityRoom':'facultyRoom'}')">+ Add</button>
+        </div>
+      </div>
+      <div style="overflow-x:auto;max-height:450px;overflow-y:auto;">
+        <table><thead><tr><th>#</th><th>Faculty / Room</th><th>Category</th><th>Total</th><th>Occupied</th><th>Util %</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+          ${rows.slice(0,50).map((r,i)=>{
+            const pct = r.utilizationRate ? Math.round(r.utilizationRate*100) : (r.occupiedSeats&&r.totalSeats ? Math.round(r.occupiedSeats/r.totalSeats*100) : 0);
+            const ind = pct>80?'🔴':pct>=50?'🟢':'🟡';
+            return `<tr><td>${i+1}</td><td>${r.facultyName||r.roomName||r.name||'—'}</td><td>${r.category||'—'}</td><td>${r.totalSeats||r.capacity||'—'}</td><td>${r.occupiedSeats||r.occupied||'—'}</td><td>${ind} ${pct}%</td><td><span class="badge">${r.status||'Active'}</span></td><td><button class="tc-btn" onclick="labOpenEditModal('${sub}','${r.id||''}')">Edit</button></td></tr>`;
+          }).join('')||'<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--text3);">Connect sheet to load data</td></tr>'}
+        </tbody></table>
+      </div>
+    </div>`;
+  }
+  else if (module === 'expenses') {
+    titleEl.textContent = '💰 Expenses — ' + sub.charAt(0).toUpperCase() + sub.slice(1);
+    const expArr = Array.isArray(EXP) ? EXP : (EXP.all || []);
+    const filterMap = { paid: 'paid', pending: 'pending', underprocess: 'under-process' };
+    const filtered = expArr.filter(e => (e.status||'').toLowerCase().includes(filterMap[sub]||sub));
+    bodyEl.innerHTML = `<div class="table-card">
+      <div class="tc-header">
+        <div class="tc-title">📋 Expenses — ${sub.charAt(0).toUpperCase()+sub.slice(1)}</div>
+        <div class="tc-actions">
+          <button class="tc-btn primary" onclick="showTab('expenses'); setTimeout(()=>document.querySelector('#tab-expenses .tc-btn.primary')?.click(),300)">+ Add Expense</button>
+        </div>
+      </div>
+      <div style="overflow-x:auto;max-height:450px;overflow-y:auto;">
+        <table><thead><tr><th>Req ID</th><th>Submitted By</th><th>Category</th><th>Amount ₹</th><th>Date</th><th>Month</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+          ${filtered.slice(0,50).map((r,i)=>`<tr><td>${r.reqId||r.id||i+1}</td><td>${r.submittedBy||r.name||'—'}</td><td>${r.category||'—'}</td><td>${r.amount||'—'}</td><td>${r.date||'—'}</td><td>${r.month||'—'}</td><td><span class="badge badge-${(r.status||'').toLowerCase().replace(' ','-')}">${r.status||'—'}</span></td><td><button class="tc-btn">Edit</button></td></tr>`).join('')||'<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--text3);">No records for this status</td></tr>'}
+        </tbody></table>
+      </div>
+    </div>`;
+  }
+  else if (module === 'publications') {
+    titleEl.textContent = '📚 Publications — ' + sub.charAt(0).toUpperCase() + sub.slice(1);
+    const pubArr = Array.isArray(PUB) ? PUB : (PUB.all || []);
+    const filterKey = { journals: 'journal', conferences: 'conference', reports: 'report', preprints: 'preprint' };
+    const filtered = pubArr.filter(p => (p.type||p.publicationType||'').toLowerCase().includes(filterKey[sub]||sub));
+    bodyEl.innerHTML = `<div class="table-card">
+      <div class="tc-header">
+        <div class="tc-title">📋 Publications — ${sub}</div>
+        <div class="tc-actions"><button class="tc-btn primary" onclick="showTab('publications'); setTimeout(()=>document.querySelector('#tab-publications .tc-btn.primary')?.click(),300)">+ Add</button></div>
+      </div>
+      <div style="overflow-x:auto;max-height:450px;overflow-y:auto;">
+        <table><thead><tr><th>#</th><th>Title</th><th>Authors</th><th>Type</th><th>Year</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+          ${filtered.slice(0,50).map((r,i)=>`<tr><td>${i+1}</td><td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.title||'—'}</td><td>${r.authors||r.author||'—'}</td><td>${r.type||r.publicationType||'—'}</td><td>${r.year||r.dateOfPublication||'—'}</td><td><span class="badge">${r.status||'—'}</span></td><td><button class="tc-btn">Edit</button></td></tr>`).join('')||'<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text3);">Connect sheet to load data</td></tr>'}
+        </tbody></table>
+      </div>
+    </div>`;
+  }
+  else if (module === 'inventory') {
+    titleEl.textContent = '📦 Inventory — ' + sub.charAt(0).toUpperCase() + sub.slice(1);
+    const invMap = { all: [...(INV.gifts||[]),...(INV.stationeries||INV.stat||[]),...(INV.mementos||INV.mem||[])], gifts: INV.gifts||[], stationeries: INV.stationeries||INV.stat||[], mementos: INV.mementos||INV.mem||[] };
+    const rows = invMap[sub] || [];
+    bodyEl.innerHTML = `<div class="table-card">
+      <div class="tc-header">
+        <div class="tc-title">📋 Inventory — ${sub}</div>
+        <div class="tc-actions"><button class="tc-btn primary" onclick="showTab('inventory'); switchInvTab('${sub==='all'?'gifts':sub}')">+ Add Item</button></div>
+      </div>
+      <div style="overflow-x:auto;max-height:450px;overflow-y:auto;">
+        <table><thead><tr><th>#</th><th>Item Name</th><th>Category</th><th>Balance</th><th>Issued</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+          ${rows.slice(0,50).map((r,i)=>`<tr><td>${i+1}</td><td>${r.name||r.itemName||'—'}</td><td>${r.category||r.type||'—'}</td><td>${r.balance||r.stock||'—'}</td><td>${r.totalIssued||r.issued||'—'}</td><td><span class="badge">${r.status||'Active'}</span></td><td><button class="tc-btn">Edit</button></td></tr>`).join('')||'<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text3);">Connect sheet to load data</td></tr>'}
+        </tbody></table>
+      </div>
+    </div>`;
+  }
+}
+
+function mydDDSearch(val) {
+  const tbody = document.getElementById('myd-dd-reg-tbody');
+  if (!tbody) return;
+  const q = val.toLowerCase();
+  tbody.querySelectorAll('tr').forEach(tr => {
+    tr.style.display = !q || tr.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+}
+
+function mydInitStaff(role) {
+  const contentEl = document.getElementById('myd-staff-content');
+  if (!contentEl) return;
+  const accessMap = {
+    hr_manager:   ['hr-people','biometric'],
+    finance_mgr:  ['expenses','asset'],
+    facility_mgr: ['facility','biometric'],
+    edu_pgm_mgr:  ['hr-people','publications'],
+    sys_admin:    ['hr-people','asset','biometric','facility','expenses','publications','inventory'],
+    mis:          ['hr-people','asset','biometric','facility','expenses','publications','inventory'],
+    staff:        ['hr-people','expenses','inventory']
+  };
+  const allowed = accessMap[role] || accessMap.staff;
+  const iconMap = {'hr-people':'👤','asset':'📦','biometric':'🔐','facility':'🏛️','expenses':'💰','publications':'📚','inventory':'📦'};
+  mydRefreshCOO();
+  contentEl.innerHTML = `<div style="color:var(--text2);font-size:0.88rem;margin-bottom:1rem;">Your accessible modules are shown below.</div>
+  <div style="display:flex;flex-wrap:wrap;gap:0.85rem;">
+    ${allowed.map(mod => `<div class="myd-kpi-card" style="max-width:200px;" onclick="mydOpenDrilldown('${mod}','all')">
+      <div class="myd-kpi-icon">${iconMap[mod]||'📋'}</div>
+      <div class="myd-kpi-lbl" style="font-size:0.85rem;font-weight:600;">${mod.replace('-',' ').replace(/(^\w|\s\w)/g, m=>m.toUpperCase())}</div>
+      <div class="myd-kpi-sub">Click to view details</div>
+    </div>`).join('')}
+  </div>`;
+}
+
+// Hook into showTab — must be at very end
+(function() {
+  const _prev = typeof showTab === 'function' ? showTab : null;
+  window.showTab = function(tabId) {
+    if (_prev) _prev.call(this, tabId);
+    if (tabId === 'my-dashboard') {
+      setTimeout(mydInit, 80);
+    }
+  };
+})();
+
+if (document.getElementById('tab-my-dashboard')?.classList.contains('active')) {
+  setTimeout(mydInit, 200);
+}
+
 </script>
+
+<!-- MY DASHBOARD DRILLDOWN OVERLAY -->
+<div id="myd-drilldown-overlay" onclick="if(event.target===this)mydCloseDrilldown()">
+  <div id="myd-drilldown-box">
+    <div class="myd-dd-header">
+      <div class="myd-dd-title" id="myd-dd-title">Detail View</div>
+      <button class="myd-dd-close" onclick="mydCloseDrilldown()">✕</button>
+    </div>
+    <div class="myd-dd-body" id="myd-dd-body"></div>
+  </div>
+</div>
+
 </body>
