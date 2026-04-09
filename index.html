@@ -1329,17 +1329,19 @@
     /* ── MY DASHBOARD (v35) ── */
     .myd-kpi-section { margin-bottom: 1.75rem; }
     .myd-sec-hdr {
-      font-size: 0.78rem;
+      font-size: 0.72rem;
       font-family: var(--font-mono);
       text-transform: uppercase;
-      letter-spacing: 0.1em;
+      letter-spacing: 0.12em;
       color: var(--text2);
       margin-bottom: 0.75rem;
-      padding: 0.4rem 0.75rem;
+      padding: 0.35rem 0.85rem;
       background: var(--surface2);
       border-radius: 8px;
       border-left: 3px solid var(--accent);
-      font-weight: 600;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
     }
     .myd-kpi-row {
       display: flex;
@@ -1353,16 +1355,28 @@
       padding: 0.85rem 1rem;
       min-width: 110px;
       cursor: pointer;
-      transition: transform 0.18s, box-shadow 0.18s, border-color 0.18s;
+      text-align: center;
+      transition: all 0.22s cubic-bezier(.22,1,.36,1);
+      flex: 1;
       position: relative;
-      flex: 1 1 110px;
-      max-width: 160px;
+      overflow: hidden;
+      animation: appIn 0.45s both;
     }
     .myd-kpi-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(59,130,246,0.18);
-      border-color: var(--accent);
+      transform: translateY(-3px);
+      border-color: rgba(99,179,237,0.3);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.35);
     }
+    .myd-kpi-card::after {
+      content: '↗';
+      position: absolute;
+      top: 7px; right: 9px;
+      font-size: 0.6rem;
+      color: var(--text3);
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .myd-kpi-card:hover::after { opacity: 0.7; }
     .myd-kpi-card.myd-kpi-alert { border-color: rgba(239,68,68,0.3); background: rgba(239,68,68,0.04); }
     .myd-kpi-card.myd-kpi-green { border-color: rgba(16,185,129,0.3); background: rgba(16,185,129,0.04); }
     .myd-kpi-card.myd-kpi-orange { border-color: rgba(249,115,22,0.3); background: rgba(249,115,22,0.04); }
@@ -1418,6 +1432,31 @@
     }
     .myd-dd-close:hover { background: rgba(239,68,68,0.12); color: var(--red); }
     .myd-dd-body { padding: 1.25rem 1.5rem 1.5rem; }
+    /* ── KPI card stagger animation (v39 style) ── */
+    .myd-kpi-row > .myd-kpi-card:nth-child(1)  { animation-delay: 0.00s; }
+    .myd-kpi-row > .myd-kpi-card:nth-child(2)  { animation-delay: 0.05s; }
+    .myd-kpi-row > .myd-kpi-card:nth-child(3)  { animation-delay: 0.10s; }
+    .myd-kpi-row > .myd-kpi-card:nth-child(4)  { animation-delay: 0.15s; }
+    .myd-kpi-row > .myd-kpi-card:nth-child(5)  { animation-delay: 0.20s; }
+    .myd-kpi-row > .myd-kpi-card:nth-child(6)  { animation-delay: 0.25s; }
+    .myd-kpi-row > .myd-kpi-card:nth-child(7)  { animation-delay: 0.30s; }
+    .myd-kpi-row > .myd-kpi-card:nth-child(8)  { animation-delay: 0.35s; }
+    .myd-kpi-row > .myd-kpi-card:nth-child(9)  { animation-delay: 0.40s; }
+    /* KPI section stagger */
+    .myd-kpi-section:nth-child(1)  { animation: appIn 0.4s 0.00s both; }
+    .myd-kpi-section:nth-child(2)  { animation: appIn 0.4s 0.06s both; }
+    .myd-kpi-section:nth-child(3)  { animation: appIn 0.4s 0.12s both; }
+    .myd-kpi-section:nth-child(4)  { animation: appIn 0.4s 0.18s both; }
+    .myd-kpi-section:nth-child(5)  { animation: appIn 0.4s 0.24s both; }
+    .myd-kpi-section:nth-child(6)  { animation: appIn 0.4s 0.30s both; }
+    .myd-kpi-section:nth-child(7)  { animation: appIn 0.4s 0.36s both; }
+    /* Light theme overrides for myd panel */
+    [data-theme="light"] .myd-kpi-card { background: #FFFFFF; border-color: rgba(30,58,138,0.09); box-shadow: 0 1px 3px rgba(15,23,42,0.07); }
+    [data-theme="light"] .myd-kpi-card:hover { box-shadow: 0 4px 12px rgba(15,23,42,0.12); }
+    [data-theme="light"] .myd-kpi-val { color: #0F172A; }
+    [data-theme="light"] .myd-kpi-lbl { color: #475569; }
+    [data-theme="light"] .myd-kpi-sub { color: #64748B; }
+    [data-theme="light"] .myd-sec-hdr { color: #1E3A8A; border-color: rgba(30,58,138,0.15); }
     </style>
 </head>
 <body>
@@ -3516,14 +3555,38 @@
     <div class="myd-kpi-section">
       <div class="myd-sec-hdr">👤 HR &amp; People</div>
       <div class="myd-kpi-row" id="myd-hr-kpi-row">
-        <div class="myd-kpi-card" onclick="mydOpenDrilldown('hr-people','staff')"><div class="myd-kpi-icon">👔</div><div class="myd-kpi-val" id="myd-hr-staff">—</div><div class="myd-kpi-lbl">Staff</div></div>
-        <div class="myd-kpi-card" onclick="mydOpenDrilldown('hr-people','faculty')"><div class="myd-kpi-icon">👨‍🏫</div><div class="myd-kpi-val" id="myd-hr-faculty">—</div><div class="myd-kpi-lbl">Faculty</div></div>
-        <div class="myd-kpi-card" onclick="mydOpenDrilldown('hr-people','affifaculty')"><div class="myd-kpi-icon">🔗</div><div class="myd-kpi-val" id="myd-hr-affifac">—</div><div class="myd-kpi-lbl">Affiliate Faculty</div></div>
-        <div class="myd-kpi-card" onclick="mydOpenDrilldown('hr-people','assocfaculty')"><div class="myd-kpi-icon">👩‍🏫</div><div class="myd-kpi-val" id="myd-hr-assocfac">—</div><div class="myd-kpi-lbl">Associate Faculty</div></div>
-        <div class="myd-kpi-card" onclick="mydOpenDrilldown('hr-people','researchers')"><div class="myd-kpi-icon">🔬</div><div class="myd-kpi-val" id="myd-hr-researchers">—</div><div class="myd-kpi-lbl">Active Researchers</div></div>
-        <div class="myd-kpi-card" onclick="mydOpenDrilldown('hr-people','fellows')"><div class="myd-kpi-icon">👥</div><div class="myd-kpi-val" id="myd-hr-fellows">—</div><div class="myd-kpi-lbl">Associate Fellows</div></div>
-        <div class="myd-kpi-card" onclick="mydOpenDrilldown('hr-people','students')"><div class="myd-kpi-icon">🎓</div><div class="myd-kpi-val" id="myd-hr-students">—</div><div class="myd-kpi-lbl">Students</div></div>
-        <div class="myd-kpi-card myd-kpi-alert" onclick="mydOpenDrilldown('hr-people','tenure')"><div class="myd-kpi-icon">⏰</div><div class="myd-kpi-val" id="myd-hr-tenure">—</div><div class="myd-kpi-lbl">Tenure Risk</div><div class="myd-kpi-sub">Tenure Actions Required</div></div>
+        <div class="myd-kpi-card" onclick="mydOpenDrilldown('hr-people','staff')">
+          <div class="myd-kpi-icon">👔</div><div class="myd-kpi-val" id="myd-hr-staff">—</div>
+          <div class="myd-kpi-lbl">Staff</div><div class="myd-kpi-sub">Active members</div>
+        </div>
+        <div class="myd-kpi-card" onclick="mydOpenDrilldown('hr-people','faculty')">
+          <div class="myd-kpi-icon">👨‍🏫</div><div class="myd-kpi-val" id="myd-hr-faculty">—</div>
+          <div class="myd-kpi-lbl">Faculty</div><div class="myd-kpi-sub">Core faculty</div>
+        </div>
+        <div class="myd-kpi-card" onclick="mydOpenDrilldown('hr-people','affifaculty')">
+          <div class="myd-kpi-icon">🔗</div><div class="myd-kpi-val" id="myd-hr-affifac">—</div>
+          <div class="myd-kpi-lbl">Affiliate Faculty</div><div class="myd-kpi-sub">Industry affiliate</div>
+        </div>
+        <div class="myd-kpi-card" onclick="mydOpenDrilldown('hr-people','assocfaculty')">
+          <div class="myd-kpi-icon">👩‍🏫</div><div class="myd-kpi-val" id="myd-hr-assocfac">—</div>
+          <div class="myd-kpi-lbl">Associate Faculty</div><div class="myd-kpi-sub">With tenure</div>
+        </div>
+        <div class="myd-kpi-card" onclick="mydOpenDrilldown('hr-people','researchers')">
+          <div class="myd-kpi-icon">🔬</div><div class="myd-kpi-val" id="myd-hr-researchers">—</div>
+          <div class="myd-kpi-lbl">Active Researchers</div><div class="myd-kpi-sub">On-going projects</div>
+        </div>
+        <div class="myd-kpi-card" onclick="mydOpenDrilldown('hr-people','fellows')">
+          <div class="myd-kpi-icon">👥</div><div class="myd-kpi-val" id="myd-hr-fellows">—</div>
+          <div class="myd-kpi-lbl">Associate Fellows</div><div class="myd-kpi-sub">Enrolled</div>
+        </div>
+        <div class="myd-kpi-card" onclick="mydOpenDrilldown('hr-people','students')">
+          <div class="myd-kpi-icon">🎓</div><div class="myd-kpi-val" id="myd-hr-students">—</div>
+          <div class="myd-kpi-lbl">Students</div><div class="myd-kpi-sub">Enrolled</div>
+        </div>
+        <div class="myd-kpi-card myd-kpi-alert" onclick="mydOpenDrilldown('hr-people','tenure')">
+          <div class="myd-kpi-icon">⏰</div><div class="myd-kpi-val" id="myd-hr-tenure">—</div>
+          <div class="myd-kpi-lbl">Tenure Risk</div><div class="myd-kpi-sub">≤90 days — Action Required</div>
+        </div>
       </div>
     </div>
 
@@ -3531,15 +3594,42 @@
     <div class="myd-kpi-section">
       <div class="myd-sec-hdr">📦 Asset</div>
       <div class="myd-kpi-row">
-        <div class="myd-kpi-card" onclick="mydOpenDrilldown('asset','it')"><div class="myd-kpi-icon">💻</div><div class="myd-kpi-val" id="myd-ast-it">—</div><div class="myd-kpi-lbl">IT Assets</div></div>
-        <div class="myd-kpi-card" onclick="mydOpenDrilldown('asset','nonit')"><div class="myd-kpi-icon">🏢</div><div class="myd-kpi-val" id="myd-ast-nonit">—</div><div class="myd-kpi-lbl">Non-IT Assets</div></div>
-        <div class="myd-kpi-card" onclick="mydOpenDrilldown('asset','ilds')"><div class="myd-kpi-icon">🌐</div><div class="myd-kpi-val" id="myd-ast-ilds">—</div><div class="myd-kpi-lbl">ILDS Cluster</div></div>
-        <div class="myd-kpi-card" onclick="mydOpenDrilldown('asset','gpu')"><div class="myd-kpi-icon">🧠</div><div class="myd-kpi-val" id="myd-ast-gpu">—</div><div class="myd-kpi-lbl">GPU Cluster</div></div>
-        <div class="myd-kpi-card" onclick="mydOpenDrilldown('asset','books')"><div class="myd-kpi-icon">📚</div><div class="myd-kpi-val" id="myd-ast-books">—</div><div class="myd-kpi-lbl">Books Inventory</div></div>
-        <div class="myd-kpi-card" onclick="mydOpenDrilldown('asset','spares')"><div class="myd-kpi-icon">🔧</div><div class="myd-kpi-val" id="myd-ast-spares">—</div><div class="myd-kpi-lbl">Spares</div></div>
-        <div class="myd-kpi-card" onclick="mydOpenDrilldown('asset','consumables')"><div class="myd-kpi-icon">🛒</div><div class="myd-kpi-val" id="myd-ast-consumables">—</div><div class="myd-kpi-lbl">Consumables</div></div>
-        <div class="myd-kpi-card" onclick="mydOpenDrilldown('asset','nonrepairable')"><div class="myd-kpi-icon">⚠️</div><div class="myd-kpi-val" id="myd-ast-nonrep">—</div><div class="myd-kpi-lbl">Non Repairable</div></div>
-        <div class="myd-kpi-card" onclick="mydOpenDrilldown('asset','vendor')"><div class="myd-kpi-icon">🏪</div><div class="myd-kpi-val" id="myd-ast-vendor">—</div><div class="myd-kpi-lbl">Vendor List</div></div>
+        <div class="myd-kpi-card" onclick="mydOpenDrilldown('asset','it')">
+          <div class="myd-kpi-icon">💻</div><div class="myd-kpi-val" id="myd-ast-it">—</div>
+          <div class="myd-kpi-lbl">IT Assets</div><div class="myd-kpi-sub">Devices &amp; HW</div>
+        </div>
+        <div class="myd-kpi-card" onclick="mydOpenDrilldown('asset','nonit')">
+          <div class="myd-kpi-icon">🏢</div><div class="myd-kpi-val" id="myd-ast-nonit">—</div>
+          <div class="myd-kpi-lbl">Non-IT Assets</div><div class="myd-kpi-sub">Furniture &amp; equipment</div>
+        </div>
+        <div class="myd-kpi-card" onclick="mydOpenDrilldown('asset','ilds')">
+          <div class="myd-kpi-icon">🌐</div><div class="myd-kpi-val" id="myd-ast-ilds">—</div>
+          <div class="myd-kpi-lbl">ILDS Cluster</div><div class="myd-kpi-sub">Storage cluster</div>
+        </div>
+        <div class="myd-kpi-card" onclick="mydOpenDrilldown('asset','gpu')">
+          <div class="myd-kpi-icon">🧠</div><div class="myd-kpi-val" id="myd-ast-gpu">—</div>
+          <div class="myd-kpi-lbl">GPU Cluster</div><div class="myd-kpi-sub">Compute nodes</div>
+        </div>
+        <div class="myd-kpi-card" onclick="mydOpenDrilldown('asset','books')">
+          <div class="myd-kpi-icon">📚</div><div class="myd-kpi-val" id="myd-ast-books">—</div>
+          <div class="myd-kpi-lbl">Books Inventory</div><div class="myd-kpi-sub">Library stock</div>
+        </div>
+        <div class="myd-kpi-card" onclick="mydOpenDrilldown('asset','spares')">
+          <div class="myd-kpi-icon">🔧</div><div class="myd-kpi-val" id="myd-ast-spares">—</div>
+          <div class="myd-kpi-lbl">Spares</div><div class="myd-kpi-sub">Parts store</div>
+        </div>
+        <div class="myd-kpi-card" onclick="mydOpenDrilldown('asset','consumables')">
+          <div class="myd-kpi-icon">🛒</div><div class="myd-kpi-val" id="myd-ast-consumables">—</div>
+          <div class="myd-kpi-lbl">Consumables</div><div class="myd-kpi-sub">Supplies</div>
+        </div>
+        <div class="myd-kpi-card myd-kpi-alert" onclick="mydOpenDrilldown('asset','nonrepairable')">
+          <div class="myd-kpi-icon">⚠️</div><div class="myd-kpi-val" id="myd-ast-nonrep">—</div>
+          <div class="myd-kpi-lbl">Non-Repairable</div><div class="myd-kpi-sub">Write-offs</div>
+        </div>
+        <div class="myd-kpi-card" onclick="mydOpenDrilldown('asset','vendor')">
+          <div class="myd-kpi-icon">🏪</div><div class="myd-kpi-val" id="myd-ast-vendor">—</div>
+          <div class="myd-kpi-lbl">Vendor List</div><div class="myd-kpi-sub">Registered vendors</div>
+        </div>
       </div>
     </div>
 
@@ -3547,22 +3637,46 @@
     <div class="myd-kpi-section">
       <div class="myd-sec-hdr">🔐 Biometric Access</div>
       <div class="myd-kpi-row">
-        <div class="myd-kpi-card myd-kpi-green" onclick="mydOpenDrilldown('biometric','total-active')"><div class="myd-kpi-icon">🏢</div><div class="myd-kpi-val" id="myd-bio-total-active">—</div><div class="myd-kpi-lbl">Total Active</div><div class="myd-kpi-sub">Area Occupancy + Pending</div></div>
+        <div class="myd-kpi-card myd-kpi-green" onclick="mydOpenDrilldown('biometric','total-active')">
+          <div class="myd-kpi-icon">🏢</div><div class="myd-kpi-val" id="myd-bio-total-active">—</div>
+          <div class="myd-kpi-lbl">Total Active</div><div class="myd-kpi-sub">Area Occupancy + Pending</div>
+        </div>
         <div id="myd-bio-area-cards" style="display:contents;"></div>
-        <div class="myd-kpi-card myd-kpi-alert" onclick="mydOpenDrilldown('biometric','pending')"><div class="myd-kpi-icon">⏳</div><div class="myd-kpi-val" id="myd-bio-pending">—</div><div class="myd-kpi-lbl">Pending Requests</div><div class="myd-kpi-sub">Biometric Auth</div></div>
+        <div class="myd-kpi-card myd-kpi-alert" onclick="mydOpenDrilldown('biometric','pending')">
+          <div class="myd-kpi-icon">⏳</div><div class="myd-kpi-val" id="myd-bio-pending">—</div>
+          <div class="myd-kpi-lbl">Pending Requests</div><div class="myd-kpi-sub">Biometric Auth</div>
+        </div>
       </div>
     </div>
 
-    <!-- ── KPI ROW 4: Facility and Room Management (v40) ── -->
+    <!-- ── KPI ROW 4: Facility and Room Management ── -->
     <div class="myd-kpi-section">
       <div class="myd-sec-hdr">🏛️ Facility and Room Management</div>
       <div class="myd-kpi-row">
-        <div class="myd-kpi-card myd-kpi-alert" onclick="mydOpenDrilldown('facility','over-capacity')"><div class="myd-kpi-icon">⚠️</div><div class="myd-kpi-val" id="myd-fac-overcap">—</div><div class="myd-kpi-lbl">Over Capacity</div><div class="myd-kpi-sub">Utilization Ribbons</div></div>
-        <div class="myd-kpi-card" onclick="mydOpenDrilldown('facility','facility-rooms')"><div class="myd-kpi-icon">🏛️</div><div class="myd-kpi-val" id="myd-fac-facrooms">—</div><div class="myd-kpi-lbl">Facility Rooms</div><div class="myd-kpi-sub">Live Status</div></div>
-        <div class="myd-kpi-card" onclick="mydOpenDrilldown('facility','lab-cap')"><div class="myd-kpi-icon">📐</div><div class="myd-kpi-val" id="myd-fac-labcap">—</div><div class="myd-kpi-lbl">Total Labs Capacity</div><div class="myd-kpi-sub">SUMIF *LAB*</div></div>
-        <div class="myd-kpi-card" onclick="mydOpenDrilldown('facility','classroom-cap')"><div class="myd-kpi-icon">🏫</div><div class="myd-kpi-val" id="myd-fac-classcap">—</div><div class="myd-kpi-lbl">Total Classroom Capacity</div><div class="myd-kpi-sub">SUMIF *CLASSROOM*</div></div>
-        <div class="myd-kpi-card myd-kpi-orange" onclick="mydOpenDrilldown('facility','faculty-labs')"><div class="myd-kpi-icon">🪑</div><div class="myd-kpi-val" id="myd-fac-occupied">—</div><div class="myd-kpi-lbl">Occupied Seats</div><div class="myd-kpi-sub">SUM(Col G)</div></div>
-        <div class="myd-kpi-card myd-kpi-green" onclick="mydOpenDrilldown('facility','faculty-labs')"><div class="myd-kpi-icon">🟢</div><div class="myd-kpi-val" id="myd-fac-available">—</div><div class="myd-kpi-lbl">Available Seats</div><div class="myd-kpi-sub">Total − Occupied</div></div>
+        <div class="myd-kpi-card myd-kpi-alert" onclick="mydOpenDrilldown('facility','over-capacity')">
+          <div class="myd-kpi-icon">⚠️</div><div class="myd-kpi-val" id="myd-fac-overcap">—</div>
+          <div class="myd-kpi-lbl">Over Capacity</div><div class="myd-kpi-sub">Utilization Ribbons</div>
+        </div>
+        <div class="myd-kpi-card" onclick="mydOpenDrilldown('facility','facility-rooms')">
+          <div class="myd-kpi-icon">🏛️</div><div class="myd-kpi-val" id="myd-fac-facrooms">—</div>
+          <div class="myd-kpi-lbl">Facility Rooms</div><div class="myd-kpi-sub">Live Status</div>
+        </div>
+        <div class="myd-kpi-card" onclick="mydOpenDrilldown('facility','lab-cap')">
+          <div class="myd-kpi-icon">📐</div><div class="myd-kpi-val" id="myd-fac-labcap">—</div>
+          <div class="myd-kpi-lbl">Total Labs Capacity</div><div class="myd-kpi-sub">SUMIF *LAB*</div>
+        </div>
+        <div class="myd-kpi-card" onclick="mydOpenDrilldown('facility','classroom-cap')">
+          <div class="myd-kpi-icon">🏫</div><div class="myd-kpi-val" id="myd-fac-classcap">—</div>
+          <div class="myd-kpi-lbl">Total Classroom Capacity</div><div class="myd-kpi-sub">SUMIF *CLASSROOM*</div>
+        </div>
+        <div class="myd-kpi-card myd-kpi-orange" onclick="mydOpenDrilldown('facility','occupied-seats')">
+          <div class="myd-kpi-icon">🪑</div><div class="myd-kpi-val" id="myd-fac-occupied">—</div>
+          <div class="myd-kpi-lbl">Occupied Seats</div><div class="myd-kpi-sub">SUM(Occupied Col)</div>
+        </div>
+        <div class="myd-kpi-card myd-kpi-green" onclick="mydOpenDrilldown('facility','available-seats')">
+          <div class="myd-kpi-icon">🟢</div><div class="myd-kpi-val" id="myd-fac-available">—</div>
+          <div class="myd-kpi-lbl">Available Seats</div><div class="myd-kpi-sub">Total − Occupied</div>
+        </div>
       </div>
     </div>
 
@@ -3570,9 +3684,18 @@
     <div class="myd-kpi-section">
       <div class="myd-sec-hdr">💰 Expenses</div>
       <div class="myd-kpi-row">
-        <div class="myd-kpi-card myd-kpi-green" onclick="mydOpenDrilldown('expenses','paid')"><div class="myd-kpi-icon">✅</div><div class="myd-kpi-val" id="myd-exp-paid">—</div><div class="myd-kpi-lbl">Paid</div></div>
-        <div class="myd-kpi-card myd-kpi-alert" onclick="mydOpenDrilldown('expenses','pending')"><div class="myd-kpi-icon">⏳</div><div class="myd-kpi-val" id="myd-exp-pending">—</div><div class="myd-kpi-lbl">Pending</div></div>
-        <div class="myd-kpi-card myd-kpi-orange" onclick="mydOpenDrilldown('expenses','underprocess')"><div class="myd-kpi-icon">⚙️</div><div class="myd-kpi-val" id="myd-exp-process">—</div><div class="myd-kpi-lbl">Under-Process</div></div>
+        <div class="myd-kpi-card myd-kpi-green" onclick="mydOpenDrilldown('expenses','paid')">
+          <div class="myd-kpi-icon">✅</div><div class="myd-kpi-val" id="myd-exp-paid">—</div>
+          <div class="myd-kpi-lbl">Paid</div><div class="myd-kpi-sub">Cleared</div>
+        </div>
+        <div class="myd-kpi-card myd-kpi-alert" onclick="mydOpenDrilldown('expenses','pending')">
+          <div class="myd-kpi-icon">⏳</div><div class="myd-kpi-val" id="myd-exp-pending">—</div>
+          <div class="myd-kpi-lbl">Pending</div><div class="myd-kpi-sub">Awaiting approval</div>
+        </div>
+        <div class="myd-kpi-card myd-kpi-orange" onclick="mydOpenDrilldown('expenses','underprocess')">
+          <div class="myd-kpi-icon">⚙️</div><div class="myd-kpi-val" id="myd-exp-process">—</div>
+          <div class="myd-kpi-lbl">Under-Process</div><div class="myd-kpi-sub">In review</div>
+        </div>
       </div>
     </div>
 
@@ -3580,10 +3703,22 @@
     <div class="myd-kpi-section">
       <div class="myd-sec-hdr">📚 Publications</div>
       <div class="myd-kpi-row">
-        <div class="myd-kpi-card" onclick="mydOpenDrilldown('publications','journals')"><div class="myd-kpi-icon">📰</div><div class="myd-kpi-val" id="myd-pub-journals">—</div><div class="myd-kpi-lbl">Journal Papers</div></div>
-        <div class="myd-kpi-card" onclick="mydOpenDrilldown('publications','conferences')"><div class="myd-kpi-icon">🎤</div><div class="myd-kpi-val" id="myd-pub-conf">—</div><div class="myd-kpi-lbl">Conference Papers</div></div>
-        <div class="myd-kpi-card" onclick="mydOpenDrilldown('publications','reports')"><div class="myd-kpi-icon">📋</div><div class="myd-kpi-val" id="myd-pub-reports">—</div><div class="myd-kpi-lbl">Reports</div></div>
-        <div class="myd-kpi-card" onclick="mydOpenDrilldown('publications','preprints')"><div class="myd-kpi-icon">📄</div><div class="myd-kpi-val" id="myd-pub-preprints">—</div><div class="myd-kpi-lbl">Preprints / ArXiv</div></div>
+        <div class="myd-kpi-card" onclick="mydOpenDrilldown('publications','journals')">
+          <div class="myd-kpi-icon">📰</div><div class="myd-kpi-val" id="myd-pub-journals">—</div>
+          <div class="myd-kpi-lbl">Journal Papers</div><div class="myd-kpi-sub">Published</div>
+        </div>
+        <div class="myd-kpi-card" onclick="mydOpenDrilldown('publications','conferences')">
+          <div class="myd-kpi-icon">🎤</div><div class="myd-kpi-val" id="myd-pub-conf">—</div>
+          <div class="myd-kpi-lbl">Conference Papers</div><div class="myd-kpi-sub">Presented</div>
+        </div>
+        <div class="myd-kpi-card" onclick="mydOpenDrilldown('publications','reports')">
+          <div class="myd-kpi-icon">📋</div><div class="myd-kpi-val" id="myd-pub-reports">—</div>
+          <div class="myd-kpi-lbl">Reports</div><div class="myd-kpi-sub">Internal</div>
+        </div>
+        <div class="myd-kpi-card" onclick="mydOpenDrilldown('publications','preprints')">
+          <div class="myd-kpi-icon">📄</div><div class="myd-kpi-val" id="myd-pub-preprints">—</div>
+          <div class="myd-kpi-lbl">Preprints / ArXiv</div><div class="myd-kpi-sub">Pre-published</div>
+        </div>
       </div>
     </div>
 
@@ -3591,10 +3726,22 @@
     <div class="myd-kpi-section">
       <div class="myd-sec-hdr">📦 Inventory Management</div>
       <div class="myd-kpi-row">
-        <div class="myd-kpi-card" onclick="mydOpenDrilldown('inventory','all')"><div class="myd-kpi-icon">📦</div><div class="myd-kpi-val" id="myd-inv-all">—</div><div class="myd-kpi-lbl">All Items</div></div>
-        <div class="myd-kpi-card" onclick="mydOpenDrilldown('inventory','gifts')"><div class="myd-kpi-icon">🎁</div><div class="myd-kpi-val" id="myd-inv-gifts">—</div><div class="myd-kpi-lbl">Gifts</div></div>
-        <div class="myd-kpi-card" onclick="mydOpenDrilldown('inventory','stationeries')"><div class="myd-kpi-icon">✏️</div><div class="myd-kpi-val" id="myd-inv-stat">—</div><div class="myd-kpi-lbl">Stationeries</div></div>
-        <div class="myd-kpi-card" onclick="mydOpenDrilldown('inventory','mementos')"><div class="myd-kpi-icon">🏆</div><div class="myd-kpi-val" id="myd-inv-mem">—</div><div class="myd-kpi-lbl">Mementos</div></div>
+        <div class="myd-kpi-card" onclick="mydOpenDrilldown('inventory','gifts')">
+          <div class="myd-kpi-icon">🎁</div><div class="myd-kpi-val" id="myd-inv-gifts">—</div>
+          <div class="myd-kpi-lbl">Gifts</div><div class="myd-kpi-sub">Transaction Ledger</div>
+        </div>
+        <div class="myd-kpi-card" onclick="mydOpenDrilldown('inventory','stationeries')">
+          <div class="myd-kpi-icon">✏️</div><div class="myd-kpi-val" id="myd-inv-stat">—</div>
+          <div class="myd-kpi-lbl">Stationeries</div><div class="myd-kpi-sub">Transaction Ledger</div>
+        </div>
+        <div class="myd-kpi-card" onclick="mydOpenDrilldown('inventory','mementos')">
+          <div class="myd-kpi-icon">🏆</div><div class="myd-kpi-val" id="myd-inv-mem">—</div>
+          <div class="myd-kpi-lbl">Mementos</div><div class="myd-kpi-sub">Transaction Ledger</div>
+        </div>
+        <div class="myd-kpi-card myd-kpi-alert" onclick="mydOpenDrilldown('inventory','low-critical')">
+          <div class="myd-kpi-icon">🚨</div><div class="myd-kpi-val" id="myd-inv-lowcrit">—</div>
+          <div class="myd-kpi-lbl">Low / Critical</div><div class="myd-kpi-sub">Low Stock Alert</div>
+        </div>
       </div>
     </div>
 
@@ -18629,6 +18776,8 @@ window.moveToAlumni = function(key, idx) {
   if (typeof _origMoveToAlumni === 'function') _origMoveToAlumni(key, idx);
   // also update sidebar analytics after decision
   try { refreshSidebarAnalytics(); } catch(e) {}
+  // Refresh My Dashboard KPI counts
+  if(typeof mydRefreshCOO==='function') { try { mydRefreshCOO(); } catch(e){} }
 };
 
 // Helper: mark person as pending (status update)
@@ -29392,10 +29541,19 @@ function mydRefreshCOO() {
   const gifts = INV.gifts || [];
   const stat  = INV.stationeries || INV.stat || [];
   const mem   = INV.mementos || INV.mem || [];
-  sv('myd-inv-all',    gifts.length + stat.length + mem.length || '—');
   sv('myd-inv-gifts',  gifts.length || '—');
   sv('myd-inv-stat',   stat.length || '—');
   sv('myd-inv-mem',    mem.length || '—');
+  // Low / Critical count across all inv categories
+  const allInvItems = [...gifts, ...stat, ...mem];
+  const lowCritCount = allInvItems.filter(i => {
+    const st = typeof getInvStatus === 'function' ? getInvStatus(i) : (
+      (i.status||'').toLowerCase() === 'low' || (i.status||'').toLowerCase() === 'critical' ||
+      (i.status||'').toLowerCase() === 'out' ? i.status : ''
+    );
+    return ['low','critical','out'].includes((st||'').toLowerCase());
+  }).length;
+  sv('myd-inv-lowcrit', lowCritCount || '—');
 }
 
 function mydRefreshBiometric() {
@@ -29453,10 +29611,10 @@ function mydRenderDrilldown(module, sub) {
   const EXP   = window.EXP   || window._expenses || {};
   const PUB   = window.PUB   || window._publications || {};
 
+  // ─── HR & PEOPLE ─────────────────────────────────────────────────────────
   if (module === 'hr-people') {
-    // ── helpers ──
     function _alumniTable(records, label) {
-      if (!records.length) return '';
+      if (!records.length) return `<div class="table-card" style="margin-bottom:1rem;"><div class="tc-header"><div class="tc-title">🏛️ ${label}</div></div><div style="padding:1.5rem;text-align:center;color:var(--text3);font-size:0.83rem;">No alumni records in this category</div></div>`;
       return `<div class="table-card" style="margin-bottom:1rem;">
         <div class="tc-header"><div class="tc-title">🏛️ ${label}</div></div>
         <div style="overflow-x:auto;max-height:260px;overflow-y:auto;">
@@ -29472,26 +29630,22 @@ function mydRenderDrilldown(module, sub) {
         <div class="tc-header"><div class="tc-title" style="color:${color};">${title}</div></div>
         <table><thead><tr><th>Type / Designation</th><th style="text-align:center;">Count</th></tr></thead><tbody>
         ${entries.map(([t,c])=>`<tr><td>${t}</td><td style="text-align:center;font-weight:700;">${c}</td></tr>`).join('')}
+        <tr style="background:rgba(99,179,237,0.07);font-weight:700;"><td>Grand Total</td><td style="text-align:center;">${Object.values(map).reduce((s,v)=>s+v,0)}</td></tr>
         </tbody></table></div>`;
     }
     function _facDistTable() {
-      // Full faculty category distribution incl. Associate + Affiliate + grand total
       const rows = [];
-      // Core faculty
       const facT = {}; (DB.faculty||[]).forEach(r=>{const t=r.facultyType||'Faculty'; facT[t]=(facT[t]||0)+1;});
       rows.push(`<tr style="background:rgba(59,130,246,0.07);"><td colspan="2" style="font-size:0.68rem;font-family:monospace;color:var(--accent);text-transform:uppercase;letter-spacing:0.08em;padding:4px 8px;">👨‍🏫 Faculty</td></tr>`);
       Object.entries(facT).forEach(([t,c])=>rows.push(`<tr><td style="padding-left:1rem;">${t}</td><td style="text-align:center;font-weight:700;">${c}</td></tr>`));
-      // Assoc Faculty
       const assT = {}; (DB.assocFaculty||[]).forEach(r=>{const t=r.facultyType||'Assoc. Faculty'; assT[t]=(assT[t]||0)+1;});
       rows.push(`<tr style="background:rgba(6,182,212,0.07);"><td colspan="2" style="font-size:0.68rem;font-family:monospace;color:#0891B2;text-transform:uppercase;letter-spacing:0.08em;padding:4px 8px;">👩‍🏫 Associate Faculty</td></tr>`);
-      if (Object.keys(assT).length) Object.entries(assT).forEach(([t,c])=>rows.push(`<tr><td style="padding-left:1rem;">${t}</td><td style="text-align:center;font-weight:700;">${c}</td></tr>`));
+      if(Object.keys(assT).length) Object.entries(assT).forEach(([t,c])=>rows.push(`<tr><td style="padding-left:1rem;">${t}</td><td style="text-align:center;font-weight:700;">${c}</td></tr>`));
       else rows.push(`<tr><td style="padding-left:1rem;color:var(--text3);">(All Types)</td><td style="text-align:center;font-weight:700;">${(DB.assocFaculty||[]).length}</td></tr>`);
-      // Affiliate Faculty
       const afiT = {}; (DB.affiFaculty||[]).forEach(r=>{const t=r.facultyType||'Affiliate Faculty'; afiT[t]=(afiT[t]||0)+1;});
       rows.push(`<tr style="background:rgba(16,185,129,0.07);"><td colspan="2" style="font-size:0.68rem;font-family:monospace;color:var(--green);text-transform:uppercase;letter-spacing:0.08em;padding:4px 8px;">🔗 Affiliate Faculty</td></tr>`);
-      if (Object.keys(afiT).length) Object.entries(afiT).forEach(([t,c])=>rows.push(`<tr><td style="padding-left:1rem;">${t}</td><td style="text-align:center;font-weight:700;">${c}</td></tr>`));
+      if(Object.keys(afiT).length) Object.entries(afiT).forEach(([t,c])=>rows.push(`<tr><td style="padding-left:1rem;">${t}</td><td style="text-align:center;font-weight:700;">${c}</td></tr>`));
       else rows.push(`<tr><td style="padding-left:1rem;color:var(--text3);">(All Types)</td><td style="text-align:center;font-weight:700;">${(DB.affiFaculty||[]).length}</td></tr>`);
-      // Grand total
       const grand = (DB.faculty||[]).length + (DB.assocFaculty||[]).length + (DB.affiFaculty||[]).length;
       rows.push(`<tr style="background:rgba(40,167,69,0.12);font-weight:700;border-top:2px solid rgba(16,185,129,0.3);"><td>🧮 Grand Total (Faculty + Assoc + Affiliate)</td><td style="text-align:center;color:var(--green);font-size:1.05em;">${grand}</td></tr>`);
       return `<div class="table-card" style="margin-bottom:1rem;">
@@ -29499,9 +29653,9 @@ function mydRenderDrilldown(module, sub) {
         <table><thead><tr><th>Faculty Type</th><th style="text-align:center;">Count</th></tr></thead><tbody>${rows.join('')}</tbody></table></div>`;
     }
     function _regTable(rows, sub) {
-      const addMap = {staff:'staff', faculty:'faculty', assocfaculty:'assocfaculty', affifaculty:'affifaculty', researchers:'researcher', fellows:'fellow', students:'student', tenure:''};
-      const titleMap = {staff:'👔 Staff Registry', faculty:'👨‍🏫 Faculty Registry', assocfaculty:'👩‍🏫 Associate Faculty Registry', affifaculty:'🔗 Affiliate Faculty Registry', researchers:'🔬 Active Researchers Registry', fellows:'👥 Associate Fellows Registry', students:'🎓 Students Registry', tenure:''};
-      return `<div class="table-card">
+      const addMap = {staff:'staff',faculty:'faculty',assocfaculty:'assocfaculty',affifaculty:'affifaculty',researchers:'researcher',fellows:'fellow',students:'student',tenure:''};
+      const titleMap = {staff:'👔 Staff Registry',faculty:'👨‍🏫 Faculty Registry',assocfaculty:'👩‍🏫 Associate Faculty Registry',affifaculty:'🔗 Affiliate Faculty Registry',researchers:'🔬 Active Researchers Registry',fellows:'👥 Associate Fellows Registry',students:'🎓 Students Registry',tenure:''};
+      return `<div class="table-card" style="margin-bottom:1rem;">
         <div class="tc-header">
           <div class="tc-title">${titleMap[sub]||'📋 Registry'}</div>
           <div class="tc-actions">
@@ -29512,7 +29666,7 @@ function mydRenderDrilldown(module, sub) {
         <div style="overflow-x:auto;max-height:350px;overflow-y:auto;">
           <table><thead><tr><th>#</th><th>Name</th><th>Designation / Type</th><th>Department / Center</th><th>Status</th><th>Actions</th></tr></thead>
           <tbody id="myd-dd-reg-tbody">
-          ${rows.slice(0,50).map((r,i)=>`<tr><td>${i+1}</td><td>${r.name||'—'}</td><td>${r.designation||r.facultyType||r.category||'—'}</td><td>${r.department||r.center||r.affiliation||'—'}</td><td><span class="badge badge-${(r.status||'active').toLowerCase()}">${r.status||'Active'}</span></td><td><button class="tc-btn" onclick="openEditModal('${sub}','${r.id||''}')">Edit</button></td></tr>`).join('')||`<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text3);">Connect sheet to load data</td></tr>`}
+          ${rows.slice(0,100).map((r,i)=>`<tr><td>${i+1}</td><td><strong>${r.name||'—'}</strong></td><td>${r.designation||r.facultyType||r.category||'—'}</td><td>${r.department||r.center||r.affiliation||'—'}</td><td><span class="badge badge-${(r.status||'active').toLowerCase()}">${r.status||'Active'}</span></td><td><button class="tc-btn" onclick="openEditModal('${sub}','${r.id||''}')">Edit</button></td></tr>`).join('')||`<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text3);">Connect sheet to load data</td></tr>`}
           </tbody></table>
         </div>
       </div>`;
@@ -29526,23 +29680,27 @@ function mydRenderDrilldown(module, sub) {
       const alumniStaff = alumniAll.filter(r => ['staff','Staff'].includes(r.movedFrom||r.type||''));
       const staffDist = {}; (DB.staff||[]).forEach(r=>{const d=r.designation||'Staff'; staffDist[d]=(staffDist[d]||0)+1;});
       html += _regTable(DB.staff||[], 'staff');
+      html += `<div class="table-card" style="margin-bottom:1rem;"><div class="tc-header"><div class="tc-title" style="color:var(--accent);">👔 Add Staff Member</div></div><div style="padding:0.75rem 1.5rem 1rem;"><button class="submit-btn" onclick="mydCloseDrilldown();showTab('people');setTimeout(()=>{ const btn=document.querySelector('#tab-people .tc-btn.primary,[onclick*="openAddModal(\'staff\'"]');if(btn)btn.click();},300);">+ Add New Staff Member</button></div></div>`;
       html += _alumniTable(alumniStaff, 'Alumni Registry — Staff');
       html += _distTable(staffDist, '👥 Staff Designation Distribution', '#FB8C00');
 
     } else if (sub === 'faculty') {
       titleEl.textContent = '👨‍🏫 Faculty';
       html += _regTable(DB.faculty||[], 'faculty');
+      html += `<div class="table-card" style="margin-bottom:1rem;"><div class="tc-header"><div class="tc-title" style="color:var(--accent2);">👨‍🏫 Add Faculty Member</div></div><div style="padding:0.75rem 1.5rem 1rem;"><button class="submit-btn" onclick="mydCloseDrilldown();showTab('people');setTimeout(()=>openAddModal('faculty'),300);">+ Add New Faculty Member</button></div></div>`;
       html += _facDistTable();
 
     } else if (sub === 'affifaculty') {
       titleEl.textContent = '🔗 Affiliate Faculty';
       html += _regTable(DB.affiFaculty||[], 'affifaculty');
+      html += `<div class="table-card" style="margin-bottom:1rem;"><div class="tc-header"><div class="tc-title" style="color:var(--green);">🔗 Add Affiliate Faculty</div></div><div style="padding:0.75rem 1.5rem 1rem;"><button class="submit-btn" onclick="mydCloseDrilldown();showTab('people');setTimeout(()=>openAddModal('affifaculty'),300);">+ Add Affiliate Faculty</button></div></div>`;
       html += _facDistTable();
 
     } else if (sub === 'assocfaculty') {
       titleEl.textContent = '👩‍🏫 Associate Faculty';
       const alumniAssoc = alumniAll.filter(r => ['assocFaculty','assocfaculty','Associate Faculty'].includes(r.movedFrom||r.type||''));
       html += _regTable(DB.assocFaculty||[], 'assocfaculty');
+      html += `<div class="table-card" style="margin-bottom:1rem;"><div class="tc-header"><div class="tc-title" style="color:#0891B2;">👩‍🏫 Add Associate Faculty</div></div><div style="padding:0.75rem 1.5rem 1rem;"><button class="submit-btn" onclick="mydCloseDrilldown();showTab('people');setTimeout(()=>openAddModal('assocfaculty'),300);">+ Add Associate Faculty</button></div></div>`;
       html += _alumniTable(alumniAssoc, 'Alumni Registry — Associate Faculty');
       html += _facDistTable();
 
@@ -29551,12 +29709,14 @@ function mydRenderDrilldown(module, sub) {
       const alumniRes = alumniAll.filter(r => ['researchers','Researchers','Active Researchers'].includes(r.movedFrom||r.type||''));
       const resDist = {}; (DB.researchers||[]).forEach(r=>{const d=r.designation||'Researcher'; resDist[d]=(resDist[d]||0)+1;});
       html += _regTable(DB.researchers||[], 'researchers');
+      html += `<div class="table-card" style="margin-bottom:1rem;"><div class="tc-header"><div class="tc-title" style="color:var(--accent);">🔬 Add Researcher</div></div><div style="padding:0.75rem 1.5rem 1rem;"><button class="submit-btn" onclick="mydCloseDrilldown();showTab('people');setTimeout(()=>openAddModal('researcher'),300);">+ Add Active Researcher</button></div></div>`;
       html += _alumniTable(alumniRes, 'Alumni Registry — Researchers');
       html += _distTable(resDist, '🔬 Researcher Designation Distribution', '#42A5F5');
 
     } else if (sub === 'fellows') {
       titleEl.textContent = '👥 Associate Fellows';
       html += _regTable(DB.fellows||[], 'fellows');
+      html += `<div class="table-card" style="margin-bottom:1rem;"><div class="tc-header"><div class="tc-title" style="color:var(--purple);">👥 Add Associate Fellow</div></div><div style="padding:0.75rem 1.5rem 1rem;"><button class="submit-btn" onclick="mydCloseDrilldown();showTab('people');setTimeout(()=>openAddModal('fellow'),300);">+ Add Associate Fellow</button></div></div>`;
 
     } else if (sub === 'students') {
       titleEl.textContent = '🎓 Students';
@@ -29569,8 +29729,8 @@ function mydRenderDrilldown(module, sub) {
     } else if (sub === 'tenure') {
       titleEl.textContent = '⏰ Tenure Risk';
       html += `<div class="table-card" style="margin-bottom:1rem;">
-        <div class="tc-header"><div class="tc-title">⏰ Tenure Actions Required</div></div>
-        <table><thead><tr><th>Name</th><th>Type</th><th>Center/Dept</th><th>Exit Date</th><th>Days Left</th><th>Decision</th></tr></thead>
+        <div class="tc-header"><div class="tc-title" style="color:var(--red);">⏰ Tenure Actions Required</div></div>
+        <table><thead><tr><th>Name</th><th>Type</th><th>Center/Dept</th><th>Exit Date</th><th>Days Left</th><th>Action</th></tr></thead>
         <tbody id="myd-dd-tenure-tbody"></tbody></table></div>`;
     } else {
       titleEl.textContent = '👤 HR & People';
@@ -29588,30 +29748,35 @@ function mydRenderDrilldown(module, sub) {
         return (exit - today)/86400000 <= 90;
       }).sort((a,b) => new Date(a.exitDate) - new Date(b.exitDate));
       const tb = document.getElementById('myd-dd-tenure-tbody');
-      if (tb) {
-        tb.innerHTML = at.map(r => {
-          const parts = String(r.exitDate).split('/');
-          const exit = parts.length===3 ? new Date(parts[2],parts[1]-1,parts[0]) : new Date(r.exitDate);
-          const days = Math.round((exit-today)/86400000);
-          const urgency = days < 30 ? 'var(--red)' : days < 60 ? 'var(--orange)' : 'var(--gold)';
-          return `<tr><td>${r.name||'—'}</td><td>${r._type||r.designation||'—'}</td><td>${r.center||r.department||'—'}</td><td>${r.exitDate||'—'}</td><td style="color:${urgency};font-weight:700;">${days}d</td><td>—</td></tr>`;
-        }).join('') || '<tr><td colspan="6" style="text-align:center;padding:1.5rem;color:var(--text3);">No tenure actions</td></tr>';
-      }
+      if (tb) tb.innerHTML = at.map(r => {
+        const parts = String(r.exitDate).split('/');
+        const exit = parts.length===3 ? new Date(parts[2],parts[1]-1,parts[0]) : new Date(r.exitDate);
+        const days = Math.round((exit-today)/86400000);
+        const urgency = days < 30 ? 'var(--red)' : days < 60 ? 'var(--orange)' : 'var(--gold)';
+        return `<tr><td><strong>${r.name||'—'}</strong></td><td>${r._type||r.designation||'—'}</td><td>${r.center||r.department||'—'}</td><td>${r.exitDate||'—'}</td><td style="color:${urgency};font-weight:700;">${days}d</td><td><button class="tc-btn primary" style="font-size:0.72rem;">Decide</button></td></tr>`;
+      }).join('') || '<tr><td colspan="6" style="text-align:center;padding:1.5rem;color:var(--text3);">No tenure actions required within 90 days</td></tr>';
     }
   }
+
+  // ─── ASSET ───────────────────────────────────────────────────────────────
   else if (module === 'asset') {
-    const assetMap = { it: ASSET.it||[], nonit: ASSET.nonit||[], ilds: ASSET.ilds||[], gpu: ASSET.gpu||[], books: ASSET.books||[], spares: ASSET.spares||[], consumables: ASSET.consumables||[], nonrepairable: ASSET.nonrepairable||[], vendor: ASSET.vendor||[] };
+    const assetMap = { it:ASSET.it||[], nonit:ASSET.nonit||[], ilds:ASSET.ilds||[], gpu:ASSET.gpu||[], books:ASSET.books||[], spares:ASSET.spares||[], consumables:ASSET.consumables||[], nonrepairable:ASSET.nonrepairable||[], vendor:ASSET.vendor||[] };
     const titleMap = { it:'💻 IT Assets', nonit:'🏢 Non-IT Assets', ilds:'🌐 ILDS Cluster', gpu:'🧠 GPU Cluster', books:'📚 Books Inventory', spares:'🔧 Spares', consumables:'🛒 Consumables', nonrepairable:'⚠️ Non-Repairable', vendor:'🏪 Vendor List' };
+    const labelMap = { it:'IT Assets — Category Breakdown', nonit:'Non-IT Assets — Category Breakdown', ilds:'ILDS Cluster — Item Breakdown', gpu:'GPU Cluster — Category Breakdown', books:'Books — Title Breakdown', spares:'Spares — Breakdown', consumables:'Consumables — Breakdown', nonrepairable:'Non-Repairable — Breakdown', vendor:'Vendor List — Breakdown' };
     titleEl.textContent = titleMap[sub] || ('📦 Asset — ' + sub);
     const rows = assetMap[sub] || [];
-    let catHTML = '';
     const catMap = {};
     rows.forEach(r => { const c = r.category||r.type||'Other'; catMap[c]=(catMap[c]||0)+1; });
+    const catTotal = Object.values(catMap).reduce((s,v)=>s+v,0);
+    let catHTML = '';
     if (Object.keys(catMap).length) {
       catHTML = `<div class="table-card" style="margin-bottom:1rem;">
-        <div class="tc-header"><div class="tc-title">${titleMap[sub]||''} — Category Breakdown</div></div>
+        <div class="tc-header"><div class="tc-title" style="color:var(--orange);">${titleMap[sub]||''} — ${labelMap[sub]||'Category Breakdown'}</div>
+        <div style="font-size:0.68rem;color:var(--text3);font-family:var(--font-mono);">Auto-updated from Google Sheet</div></div>
         <table><thead><tr><th>Category</th><th style="text-align:center;">Count</th></tr></thead>
-        <tbody>${Object.entries(catMap).sort((a,b)=>b[1]-a[1]).map(([c,n])=>`<tr><td>${c}</td><td style="text-align:center;font-weight:700;">${n}</td></tr>`).join('')}</tbody></table></div>`;
+        <tbody>${Object.entries(catMap).sort((a,b)=>b[1]-a[1]).map(([c,n])=>`<tr><td>${c}</td><td style="text-align:center;font-weight:700;">${n}</td></tr>`).join('')}
+        <tr style="background:rgba(249,115,22,0.08);font-weight:700;"><td>Total</td><td style="text-align:center;color:var(--orange);">${catTotal}</td></tr>
+        </tbody></table></div>`;
     }
     bodyEl.innerHTML = catHTML + `<div class="table-card">
       <div class="tc-header">
@@ -29624,177 +29789,306 @@ function mydRenderDrilldown(module, sub) {
       <div style="overflow-x:auto;max-height:400px;overflow-y:auto;">
         <table><thead><tr><th>#</th><th>Name / Label</th><th>Category</th><th>Status</th><th>Value ₹</th><th>Actions</th></tr></thead>
         <tbody>
-          ${rows.slice(0,50).map((r,i)=>`<tr><td>${i+1}</td><td>${r.name||r.label||r.assetName||'—'}</td><td>${r.category||r.type||'—'}</td><td><span class="badge">${r.status||'Active'}</span></td><td>${r.value||r.purchaseValue||'—'}</td><td><button class="tc-btn" onclick="openAssetEditModal('${sub}','${r.id||''}')">Edit</button></td></tr>`).join('')||`<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text3);">Connect sheet to load data</td></tr>`}
+          ${rows.slice(0,100).map((r,i)=>`<tr><td>${i+1}</td><td><strong>${r.name||r.label||r.assetName||'—'}</strong></td><td>${r.category||r.type||'—'}</td><td><span class="badge">${r.status||'Active'}</span></td><td style="font-family:var(--font-mono);">${r.value||r.purchaseValue||'—'}</td><td><button class="tc-btn" onclick="openAssetEditModal('${sub}','${r.id||''}')">Edit</button></td></tr>`).join('')||`<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text3);">Connect sheet to load data</td></tr>`}
         </tbody></table>
       </div>
     </div>`;
   }
+
+  // ─── BIOMETRIC ────────────────────────────────────────────────────────────
   else if (module === 'biometric') {
-    titleEl.textContent = '🔐 Biometric Access';
-    const areas = BM.areaOccupancy || BM.areas || [];
+    const areas   = BM.areaOccupancy || BM.areas || [];
     const pending = BM.pendingRequests || [];
-    if (sub === 'total-active') {
-      titleEl.textContent = '🔐 Biometric Access — Total Active';
-      const areaGrid = areas.map(a => {
+    titleEl.textContent = '🔐 Biometric Access';
+    if (sub === 'total-active' || sub === 'pending' || sub === 'area') {
+      if (sub === 'total-active') titleEl.textContent = '🔐 Biometric — Area Occupancy';
+      if (sub === 'pending')      titleEl.textContent = '🔐 Biometric — Pending Requests';
+      const areaGrid = areas.length ? areas.map(a => {
         const pct = a.capacity > 0 ? Math.round((a.occupied||0)/a.capacity*100) : 0;
         const color = pct>80?'var(--red)':pct>=50?'var(--gold)':'var(--green)';
-        return `<div class="table-card" style="padding:0.85rem;border-color:${color}30;"><div style="font-size:0.7rem;color:var(--text3);text-transform:uppercase;margin-bottom:0.3rem;">${a.area||a.name||'Area'}</div><div style="font-size:1.3rem;font-weight:700;color:${color};">${a.occupied||0}/${a.capacity||0}</div><div style="font-size:0.72rem;color:var(--text3);">${pct}% occupied</div></div>`;
-      }).join('') || '<div style="color:var(--text3);font-size:0.85rem;">No biometric area data — connect sheet</div>';
-      const pendingRows = pending.filter(r=>(r.status||'').toLowerCase()==='pending').slice(0,30).map((r,i)=>`<tr><td>${r.id||r.biometricId||i+1}</td><td>${r.name||r.employeeName||'—'}</td><td>${r.category||r.role||'—'}</td><td>${r.department||'—'}</td><td>${r.requestDate||r.lastAccess||'—'}</td><td><span class="badge badge-pending">Pending</span></td><td><button class="tc-btn" style="color:var(--green);">✓ Auth</button> <button class="tc-btn" style="color:var(--red);">✕ Deny</button></td></tr>`).join('') || '<tr><td colspan="7" style="text-align:center;padding:1.5rem;color:var(--text3);">No pending requests</td></tr>';
-      bodyEl.innerHTML = `<div class="table-card" style="margin-bottom:1rem;"><div class="tc-header"><div class="tc-title">🏢 Area Occupancy</div></div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:0.6rem;padding:0.75rem;">${areaGrid}</div></div>
-        <div class="table-card"><div class="tc-header"><div class="tc-title">⏳ Biometric Auth — Pending Requests</div></div><div style="overflow-x:auto;"><table><thead><tr><th>Req ID</th><th>Name</th><th>Role</th><th>Department</th><th>Request Date</th><th>Status</th><th>Actions</th></tr></thead><tbody>${pendingRows}</tbody></table></div></div>`;
-      return;
+        return `<div style="background:var(--surface2);border:1px solid ${color}30;border-radius:10px;padding:0.85rem;text-align:center;">
+          <div style="font-size:0.68rem;color:var(--text3);text-transform:uppercase;margin-bottom:0.3rem;font-family:var(--font-mono);">${a.area||a.name||'Area'}</div>
+          <div style="font-size:1.4rem;font-weight:700;color:${color};font-family:var(--font-mono);">${a.occupied||0}<span style="font-size:0.9rem;opacity:0.6;">/${a.capacity||0}</span></div>
+          <div style="font-size:0.7rem;color:var(--text3);margin-top:2px;">${pct}% occupied</div>
+          <div style="width:100%;height:4px;background:var(--surface3);border-radius:2px;margin-top:6px;overflow:hidden;"><div style="width:${pct}%;height:100%;background:${color};border-radius:2px;transition:width 0.5s;"></div></div>
+        </div>`;
+      }).join('') : '<div style="color:var(--text3);font-size:0.85rem;padding:1rem;">No biometric area data — connect Google Sheet</div>';
+      const pendingRows = pending.filter(r=>(r.status||'').toLowerCase()==='pending').slice(0,50).map((r,i)=>`<tr><td>${r.id||r.biometricId||i+1}</td><td><strong>${r.name||r.employeeName||'—'}</strong></td><td>${r.category||r.role||'—'}</td><td>${r.department||'—'}</td><td style="font-family:var(--font-mono);">${r.requestDate||r.lastAccess||'—'}</td><td><span class="badge badge-pending">Pending</span></td><td><button class="tc-btn" style="color:var(--green);border-color:rgba(16,185,129,0.3);">✓ Auth</button> <button class="tc-btn" style="color:var(--red);border-color:rgba(239,68,68,0.3);">✕ Deny</button></td></tr>`).join('') || '<tr><td colspan="7" style="text-align:center;padding:1.5rem;color:var(--text3);">No pending biometric requests</td></tr>';
+      bodyEl.innerHTML = `<div class="table-card" style="margin-bottom:1rem;"><div class="tc-header"><div class="tc-title">🏢 Area Occupancy</div></div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:0.75rem;padding:0.75rem;">${areaGrid}</div></div>
+        <div class="table-card"><div class="tc-header"><div class="tc-title">⏳ Biometric Auth — Pending Requests</div></div><div style="overflow-x:auto;max-height:350px;overflow-y:auto;"><table><thead><tr><th>Req ID</th><th>Name</th><th>Role</th><th>Department</th><th>Request Date</th><th>Status</th><th>Actions</th></tr></thead><tbody>${pendingRows}</tbody></table></div></div>`;
     }
-    bodyEl.innerHTML = `
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:0.75rem;margin-bottom:1.25rem;">
-        ${areas.map(a => {
-          const pct = a.capacity > 0 ? Math.round((a.occupied||0)/a.capacity*100) : 0;
-          const color = pct>80?'var(--red)':pct>=50?'var(--gold)':'var(--green)';
-          return `<div class="table-card" style="padding:0.85rem;border-color:${color}30;"><div style="font-size:0.7rem;color:var(--text3);text-transform:uppercase;margin-bottom:0.3rem;">${a.area||a.name||'Area'}</div><div style="font-size:1.3rem;font-weight:700;color:${color};">${a.occupied||0}/${a.capacity||0}</div><div style="font-size:0.72rem;color:var(--text3);">${pct}% occupied</div></div>`;
-        }).join('')||'<div style="color:var(--text3);font-size:0.85rem;">No biometric area data — connect sheet</div>'}
-      </div>
-      <div class="table-card">
-        <div class="tc-header"><div class="tc-title">⏳ Biometric Auth — Pending Requests</div></div>
-        <div style="overflow-x:auto;"><table><thead><tr><th>Req ID</th><th>Employee Name</th><th>Role</th><th>Department</th><th>Request Date</th><th>Auth Type</th><th>Status</th><th>Actions</th></tr></thead>
-        <tbody>
-          ${pending.filter(r=>(r.status||'').toLowerCase()==='pending').slice(0,50).map((r,i)=>`<tr><td>${r.id||r.biometricId||i+1}</td><td>${r.name||r.employeeName||'—'}</td><td>${r.category||r.role||'—'}</td><td>${r.department||'—'}</td><td>${r.lastAccess||r.requestDate||'—'}</td><td>${r.accessArea||r.authType||'—'}</td><td><span class="badge badge-pending">Pending</span></td><td><button class="tc-btn" style="color:var(--green);">✓ Auth</button> <button class="tc-btn" style="color:var(--red);">✕ Deny</button></td></tr>`).join('')||'<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--text3);">No pending requests</td></tr>'}
-        </tbody></table></div>
-      </div>`;
   }
+
+  // ─── FACILITY ─────────────────────────────────────────────────────────────
   else if (module === 'facility') {
     titleEl.textContent = '🏛️ Facility & Room Management';
     const fLabs2  = LAB.facultyLabs  || LAB.data?.facultyLabs  || [];
     const fRooms2 = LAB.facilityRooms|| LAB.data?.facilityRooms|| [];
 
     if (sub === 'over-capacity') {
-      // ── Over-Capacity: Utilization Ribbons ──
-      titleEl.textContent = '🏛️ Facility — Over-Capacity & Utilization Ribbons';
-      const overRows = fLabs2.filter(l => (l.statusIndicator||(typeof labGetIndicator==='function'?labGetIndicator(l):''))==='OVER-CAPACITY');
-      const ribbonHTML = fLabs2.map(l => {
-        const pct = l.utilizationRate ? Math.round(l.utilizationRate*100) : (l.occupiedSeats&&l.totalSeats?Math.round(l.occupiedSeats/l.totalSeats*100):0);
-        const bg  = pct>100?'#EF4444':pct>=80?'#F97316':pct>=50?'#F59E0B':pct>=20?'#10B981':'#3B82F6';
-        const ind = pct>100?'🔴':pct>=80?'🟠':pct>=50?'🟡':pct>=20?'🟢':'🔵';
-        return `<div style="display:flex;align-items:center;gap:0.6rem;padding:0.45rem 0.6rem;border-bottom:1px solid var(--border);"><div style="flex:0 0 160px;font-size:0.78rem;font-weight:600;">${l.facultyName||l.room||'—'}</div><div style="flex:1;background:var(--surface3);border-radius:4px;height:14px;overflow:hidden;"><div style="width:${Math.min(pct,110)}%;height:100%;background:${bg};transition:width 0.4s;"></div></div><div style="flex:0 0 52px;text-align:right;font-size:0.75rem;font-family:var(--font-mono);color:${bg};font-weight:700;">${ind} ${pct}%</div><div style="flex:0 0 80px;font-size:0.72rem;color:var(--text3);">${l.occupiedSeats||0}/${l.totalSeats||0}</div></div>`;
-      }).join('');
+      titleEl.textContent = '🏛️ Facility — Utilization Ribbons';
+      const active  = fLabs2.filter(l=>l.status==='Active'||!l.status);
+      const over    = active.filter(l=>{ const p=(l.occupiedSeats||0)/(l.totalSeats||1); return p>0.8; });
+      const opt     = active.filter(l=>{ const p=(l.occupiedSeats||0)/(l.totalSeats||1); return p>=0.5&&p<=0.8; });
+      const under   = active.filter(l=>{ const p=(l.occupiedSeats||0)/(l.totalSeats||1); return p>0&&p<0.5; });
+      function ribRow(arr, col) {
+        if(!arr.length) return '<div style="padding:0.6rem 1rem;font-size:0.78rem;color:var(--text3);font-style:italic;">No labs in this range</div>';
+        return arr.map((l,i)=>{
+          const tot=l.totalSeats||0,occ=l.occupiedSeats||0;
+          const pct=tot>0?Math.round(occ/tot*100):0;
+          return `<div style="display:flex;align-items:center;gap:0.75rem;padding:0.6rem 1rem;border-bottom:1px solid var(--border);">
+            <div style="flex:1;"><div style="font-weight:600;font-size:0.83rem;">${l.facultyName||l.name||'—'}</div><div style="font-size:0.7rem;color:var(--text3);">${l.category||'—'} · ${l.room||'—'}</div></div>
+            <div style="text-align:right;"><div style="font-family:var(--font-mono);font-size:0.82rem;">${occ}/${tot}</div><div style="width:80px;height:4px;background:var(--surface3);border-radius:2px;margin-top:3px;overflow:hidden;"><div style="width:${pct}%;height:100%;background:${col};border-radius:2px;"></div></div></div>
+            <div style="font-weight:700;font-size:0.82rem;color:${col};min-width:38px;">${pct}%</div>
+          </div>`;
+        }).join('');
+      }
       bodyEl.innerHTML = `
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:0.6rem;margin-bottom:1rem;padding:0.75rem;background:var(--surface2);border-radius:10px;">
-          <div style="text-align:center;padding:0.6rem;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:8px;"><div style="font-size:1.6rem;font-weight:700;color:var(--red);">${overRows.length}</div><div style="font-size:0.7rem;color:var(--text3);">Over Capacity</div></div>
-          <div style="text-align:center;padding:0.6rem;background:var(--surface3);border:1px solid var(--border);border-radius:8px;"><div style="font-size:1.6rem;font-weight:700;">${fLabs2.length}</div><div style="font-size:0.7rem;color:var(--text3);">Total Faculty Labs</div></div>
+        <div style="margin-bottom:0.75rem;display:flex;gap:0.5rem;flex-wrap:wrap;">
+          <span style="font-size:0.7rem;padding:.2rem .6rem;border-radius:6px;background:rgba(239,68,68,.12);color:var(--red);font-family:var(--font-mono);">🔴 Over >80%</span>
+          <span style="font-size:0.7rem;padding:.2rem .6rem;border-radius:6px;background:rgba(16,185,129,.12);color:var(--green);font-family:var(--font-mono);">🟢 Optimum 50–80%</span>
+          <span style="font-size:0.7rem;padding:.2rem .6rem;border-radius:6px;background:rgba(245,158,11,.12);color:var(--gold);font-family:var(--font-mono);">🟡 Under <50%</span>
         </div>
-        <div class="table-card" style="padding:0;">
-          <div class="tc-header"><div class="tc-title">📊 Utilization Ribbons — All Faculty Labs</div></div>
-          <div style="padding:0.5rem 0.5rem;max-height:500px;overflow-y:auto;">${ribbonHTML || '<div style="padding:2rem;text-align:center;color:var(--text3);">No data — connect sheet</div>'}</div>
+        <div style="border:1px solid rgba(239,68,68,.3);border-radius:10px;overflow:hidden;margin-bottom:0.75rem;">
+          <div style="background:rgba(239,68,68,.12);padding:.5rem 1rem;font-weight:700;font-size:0.83rem;color:var(--red);">🔴 OVER UTILIZED (${over.length})</div>
+          ${ribRow(over,'var(--red)')}
+        </div>
+        <div style="border:1px solid rgba(16,185,129,.3);border-radius:10px;overflow:hidden;margin-bottom:0.75rem;">
+          <div style="background:rgba(16,185,129,.10);padding:.5rem 1rem;font-weight:700;font-size:0.83rem;color:var(--green);">🟢 OPTIMUM UTILIZED (${opt.length})</div>
+          ${ribRow(opt,'var(--green)')}
+        </div>
+        <div style="border:1px solid rgba(245,158,11,.3);border-radius:10px;overflow:hidden;">
+          <div style="background:rgba(245,158,11,.10);padding:.5rem 1rem;font-weight:700;font-size:0.83rem;color:var(--gold);">🟡 UNDER UTILIZED (${under.length})</div>
+          ${ribRow(under,'var(--gold)')}
         </div>`;
 
     } else if (sub === 'facility-rooms') {
-      // ── Facility Rooms Live Status ──
       titleEl.textContent = '🏛️ Facility Rooms — Live Status';
-      const frHTML = fRooms2.map((r,i) => {
-        const cap = r.capacity||0;
-        const occ2 = r.occupied||0;
-        const pct2 = cap>0?Math.round(occ2/cap*100):0;
-        const bg2  = pct2>80?'var(--red)':pct2>=50?'var(--gold)':'var(--green)';
-        return `<tr><td>${i+1}</td><td><strong>${r.roomName||'—'}</strong></td><td>${r.roomType||'—'}</td><td>${r.allocated||'—'}</td><td style="text-align:center;font-weight:700;">${cap}</td><td style="text-align:center;color:var(--orange);">${occ2||'—'}</td><td style="text-align:center;color:var(--green);">${cap-occ2>=0?cap-occ2:'—'}</td><td><span style="font-size:0.72rem;padding:2px 7px;border-radius:5px;background:${bg2}20;color:${bg2};border:1px solid ${bg2}40;">${r.status||'Active'}</span></td><td><button class="tc-btn" onclick="labOpenEditModal('facilityRoom','${r.id||''}')">Edit</button></td></tr>`;
-      }).join('');
-      bodyEl.innerHTML = `<div class="table-card" style="padding:0;">
-        <div class="tc-header"><div class="tc-title">🏛️ Facility Rooms — Live Status</div><div class="tc-actions"><button class="tc-btn primary" onclick="labOpenAddModal('facilityRoom')">+ Add Room</button></div></div>
-        <div style="overflow-x:auto;"><table><thead><tr><th>#</th><th>Room Name</th><th>Type</th><th>Allocated To</th><th>Capacity</th><th>Occupied</th><th>Available</th><th>Status</th><th>Actions</th></tr></thead><tbody>${frHTML||'<tr><td colspan="9" style="text-align:center;padding:2rem;color:var(--text3);">Connect sheet to load data</td></tr>'}</tbody></table></div>
-      </div>`;
+      const rHTML = fRooms2.slice(0,100).map((r,i)=>{
+        const pct = (r.capacity||0)>0 ? Math.round(((r.allocated||r.occupied||0)/r.capacity)*100):0;
+        const col = pct>80?'var(--red)':pct>=50?'var(--gold)':'var(--green)';
+        return `<tr><td>${i+1}</td><td><strong>${r.roomName||r.name||'—'}</strong></td><td>${r.roomType||r.type||'—'}</td><td style="text-align:center;font-weight:700;">${r.capacity||'—'}</td><td style="text-align:center;">${r.allocated||r.occupied||0}</td><td style="text-align:center;color:${col};font-weight:700;">${Math.max(0,(r.capacity||0)-(r.allocated||r.occupied||0))}</td><td><div style="display:flex;align-items:center;gap:6px;"><div style="width:60px;height:4px;background:var(--surface3);border-radius:2px;overflow:hidden;"><div style="width:${pct}%;height:100%;background:${col};border-radius:2px;"></div></div><span style="font-size:0.72rem;color:${col};">${pct}%</span></div></td><td><span class="badge">${r.status||'Active'}</span></td></tr>`;
+      }).join('') || '<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--text3);">Connect sheet to load data</td></tr>';
+      bodyEl.innerHTML = `<div class="table-card"><div class="tc-header"><div class="tc-title">🏛️ Facility Rooms — Live Status</div></div><div style="overflow-x:auto;max-height:480px;overflow-y:auto;"><table><thead><tr><th>#</th><th>Room Name</th><th>Type</th><th style="text-align:center;">Capacity</th><th style="text-align:center;">Allocated</th><th style="text-align:center;">Available</th><th>Utilization</th><th>Status</th></tr></thead><tbody>${rHTML}</tbody></table></div></div>`;
 
     } else if (sub === 'lab-cap') {
-      // ── Total Labs Capacity ──
-      titleEl.textContent = '📐 Total Labs Capacity Breakdown';
+      titleEl.textContent = '📐 Total Labs Capacity';
       const labRooms = fRooms2.filter(r=>(r.roomName||'').toUpperCase().includes('LAB')||(r.roomType||'').toUpperCase().includes('LAB'));
-      const totalLabCap2 = labRooms.reduce((s,r)=>s+(r.capacity||0),0);
-      const lrHTML = labRooms.map((r,i)=>`<tr><td>${i+1}</td><td><strong>${r.roomName||'—'}</strong></td><td>${r.roomType||'—'}</td><td style="text-align:center;font-weight:700;color:var(--accent);">${r.capacity||0}</td><td>${r.allocated||'—'}</td><td><span class="badge">${r.status||'Active'}</span></td></tr>`).join('');
-      bodyEl.innerHTML = `<div style="padding:0.75rem;background:var(--surface2);border-radius:10px;margin-bottom:1rem;display:flex;align-items:center;gap:1rem;"><div style="font-size:2rem;font-weight:700;color:var(--accent);">${totalLabCap2}</div><div style="font-size:0.8rem;color:var(--text2);">Total Lab Seats (SUMIF *LAB* in Facility Rooms)</div></div>
-        <div class="table-card" style="padding:0;"><div class="tc-header"><div class="tc-title">📐 Lab Rooms — Capacity Detail</div></div>
-        <div style="overflow-x:auto;"><table><thead><tr><th>#</th><th>Room Name</th><th>Type</th><th>Capacity</th><th>Allocated</th><th>Status</th></tr></thead><tbody>${lrHTML||'<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text3);">No lab rooms found</td></tr>'}</tbody></table></div></div>`;
+      const total = labRooms.reduce((s,r)=>s+(r.capacity||0),0) || fLabs2.reduce((s,r)=>s+(parseInt(r.totalSeats)||0),0);
+      const crHTML = labRooms.map((r,i)=>`<tr><td>${i+1}</td><td>${r.roomName||r.name||'—'}</td><td>${r.roomType||'—'}</td><td style="text-align:center;font-weight:700;">${r.capacity||'—'}</td><td style="text-align:center;">${r.allocated||0}</td><td><span class="badge">${r.status||'Active'}</span></td></tr>`).join('') || '<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text3);">No lab rooms found</td></tr>';
+      bodyEl.innerHTML = `<div style="padding:0.75rem;background:var(--surface2);border-radius:10px;margin-bottom:1rem;display:flex;align-items:center;gap:1rem;"><div style="font-size:2rem;font-weight:700;color:var(--accent2);">${total}</div><div style="font-size:0.8rem;color:var(--text2);">Total Lab Seats (SUMIF *LAB* in Facility Rooms)</div></div>
+        <div class="table-card" style="padding:0;"><div class="tc-header"><div class="tc-title">📐 Lab Rooms — Capacity Detail</div></div><div style="overflow-x:auto;"><table><thead><tr><th>#</th><th>Room Name</th><th>Type</th><th>Capacity</th><th>Allocated</th><th>Status</th></tr></thead><tbody>${crHTML}</tbody></table></div></div>`;
 
     } else if (sub === 'classroom-cap') {
-      // ── Total Classroom Capacity ──
-      titleEl.textContent = '🏫 Total Classroom Capacity Breakdown';
+      titleEl.textContent = '🏫 Total Classroom Capacity';
       const classRooms = fRooms2.filter(r=>(r.roomName||'').toUpperCase().includes('CLASSROOM')||(r.roomType||'').toUpperCase().includes('CLASSROOM'));
       const totalClassCap = classRooms.reduce((s,r)=>s+(r.capacity||0),0);
-      const crHTML = classRooms.map((r,i)=>`<tr><td>${i+1}</td><td><strong>${r.roomName||'—'}</strong></td><td>${r.roomType||'—'}</td><td style="text-align:center;font-weight:700;color:var(--purple);">${r.capacity||0}</td><td>${r.allocated||'—'}</td><td><span class="badge">${r.status||'Active'}</span></td></tr>`).join('');
+      const crHTML = classRooms.map((r,i)=>`<tr><td>${i+1}</td><td>${r.roomName||r.name||'—'}</td><td>${r.roomType||'—'}</td><td style="text-align:center;font-weight:700;">${r.capacity||'—'}</td><td style="text-align:center;">${r.allocated||0}</td><td><span class="badge">${r.status||'Active'}</span></td></tr>`).join('') || '<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text3);">No classroom rooms found</td></tr>';
       bodyEl.innerHTML = `<div style="padding:0.75rem;background:var(--surface2);border-radius:10px;margin-bottom:1rem;display:flex;align-items:center;gap:1rem;"><div style="font-size:2rem;font-weight:700;color:var(--purple);">${totalClassCap}</div><div style="font-size:0.8rem;color:var(--text2);">Total Classroom Seats (SUMIF *CLASSROOM* in Facility Rooms)</div></div>
-        <div class="table-card" style="padding:0;"><div class="tc-header"><div class="tc-title">🏫 Classroom Rooms — Capacity Detail</div></div>
-        <div style="overflow-x:auto;"><table><thead><tr><th>#</th><th>Room Name</th><th>Type</th><th>Capacity</th><th>Allocated</th><th>Status</th></tr></thead><tbody>${crHTML||'<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text3);">No classroom rooms found</td></tr>'}</tbody></table></div></div>`;
+        <div class="table-card" style="padding:0;"><div class="tc-header"><div class="tc-title">🏫 Classroom Rooms — Capacity Detail</div></div><div style="overflow-x:auto;"><table><thead><tr><th>#</th><th>Room Name</th><th>Type</th><th>Capacity</th><th>Allocated</th><th>Status</th></tr></thead><tbody>${crHTML}</tbody></table></div></div>`;
 
-    } else {
-      // ── Faculty Labs (default) ──
-      const rows = fLabs2;
-      bodyEl.innerHTML = `<div class="table-card" style="padding:0;">
-        <div class="tc-header"><div class="tc-title">📋 ${sub.charAt(0).toUpperCase()+sub.slice(1).replace(/-/g,' ')} Registry</div>
-        <div class="tc-actions"><input type="text" placeholder="🔍 Search..." style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0.4rem 0.9rem;color:var(--text);font-size:0.82rem;outline:none;min-width:180px;"><button class="tc-btn primary" onclick="labOpenAddModal('facultyLab')">+ Add</button></div></div>
-        <div style="overflow-x:auto;max-height:450px;overflow-y:auto;">
-          <table><thead><tr><th>#</th><th>Faculty / Room</th><th>Category</th><th>Total Seats</th><th>Occupied</th><th>Available</th><th>Util %</th><th>Status</th><th>Actions</th></tr></thead>
-          <tbody>${rows.slice(0,50).map((r,i)=>{
-            const pct=r.utilizationRate?Math.round(r.utilizationRate*100):(r.occupiedSeats&&r.totalSeats?Math.round(r.occupiedSeats/r.totalSeats*100):0);
-            const avail=Math.max(0,(r.totalSeats||0)-(r.occupiedSeats||0));
-            const ind=pct>80?'🔴':pct>=50?'🟢':'🟡';
-            return `<tr><td>${i+1}</td><td>${r.facultyName||r.name||'—'}</td><td>${r.category||'—'}</td><td style="text-align:center;">${r.totalSeats||'—'}</td><td style="text-align:center;color:var(--orange);">${r.occupiedSeats||'—'}</td><td style="text-align:center;color:var(--green);">${avail||'—'}</td><td>${ind} ${pct}%</td><td><span class="badge">${r.status||'Active'}</span></td><td><button class="tc-btn" onclick="labOpenEditModal('${sub}','${r.id||''}')">Edit</button></td></tr>`;
-          }).join('')||'<tr><td colspan="9" style="text-align:center;padding:2rem;color:var(--text3);">Connect sheet to load data</td></tr>'}
+    } else if (sub === 'occupied-seats' || sub === 'available-seats' || sub === 'faculty-labs') {
+      titleEl.textContent = sub === 'occupied-seats' ? '🪑 Occupied Seats' : sub === 'available-seats' ? '🟢 Available Seats' : '🏛️ Faculty Labs';
+      const rHTML = fLabs2.slice(0,100).map((r,i)=>{
+        const pct=r.utilizationRate?Math.round(r.utilizationRate*100):(r.occupiedSeats&&r.totalSeats?Math.round(r.occupiedSeats/r.totalSeats*100):0);
+        const avail=Math.max(0,(r.totalSeats||0)-(r.occupiedSeats||0));
+        const ind=pct>80?'🔴':pct>=50?'🟢':'🟡';
+        const col=pct>80?'var(--red)':pct>=50?'var(--green)':'var(--gold)';
+        return `<tr><td>${i+1}</td><td><strong>${r.facultyName||r.name||'—'}</strong></td><td>${r.category||'—'}</td><td style="text-align:center;">${r.totalSeats||'—'}</td><td style="text-align:center;color:var(--orange);font-weight:700;">${r.occupiedSeats||'—'}</td><td style="text-align:center;color:var(--green);font-weight:700;">${avail||'—'}</td><td><span style="color:${col};">${ind} ${pct}%</span></td><td><span class="badge">${r.status||'Active'}</span></td><td><button class="tc-btn" onclick="labOpenEditModal('facultyLab','${r.id||''}')">Edit</button></td></tr>`;
+      }).join('') || '<tr><td colspan="9" style="text-align:center;padding:2rem;color:var(--text3);">Connect sheet to load data</td></tr>';
+      bodyEl.innerHTML = `<div class="table-card" style="padding:0;"><div class="tc-header"><div class="tc-title">📋 Faculty Labs — Occupancy Detail</div><div class="tc-actions"><input type="text" placeholder="🔍 Search..." style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0.4rem 0.9rem;color:var(--text);font-size:0.82rem;outline:none;min-width:180px;"><button class="tc-btn primary" onclick="labOpenAddModal('facultyLab')">+ Add</button></div></div><div style="overflow-x:auto;max-height:480px;overflow-y:auto;"><table><thead><tr><th>#</th><th>Faculty / Room</th><th>Category</th><th>Total Seats</th><th>Occupied</th><th>Available</th><th>Util %</th><th>Status</th><th>Actions</th></tr></thead><tbody>${rHTML}</tbody></table></div></div>`;
+    }
+  }
+
+  // ─── EXPENSES ────────────────────────────────────────────────────────────
+  else if (module === 'expenses') {
+    const expArr = Array.isArray(EXP) ? EXP : (EXP.all || []);
+    const filterMap = { paid:'paid', pending:'pending', underprocess:'under-process' };
+    const iconMap   = { paid:'✅', pending:'⏳', underprocess:'⚙️' };
+    const colorMap  = { paid:'var(--green)', pending:'var(--red)', underprocess:'var(--orange)' };
+    titleEl.textContent = `💰 Expenses — ${sub.charAt(0).toUpperCase()+sub.slice(1)}`;
+    const filtered = expArr.filter(e => (e.status||'').toLowerCase().includes(filterMap[sub]||sub));
+    const total = filtered.reduce((s,r)=>s+(parseFloat(r.amount)||0),0);
+    bodyEl.innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.75rem;margin-bottom:1rem;">
+        <div style="background:var(--surface2);border-radius:10px;padding:0.85rem;text-align:center;border:1px solid var(--border);">
+          <div style="font-size:1.5rem;font-weight:700;color:${colorMap[sub]||'var(--text)'};">${filtered.length}</div>
+          <div style="font-size:0.7rem;color:var(--text3);margin-top:2px;">Records</div>
+        </div>
+        <div style="background:var(--surface2);border-radius:10px;padding:0.85rem;text-align:center;border:1px solid var(--border);">
+          <div style="font-size:1.2rem;font-weight:700;color:${colorMap[sub]||'var(--text)'};font-family:var(--font-mono);">₹${total.toLocaleString('en-IN')}</div>
+          <div style="font-size:0.7rem;color:var(--text3);margin-top:2px;">Total Amount</div>
+        </div>
+        <div style="background:var(--surface2);border-radius:10px;padding:0.85rem;text-align:center;border:1px solid var(--border);">
+          <div style="font-size:1.5rem;">${iconMap[sub]||'💰'}</div>
+          <div style="font-size:0.7rem;color:var(--text3);margin-top:2px;">Status: ${sub.charAt(0).toUpperCase()+sub.slice(1)}</div>
+        </div>
+      </div>
+      <div class="table-card">
+        <div class="tc-header">
+          <div class="tc-title">📋 Expenses — ${sub.charAt(0).toUpperCase()+sub.slice(1)} Registry</div>
+          <div class="tc-actions">
+            <input type="text" placeholder="🔍 Search..." oninput="mydDDSearch(this.value)" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0.4rem 0.9rem;color:var(--text);font-size:0.82rem;outline:none;min-width:180px;">
+            <button class="tc-btn primary" onclick="mydCloseDrilldown();showTab('expenses');">Open Module →</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto;max-height:420px;overflow-y:auto;">
+          <table><thead><tr><th>Req ID</th><th>Submitted By</th><th>Category</th><th>Amount ₹</th><th>Date</th><th>Month</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="myd-dd-reg-tbody">
+            ${filtered.slice(0,100).map((r,i)=>`<tr><td style="font-family:var(--font-mono);font-size:0.78rem;">${r.reqId||r.id||i+1}</td><td><strong>${r.submittedBy||r.name||'—'}</strong></td><td>${r.category||'—'}</td><td style="font-family:var(--font-mono);font-weight:700;">${r.amount||'—'}</td><td style="font-family:var(--font-mono);font-size:0.78rem;">${r.date||'—'}</td><td>${r.month||'—'}</td><td><span class="badge badge-${(r.status||'').toLowerCase().replace(' ','-')}">${r.status||'—'}</span></td><td><button class="tc-btn">Edit</button></td></tr>`).join('')||'<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--text3);">No records for this status — connect Google Sheet</td></tr>'}
           </tbody></table>
         </div>
       </div>`;
-    }
   }
-  else if (module === 'expenses') {
-    titleEl.textContent = '💰 Expenses — ' + sub.charAt(0).toUpperCase() + sub.slice(1);
-    const expArr = Array.isArray(EXP) ? EXP : (EXP.all || []);
-    const filterMap = { paid: 'paid', pending: 'pending', underprocess: 'under-process' };
-    const filtered = expArr.filter(e => (e.status||'').toLowerCase().includes(filterMap[sub]||sub));
-    bodyEl.innerHTML = `<div class="table-card">
+
+  // ─── PUBLICATIONS ────────────────────────────────────────────────────────
+  else if (module === 'publications') {
+    const pubArr = Array.isArray(PUB) ? PUB : (PUB.all || []);
+    const filterKey = { journals:'journal', conferences:'conference', reports:'report', preprints:'preprint' };
+    const iconMap2  = { journals:'📰', conferences:'🎤', reports:'📋', preprints:'📄' };
+    titleEl.textContent = `📚 Publications — ${sub.charAt(0).toUpperCase()+sub.slice(1)}`;
+    const filtered = pubArr.filter(p => (p.type||p.publicationType||'').toLowerCase().includes(filterKey[sub]||sub));
+    // Year-wise matrix
+    const yearMap = {};
+    const typeSet = new Set();
+    pubArr.forEach(p => {
+      const y = p.year||p.dateOfPublication||'Unknown';
+      const t = (p.type||p.publicationType||'Other').toLowerCase().includes('journal')?'Journal':
+                (p.type||p.publicationType||'Other').toLowerCase().includes('conference')?'Conference':
+                (p.type||p.publicationType||'Other').toLowerCase().includes('report')?'Report':
+                (p.type||p.publicationType||'Other').toLowerCase().includes('preprint')?'Preprint':'Other';
+      typeSet.add(t);
+      if(!yearMap[y]) yearMap[y]={};
+      yearMap[y][t]=(yearMap[y][t]||0)+1;
+    });
+    const years = Object.keys(yearMap).sort().reverse().slice(0,10);
+    const types = [...typeSet].sort();
+    const matrixHTML = years.length ? `
+      <div class="table-card" style="margin-bottom:1rem;">
+        <div class="tc-header"><div class="tc-title">📊 Year-wise Publication Matrix</div><div style="font-size:0.68rem;color:var(--text3);font-family:var(--font-mono);">Auto-updated from Google Sheet</div></div>
+        <div style="overflow-x:auto;"><table><thead><tr><th>Year</th>${types.map(t=>`<th style="text-align:center;">${t}</th>`).join('')}<th style="text-align:center;">Total</th></tr></thead>
+        <tbody>${years.map(y=>{
+          const rowTotal=types.reduce((s,t)=>s+(yearMap[y][t]||0),0);
+          return `<tr><td style="font-weight:700;font-family:var(--font-mono);">${y}</td>${types.map(t=>`<td style="text-align:center;">${yearMap[y][t]||'—'}</td>`).join('')}<td style="text-align:center;font-weight:700;color:var(--accent);">${rowTotal}</td></tr>`;
+        }).join('')}
+        <tr style="background:rgba(59,130,246,0.08);font-weight:700;border-top:2px solid var(--border);"><td>Total</td>${types.map(t=>`<td style="text-align:center;color:var(--accent);">${pubArr.filter(p=>(p.type||p.publicationType||'').toLowerCase().includes(t.toLowerCase())).length}</td>`).join('')}<td style="text-align:center;color:var(--accent);">${pubArr.length}</td></tr>
+        </tbody></table></div></div>` : '<div style="color:var(--text3);font-size:0.83rem;margin-bottom:1rem;">Connect Google Sheet for Year-wise Matrix</div>';
+    bodyEl.innerHTML = matrixHTML + `<div class="table-card">
       <div class="tc-header">
-        <div class="tc-title">📋 Expenses — ${sub.charAt(0).toUpperCase()+sub.slice(1)}</div>
+        <div class="tc-title">${iconMap2[sub]||'📋'} ${sub.charAt(0).toUpperCase()+sub.slice(1)} Registry</div>
         <div class="tc-actions">
-          <button class="tc-btn primary" onclick="showTab('expenses'); setTimeout(()=>document.querySelector('#tab-expenses .tc-btn.primary')?.click(),300)">+ Add Expense</button>
+          <input type="text" placeholder="🔍 Search..." oninput="mydDDSearch(this.value)" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0.4rem 0.9rem;color:var(--text);font-size:0.82rem;outline:none;min-width:180px;">
+          <button class="tc-btn primary" onclick="mydCloseDrilldown();showTab('publications');">Open Module →</button>
         </div>
       </div>
-      <div style="overflow-x:auto;max-height:450px;overflow-y:auto;">
-        <table><thead><tr><th>Req ID</th><th>Submitted By</th><th>Category</th><th>Amount ₹</th><th>Date</th><th>Month</th><th>Status</th><th>Actions</th></tr></thead>
-        <tbody>
-          ${filtered.slice(0,50).map((r,i)=>`<tr><td>${r.reqId||r.id||i+1}</td><td>${r.submittedBy||r.name||'—'}</td><td>${r.category||'—'}</td><td>${r.amount||'—'}</td><td>${r.date||'—'}</td><td>${r.month||'—'}</td><td><span class="badge badge-${(r.status||'').toLowerCase().replace(' ','-')}">${r.status||'—'}</span></td><td><button class="tc-btn">Edit</button></td></tr>`).join('')||'<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--text3);">No records for this status</td></tr>'}
-        </tbody></table>
-      </div>
-    </div>`;
-  }
-  else if (module === 'publications') {
-    titleEl.textContent = '📚 Publications — ' + sub.charAt(0).toUpperCase() + sub.slice(1);
-    const pubArr = Array.isArray(PUB) ? PUB : (PUB.all || []);
-    const filterKey = { journals: 'journal', conferences: 'conference', reports: 'report', preprints: 'preprint' };
-    const filtered = pubArr.filter(p => (p.type||p.publicationType||'').toLowerCase().includes(filterKey[sub]||sub));
-    bodyEl.innerHTML = `<div class="table-card">
-      <div class="tc-header">
-        <div class="tc-title">📋 Publications — ${sub}</div>
-        <div class="tc-actions"><button class="tc-btn primary" onclick="showTab('publications'); setTimeout(()=>document.querySelector('#tab-publications .tc-btn.primary')?.click(),300)">+ Add</button></div>
-      </div>
-      <div style="overflow-x:auto;max-height:450px;overflow-y:auto;">
+      <div style="overflow-x:auto;max-height:380px;overflow-y:auto;">
         <table><thead><tr><th>#</th><th>Title</th><th>Authors</th><th>Type</th><th>Year</th><th>Status</th><th>Actions</th></tr></thead>
-        <tbody>
-          ${filtered.slice(0,50).map((r,i)=>`<tr><td>${i+1}</td><td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.title||'—'}</td><td>${r.authors||r.author||'—'}</td><td>${r.type||r.publicationType||'—'}</td><td>${r.year||r.dateOfPublication||'—'}</td><td><span class="badge">${r.status||'—'}</span></td><td><button class="tc-btn">Edit</button></td></tr>`).join('')||'<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text3);">Connect sheet to load data</td></tr>'}
+        <tbody id="myd-dd-reg-tbody">
+          ${filtered.slice(0,100).map((r,i)=>`<tr><td>${i+1}</td><td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${r.title||''}">${r.title||'—'}</td><td style="font-size:0.78rem;">${r.authors||r.author||'—'}</td><td>${r.type||r.publicationType||'—'}</td><td style="font-family:var(--font-mono);">${r.year||r.dateOfPublication||'—'}</td><td><span class="badge">${r.status||'—'}</span></td><td><button class="tc-btn">Edit</button></td></tr>`).join('')||'<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text3);">Connect sheet to load data</td></tr>'}
         </tbody></table>
       </div>
     </div>`;
   }
+
+  // ─── INVENTORY ────────────────────────────────────────────────────────────
   else if (module === 'inventory') {
-    titleEl.textContent = '📦 Inventory — ' + sub.charAt(0).toUpperCase() + sub.slice(1);
-    const invMap = { all: [...(INV.gifts||[]),...(INV.stationeries||INV.stat||[]),...(INV.mementos||INV.mem||[])], gifts: INV.gifts||[], stationeries: INV.stationeries||INV.stat||[], mementos: INV.mementos||INV.mem||[] };
-    const rows = invMap[sub] || [];
-    bodyEl.innerHTML = `<div class="table-card">
-      <div class="tc-header">
-        <div class="tc-title">📋 Inventory — ${sub}</div>
-        <div class="tc-actions"><button class="tc-btn primary" onclick="showTab('inventory'); switchInvTab('${sub==='all'?'gifts':sub}')">+ Add Item</button></div>
-      </div>
-      <div style="overflow-x:auto;max-height:450px;overflow-y:auto;">
-        <table><thead><tr><th>#</th><th>Item Name</th><th>Category</th><th>Balance</th><th>Issued</th><th>Status</th><th>Actions</th></tr></thead>
-        <tbody>
-          ${rows.slice(0,50).map((r,i)=>`<tr><td>${i+1}</td><td>${r.name||r.itemName||'—'}</td><td>${r.category||r.type||'—'}</td><td>${r.balance||r.stock||'—'}</td><td>${r.totalIssued||r.issued||'—'}</td><td><span class="badge">${r.status||'Active'}</span></td><td><button class="tc-btn">Edit</button></td></tr>`).join('')||'<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text3);">Connect sheet to load data</td></tr>'}
-        </tbody></table>
-      </div>
-    </div>`;
+    const gifts  = INV.gifts  || [];
+    const stat   = INV.stationeries || INV.stat || [];
+    const mem    = INV.mementos || INV.mem || [];
+    const invTypeMap = { gifts:gifts, stationeries:stat, mementos:mem };
+    const invTitleMap = { gifts:'🎁 Gifts — Transaction Ledger', stationeries:'✏️ Stationeries — Transaction Ledger', mementos:'🏆 Mementos — Transaction Ledger', 'low-critical':'🚨 Low / Critical Stock Alert' };
+    const invIconMap  = { gifts:'🎁', stationeries:'✏️', mementos:'🏆' };
+    titleEl.textContent = invTitleMap[sub] || '📦 Inventory';
+
+    if (sub === 'low-critical') {
+      const allItems = [...gifts, ...stat, ...mem];
+      const lowItems = allItems.filter(i => {
+        const st = typeof getInvStatus === 'function' ? getInvStatus(i) : (i.status||'').toLowerCase();
+        return ['low','critical','out'].includes(st);
+      });
+      const rows = lowItems.slice(0,100).map((r,i)=>{
+        const st = typeof getInvStatus === 'function' ? getInvStatus(r) : (r.status||'').toLowerCase();
+        const stColor = st==='out'?'var(--red)':st==='critical'?'var(--red)':'var(--gold)';
+        const cat = gifts.includes(r)?'Gift':stat.includes(r)?'Stationery':mem.includes(r)?'Memento':'Item';
+        return `<tr><td>${i+1}</td><td><strong>${r.name||r.itemName||'—'}</strong></td><td>${cat}</td><td>${r.category||r.type||'—'}</td><td style="font-weight:700;color:${stColor};font-family:var(--font-mono);">${r.balance||r.stock||0}</td><td style="font-family:var(--font-mono);">${r.reorderLevel||r.threshold||'—'}</td><td><span class="badge" style="color:${stColor};border-color:${stColor}40;background:${stColor}12;">${st.toUpperCase()}</span></td></tr>`;
+      }).join('') || '<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text3);">No low/critical stock items — all inventory is healthy!</td></tr>';
+      bodyEl.innerHTML = `
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.75rem;margin-bottom:1rem;">
+          <div style="background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.25);border-radius:10px;padding:0.85rem;text-align:center;">
+            <div style="font-size:1.5rem;font-weight:700;color:var(--red);">${allItems.filter(i=>{const s=typeof getInvStatus==='function'?getInvStatus(i):(i.status||'');return s==='out';}).length}</div>
+            <div style="font-size:0.7rem;color:var(--text3);margin-top:2px;">Out of Stock</div>
+          </div>
+          <div style="background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.2);border-radius:10px;padding:0.85rem;text-align:center;">
+            <div style="font-size:1.5rem;font-weight:700;color:var(--red);">${allItems.filter(i=>{const s=typeof getInvStatus==='function'?getInvStatus(i):(i.status||'');return s==='critical';}).length}</div>
+            <div style="font-size:0.7rem;color:var(--text3);margin-top:2px;">Critical</div>
+          </div>
+          <div style="background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.25);border-radius:10px;padding:0.85rem;text-align:center;">
+            <div style="font-size:1.5rem;font-weight:700;color:var(--gold);">${allItems.filter(i=>{const s=typeof getInvStatus==='function'?getInvStatus(i):(i.status||'');return s==='low';}).length}</div>
+            <div style="font-size:0.7rem;color:var(--text3);margin-top:2px;">Low Stock</div>
+          </div>
+        </div>
+        <div class="table-card">
+          <div class="tc-header"><div class="tc-title" style="color:var(--red);">🚨 Low Stock Alert Summary</div><div class="tc-actions"><button class="tc-btn primary" onclick="mydCloseDrilldown();showTab('inventory');">Open Inventory →</button></div></div>
+          <div style="overflow-x:auto;max-height:420px;overflow-y:auto;">
+            <table><thead><tr><th>#</th><th>Item Name</th><th>Category</th><th>Sub-Type</th><th>Current Stock</th><th>Reorder Level</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table>
+          </div>
+        </div>`;
+    } else {
+      // Gifts / Stationeries / Mementos — full Transaction Ledger
+      const rows = (invTypeMap[sub]||[]);
+      titleEl.textContent = invTitleMap[sub] || ('📦 '+sub);
+      // Stats row
+      const totalItems = rows.length;
+      const totalIssued = rows.reduce((s,r)=>s+(parseInt(r.totalIssued||r.issued)||0),0);
+      const lowCount = rows.filter(r=>{const s=typeof getInvStatus==='function'?getInvStatus(r):(r.status||'').toLowerCase();return ['low','critical','out'].includes(s);}).length;
+      bodyEl.innerHTML = `
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.75rem;margin-bottom:1rem;">
+          <div style="background:var(--surface2);border-radius:10px;padding:0.85rem;text-align:center;border:1px solid var(--border);">
+            <div style="font-size:1.5rem;font-weight:700;color:var(--text);">${totalItems}</div><div style="font-size:0.7rem;color:var(--text3);margin-top:2px;">Total Items</div>
+          </div>
+          <div style="background:var(--surface2);border-radius:10px;padding:0.85rem;text-align:center;border:1px solid var(--border);">
+            <div style="font-size:1.5rem;font-weight:700;color:var(--orange);">${totalIssued}</div><div style="font-size:0.7rem;color:var(--text3);margin-top:2px;">Total Issued</div>
+          </div>
+          <div style="background:rgba(239,68,68,0.06);border-radius:10px;padding:0.85rem;text-align:center;border:1px solid rgba(239,68,68,0.2);">
+            <div style="font-size:1.5rem;font-weight:700;color:var(--red);">${lowCount}</div><div style="font-size:0.7rem;color:var(--text3);margin-top:2px;">Low/Critical</div>
+          </div>
+        </div>
+        <div class="table-card">
+          <div class="tc-header">
+            <div class="tc-title">${invTitleMap[sub]||'📋 Registry'}</div>
+            <div class="tc-actions">
+              <input type="text" placeholder="🔍 Search..." oninput="mydDDSearch(this.value)" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0.4rem 0.9rem;color:var(--text);font-size:0.82rem;outline:none;min-width:180px;">
+              <select oninput="mydDDFilter(this.value)" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0.4rem 0.75rem;color:var(--text);font-size:0.78rem;outline:none;">
+                <option value="">All Status</option><option value="ok">OK</option><option value="low">Low</option><option value="critical">Critical</option><option value="out">Out of Stock</option>
+              </select>
+              <button class="tc-btn primary" onclick="mydCloseDrilldown();showTab('inventory');switchInvTab('${sub}');">Open Module →</button>
+            </div>
+          </div>
+          <div style="overflow-x:auto;max-height:420px;overflow-y:auto;">
+            <table><thead><tr><th>#</th><th>Item Name</th><th>Category</th><th>Balance</th><th>Issued</th><th>Reorder Level</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="myd-dd-reg-tbody">
+              ${rows.slice(0,100).map((r,i)=>{
+                const st = typeof getInvStatus==='function'?getInvStatus(r):(r.status||'ok').toLowerCase();
+                const stColor = st==='out'||st==='critical'?'var(--red)':st==='low'?'var(--gold)':'var(--green)';
+                const bal = parseInt(r.balance||r.stock||0);
+                const pct = (r.reorderLevel||0)>0?Math.round(bal/(r.reorderLevel||1)*100):100;
+                return `<tr><td>${i+1}</td><td><strong>${r.name||r.itemName||'—'}</strong></td><td>${r.category||r.type||'—'}</td><td><div style="font-family:var(--font-mono);font-weight:700;color:${stColor};">${bal}</div><div style="width:60px;height:3px;background:var(--surface3);border-radius:2px;margin-top:2px;overflow:hidden;"><div style="width:${Math.min(pct,100)}%;height:100%;background:${stColor};border-radius:2px;"></div></div></td><td style="font-family:var(--font-mono);">${r.totalIssued||r.issued||'—'}</td><td style="font-family:var(--font-mono);">${r.reorderLevel||r.threshold||'—'}</td><td><span class="badge" style="color:${stColor};border-color:${stColor}40;background:${stColor}12;">${st.toUpperCase()}</span></td><td><button class="tc-btn">Issue</button> <button class="tc-btn">Edit</button></td></tr>`;
+              }).join('')||'<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--text3);">Connect sheet to load data</td></tr>'}
+            </tbody></table>
+          </div>
+        </div>`;
+    }
   }
+}
+
+function mydDDFilter(status) {
+  const tbody = document.getElementById('myd-dd-reg-tbody');
+  if (!tbody) return;
+  tbody.querySelectorAll('tr').forEach(tr => {
+    if (!status) { tr.style.display = ''; return; }
+    const txt = tr.textContent.toLowerCase();
+    tr.style.display = txt.includes(status.toLowerCase()) ? '' : 'none';
+  });
 }
 
 function mydDDSearch(val) {
