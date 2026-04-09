@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WSAI - PORTAL v41</title>
+<title>WSAI - PORTAL v42</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
@@ -28,7 +28,7 @@
     --font-mono: 'DM Mono', monospace;
   }
   /* ══════════════════════════════════════════════════════════════════════
-     LIGHT THEME — WSAI Portal v22
+     LIGHT THEME — WSAI Portal v42
      Palette: Warm Ivory bg · Deep Navy accents · Amber highlights
      Inspired by premium institutional dashboards (IITM research grade)
   ══════════════════════════════════════════════════════════════════════ */
@@ -1526,7 +1526,7 @@
         <div class="nav-item" data-tab="dashboard" onclick="showTab('dashboard')">
           <span class="ni-icon">📊</span> Dashboard
         </div>
-        <div class="nav-item" data-tab="role-dashboard" onclick="showTab('role-dashboard')" id="nav-role-dashboard" style="display:none !important;">
+        <div class="nav-item" data-tab="role-dashboard" onclick="showTab('role-dashboard')" id="nav-role-dashboard" style="display:none !important;" aria-hidden="true" tabindex="-1">
           <span class="ni-icon" id="nav-role-icon">📊</span> <span id="nav-role-label">Role Dashboard</span>
         </div>
       </div>
@@ -1625,7 +1625,7 @@
     <main class="main">
 
       <!-- ── DASHBOARD ── -->
-      <div class="tabs active" id="tab-dashboard">
+      <div class="tabs" id="tab-dashboard">
         <div class="page-header">
           <h2>Command Center</h2>
           <p>Real-time overview of all WSAI management systems · IIT Madras</p>
@@ -3505,23 +3505,9 @@
 <!-- ══════════════════════════════════════════════════════
      MY DASHBOARD TAB — v35 Role-Adaptive Dashboard
 ══════════════════════════════════════════════════════ -->
-<div class="tabs" id="tab-my-dashboard">
+<div class="tabs active" id="tab-my-dashboard">
 
-  <!-- Welcome Banner (reused from role-dashboard logic) -->
-  <div id="myd-role-banner" style="background:linear-gradient(135deg,var(--surface),var(--surface2));border:1px solid var(--border);border-radius:14px;padding:1.25rem 1.5rem;margin-bottom:1.5rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;">
-    <div style="display:flex;align-items:center;gap:1rem;">
-      <div id="myd-avatar" style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:1.3rem;font-weight:700;color:white;flex-shrink:0;">?</div>
-      <div>
-        <div id="myd-greeting" style="font-size:1.1rem;font-weight:700;color:var(--text);">Welcome</div>
-        <div id="myd-sub" style="font-size:0.78rem;color:var(--text2);margin:0.15rem 0;">Loading profile…</div>
-        <div id="myd-quote" style="font-size:0.72rem;color:var(--text3);font-style:italic;margin-top:0.2rem;max-width:480px;"></div>
-      </div>
-    </div>
-    <div style="text-align:right;">
-      <div id="myd-clock-time" style="font-size:1.4rem;font-weight:700;color:var(--accent);font-family:var(--font-mono);">--:--</div>
-      <div id="myd-clock-date" style="font-size:0.72rem;color:var(--text2);font-family:var(--font-mono);"></div>
-    </div>
-  </div>
+
 
   <!-- COO DASHBOARD (shown when role = coo / admin / creator) -->
   <div id="myd-coo-panel" style="display:none;">
@@ -8987,8 +8973,8 @@
         </div>
       </div>
       <div style="text-align:right;flex-shrink:0;min-width:130px;">
-        <div style="font-family:var(--font-mono);font-size:0.8rem;color:var(--text);font-weight:500;">${timeStr}</div>
-        <div style="font-size:0.7rem;color:var(--text3);margin-top:2px;font-family:var(--font-mono);">${dateStr}</div>
+        <div data-iwb-time style="font-family:var(--font-mono);font-size:0.8rem;color:var(--text);font-weight:500;">${timeStr}</div>
+        <div data-iwb-date style="font-size:0.7rem;color:var(--text3);margin-top:2px;font-family:var(--font-mono);">${dateStr}</div>
       </div>`;
 
     // Insert right after the page-header in the landing panel
@@ -8998,6 +8984,18 @@
     } else {
       landingPanel.insertBefore(banner, landingPanel.firstChild);
     }
+
+    // Live clock — tick every second inside the injected banner
+    if (window._iwbClockTimer) clearInterval(window._iwbClockTimer);
+    window._iwbClockTimer = setInterval(() => {
+      const b = document.getElementById('interface-welcome-banner');
+      if (!b) { clearInterval(window._iwbClockTimer); return; }
+      const timeEl = b.querySelector('[data-iwb-time]');
+      const dateEl = b.querySelector('[data-iwb-date]');
+      const n = new Date();
+      if (timeEl) timeEl.textContent = n.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit', hour12:true });
+      if (dateEl) dateEl.textContent = n.toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+    }, 1000);
   }
 
   // ── Write restriction engine ──────────────────────────────────────────────
