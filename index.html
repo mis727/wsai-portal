@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WSAI - PORTAL v40</title>
+<title>WSAI - PORTAL v41</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
@@ -3561,6 +3561,7 @@
     <div class="myd-kpi-section">
       <div class="myd-sec-hdr">🔐 Biometric Access</div>
       <div class="myd-kpi-row">
+        <div class="myd-kpi-card myd-kpi-green" onclick="mydOpenDrilldown('biometric','total-active')"><div class="myd-kpi-icon">🏢</div><div class="myd-kpi-val" id="myd-bio-total-active">—</div><div class="myd-kpi-lbl">Total Active</div><div class="myd-kpi-sub">Area Occupancy + Pending</div></div>
         <div id="myd-bio-area-cards" style="display:contents;"></div>
         <div class="myd-kpi-card myd-kpi-alert" onclick="mydOpenDrilldown('biometric','pending')"><div class="myd-kpi-icon">⏳</div><div class="myd-kpi-val" id="myd-bio-pending">—</div><div class="myd-kpi-lbl">Pending Requests</div><div class="myd-kpi-sub">Biometric Auth</div></div>
       </div>
@@ -29374,6 +29375,10 @@ function mydRefreshCOO() {
 
   const EXP = window.EXP || window._expenses || [];
   const expAll = Array.isArray(EXP) ? EXP : (EXP.all || []);
+  // Biometric Total Active
+  const bioAreas = BM.areaOccupancy || BM.areas || [];
+  const bioTotalActive = bioAreas.reduce((s,a) => s + (a.occupied||0), 0) || BM.totalActive || (BM.enrolled||[]).filter(r=>(r.status||'').toLowerCase()==='active').length || '—';
+  sv('myd-bio-total-active', bioTotalActive);
   sv('myd-exp-paid',    expAll.filter(e => (e.status||'').toLowerCase() === 'paid').length || '—');
   sv('myd-exp-pending', expAll.filter(e => (e.status||'').toLowerCase() === 'pending').length || '—');
   sv('myd-exp-process', expAll.filter(e => (e.status||'').toLowerCase().includes('process')).length || '—');
@@ -29451,72 +29456,131 @@ function mydRenderDrilldown(module, sub) {
   const PUB   = window.PUB   || window._publications || {};
 
   if (module === 'hr-people') {
-    titleEl.textContent = '👤 HR & People — ' + sub.charAt(0).toUpperCase() + sub.slice(1);
-    let distHTML = '';
-    const facTypes = {};
-    [...(DB.faculty||[]),...(DB.assocFaculty||[]),...(DB.affiFaculty||[])].forEach(r => {
-      const t = r.facultyType || r._type || 'Faculty';
-      facTypes[t] = (facTypes[t]||0)+1;
-    });
-    distHTML += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
-      <div class="table-card"><div class="tc-header"><div class="tc-title" style="color:#4CAF50;">🎓 Faculty Category Distribution</div></div>
-        <table><thead><tr><th>Faculty Type</th><th>Count</th></tr></thead><tbody>
-        ${Object.entries(facTypes).map(([t,c])=>`<tr><td>${t}</td><td style="text-align:center;font-weight:700;">${c}</td></tr>`).join('')||'<tr><td colspan="2" style="text-align:center;color:var(--text3);">No data</td></tr>'}
+    // ── helpers ──
+    function _alumniTable(records, label) {
+      if (!records.length) return '';
+      return `<div class="table-card" style="margin-bottom:1rem;">
+        <div class="tc-header"><div class="tc-title">🏛️ ${label}</div></div>
+        <div style="overflow-x:auto;max-height:260px;overflow-y:auto;">
+          <table><thead><tr><th>#</th><th>Name</th><th>Designation</th><th>Center/Dept</th><th>Exit Date</th></tr></thead><tbody>
+          ${records.slice(0,50).map((r,i)=>`<tr><td>${i+1}</td><td>${r.name||'—'}</td><td>${r.designation||r.facultyType||'—'}</td><td>${r.center||r.department||r.unit||'—'}</td><td>${r.exitDate||'—'}</td></tr>`).join('')}
+          </tbody></table>
+        </div></div>`;
+    }
+    function _distTable(map, title, color) {
+      const entries = Object.entries(map).sort((a,b)=>b[1]-a[1]);
+      if (!entries.length) return '';
+      return `<div class="table-card" style="margin-bottom:1rem;">
+        <div class="tc-header"><div class="tc-title" style="color:${color};">${title}</div></div>
+        <table><thead><tr><th>Type / Designation</th><th style="text-align:center;">Count</th></tr></thead><tbody>
+        ${entries.map(([t,c])=>`<tr><td>${t}</td><td style="text-align:center;font-weight:700;">${c}</td></tr>`).join('')}
         </tbody></table></div>`;
-    const resTypes = {};
-    (DB.researchers||[]).forEach(r => { const d=r.designation||'Other'; resTypes[d]=(resTypes[d]||0)+1; });
-    distHTML += `<div class="table-card"><div class="tc-header"><div class="tc-title" style="color:#42A5F5;">🔬 Researcher Designation Distribution</div></div>
-        <table><thead><tr><th>Designation</th><th>Count</th></tr></thead><tbody>
-        ${Object.entries(resTypes).sort((a,b)=>b[1]-a[1]).map(([t,c])=>`<tr><td>${t}</td><td style="text-align:center;font-weight:700;">${c}</td></tr>`).join('')||'<tr><td colspan="2" style="text-align:center;color:var(--text3);">No data</td></tr>'}
-        </tbody></table></div></div>`;
-    const staffTypes = {};
-    (DB.staff||[]).forEach(r => { const d=r.designation||'Staff'; staffTypes[d]=(staffTypes[d]||0)+1; });
-    const stuTypes = {};
-    (DB.students||[]).forEach(r => { const d=r.designation||'Student'; stuTypes[d]=(stuTypes[d]||0)+1; });
-    distHTML += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
-      <div class="table-card"><div class="tc-header"><div class="tc-title" style="color:#FB8C00;">👥 Staff Designation Distribution</div></div>
-        <table><thead><tr><th>Designation</th><th>Count</th></tr></thead><tbody>
-        ${Object.entries(staffTypes).sort((a,b)=>b[1]-a[1]).map(([t,c])=>`<tr><td>${t}</td><td style="text-align:center;font-weight:700;">${c}</td></tr>`).join('')||'<tr><td colspan="2" style="text-align:center;color:var(--text3);">No data</td></tr>'}
-        </tbody></table></div>
-      <div class="table-card"><div class="tc-header"><div class="tc-title" style="color:#7E57C2;">🎓 Student Designation Distribution</div></div>
-        <table><thead><tr><th>Designation</th><th>Count</th></tr></thead><tbody>
-        ${Object.entries(stuTypes).sort((a,b)=>b[1]-a[1]).map(([t,c])=>`<tr><td>${t}</td><td style="text-align:center;font-weight:700;">${c}</td></tr>`).join('')||'<tr><td colspan="2" style="text-align:center;color:var(--text3);">No data</td></tr>'}
-        </tbody></table></div></div>`;
-    if (sub === 'tenure') {
-      distHTML += `<div class="table-card" style="margin-bottom:1rem;">
+    }
+    function _facDistTable() {
+      // Full faculty category distribution incl. Associate + Affiliate + grand total
+      const rows = [];
+      // Core faculty
+      const facT = {}; (DB.faculty||[]).forEach(r=>{const t=r.facultyType||'Faculty'; facT[t]=(facT[t]||0)+1;});
+      rows.push(`<tr style="background:rgba(59,130,246,0.07);"><td colspan="2" style="font-size:0.68rem;font-family:monospace;color:var(--accent);text-transform:uppercase;letter-spacing:0.08em;padding:4px 8px;">👨‍🏫 Faculty</td></tr>`);
+      Object.entries(facT).forEach(([t,c])=>rows.push(`<tr><td style="padding-left:1rem;">${t}</td><td style="text-align:center;font-weight:700;">${c}</td></tr>`));
+      // Assoc Faculty
+      const assT = {}; (DB.assocFaculty||[]).forEach(r=>{const t=r.facultyType||'Assoc. Faculty'; assT[t]=(assT[t]||0)+1;});
+      rows.push(`<tr style="background:rgba(6,182,212,0.07);"><td colspan="2" style="font-size:0.68rem;font-family:monospace;color:#0891B2;text-transform:uppercase;letter-spacing:0.08em;padding:4px 8px;">👩‍🏫 Associate Faculty</td></tr>`);
+      if (Object.keys(assT).length) Object.entries(assT).forEach(([t,c])=>rows.push(`<tr><td style="padding-left:1rem;">${t}</td><td style="text-align:center;font-weight:700;">${c}</td></tr>`));
+      else rows.push(`<tr><td style="padding-left:1rem;color:var(--text3);">(All Types)</td><td style="text-align:center;font-weight:700;">${(DB.assocFaculty||[]).length}</td></tr>`);
+      // Affiliate Faculty
+      const afiT = {}; (DB.affiFaculty||[]).forEach(r=>{const t=r.facultyType||'Affiliate Faculty'; afiT[t]=(afiT[t]||0)+1;});
+      rows.push(`<tr style="background:rgba(16,185,129,0.07);"><td colspan="2" style="font-size:0.68rem;font-family:monospace;color:var(--green);text-transform:uppercase;letter-spacing:0.08em;padding:4px 8px;">🔗 Affiliate Faculty</td></tr>`);
+      if (Object.keys(afiT).length) Object.entries(afiT).forEach(([t,c])=>rows.push(`<tr><td style="padding-left:1rem;">${t}</td><td style="text-align:center;font-weight:700;">${c}</td></tr>`));
+      else rows.push(`<tr><td style="padding-left:1rem;color:var(--text3);">(All Types)</td><td style="text-align:center;font-weight:700;">${(DB.affiFaculty||[]).length}</td></tr>`);
+      // Grand total
+      const grand = (DB.faculty||[]).length + (DB.assocFaculty||[]).length + (DB.affiFaculty||[]).length;
+      rows.push(`<tr style="background:rgba(40,167,69,0.12);font-weight:700;border-top:2px solid rgba(16,185,129,0.3);"><td>🧮 Grand Total (Faculty + Assoc + Affiliate)</td><td style="text-align:center;color:var(--green);font-size:1.05em;">${grand}</td></tr>`);
+      return `<div class="table-card" style="margin-bottom:1rem;">
+        <div class="tc-header"><div class="tc-title" style="color:#4CAF50;">🎓 Faculty Category Distribution</div></div>
+        <table><thead><tr><th>Faculty Type</th><th style="text-align:center;">Count</th></tr></thead><tbody>${rows.join('')}</tbody></table></div>`;
+    }
+    function _regTable(rows, sub) {
+      const addMap = {staff:'staff', faculty:'faculty', assocfaculty:'assocfaculty', affifaculty:'affifaculty', researchers:'researcher', fellows:'fellow', students:'student', tenure:''};
+      const titleMap = {staff:'👔 Staff Registry', faculty:'👨‍🏫 Faculty Registry', assocfaculty:'👩‍🏫 Associate Faculty Registry', affifaculty:'🔗 Affiliate Faculty Registry', researchers:'🔬 Active Researchers Registry', fellows:'👥 Associate Fellows Registry', students:'🎓 Students Registry', tenure:''};
+      return `<div class="table-card">
+        <div class="tc-header">
+          <div class="tc-title">${titleMap[sub]||'📋 Registry'}</div>
+          <div class="tc-actions">
+            <input type="text" placeholder="🔍 Search..." oninput="mydDDSearch(this.value)" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0.4rem 0.9rem;color:var(--text);font-size:0.82rem;outline:none;min-width:180px;">
+            ${addMap[sub] ? `<button class="tc-btn primary" onclick="openAddModal('${addMap[sub]}')">+ Add</button>` : ''}
+          </div>
+        </div>
+        <div style="overflow-x:auto;max-height:350px;overflow-y:auto;">
+          <table><thead><tr><th>#</th><th>Name</th><th>Designation / Type</th><th>Department / Center</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="myd-dd-reg-tbody">
+          ${rows.slice(0,50).map((r,i)=>`<tr><td>${i+1}</td><td>${r.name||'—'}</td><td>${r.designation||r.facultyType||r.category||'—'}</td><td>${r.department||r.center||r.affiliation||'—'}</td><td><span class="badge badge-${(r.status||'active').toLowerCase()}">${r.status||'Active'}</span></td><td><button class="tc-btn" onclick="openEditModal('${sub}','${r.id||''}')">Edit</button></td></tr>`).join('')||`<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text3);">Connect sheet to load data</td></tr>`}
+          </tbody></table>
+        </div>
+      </div>`;
+    }
+
+    let html = '';
+    const alumniAll = DB.alumni || [];
+
+    if (sub === 'staff') {
+      titleEl.textContent = '👔 Staff';
+      const alumniStaff = alumniAll.filter(r => ['staff','Staff'].includes(r.movedFrom||r.type||''));
+      const staffDist = {}; (DB.staff||[]).forEach(r=>{const d=r.designation||'Staff'; staffDist[d]=(staffDist[d]||0)+1;});
+      html += _regTable(DB.staff||[], 'staff');
+      html += _alumniTable(alumniStaff, 'Alumni Registry — Staff');
+      html += _distTable(staffDist, '👥 Staff Designation Distribution', '#FB8C00');
+
+    } else if (sub === 'faculty') {
+      titleEl.textContent = '👨‍🏫 Faculty';
+      html += _regTable(DB.faculty||[], 'faculty');
+      html += _facDistTable();
+
+    } else if (sub === 'affifaculty') {
+      titleEl.textContent = '🔗 Affiliate Faculty';
+      html += _regTable(DB.affiFaculty||[], 'affifaculty');
+      html += _facDistTable();
+
+    } else if (sub === 'assocfaculty') {
+      titleEl.textContent = '👩‍🏫 Associate Faculty';
+      const alumniAssoc = alumniAll.filter(r => ['assocFaculty','assocfaculty','Associate Faculty'].includes(r.movedFrom||r.type||''));
+      html += _regTable(DB.assocFaculty||[], 'assocfaculty');
+      html += _alumniTable(alumniAssoc, 'Alumni Registry — Associate Faculty');
+      html += _facDistTable();
+
+    } else if (sub === 'researchers') {
+      titleEl.textContent = '🔬 Active Researchers';
+      const alumniRes = alumniAll.filter(r => ['researchers','Researchers','Active Researchers'].includes(r.movedFrom||r.type||''));
+      const resDist = {}; (DB.researchers||[]).forEach(r=>{const d=r.designation||'Researcher'; resDist[d]=(resDist[d]||0)+1;});
+      html += _regTable(DB.researchers||[], 'researchers');
+      html += _alumniTable(alumniRes, 'Alumni Registry — Researchers');
+      html += _distTable(resDist, '🔬 Researcher Designation Distribution', '#42A5F5');
+
+    } else if (sub === 'fellows') {
+      titleEl.textContent = '👥 Associate Fellows';
+      html += _regTable(DB.fellows||[], 'fellows');
+
+    } else if (sub === 'students') {
+      titleEl.textContent = '🎓 Students';
+      const alumniStu = alumniAll.filter(r => ['students','Students'].includes(r.movedFrom||r.type||''));
+      const stuDist = {}; (DB.students||[]).forEach(r=>{const d=r.designation||'Student'; stuDist[d]=(stuDist[d]||0)+1;});
+      html += _regTable(DB.students||[], 'students');
+      html += _alumniTable(alumniStu, 'Alumni Registry — Students');
+      html += _distTable(stuDist, '🎓 Student Designation Distribution', '#7E57C2');
+
+    } else if (sub === 'tenure') {
+      titleEl.textContent = '⏰ Tenure Risk';
+      html += `<div class="table-card" style="margin-bottom:1rem;">
         <div class="tc-header"><div class="tc-title">⏰ Tenure Actions Required</div></div>
         <table><thead><tr><th>Name</th><th>Type</th><th>Center/Dept</th><th>Exit Date</th><th>Days Left</th><th>Decision</th></tr></thead>
         <tbody id="myd-dd-tenure-tbody"></tbody></table></div>`;
+    } else {
+      titleEl.textContent = '👤 HR & People';
+      html += _regTable([], sub);
     }
-    const typeMap = {
-      staff: DB.staff||[], faculty: DB.faculty||[], assocfaculty: DB.assocFaculty||[],
-      affifaculty: DB.affiFaculty||[], researchers: DB.researchers||[],
-      fellows: DB.fellows||[], students: DB.students||[], tenure: []
-    };
-    const rows = typeMap[sub] || [];
-    distHTML += `<div class="table-card">
-      <div class="tc-header">
-        <div class="tc-title">📋 ${sub.charAt(0).toUpperCase()+sub.slice(1)} Registry</div>
-        <div class="tc-actions">
-          <input type="text" placeholder="🔍 Search..." oninput="mydDDSearch(this.value)" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0.4rem 0.9rem;color:var(--text);font-size:0.82rem;outline:none;min-width:180px;">
-          <button class="tc-btn primary" onclick="openAddModal('${sub === 'assocfaculty' ? 'assocfaculty' : sub === 'affifaculty' ? 'affifaculty' : sub === 'researchers' ? 'researcher' : sub === 'fellows' ? 'fellow' : sub}')">+ Add</button>
-        </div>
-      </div>
-      <div style="overflow-x:auto;max-height:350px;overflow-y:auto;">
-        <table><thead><tr><th>#</th><th>Name</th><th>Designation / Type</th><th>Department</th><th>Status</th><th>Actions</th></tr></thead>
-        <tbody id="myd-dd-reg-tbody">
-          ${rows.slice(0,50).map((r,i)=>`<tr>
-            <td>${i+1}</td>
-            <td>${r.name||'—'}</td>
-            <td>${r.designation||r.facultyType||r.category||r._type||'—'}</td>
-            <td>${r.department||r.center||'—'}</td>
-            <td><span class="badge badge-${(r.status||'active').toLowerCase()}">${r.status||'Active'}</span></td>
-            <td><button class="tc-btn" onclick="openEditModal('${sub}','${r.id||''}')">Edit</button> <button class="tc-btn" style="color:var(--red);" onclick="confirmDelete('${sub}','${r.id||''}')">Del</button></td>
-          </tr>`).join('')||`<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text3);">Connect sheet to load data</td></tr>`}
-        </tbody></table>
-      </div>
-    </div>`;
-    bodyEl.innerHTML = distHTML;
+
+    bodyEl.innerHTML = html;
+
     if (sub === 'tenure') {
       const today = new Date();
       const at = [...(DB.researchers||[]),...(DB.assocFaculty||[]),...(DB.affiFaculty||[])].filter(r => {
@@ -29571,6 +29635,18 @@ function mydRenderDrilldown(module, sub) {
     titleEl.textContent = '🔐 Biometric Access';
     const areas = BM.areaOccupancy || BM.areas || [];
     const pending = BM.pendingRequests || [];
+    if (sub === 'total-active') {
+      titleEl.textContent = '🔐 Biometric Access — Total Active';
+      const areaGrid = areas.map(a => {
+        const pct = a.capacity > 0 ? Math.round((a.occupied||0)/a.capacity*100) : 0;
+        const color = pct>80?'var(--red)':pct>=50?'var(--gold)':'var(--green)';
+        return `<div class="table-card" style="padding:0.85rem;border-color:${color}30;"><div style="font-size:0.7rem;color:var(--text3);text-transform:uppercase;margin-bottom:0.3rem;">${a.area||a.name||'Area'}</div><div style="font-size:1.3rem;font-weight:700;color:${color};">${a.occupied||0}/${a.capacity||0}</div><div style="font-size:0.72rem;color:var(--text3);">${pct}% occupied</div></div>`;
+      }).join('') || '<div style="color:var(--text3);font-size:0.85rem;">No biometric area data — connect sheet</div>';
+      const pendingRows = pending.filter(r=>(r.status||'').toLowerCase()==='pending').slice(0,30).map((r,i)=>`<tr><td>${r.id||r.biometricId||i+1}</td><td>${r.name||r.employeeName||'—'}</td><td>${r.category||r.role||'—'}</td><td>${r.department||'—'}</td><td>${r.requestDate||r.lastAccess||'—'}</td><td><span class="badge badge-pending">Pending</span></td><td><button class="tc-btn" style="color:var(--green);">✓ Auth</button> <button class="tc-btn" style="color:var(--red);">✕ Deny</button></td></tr>`).join('') || '<tr><td colspan="7" style="text-align:center;padding:1.5rem;color:var(--text3);">No pending requests</td></tr>';
+      bodyEl.innerHTML = `<div class="table-card" style="margin-bottom:1rem;"><div class="tc-header"><div class="tc-title">🏢 Area Occupancy</div></div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:0.6rem;padding:0.75rem;">${areaGrid}</div></div>
+        <div class="table-card"><div class="tc-header"><div class="tc-title">⏳ Biometric Auth — Pending Requests</div></div><div style="overflow-x:auto;"><table><thead><tr><th>Req ID</th><th>Name</th><th>Role</th><th>Department</th><th>Request Date</th><th>Status</th><th>Actions</th></tr></thead><tbody>${pendingRows}</tbody></table></div></div>`;
+      return;
+    }
     bodyEl.innerHTML = `
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:0.75rem;margin-bottom:1.25rem;">
         ${areas.map(a => {
