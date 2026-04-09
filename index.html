@@ -29673,3 +29673,58 @@ if (document.getElementById('tab-my-dashboard')?.classList.contains('active')) {
 </div>
 
 </body>
+<script>
+/* === Faculty Distribution Fix (v36) === */
+function buildFacultyDistribution() {
+  const tbody = document.getElementById('dash-faculty-dist');
+  if (!tbody || typeof DB === 'undefined') return;
+
+  const allFaculty = [
+    ...(DB.faculty || []),
+    ...(DB.assocFaculty || []),
+    ...(DB.affiFaculty || [])
+  ];
+
+  const counts = {};
+
+  allFaculty.forEach(f => {
+    const type = f.facultyType || f.category || 'Others';
+    counts[type] = (counts[type] || 0) + 1;
+  });
+
+  let grandTotal = 0;
+
+  const rows = Object.entries(counts)
+    .sort((a,b) => b[1] - a[1])
+    .map(([type, count]) => {
+      grandTotal += count;
+      return `
+        <tr>
+          <td>${type}</td>
+          <td><b>${count}</b></td>
+          <td><span class="badge active">Active</span></td>
+        </tr>
+      `;
+    }).join('');
+
+  const totalRow = `
+    <tr style="border-top:2px solid var(--accent);font-weight:700;">
+      <td>Grand Total</td>
+      <td>${grandTotal}</td>
+      <td>—</td>
+    </tr>
+  `;
+
+  tbody.innerHTML = rows + totalRow;
+}
+
+/* Hook into dashboard refresh */
+const _origRefreshPeopleDashboard = window.refreshPeopleDashboard;
+window.refreshPeopleDashboard = function() {
+  if (_origRefreshPeopleDashboard) _origRefreshPeopleDashboard();
+  buildFacultyDistribution();
+};
+</script>
+</script>
+</body>
+</html>
