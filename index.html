@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8440,16 +8439,25 @@
 
   // ── Role → landing tab ────────────────────────────────────────────────────
   const INTERFACE_LANDING = {
+    // ── All interfaces land on My Dashboard (v36 fix: complete mapping) ──
+    creator:     'my-dashboard',
+    admin:       'my-dashboard',
+    full:        'my-dashboard',
     coo:         'my-dashboard',
     faculty:     'my-dashboard',
+    staff:       'my-dashboard',
     hr_manager:  'my-dashboard',
     finance_mgr: 'my-dashboard',
     facility_mgr:'my-dashboard',
-    event_mgr:   'my-dashboard',
     edu_pgm_mgr: 'my-dashboard',
+    event_mgr:   'my-dashboard',
     sys_admin:   'my-dashboard',
     mis:         'my-dashboard',
-    full:        'my-dashboard'
+    hr:          'my-dashboard',
+    finance:     'my-dashboard',
+    labs:        'my-dashboard',
+    publications:'my-dashboard',
+    readonly:    'my-dashboard'
   };
 
   // ── Role → welcome banner config ─────────────────────────────────────────
@@ -8493,6 +8501,47 @@
       icon: '📊', color: '#3B82F6', bg: 'rgba(59,130,246,0.08)', border: 'rgba(59,130,246,0.25)',
       title: 'MIS — Management Information System',
       access: 'Full portal access · All modules · Reporting · Configuration'
+    },
+    /* ── v36 fix: added missing welcome configs for all roles ── */
+    staff: {
+      icon: '🏢', color: '#10B981', bg: 'rgba(16,185,129,0.08)', border: 'rgba(16,185,129,0.25)',
+      title: 'Staff Portal',
+      access: 'HR overview · Expenses · Inventory management'
+    },
+    creator: {
+      icon: '🛡️', color: '#3B82F6', bg: 'rgba(59,130,246,0.08)', border: 'rgba(59,130,246,0.25)',
+      title: 'Creator (Full Admin)',
+      access: 'Full portal access · All modules · Complete management · System configuration'
+    },
+    admin: {
+      icon: '🛡️', color: '#3B82F6', bg: 'rgba(59,130,246,0.08)', border: 'rgba(59,130,246,0.25)',
+      title: 'Administrator Dashboard',
+      access: 'Full portal access · All modules · Complete management'
+    },
+    hr: {
+      icon: '👤', color: '#8B5CF6', bg: 'rgba(139,92,246,0.08)', border: 'rgba(139,92,246,0.25)',
+      title: 'HR & People Portal',
+      access: 'People management · HR registry · Activity log'
+    },
+    finance: {
+      icon: '💳', color: '#F59E0B', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.25)',
+      title: 'Finance Portal',
+      access: 'Expense management · Financial records · Activity log'
+    },
+    labs: {
+      icon: '🔬', color: '#06B6D4', bg: 'rgba(6,182,212,0.08)', border: 'rgba(6,182,212,0.25)',
+      title: 'Labs & Assets Portal',
+      access: 'Lab management · Asset tracking · Inventory · Biometric'
+    },
+    publications: {
+      icon: '📚', color: '#7C3AED', bg: 'rgba(124,58,237,0.08)', border: 'rgba(124,58,237,0.25)',
+      title: 'Publications Portal',
+      access: 'Publication records · Research output · Journal & conference papers'
+    },
+    readonly: {
+      icon: '👁️', color: '#64748B', bg: 'rgba(100,116,139,0.08)', border: 'rgba(100,116,139,0.25)',
+      title: 'Read-Only Access',
+      access: 'View-only · People · Expenses · Publications · Inventory'
     },
     full: {
       icon: '🛡️', color: '#3B82F6', bg: 'rgba(59,130,246,0.08)', border: 'rgba(59,130,246,0.25)',
@@ -8542,7 +8591,7 @@
     document.body.setAttribute('data-interface', iface);
 
     // ── 4. Landing tab ──────────────────────────────────────────────────────
-    const landing = INTERFACE_LANDING[iface] || INTERFACE_LANDING['full'];
+    const landing = INTERFACE_LANDING[iface] || INTERFACE_LANDING[role] || 'my-dashboard';
     setTimeout(() => { try { showTab(landing); } catch(e){} }, 200);
 
     // ── 5. Write-button visibility ──────────────────────────────────────────
@@ -8567,8 +8616,8 @@
     const existing = document.getElementById('interface-welcome-banner');
     if (existing) existing.remove();
 
-    const cfg = INTERFACE_WELCOME[iface] || INTERFACE_WELCOME['full'];
-    const landing = INTERFACE_LANDING[iface] || 'dashboard';
+    const cfg = INTERFACE_WELCOME[iface] || INTERFACE_WELCOME[role] || INTERFACE_WELCOME['full'];
+    const landing = INTERFACE_LANDING[iface] || INTERFACE_LANDING[role] || 'my-dashboard';
     const landingPanel = document.getElementById('tab-' + landing);
     if (!landingPanel) return;
 
@@ -8578,15 +8627,27 @@
     if (userObj) displayName = userObj.name;
     else displayName = (_currentUser||'').split('@')[0] || '';
 
-    // Faculty get "Professor <Surname>" greeting
+    // Greeting logic — role-aware for every interface
     let greeting = '';
     if (iface === 'faculty') {
       const surname = displayName.split(/[\s.]+/).filter(Boolean).pop() || displayName;
       greeting = `Welcome, Professor ${surname}`;
     } else if (iface === 'coo') {
-      greeting = `Welcome, ${displayName}`;
+      greeting = displayName ? `Welcome, ${displayName} Sir` : `Welcome, COO`;
+    } else if (iface === 'sys_admin' || iface === 'mis') {
+      greeting = displayName ? `Welcome, ${displayName}` : `Welcome, Administrator`;
+    } else if (iface === 'hr_manager') {
+      greeting = displayName ? `Welcome, ${displayName}` : `Welcome, HR Manager`;
+    } else if (iface === 'finance_mgr') {
+      greeting = displayName ? `Welcome, ${displayName}` : `Welcome, Finance Manager`;
+    } else if (iface === 'facility_mgr') {
+      greeting = displayName ? `Welcome, ${displayName}` : `Welcome, Facility Manager`;
+    } else if (iface === 'edu_pgm_mgr') {
+      greeting = displayName ? `Welcome, ${displayName}` : `Welcome, Education Program Manager`;
+    } else if (iface === 'staff') {
+      greeting = displayName ? `Welcome, ${displayName}` : `Welcome, Staff`;
     } else {
-      // Use designation if known
+      // creator / admin / full / hr / finance / labs / publications / readonly
       const desg = userObj && userObj.designation ? userObj.designation : cfg.title;
       greeting = displayName ? `Welcome, ${displayName}` : `Welcome to ${desg}`;
     }
@@ -28814,17 +28875,19 @@ window.showPeopleSection = function(section) {
 
 /* ── Role → which KPI rows to show ──────────────────────────────────────── */
 const MYD_ROLE_ROWS = {
+  // Full-access roles — all 7 KPI sections
   creator:      ['hr','assets','biometric','facility','expenses','publications','inventory'],
   admin:        ['hr','assets','biometric','facility','expenses','publications','inventory'],
   full:         ['hr','assets','biometric','facility','expenses','publications','inventory'],
   coo:          ['hr','assets','biometric','facility','expenses','publications','inventory'],
-  faculty:      ['hr','publications','facility'],
+  sys_admin:    ['hr','assets','biometric','facility','expenses','publications','inventory'],
+  mis:          ['hr','assets','biometric','facility','expenses','publications','inventory'],
+  // Role-scoped — only relevant KPI sections shown
+  faculty:      ['publications','facility','hr'],
   hr_manager:   ['hr','biometric'],
   finance_mgr:  ['expenses','assets'],
   facility_mgr: ['facility','assets','biometric'],
   edu_pgm_mgr:  ['hr','publications','facility'],
-  sys_admin:    ['hr','assets','biometric','facility','expenses','publications','inventory'],
-  mis:          ['hr','assets','biometric','facility','expenses','publications','inventory'],
   staff:        ['hr','expenses','inventory'],
   hr:           ['hr'],
   finance:      ['expenses'],
@@ -28835,11 +28898,14 @@ const MYD_ROLE_ROWS = {
 
 /* ── Role → accent colour ────────────────────────────────────────────────── */
 const MYD_ROLE_COLORS = {
-  creator:'#3B82F6', admin:'#3B82F6', full:'#3B82F6', coo:'#F59E0B',
-  faculty:'#06B6D4', hr_manager:'#8B5CF6', finance_mgr:'#F59E0B',
-  facility_mgr:'#06B6D4', edu_pgm_mgr:'#EC4899', sys_admin:'#64748B',
-  mis:'#3B82F6', staff:'#10B981', hr:'#8B5CF6', finance:'#F59E0B',
-  labs:'#06B6D4', publications:'#8B5CF6', readonly:'#64748B'
+  creator:'#3B82F6', admin:'#3B82F6', full:'#3B82F6',
+  coo:'#F59E0B',     faculty:'#06B6D4',
+  hr_manager:'#8B5CF6', finance_mgr:'#F59E0B',
+  facility_mgr:'#06B6D4', edu_pgm_mgr:'#EC4899',
+  sys_admin:'#64748B', mis:'#3B82F6',
+  staff:'#10B981',
+  hr:'#8B5CF6', finance:'#F59E0B', labs:'#06B6D4',
+  publications:'#7C3AED', readonly:'#64748B'
 };
 
 /* ── Helper: balance from v35 INV_DB item ────────────────────────────────── */
@@ -29401,13 +29467,19 @@ window.mydRebuild = function() {
 (function _hookApplyAccess() {
   const _orig = typeof window.applyAccessLevelUI === 'function' ? window.applyAccessLevelUI : null;
   if (!_orig) { setTimeout(_hookApplyAccess, 200); return; }
-  if (_orig._myd_hooked) return;
+  // Guard: check both the stored ref and the current fn to survive re-wraps
+  if (_orig._myd_hooked || window.applyAccessLevelUI._myd_hooked) return;
   window.applyAccessLevelUI = function(role) {
     _orig.apply(this, arguments);
-    // Rebuild after the landing tab switch animates in (350ms covers that)
-    setTimeout(() => { mydBuild(); _myd_refreshValues(); }, 400);
+    // Rebuild My Dashboard after landing tab animates in
+    setTimeout(() => {
+      try { mydBuild(); } catch(e){}
+      try { _myd_refreshValues(); } catch(e){}
+    }, 450);
   };
   window.applyAccessLevelUI._myd_hooked = true;
+  // Keep the flag on _orig too so any future re-wrap sees it
+  _orig._myd_hooked = true;
 })();
 
 /* ── Hook 3: _wsai_renderAll → fires after every 30s poll & manual fetch ── */
