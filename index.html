@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WSAI - PORTAL v42</title>
+<title>WSAI - PORTAL v36</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
@@ -28,7 +28,7 @@
     --font-mono: 'DM Mono', monospace;
   }
   /* ══════════════════════════════════════════════════════════════════════
-     LIGHT THEME — WSAI Portal v42
+     LIGHT THEME — WSAI Portal v22
      Palette: Warm Ivory bg · Deep Navy accents · Amber highlights
      Inspired by premium institutional dashboards (IITM research grade)
   ══════════════════════════════════════════════════════════════════════ */
@@ -1326,64 +1326,101 @@
     #v31-auto-sync-bar.syncing { background:linear-gradient(90deg,var(--accent),var(--accent2),var(--purple),var(--accent));background-size:300% 100%;animation:syncSlide 1s linear infinite; }
     #v31-auto-sync-bar.done    { background:var(--green);animation:none; }
 
-    /* ── MY DASHBOARD (v35) ── */
-    .myd-kpi-section { margin-bottom: 1.75rem; }
+    /* ── MY DASHBOARD (v36 — v39 KPI Visual System) ── */
+    /* KPI section header row */
+    .myd-kpi-section { margin-bottom: 1.5rem; }
     .myd-sec-hdr {
-      font-size: 0.72rem;
-      font-family: var(--font-mono);
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      color: var(--text2);
-      margin-bottom: 0.75rem;
-      padding: 0.35rem 0.85rem;
-      background: var(--surface2);
-      border-radius: 8px;
-      border-left: 3px solid var(--accent);
-      font-weight: 700;
-      display: flex;
-      align-items: center;
+      display: flex; align-items: center; gap: 7px;
+      margin-bottom: 9px; padding-bottom: 7px;
+      border-bottom: 1px solid var(--border);
     }
+    .myd-sec-hdr-icon { font-size: 14px; }
+    .myd-sec-hdr-title { font-size: 0.78rem; font-weight: 600; color: var(--text); }
+    .myd-sec-hdr-sub {
+      font-size: 0.68rem; font-family: var(--font-mono); color: var(--text3);
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 50px; padding: 1px 7px; margin-left: 2px;
+    }
+    /* KPI card row */
     .myd-kpi-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.75rem;
+      display: flex; gap: 7px; flex-wrap: wrap;
     }
+    /* v39 KPI card */
     .myd-kpi-card {
       background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 0.85rem 1rem;
-      min-width: 110px;
+      border: 0.5px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
       cursor: pointer;
-      text-align: center;
-      transition: all 0.22s cubic-bezier(.22,1,.36,1);
-      flex: 1;
+      min-width: 90px;
+      flex: 1 1 90px;
+      max-width: 155px;
       position: relative;
       overflow: hidden;
-      animation: appIn 0.45s both;
+      transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+    }
+    .myd-kpi-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 2.5px;
+      background: var(--myd-kpi-color, var(--accent));
     }
     .myd-kpi-card:hover {
-      transform: translateY(-3px);
-      border-color: rgba(99,179,237,0.3);
-      box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+      border-color: var(--myd-kpi-color, var(--accent));
+      box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+      transform: translateY(-1px);
     }
-    .myd-kpi-card::after {
-      content: '↗';
-      position: absolute;
-      top: 7px; right: 9px;
-      font-size: 0.6rem;
-      color: var(--text3);
-      opacity: 0;
-      transition: opacity 0.2s;
+    .myd-kpi-card.active {
+      border-color: var(--myd-kpi-color, var(--accent));
+      background: var(--surface2);
     }
-    .myd-kpi-card:hover::after { opacity: 0.7; }
-    .myd-kpi-card.myd-kpi-alert { border-color: rgba(239,68,68,0.3); background: rgba(239,68,68,0.04); }
-    .myd-kpi-card.myd-kpi-green { border-color: rgba(16,185,129,0.3); background: rgba(16,185,129,0.04); }
-    .myd-kpi-card.myd-kpi-orange { border-color: rgba(249,115,22,0.3); background: rgba(249,115,22,0.04); }
-    .myd-kpi-icon { font-size: 1.1rem; margin-bottom: 0.3rem; }
-    .myd-kpi-val { font-size: 1.4rem; font-weight: 700; color: var(--text); font-family: var(--font-mono); line-height: 1.1; }
-    .myd-kpi-lbl { font-size: 0.7rem; color: var(--text2); margin-top: 0.2rem; font-weight: 500; }
-    .myd-kpi-sub { font-size: 0.62rem; color: var(--text3); margin-top: 0.15rem; font-family: var(--font-mono); }
+    /* alert / green / orange semantic variants */
+    .myd-kpi-card.myd-kpi-alert { --myd-kpi-color: #EF4444; }
+    .myd-kpi-card.myd-kpi-green { --myd-kpi-color: #10B981; }
+    .myd-kpi-card.myd-kpi-orange { --myd-kpi-color: #F97316; }
+    /* KPI card inner elements */
+    .myd-kpi-icon { font-size: 1rem; margin-bottom: 0.25rem; }
+    .myd-kpi-val {
+      font-size: 1.35rem; font-weight: 700;
+      color: var(--myd-kpi-color, var(--accent));
+      font-family: var(--font-mono); line-height: 1.1;
+    }
+    .myd-kpi-lbl {
+      font-size: 0.68rem; font-family: var(--font-mono);
+      text-transform: uppercase; letter-spacing: 0.06em;
+      color: var(--text2); margin-top: 0.2rem;
+    }
+    .myd-kpi-sub { font-size: 0.6rem; color: var(--text3); margin-top: 0.1rem; font-family: var(--font-mono); }
+    /* Expand panel (v39 style) */
+    .myd-expand-panel {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-top: 8px;
+      display: none;
+    }
+    .myd-expand-panel.open { display: block; }
+    .myd-ep-title {
+      font-size: 0.78rem; font-weight: 600; color: var(--text);
+      margin-bottom: 10px; padding-bottom: 7px;
+      border-bottom: 0.5px solid var(--border);
+    }
+    .myd-ep-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
+      gap: 8px;
+    }
+    .myd-ep-item {
+      background: var(--surface2);
+      border: 0.5px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 10px;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .myd-ep-item:hover { border-color: var(--accent); }
+    .myd-ep-item-title { font-size: 0.78rem; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+    .myd-ep-item-desc { font-size: 0.65rem; color: var(--text3); font-family: var(--font-mono); }
 
     /* Drilldown overlay */
     #myd-drilldown-overlay {
@@ -1432,31 +1469,6 @@
     }
     .myd-dd-close:hover { background: rgba(239,68,68,0.12); color: var(--red); }
     .myd-dd-body { padding: 1.25rem 1.5rem 1.5rem; }
-    /* ── KPI card stagger animation (v39 style) ── */
-    .myd-kpi-row > .myd-kpi-card:nth-child(1)  { animation-delay: 0.00s; }
-    .myd-kpi-row > .myd-kpi-card:nth-child(2)  { animation-delay: 0.05s; }
-    .myd-kpi-row > .myd-kpi-card:nth-child(3)  { animation-delay: 0.10s; }
-    .myd-kpi-row > .myd-kpi-card:nth-child(4)  { animation-delay: 0.15s; }
-    .myd-kpi-row > .myd-kpi-card:nth-child(5)  { animation-delay: 0.20s; }
-    .myd-kpi-row > .myd-kpi-card:nth-child(6)  { animation-delay: 0.25s; }
-    .myd-kpi-row > .myd-kpi-card:nth-child(7)  { animation-delay: 0.30s; }
-    .myd-kpi-row > .myd-kpi-card:nth-child(8)  { animation-delay: 0.35s; }
-    .myd-kpi-row > .myd-kpi-card:nth-child(9)  { animation-delay: 0.40s; }
-    /* KPI section stagger */
-    .myd-kpi-section:nth-child(1)  { animation: appIn 0.4s 0.00s both; }
-    .myd-kpi-section:nth-child(2)  { animation: appIn 0.4s 0.06s both; }
-    .myd-kpi-section:nth-child(3)  { animation: appIn 0.4s 0.12s both; }
-    .myd-kpi-section:nth-child(4)  { animation: appIn 0.4s 0.18s both; }
-    .myd-kpi-section:nth-child(5)  { animation: appIn 0.4s 0.24s both; }
-    .myd-kpi-section:nth-child(6)  { animation: appIn 0.4s 0.30s both; }
-    .myd-kpi-section:nth-child(7)  { animation: appIn 0.4s 0.36s both; }
-    /* Light theme overrides for myd panel */
-    [data-theme="light"] .myd-kpi-card { background: #FFFFFF; border-color: rgba(30,58,138,0.09); box-shadow: 0 1px 3px rgba(15,23,42,0.07); }
-    [data-theme="light"] .myd-kpi-card:hover { box-shadow: 0 4px 12px rgba(15,23,42,0.12); }
-    [data-theme="light"] .myd-kpi-val { color: #0F172A; }
-    [data-theme="light"] .myd-kpi-lbl { color: #475569; }
-    [data-theme="light"] .myd-kpi-sub { color: #64748B; }
-    [data-theme="light"] .myd-sec-hdr { color: #1E3A8A; border-color: rgba(30,58,138,0.15); }
     </style>
 </head>
 <body>
@@ -1565,7 +1577,7 @@
         <div class="nav-item" data-tab="dashboard" onclick="showTab('dashboard')">
           <span class="ni-icon">📊</span> Dashboard
         </div>
-        <div class="nav-item" data-tab="role-dashboard" onclick="showTab('role-dashboard')" id="nav-role-dashboard" style="display:none !important;" aria-hidden="true" tabindex="-1">
+        <div class="nav-item" data-tab="role-dashboard" onclick="showTab('role-dashboard')" id="nav-role-dashboard" style="display:none !important;">
           <span class="ni-icon" id="nav-role-icon">📊</span> <span id="nav-role-label">Role Dashboard</span>
         </div>
       </div>
@@ -1664,7 +1676,7 @@
     <main class="main">
 
       <!-- ── DASHBOARD ── -->
-      <div class="tabs" id="tab-dashboard">
+      <div class="tabs active" id="tab-dashboard">
         <div class="page-header">
           <h2>Command Center</h2>
           <p>Real-time overview of all WSAI management systems · IIT Madras</p>
@@ -2254,14 +2266,12 @@
 
         <!-- KPI GRID -->
         <div class="kpi-grid">
-          <div class="kpi-card blue"  ><div class="kpi-icon">👔</div><div class="kpi-val" id="kpi-staff">0</div><div class="kpi-label">Staff</div></div>
-          <div class="kpi-card cyan"  ><div class="kpi-icon">👨‍🏫</div><div class="kpi-val" id="kpi-faculty">0</div><div class="kpi-label">Faculty</div></div>
-          <div class="kpi-card teal"  style="border-top:3px solid #0891B2;"><div class="kpi-icon">🔗</div><div class="kpi-val" id="kpi-affifaculty">0</div><div class="kpi-label">Affiliate Faculty</div></div>
-          <div class="kpi-card gold"  ><div class="kpi-icon">🏛️</div><div class="kpi-val" id="kpi-assocfaculty">0</div><div class="kpi-label">Assoc. Faculty</div></div>
-          <div class="kpi-card green" ><div class="kpi-icon">🔬</div><div class="kpi-val" id="kpi-researchers">0</div><div class="kpi-label">Researchers</div></div>
-          <div class="kpi-card purple" style="border-top:3px solid #7C3AED;"><div class="kpi-icon">👥</div><div class="kpi-val" id="kpi-fellows">0</div><div class="kpi-label">Assoc. Fellows</div></div>
+          <div class="kpi-card blue"><div class="kpi-icon">👔</div><div class="kpi-val" id="kpi-staff">0</div><div class="kpi-label">Staff</div></div>
+          <div class="kpi-card cyan"><div class="kpi-icon">👨‍🏫</div><div class="kpi-val" id="kpi-faculty">0</div><div class="kpi-label">Faculty</div></div>
+          <div class="kpi-card green"><div class="kpi-icon">🔬</div><div class="kpi-val" id="kpi-researchers">0</div><div class="kpi-label">Researchers</div></div>
           <div class="kpi-card purple"><div class="kpi-icon">🎓</div><div class="kpi-val" id="kpi-students">0</div><div class="kpi-label">Students</div></div>
-          <div class="kpi-card orange"><div class="kpi-icon">🏛️</div><div class="kpi-val" id="kpi-alumni">0</div><div class="kpi-label">Alumni</div></div>
+          <div class="kpi-card gold"><div class="kpi-icon">🏛️</div><div class="kpi-val" id="kpi-assocfaculty">0</div><div class="kpi-label">Assoc. Faculty</div></div>
+          <div class="kpi-card orange"><div class="kpi-icon">🎓</div><div class="kpi-val" id="kpi-alumni">0</div><div class="kpi-label">Alumni</div></div>
         </div>
 
         <!-- PEOPLE MANAGEMENT DASHBOARD ANALYTICS -->
@@ -2556,9 +2566,10 @@
             <span style="font-size:0.72rem;color:var(--text3);font-family:var(--font-mono);align-self:center;margin-right:0.2rem;">ALUMNI BY SOURCE →</span>
             <button class="people-tab-btn active" id="alumni-sub-btn-all"          onclick="switchAlumniSub('all')">          📋 All Alumni</button>
             <button class="people-tab-btn"         id="alumni-sub-btn-staff"        onclick="switchAlumniSub('staff')">        👔 Staff</button>
+            <button class="people-tab-btn"         id="alumni-sub-btn-faculty"      onclick="switchAlumniSub('faculty')">      👨‍🏫 Faculty</button>
             <button class="people-tab-btn"         id="alumni-sub-btn-assocfaculty" onclick="switchAlumniSub('assocfaculty')"> 👩‍🏫 Assoc. Faculty</button>
             <button class="people-tab-btn"         id="alumni-sub-btn-researchers"  onclick="switchAlumniSub('researchers')">  🔬 Researchers</button>
-            <button class="people-tab-btn"         id="alumni-sub-btn-students"     onclick="switchAlumniSub('students')">     🎓 Students</button>
+            <button class="people-tab-btn"         id="alumni-sub-btn-fellows"      onclick="switchAlumniSub('fellows')">      👥 Fellows</button>
           </div>
 
           <div class="table-card">
@@ -2800,7 +2811,7 @@
             <div class="kpi-label">Total Lab Capacity</div><div class="kpi-sub">SUMIF *LAB* capacity</div></div>
           <div class="kpi-card" style="border-top:3px solid #283593;cursor:pointer;" onclick="switchLabTab('category')" title="Lab cap + Classroom cap">
             <div class="kpi-icon">🏫</div><div class="kpi-val" id="lab-kpi-total-combined" style="color:#283593;">—</div>
-            <div class="kpi-label">Total Classroom Capacity</div><div class="kpi-sub">Lab + Classroom</div></div>
+            <div class="kpi-label">Total Capacity</div><div class="kpi-sub">Lab + Classroom</div></div>
           <div class="kpi-card orange" style="cursor:pointer;" onclick="switchLabTab('faculty-labs')" title="SUM(Faculty Lab col G: Occupied)">
             <div class="kpi-icon">👨‍🔬</div><div class="kpi-val" id="lab-kpi-occ">—</div>
             <div class="kpi-label">Occupied Seats</div><div class="kpi-sub">SUM(Col G)</div></div>
@@ -3542,227 +3553,177 @@
       </div><!-- /tab-exec-dashboard -->
 
 <!-- ══════════════════════════════════════════════════════
-     MY DASHBOARD TAB — v35 Role-Adaptive Dashboard
+     MY DASHBOARD TAB — v36 · v39 KPI Visual System
 ══════════════════════════════════════════════════════ -->
-<div class="tabs active" id="tab-my-dashboard">
+<div class="tabs" id="tab-my-dashboard">
 
-
+  <!-- Welcome Banner -->
+  <div id="myd-role-banner" style="border-radius:12px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;border-left:4px solid var(--accent);background:var(--surface);">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div id="myd-avatar" style="width:42px;height:42px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:1rem;font-weight:700;color:white;flex-shrink:0;">?</div>
+      <div>
+        <div id="myd-greeting" style="font-size:1rem;font-weight:600;color:var(--text);">Welcome</div>
+        <div id="myd-sub" style="font-size:0.72rem;color:var(--text2);margin:2px 0;font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.08em;"></div>
+        <div id="myd-quote" style="font-size:0.7rem;color:var(--text3);font-style:italic;margin-top:3px;max-width:460px;padding-left:8px;border-left:2px solid var(--border);line-height:1.5;"></div>
+      </div>
+    </div>
+    <div style="text-align:right;flex-shrink:0;">
+      <div id="myd-clock-date" style="font-size:0.68rem;color:var(--text2);font-family:var(--font-mono);"></div>
+      <div id="myd-clock-time" style="font-size:1.1rem;font-weight:700;color:var(--accent);font-family:var(--font-mono);margin:2px 0;">--:--</div>
+      <div id="myd-sync-indicator" style="font-size:0.62rem;font-family:var(--font-mono);color:var(--text3);display:flex;align-items:center;gap:3px;justify-content:flex-end;">
+        <span id="myd-sync-dot" style="width:5px;height:5px;border-radius:50%;background:var(--text3);flex-shrink:0;display:inline-block;"></span>
+        <span id="myd-sync-label">No Sheet Connected</span>
+      </div>
+    </div>
+  </div>
 
   <!-- COO DASHBOARD (shown when role = coo / admin / creator) -->
   <div id="myd-coo-panel" style="display:none;">
 
     <!-- ── KPI ROW 1: HR & People ── -->
     <div class="myd-kpi-section">
-      <div class="myd-sec-hdr">👤 HR &amp; People</div>
-      <div class="myd-kpi-row" id="myd-hr-kpi-row">
-        <div class="myd-kpi-card" onclick="mydOpenDrilldown('hr-people','staff')">
-          <div class="myd-kpi-icon">👔</div><div class="myd-kpi-val" id="myd-hr-staff">—</div>
-          <div class="myd-kpi-lbl">Staff</div><div class="myd-kpi-sub">Active members</div>
-        </div>
-        <div class="myd-kpi-card" onclick="mydOpenDrilldown('hr-people','faculty')">
-          <div class="myd-kpi-icon">👨‍🏫</div><div class="myd-kpi-val" id="myd-hr-faculty">—</div>
-          <div class="myd-kpi-lbl">Faculty</div><div class="myd-kpi-sub">Core faculty</div>
-        </div>
-        <div class="myd-kpi-card" onclick="mydOpenDrilldown('hr-people','affifaculty')">
-          <div class="myd-kpi-icon">🔗</div><div class="myd-kpi-val" id="myd-hr-affifac">—</div>
-          <div class="myd-kpi-lbl">Affiliate Faculty</div><div class="myd-kpi-sub">Industry affiliate</div>
-        </div>
-        <div class="myd-kpi-card" onclick="mydOpenDrilldown('hr-people','assocfaculty')">
-          <div class="myd-kpi-icon">👩‍🏫</div><div class="myd-kpi-val" id="myd-hr-assocfac">—</div>
-          <div class="myd-kpi-lbl">Associate Faculty</div><div class="myd-kpi-sub">With tenure</div>
-        </div>
-        <div class="myd-kpi-card" onclick="mydOpenDrilldown('hr-people','researchers')">
-          <div class="myd-kpi-icon">🔬</div><div class="myd-kpi-val" id="myd-hr-researchers">—</div>
-          <div class="myd-kpi-lbl">Active Researchers</div><div class="myd-kpi-sub">On-going projects</div>
-        </div>
-        <div class="myd-kpi-card" onclick="mydOpenDrilldown('hr-people','fellows')">
-          <div class="myd-kpi-icon">👥</div><div class="myd-kpi-val" id="myd-hr-fellows">—</div>
-          <div class="myd-kpi-lbl">Associate Fellows</div><div class="myd-kpi-sub">Enrolled</div>
-        </div>
-        <div class="myd-kpi-card" onclick="mydOpenDrilldown('hr-people','students')">
-          <div class="myd-kpi-icon">🎓</div><div class="myd-kpi-val" id="myd-hr-students">—</div>
-          <div class="myd-kpi-lbl">Students</div><div class="myd-kpi-sub">Enrolled</div>
-        </div>
-        <div class="myd-kpi-card myd-kpi-alert" onclick="mydOpenDrilldown('hr-people','tenure')">
-          <div class="myd-kpi-icon">⏰</div><div class="myd-kpi-val" id="myd-hr-tenure">—</div>
-          <div class="myd-kpi-lbl">Tenure Risk</div><div class="myd-kpi-sub">≤90 days — Action Required</div>
-        </div>
+      <div class="myd-sec-hdr">
+        <span class="myd-sec-hdr-icon">👤</span>
+        <span class="myd-sec-hdr-title">HR &amp; People</span>
+        <span class="myd-sec-hdr-sub">People Overview</span>
       </div>
+      <div class="myd-kpi-row" id="myd-hr-kpi-row">
+        <div class="myd-kpi-card" style="--myd-kpi-color:#3B82F6" onclick="mydToggleExpand('hr-people','staff',this)"><div class="myd-kpi-val" id="myd-hr-staff">—</div><div class="myd-kpi-lbl">Staff</div><div class="myd-kpi-sub">Active members</div></div>
+        <div class="myd-kpi-card" style="--myd-kpi-color:#3B82F6" onclick="mydToggleExpand('hr-people','faculty',this)"><div class="myd-kpi-val" id="myd-hr-faculty">—</div><div class="myd-kpi-lbl">Faculty</div><div class="myd-kpi-sub">Core faculty</div></div>
+        <div class="myd-kpi-card" style="--myd-kpi-color:#8B5CF6" onclick="mydToggleExpand('hr-people','affifaculty',this)"><div class="myd-kpi-val" id="myd-hr-affifac">—</div><div class="myd-kpi-lbl">Affiliate Faculty</div><div class="myd-kpi-sub">Industry links</div></div>
+        <div class="myd-kpi-card" style="--myd-kpi-color:#8B5CF6" onclick="mydToggleExpand('hr-people','assocfaculty',this)"><div class="myd-kpi-val" id="myd-hr-assocfac">—</div><div class="myd-kpi-lbl">Associate Faculty</div><div class="myd-kpi-sub">With tenure</div></div>
+        <div class="myd-kpi-card" style="--myd-kpi-color:#06B6D4" onclick="mydToggleExpand('hr-people','researchers',this)"><div class="myd-kpi-val" id="myd-hr-researchers">—</div><div class="myd-kpi-lbl">Active Researchers</div><div class="myd-kpi-sub">Ongoing</div></div>
+        <div class="myd-kpi-card" style="--myd-kpi-color:#06B6D4" onclick="mydToggleExpand('hr-people','fellows',this)"><div class="myd-kpi-val" id="myd-hr-fellows">—</div><div class="myd-kpi-lbl">Associate Fellows</div><div class="myd-kpi-sub">Program fellows</div></div>
+        <div class="myd-kpi-card" style="--myd-kpi-color:#10B981" onclick="mydToggleExpand('hr-people','students',this)"><div class="myd-kpi-val" id="myd-hr-students">—</div><div class="myd-kpi-lbl">Students</div><div class="myd-kpi-sub">Enrolled</div></div>
+        <div class="myd-kpi-card myd-kpi-alert" onclick="mydToggleExpand('hr-people','tenure',this)"><div class="myd-kpi-val" id="myd-hr-tenure">—</div><div class="myd-kpi-lbl">Tenure Risk</div><div class="myd-kpi-sub">Action needed</div></div>
+      </div>
+      <div class="myd-expand-panel" id="myd-ep-hr-people"></div>
     </div>
 
-    <!-- ── KPI ROW 2: Asset ── -->
+    <!-- ── KPI ROW 2: Asset Management ── -->
     <div class="myd-kpi-section">
-      <div class="myd-sec-hdr">📦 Asset</div>
-      <div class="myd-kpi-row">
-        <div class="myd-kpi-card" onclick="mydOpenDrilldown('asset','it')">
-          <div class="myd-kpi-icon">💻</div><div class="myd-kpi-val" id="myd-ast-it">—</div>
-          <div class="myd-kpi-lbl">IT Assets</div><div class="myd-kpi-sub">Devices &amp; HW</div>
-        </div>
-        <div class="myd-kpi-card" onclick="mydOpenDrilldown('asset','nonit')">
-          <div class="myd-kpi-icon">🏢</div><div class="myd-kpi-val" id="myd-ast-nonit">—</div>
-          <div class="myd-kpi-lbl">Non-IT Assets</div><div class="myd-kpi-sub">Furniture &amp; equipment</div>
-        </div>
-        <div class="myd-kpi-card" onclick="mydOpenDrilldown('asset','ilds')">
-          <div class="myd-kpi-icon">🌐</div><div class="myd-kpi-val" id="myd-ast-ilds">—</div>
-          <div class="myd-kpi-lbl">ILDS Cluster</div><div class="myd-kpi-sub">Storage cluster</div>
-        </div>
-        <div class="myd-kpi-card" onclick="mydOpenDrilldown('asset','gpu')">
-          <div class="myd-kpi-icon">🧠</div><div class="myd-kpi-val" id="myd-ast-gpu">—</div>
-          <div class="myd-kpi-lbl">GPU Cluster</div><div class="myd-kpi-sub">Compute nodes</div>
-        </div>
-        <div class="myd-kpi-card" onclick="mydOpenDrilldown('asset','books')">
-          <div class="myd-kpi-icon">📚</div><div class="myd-kpi-val" id="myd-ast-books">—</div>
-          <div class="myd-kpi-lbl">Books Inventory</div><div class="myd-kpi-sub">Library stock</div>
-        </div>
-        <div class="myd-kpi-card" onclick="mydOpenDrilldown('asset','spares')">
-          <div class="myd-kpi-icon">🔧</div><div class="myd-kpi-val" id="myd-ast-spares">—</div>
-          <div class="myd-kpi-lbl">Spares</div><div class="myd-kpi-sub">Parts store</div>
-        </div>
-        <div class="myd-kpi-card" onclick="mydOpenDrilldown('asset','consumables')">
-          <div class="myd-kpi-icon">🛒</div><div class="myd-kpi-val" id="myd-ast-consumables">—</div>
-          <div class="myd-kpi-lbl">Consumables</div><div class="myd-kpi-sub">Supplies</div>
-        </div>
-        <div class="myd-kpi-card myd-kpi-alert" onclick="mydOpenDrilldown('asset','nonrepairable')">
-          <div class="myd-kpi-icon">⚠️</div><div class="myd-kpi-val" id="myd-ast-nonrep">—</div>
-          <div class="myd-kpi-lbl">Non-Repairable</div><div class="myd-kpi-sub">Write-offs</div>
-        </div>
-        <div class="myd-kpi-card" onclick="mydOpenDrilldown('asset','vendor')">
-          <div class="myd-kpi-icon">🏪</div><div class="myd-kpi-val" id="myd-ast-vendor">—</div>
-          <div class="myd-kpi-lbl">Vendor List</div><div class="myd-kpi-sub">Registered vendors</div>
-        </div>
+      <div class="myd-sec-hdr">
+        <span class="myd-sec-hdr-icon">📦</span>
+        <span class="myd-sec-hdr-title">Asset Management</span>
+        <span class="myd-sec-hdr-sub">Equipment Portfolio</span>
       </div>
+      <div class="myd-kpi-row">
+        <div class="myd-kpi-card" style="--myd-kpi-color:#3B82F6" onclick="mydToggleExpand('asset','it',this)"><div class="myd-kpi-val" id="myd-ast-it">—</div><div class="myd-kpi-lbl">IT Assets</div><div class="myd-kpi-sub">Devices &amp; HW</div></div>
+        <div class="myd-kpi-card" style="--myd-kpi-color:#F59E0B" onclick="mydToggleExpand('asset','nonit',this)"><div class="myd-kpi-val" id="myd-ast-nonit">—</div><div class="myd-kpi-lbl">Non-IT Assets</div><div class="myd-kpi-sub">Furniture &amp; HW</div></div>
+        <div class="myd-kpi-card" style="--myd-kpi-color:#06B6D4" onclick="mydToggleExpand('asset','ilds',this)"><div class="myd-kpi-val" id="myd-ast-ilds">—</div><div class="myd-kpi-lbl">ILDS Cluster</div><div class="myd-kpi-sub">Storage nodes</div></div>
+        <div class="myd-kpi-card" style="--myd-kpi-color:#8B5CF6" onclick="mydToggleExpand('asset','gpu',this)"><div class="myd-kpi-val" id="myd-ast-gpu">—</div><div class="myd-kpi-lbl">GPU Cluster</div><div class="myd-kpi-sub">Compute nodes</div></div>
+        <div class="myd-kpi-card" style="--myd-kpi-color:#10B981" onclick="mydToggleExpand('asset','books',this)"><div class="myd-kpi-val" id="myd-ast-books">—</div><div class="myd-kpi-lbl">Books Inventory</div><div class="myd-kpi-sub">Library stock</div></div>
+        <div class="myd-kpi-card" style="--myd-kpi-color:#10B981" onclick="mydToggleExpand('asset','spares',this)"><div class="myd-kpi-val" id="myd-ast-spares">—</div><div class="myd-kpi-lbl">Spares</div><div class="myd-kpi-sub">Parts store</div></div>
+        <div class="myd-kpi-card myd-kpi-orange" onclick="mydToggleExpand('asset','consumables',this)"><div class="myd-kpi-val" id="myd-ast-consumables">—</div><div class="myd-kpi-lbl">Consumables</div><div class="myd-kpi-sub">Stock items</div></div>
+        <div class="myd-kpi-card myd-kpi-alert" onclick="mydToggleExpand('asset','nonrepairable',this)"><div class="myd-kpi-val" id="myd-ast-nonrep">—</div><div class="myd-kpi-lbl">Non Repairable</div><div class="myd-kpi-sub">Write-offs</div></div>
+        <div class="myd-kpi-card" style="--myd-kpi-color:#64748B" onclick="mydToggleExpand('asset','vendor',this)"><div class="myd-kpi-val" id="myd-ast-vendor">—</div><div class="myd-kpi-lbl">Vendor List</div><div class="myd-kpi-sub">Active vendors</div></div>
+      </div>
+      <div class="myd-expand-panel" id="myd-ep-asset"></div>
     </div>
 
     <!-- ── KPI ROW 3: Biometric Access ── -->
     <div class="myd-kpi-section">
-      <div class="myd-sec-hdr">🔐 Biometric Access</div>
-      <div class="myd-kpi-row">
-        <div class="myd-kpi-card myd-kpi-green" onclick="mydOpenDrilldown('biometric','total-active')">
-          <div class="myd-kpi-icon">🏢</div><div class="myd-kpi-val" id="myd-bio-total-active">—</div>
-          <div class="myd-kpi-lbl">Total Active</div><div class="myd-kpi-sub">Area Occupancy + Pending</div>
-        </div>
-        <div id="myd-bio-area-cards" style="display:contents;"></div>
-        <div class="myd-kpi-card myd-kpi-alert" onclick="mydOpenDrilldown('biometric','pending')">
-          <div class="myd-kpi-icon">⏳</div><div class="myd-kpi-val" id="myd-bio-pending">—</div>
-          <div class="myd-kpi-lbl">Pending Requests</div><div class="myd-kpi-sub">Biometric Auth</div>
-        </div>
+      <div class="myd-sec-hdr">
+        <span class="myd-sec-hdr-icon">🔐</span>
+        <span class="myd-sec-hdr-title">Biometric Access</span>
+        <span class="myd-sec-hdr-sub">Area Occupancy</span>
       </div>
+      <div class="myd-kpi-row">
+        <div id="myd-bio-area-cards" style="display:contents;"></div>
+        <div class="myd-kpi-card" style="--myd-kpi-color:#8B5CF6" onclick="mydToggleExpand('biometric','enrolled',this)"><div class="myd-kpi-val" id="myd-bio-active">—</div><div class="myd-kpi-lbl">Total Active</div><div class="myd-kpi-sub">Enrolled users</div></div>
+        <div class="myd-kpi-card myd-kpi-alert" onclick="mydToggleExpand('biometric','pending',this)"><div class="myd-kpi-val" id="myd-bio-pending">—</div><div class="myd-kpi-lbl">Pending Requests</div><div class="myd-kpi-sub">Biometric Auth</div></div>
+      </div>
+      <div class="myd-expand-panel" id="myd-ep-biometric"></div>
     </div>
 
-    <!-- ── KPI ROW 4: Facility and Room Management ── -->
+    <!-- ── KPI ROW 4: Facility & Room Management ── -->
     <div class="myd-kpi-section">
-      <div class="myd-sec-hdr">🏛️ Facility and Room Management</div>
-      <div class="myd-kpi-row">
-        <div class="myd-kpi-card myd-kpi-alert" onclick="mydOpenDrilldown('facility','over-capacity')">
-          <div class="myd-kpi-icon">⚠️</div><div class="myd-kpi-val" id="myd-fac-overcap">—</div>
-          <div class="myd-kpi-lbl">Over Capacity</div><div class="myd-kpi-sub">Utilization Ribbons</div>
-        </div>
-        <div class="myd-kpi-card" onclick="mydOpenDrilldown('facility','facility-rooms')">
-          <div class="myd-kpi-icon">🏛️</div><div class="myd-kpi-val" id="myd-fac-facrooms">—</div>
-          <div class="myd-kpi-lbl">Facility Rooms</div><div class="myd-kpi-sub">Live Status</div>
-        </div>
-        <div class="myd-kpi-card" onclick="mydOpenDrilldown('facility','lab-cap')">
-          <div class="myd-kpi-icon">📐</div><div class="myd-kpi-val" id="myd-fac-labcap">—</div>
-          <div class="myd-kpi-lbl">Total Labs Capacity</div><div class="myd-kpi-sub">SUMIF *LAB*</div>
-        </div>
-        <div class="myd-kpi-card" onclick="mydOpenDrilldown('facility','classroom-cap')">
-          <div class="myd-kpi-icon">🏫</div><div class="myd-kpi-val" id="myd-fac-classcap">—</div>
-          <div class="myd-kpi-lbl">Total Classroom Capacity</div><div class="myd-kpi-sub">SUMIF *CLASSROOM*</div>
-        </div>
-        <div class="myd-kpi-card myd-kpi-orange" onclick="mydOpenDrilldown('facility','occupied-seats')">
-          <div class="myd-kpi-icon">🪑</div><div class="myd-kpi-val" id="myd-fac-occupied">—</div>
-          <div class="myd-kpi-lbl">Occupied Seats</div><div class="myd-kpi-sub">SUM(Occupied Col)</div>
-        </div>
-        <div class="myd-kpi-card myd-kpi-green" onclick="mydOpenDrilldown('facility','available-seats')">
-          <div class="myd-kpi-icon">🟢</div><div class="myd-kpi-val" id="myd-fac-available">—</div>
-          <div class="myd-kpi-lbl">Available Seats</div><div class="myd-kpi-sub">Total − Occupied</div>
-        </div>
+      <div class="myd-sec-hdr">
+        <span class="myd-sec-hdr-icon">🏛️</span>
+        <span class="myd-sec-hdr-title">Facility &amp; Room Management</span>
+        <span class="myd-sec-hdr-sub">Labs &amp; Rooms</span>
       </div>
+      <div class="myd-kpi-row">
+        <div class="myd-kpi-card" style="--myd-kpi-color:#06B6D4" onclick="mydToggleExpand('facility','faculty-labs',this)"><div class="myd-kpi-val" id="myd-fac-faclabs">—</div><div class="myd-kpi-lbl">Faculty Labs</div><div class="myd-kpi-sub">All labs</div></div>
+        <div class="myd-kpi-card" style="--myd-kpi-color:#06B6D4" onclick="mydToggleExpand('facility','facility-rooms',this)"><div class="myd-kpi-val" id="myd-fac-facrooms">—</div><div class="myd-kpi-lbl">Facility Rooms</div><div class="myd-kpi-sub">All spaces</div></div>
+        <div class="myd-kpi-card" style="--myd-kpi-color:#06B6D4" onclick="mydToggleExpand('facility','faculty-rooms',this)">
+          <div class="myd-kpi-val" id="myd-fac-facroomscount">—</div><div class="myd-kpi-lbl">Faculty Rooms</div>
+          <div id="myd-fac-ribbons" style="display:flex;gap:2px;margin-top:4px;flex-wrap:wrap;"></div>
+        </div>
+        <div class="myd-kpi-card" style="--myd-kpi-color:#10B981" onclick="mydToggleExpand('facility','capacity',this)"><div class="myd-kpi-val" id="myd-fac-labcap">—</div><div class="myd-kpi-lbl">Total Labs Capacity</div><div class="myd-kpi-sub">Lab seats</div></div>
+        <div class="myd-kpi-card" style="--myd-kpi-color:#10B981" onclick="mydToggleExpand('facility','capacity',this)"><div class="myd-kpi-val" id="myd-fac-classcap">—</div><div class="myd-kpi-lbl">Total Classroom Cap.</div><div class="myd-kpi-sub">Classroom seats</div></div>
+        <div class="myd-kpi-card" style="--myd-kpi-color:#F59E0B" onclick="mydToggleExpand('facility','faculty-labs',this)"><div class="myd-kpi-val" id="myd-fac-occupied">—</div><div class="myd-kpi-lbl">Occupied Seats</div><div class="myd-kpi-sub">Current occupancy</div></div>
+        <div class="myd-kpi-card" style="--myd-kpi-color:#10B981" onclick="mydToggleExpand('facility','faculty-labs',this)"><div class="myd-kpi-val" id="myd-fac-available">—</div><div class="myd-kpi-lbl">Available Seats</div><div class="myd-kpi-sub">Free now</div></div>
+        <div class="myd-kpi-card myd-kpi-alert" onclick="mydToggleExpand('facility','overcap',this)"><div class="myd-kpi-val" id="myd-fac-overcap">—</div><div class="myd-kpi-lbl">Over Capacity</div><div class="myd-kpi-sub">Labs exceeding limit</div></div>
+      </div>
+      <div class="myd-expand-panel" id="myd-ep-facility"></div>
     </div>
 
     <!-- ── KPI ROW 5: Expenses ── -->
     <div class="myd-kpi-section">
-      <div class="myd-sec-hdr">💰 Expenses</div>
-      <div class="myd-kpi-row">
-        <div class="myd-kpi-card myd-kpi-green" onclick="mydOpenDrilldown('expenses','paid')">
-          <div class="myd-kpi-icon">✅</div><div class="myd-kpi-val" id="myd-exp-paid">—</div>
-          <div class="myd-kpi-lbl">Paid</div><div class="myd-kpi-sub">Cleared</div>
-        </div>
-        <div class="myd-kpi-card myd-kpi-alert" onclick="mydOpenDrilldown('expenses','pending')">
-          <div class="myd-kpi-icon">⏳</div><div class="myd-kpi-val" id="myd-exp-pending">—</div>
-          <div class="myd-kpi-lbl">Pending</div><div class="myd-kpi-sub">Awaiting approval</div>
-        </div>
-        <div class="myd-kpi-card myd-kpi-orange" onclick="mydOpenDrilldown('expenses','underprocess')">
-          <div class="myd-kpi-icon">⚙️</div><div class="myd-kpi-val" id="myd-exp-process">—</div>
-          <div class="myd-kpi-lbl">Under-Process</div><div class="myd-kpi-sub">In review</div>
-        </div>
+      <div class="myd-sec-hdr">
+        <span class="myd-sec-hdr-icon">💰</span>
+        <span class="myd-sec-hdr-title">Expenses</span>
+        <span class="myd-sec-hdr-sub">Financial Tracker</span>
       </div>
+      <div class="myd-kpi-row">
+        <div class="myd-kpi-card myd-kpi-green" onclick="mydToggleExpand('expenses','paid',this)"><div class="myd-kpi-val" id="myd-exp-paid">—</div><div class="myd-kpi-lbl">Paid</div><div class="myd-kpi-sub">Cleared</div></div>
+        <div class="myd-kpi-card myd-kpi-alert" onclick="mydToggleExpand('expenses','pending',this)"><div class="myd-kpi-val" id="myd-exp-pending">—</div><div class="myd-kpi-lbl">Pending</div><div class="myd-kpi-sub">Awaiting approval</div></div>
+        <div class="myd-kpi-card myd-kpi-orange" onclick="mydToggleExpand('expenses','underprocess',this)"><div class="myd-kpi-val" id="myd-exp-process">—</div><div class="myd-kpi-lbl">Under-Process</div><div class="myd-kpi-sub">In review</div></div>
+      </div>
+      <div class="myd-expand-panel" id="myd-ep-expenses"></div>
     </div>
 
     <!-- ── KPI ROW 6: Publications ── -->
     <div class="myd-kpi-section">
-      <div class="myd-sec-hdr">📚 Publications</div>
-      <div class="myd-kpi-row">
-        <div class="myd-kpi-card" onclick="mydOpenDrilldown('publications','journals')">
-          <div class="myd-kpi-icon">📰</div><div class="myd-kpi-val" id="myd-pub-journals">—</div>
-          <div class="myd-kpi-lbl">Journal Papers</div><div class="myd-kpi-sub">Published</div>
-        </div>
-        <div class="myd-kpi-card" onclick="mydOpenDrilldown('publications','conferences')">
-          <div class="myd-kpi-icon">🎤</div><div class="myd-kpi-val" id="myd-pub-conf">—</div>
-          <div class="myd-kpi-lbl">Conference Papers</div><div class="myd-kpi-sub">Presented</div>
-        </div>
-        <div class="myd-kpi-card" onclick="mydOpenDrilldown('publications','reports')">
-          <div class="myd-kpi-icon">📋</div><div class="myd-kpi-val" id="myd-pub-reports">—</div>
-          <div class="myd-kpi-lbl">Reports</div><div class="myd-kpi-sub">Internal</div>
-        </div>
-        <div class="myd-kpi-card" onclick="mydOpenDrilldown('publications','preprints')">
-          <div class="myd-kpi-icon">📄</div><div class="myd-kpi-val" id="myd-pub-preprints">—</div>
-          <div class="myd-kpi-lbl">Preprints / ArXiv</div><div class="myd-kpi-sub">Pre-published</div>
-        </div>
+      <div class="myd-sec-hdr">
+        <span class="myd-sec-hdr-icon">📚</span>
+        <span class="myd-sec-hdr-title">Publications</span>
+        <span class="myd-sec-hdr-sub">Research Output</span>
       </div>
+      <div class="myd-kpi-row">
+        <div class="myd-kpi-card" style="--myd-kpi-color:#8B5CF6" onclick="mydToggleExpand('publications','journals',this)"><div class="myd-kpi-val" id="myd-pub-journals">—</div><div class="myd-kpi-lbl">Journal Papers</div><div class="myd-kpi-sub">Published</div></div>
+        <div class="myd-kpi-card" style="--myd-kpi-color:#7C3AED" onclick="mydToggleExpand('publications','conferences',this)"><div class="myd-kpi-val" id="myd-pub-conf">—</div><div class="myd-kpi-lbl">Conference Papers</div><div class="myd-kpi-sub">Presented</div></div>
+        <div class="myd-kpi-card" style="--myd-kpi-color:#06B6D4" onclick="mydToggleExpand('publications','reports',this)"><div class="myd-kpi-val" id="myd-pub-reports">—</div><div class="myd-kpi-lbl">Reports</div><div class="myd-kpi-sub">Internal docs</div></div>
+        <div class="myd-kpi-card" style="--myd-kpi-color:#F59E0B" onclick="mydToggleExpand('publications','preprints',this)"><div class="myd-kpi-val" id="myd-pub-preprints">—</div><div class="myd-kpi-lbl">Preprints / ArXiv</div><div class="myd-kpi-sub">Pre-published</div></div>
+      </div>
+      <div class="myd-expand-panel" id="myd-ep-publications"></div>
     </div>
 
     <!-- ── KPI ROW 7: Inventory Management ── -->
     <div class="myd-kpi-section">
-      <div class="myd-sec-hdr">📦 Inventory Management</div>
-      <div class="myd-kpi-row">
-        <div class="myd-kpi-card" onclick="mydOpenDrilldown('inventory','gifts')">
-          <div class="myd-kpi-icon">🎁</div><div class="myd-kpi-val" id="myd-inv-gifts">—</div>
-          <div class="myd-kpi-lbl">Gifts</div><div class="myd-kpi-sub">Transaction Ledger</div>
-        </div>
-        <div class="myd-kpi-card" onclick="mydOpenDrilldown('inventory','stationeries')">
-          <div class="myd-kpi-icon">✏️</div><div class="myd-kpi-val" id="myd-inv-stat">—</div>
-          <div class="myd-kpi-lbl">Stationeries</div><div class="myd-kpi-sub">Transaction Ledger</div>
-        </div>
-        <div class="myd-kpi-card" onclick="mydOpenDrilldown('inventory','mementos')">
-          <div class="myd-kpi-icon">🏆</div><div class="myd-kpi-val" id="myd-inv-mem">—</div>
-          <div class="myd-kpi-lbl">Mementos</div><div class="myd-kpi-sub">Transaction Ledger</div>
-        </div>
-        <div class="myd-kpi-card myd-kpi-alert" onclick="mydOpenDrilldown('inventory','low-critical')">
-          <div class="myd-kpi-icon">🚨</div><div class="myd-kpi-val" id="myd-inv-lowcrit">—</div>
-          <div class="myd-kpi-lbl">Low / Critical</div><div class="myd-kpi-sub">Low Stock Alert</div>
-        </div>
+      <div class="myd-sec-hdr">
+        <span class="myd-sec-hdr-icon">📦</span>
+        <span class="myd-sec-hdr-title">Inventory Management</span>
+        <span class="myd-sec-hdr-sub">Gifts · Stationeries · Mementos</span>
       </div>
+      <div class="myd-kpi-row">
+        <div class="myd-kpi-card" style="--myd-kpi-color:#10B981" onclick="mydToggleExpand('inventory','gifts',this)"><div class="myd-kpi-val" id="myd-inv-gifts">—</div><div class="myd-kpi-lbl">Gifts</div><div class="myd-kpi-sub">Stock items</div></div>
+        <div class="myd-kpi-card" style="--myd-kpi-color:#06B6D4" onclick="mydToggleExpand('inventory','stationeries',this)"><div class="myd-kpi-val" id="myd-inv-stat">—</div><div class="myd-kpi-lbl">Stationeries</div><div class="myd-kpi-sub">Office supplies</div></div>
+        <div class="myd-kpi-card" style="--myd-kpi-color:#8B5CF6" onclick="mydToggleExpand('inventory','mementos',this)"><div class="myd-kpi-val" id="myd-inv-mem">—</div><div class="myd-kpi-lbl">Mementos</div><div class="myd-kpi-sub">Keepsakes</div></div>
+        <div class="myd-kpi-card myd-kpi-alert" onclick="mydToggleExpand('inventory','lowstock',this)"><div class="myd-kpi-val" id="myd-inv-low">—</div><div class="myd-kpi-lbl">Low / Critical</div><div class="myd-kpi-sub">Needs reorder</div></div>
+      </div>
+      <div class="myd-expand-panel" id="myd-ep-inventory"></div>
     </div>
 
   </div><!-- /myd-coo-panel -->
 
-  <!-- FACULTY DASHBOARD PANEL -->
+  <!-- FACULTY DASHBOARD PANEL (v39 KPI style) -->
   <div id="myd-faculty-panel" style="display:none;">
-    <div class="v31-sec-hdr"><div class="v31-sec-title">🔗 My Affiliations</div></div>
-    <div class="v31-affil-grid">
-      <div class="v31-affil-card" style="border-top-color:var(--accent);"><div style="font-size:0.7rem;color:var(--text3);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.3rem;">🔬 Researchers</div><div class="v31-affil-num" id="f-affil-res">—</div><div class="v31-affil-label">Under my supervision</div></div>
-      <div class="v31-affil-card" style="border-top-color:var(--green);"><div style="font-size:0.7rem;color:var(--text3);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.3rem;">🎓 Students</div><div class="v31-affil-num" id="f-affil-stu">—</div><div class="v31-affil-label">Under my mentorship</div></div>
-      <div class="v31-affil-card" style="border-top-color:var(--purple);"><div style="font-size:0.7rem;color:var(--text3);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.3rem;">📚 Publications</div><div class="v31-affil-num" id="f-affil-pub">—</div><div class="v31-affil-label">My published works</div></div>
-      <div class="v31-affil-card" style="border-top-color:var(--gold);"><div style="font-size:0.7rem;color:var(--text3);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.3rem;">💰 Expense Claims</div><div class="v31-affil-num" id="f-affil-exp">—</div><div class="v31-affil-label">Pending approval</div></div>
-    </div>
-    <div class="v31-kpi-grid">
-      <div class="v31-kpi-card k-cyan"><div class="v31-kpi-icon">🎓</div><div class="v31-kpi-val" id="f-kpi-stu">—</div><div class="v31-kpi-lbl">My Students</div><div class="v31-kpi-sub">Active mentorship</div></div>
-      <div class="v31-kpi-card k-blue"><div class="v31-kpi-icon">🔬</div><div class="v31-kpi-val" id="f-kpi-res">—</div><div class="v31-kpi-lbl">My Researchers</div><div class="v31-kpi-sub">On-going projects</div></div>
-      <div class="v31-kpi-card k-gold"><div class="v31-kpi-icon">💰</div><div class="v31-kpi-val" id="f-kpi-exp">—</div><div class="v31-kpi-lbl">Pending Claims</div><div class="v31-kpi-sub">Awaiting approval</div></div>
-      <div class="v31-kpi-card k-green"><div class="v31-kpi-icon">📚</div><div class="v31-kpi-val" id="f-kpi-pub">—</div><div class="v31-kpi-lbl">Publications</div><div class="v31-kpi-sub">All time</div></div>
-      <div class="v31-kpi-card k-purple"><div class="v31-kpi-icon">🔐</div><div class="v31-kpi-val" id="f-kpi-bio">—</div><div class="v31-kpi-lbl">Bio Auth Status</div><div class="v31-kpi-sub">My auth requests</div></div>
-      <div class="v31-kpi-card k-orange"><div class="v31-kpi-icon">🏆</div><div class="v31-kpi-val" id="f-kpi-tenure">Active</div><div class="v31-kpi-lbl">Tenure Status</div><div class="v31-kpi-sub">My tenure</div></div>
+    <div class="myd-kpi-section">
+      <div class="myd-sec-hdr">
+        <span class="myd-sec-hdr-icon">🔗</span>
+        <span class="myd-sec-hdr-title">My Affiliations</span>
+        <span class="myd-sec-hdr-sub">Faculty View</span>
+      </div>
+      <div class="myd-kpi-row">
+        <div class="myd-kpi-card" style="--myd-kpi-color:#06B6D4" onclick="mydOpenDrilldown('hr-people','researchers')"><div class="myd-kpi-val" id="f-kpi-res">—</div><div class="myd-kpi-lbl">My Researchers</div><div class="myd-kpi-sub">On-going projects</div></div>
+        <div class="myd-kpi-card" style="--myd-kpi-color:#10B981" onclick="mydOpenDrilldown('hr-people','students')"><div class="myd-kpi-val" id="f-kpi-stu">—</div><div class="myd-kpi-lbl">My Students</div><div class="myd-kpi-sub">Active mentorship</div></div>
+        <div class="myd-kpi-card" style="--myd-kpi-color:#8B5CF6" onclick="mydOpenDrilldown('publications','journals')"><div class="myd-kpi-val" id="f-kpi-pub">—</div><div class="myd-kpi-lbl">Publications</div><div class="myd-kpi-sub">All time</div></div>
+        <div class="myd-kpi-card myd-kpi-alert" onclick="mydOpenDrilldown('expenses','pending')"><div class="myd-kpi-val" id="f-kpi-exp">—</div><div class="myd-kpi-lbl">Pending Claims</div><div class="myd-kpi-sub">Awaiting approval</div></div>
+        <div class="myd-kpi-card" style="--myd-kpi-color:#8B5CF6" onclick="mydOpenDrilldown('biometric','pending')"><div class="myd-kpi-val" id="f-kpi-bio">—</div><div class="myd-kpi-lbl">Bio Auth Status</div><div class="myd-kpi-sub">My auth requests</div></div>
+        <div class="myd-kpi-card" style="--myd-kpi-color:#10B981"><div class="myd-kpi-val" id="f-kpi-tenure">Active</div><div class="myd-kpi-lbl">Tenure Status</div><div class="myd-kpi-sub">My tenure</div></div>
+      </div>
     </div>
   </div><!-- /myd-faculty-panel -->
 
@@ -7162,16 +7123,14 @@
     return `<span class="badge-days-ok">${days}d</span>`;
   }
 
-  // ── KPI REFRESH (v40) ──
+  // ── KPI REFRESH ──
   function refreshKPIs() {
-    document.getElementById('kpi-staff').textContent        = DB.staff.length;
-    document.getElementById('kpi-faculty').textContent      = DB.faculty.length;
-    document.getElementById('kpi-affifaculty').textContent  = DB.affiFaculty.length;
-    document.getElementById('kpi-assocfaculty').textContent = DB.assocFaculty.length;
-    document.getElementById('kpi-researchers').textContent  = DB.researchers.filter(r=>r.status==='On-going'||r.status==='Active').length || DB.researchers.length;
-    document.getElementById('kpi-fellows').textContent      = DB.fellows.length;
-    document.getElementById('kpi-students').textContent     = DB.students.length;
-    document.getElementById('kpi-alumni').textContent       = DB.alumni.length;
+    document.getElementById('kpi-staff').textContent = DB.staff.length;
+    document.getElementById('kpi-faculty').textContent = DB.faculty.length;
+    document.getElementById('kpi-researchers').textContent = DB.researchers.length;
+    document.getElementById('kpi-students').textContent = DB.students.length;
+    document.getElementById('kpi-assocfaculty').textContent = DB.assocFaculty.length + DB.affiFaculty.length;
+    document.getElementById('kpi-alumni').textContent = DB.alumni.length;
   }
 
   // ── TAB SWITCHING ──
@@ -7370,15 +7329,15 @@
     staff:        '🏛️ Alumni Registry — Staff',
     assocfaculty: '🏛️ Alumni Registry — Associate Faculty',
     researchers:  '🏛️ Alumni Registry — Researchers',
-    students:     '🏛️ Alumni Registry — Students'
+    fellows:      '🏛️ Alumni Registry — Associate Fellows'
   };
 
-  // movedFrom filter values for each sub-tab key (v40)
+  // movedFrom filter values for each sub-tab key
   const ALUMNI_SUB_FILTER = {
     staff:        ['staff','Staff'],
     assocfaculty: ['assocFaculty','assocfaculty','Associate Faculty'],
     researchers:  ['researchers','Researchers','Active Researchers'],
-    students:     ['students','Students']
+    fellows:      ['fellows','Fellows','Associate Fellows']
   };
 
   function switchAlumniSub(sub) {
@@ -8337,42 +8296,21 @@
   function refreshPeopleDashboard() {
     const el = (id, val) => { const e = document.getElementById(id); if(e) e.textContent = val; };
 
-    // Faculty Distribution (v40: shows Faculty + AssocFaculty + AffiFaculty types)
+    // Faculty Distribution
     const facultyTypes = WS_CONFIG.facultyType;
-    const assocTypes   = WS_CONFIG.associateFacultyType || [];
+    const assocTypes = WS_CONFIG.associateFacultyType;
     const tbody = document.getElementById('dash-faculty-dist');
     if (tbody) {
+      // FIX (v24.3): Only show faculty types (not assocFaculty types) in this table.
+      // Associate Faculty has its own section. Previously assocTypes were rendered
+      // here as "(Assoc.)" rows which caused confusion and clutter.
       const rows = [];
-      // ── Core Faculty ──
-      rows.push(`<tr style="background:rgba(59,130,246,0.07);"><td colspan="3" style="font-size:0.68rem;font-family:var(--font-mono);color:var(--accent);text-transform:uppercase;letter-spacing:0.08em;padding:4px 8px;">👨‍🏫 Faculty</td></tr>`);
       facultyTypes.forEach(t => {
         const cnt = DB.faculty.filter(f => f.facultyType === t).length;
-        rows.push(`<tr><td style="padding-left:1.2rem;">${t}</td><td style="font-weight:700;text-align:center;">${cnt}</td><td style="text-align:center;color:${cnt>0?'var(--green)':'var(--text3)'};"> ${cnt>0?'✓ Active':'-- Inactive'}</td></tr>`);
+        rows.push(`<tr><td>${t}</td><td style="font-weight:700;text-align:center;">${cnt}</td><td style="text-align:center;color:${cnt>0?'var(--green)':'var(--text3)'};"> ${cnt>0?'✓ Active':'-- Inactive'}</td></tr>`);
       });
-      // ── Associate Faculty ──
-      rows.push(`<tr style="background:rgba(6,182,212,0.07);"><td colspan="3" style="font-size:0.68rem;font-family:var(--font-mono);color:var(--accent2);text-transform:uppercase;letter-spacing:0.08em;padding:4px 8px;">👩‍🏫 Associate Faculty</td></tr>`);
-      assocTypes.forEach(t => {
-        const cnt = DB.assocFaculty.filter(f => f.facultyType === t).length;
-        rows.push(`<tr><td style="padding-left:1.2rem;">${t}</td><td style="font-weight:700;text-align:center;">${cnt}</td><td style="text-align:center;color:${cnt>0?'var(--green)':'var(--text3)'};"> ${cnt>0?'✓ Active':'-- Inactive'}</td></tr>`);
-      });
-      if (!assocTypes.length) {
-        const cnt = DB.assocFaculty.length;
-        rows.push(`<tr><td style="padding-left:1.2rem;">(All Types)</td><td style="font-weight:700;text-align:center;">${cnt}</td><td style="text-align:center;color:${cnt>0?'var(--green)':'var(--text3)'};"> ${cnt>0?'✓ Active':'-- Inactive'}</td></tr>`);
-      }
-      // ── Affiliate Faculty ──
-      rows.push(`<tr style="background:rgba(16,185,129,0.07);"><td colspan="3" style="font-size:0.68rem;font-family:var(--font-mono);color:var(--green);text-transform:uppercase;letter-spacing:0.08em;padding:4px 8px;">🔗 Affiliate Faculty</td></tr>`);
-      const affiTypes = [...new Set((DB.affiFaculty||[]).map(f=>f.facultyType||'Other'))];
-      affiTypes.forEach(t => {
-        const cnt = DB.affiFaculty.filter(f => (f.facultyType||'Other') === t).length;
-        rows.push(`<tr><td style="padding-left:1.2rem;">${t}</td><td style="font-weight:700;text-align:center;">${cnt}</td><td style="text-align:center;color:${cnt>0?'var(--green)':'var(--text3)'};"> ${cnt>0?'✓ Active':'-- Inactive'}</td></tr>`);
-      });
-      if (!affiTypes.length) {
-        const cnt = DB.affiFaculty.length;
-        rows.push(`<tr><td style="padding-left:1.2rem;">(All Types)</td><td style="font-weight:700;text-align:center;">${cnt}</td><td style="text-align:center;color:${cnt>0?'var(--green)':'var(--text3)'};"> ${cnt>0?'✓ Active':'-- Inactive'}</td></tr>`);
-      }
-      // ── Grand Total ──
       const grandTotal = DB.faculty.length + DB.assocFaculty.length + DB.affiFaculty.length;
-      rows.push(`<tr style="background:rgba(40,167,69,0.15);font-weight:700;border-top:2px solid rgba(16,185,129,0.3);"><td>🧮 Grand Total (Faculty + Assoc + Affiliate)</td><td style="text-align:center;color:var(--green);font-size:1.05em;">${grandTotal}</td><td style="text-align:center;">✓</td></tr>`);
+      rows.push(`<tr style="background:rgba(40,167,69,0.12);font-weight:700;"><td>🧮 Grand Total (All Faculty)</td><td style="text-align:center;color:var(--green);">${grandTotal}</td><td style="text-align:center;">✓</td></tr>`);
       tbody.innerHTML = rows.join('');
     }
 
@@ -9120,8 +9058,8 @@
         </div>
       </div>
       <div style="text-align:right;flex-shrink:0;min-width:130px;">
-        <div data-iwb-time style="font-family:var(--font-mono);font-size:0.8rem;color:var(--text);font-weight:500;">${timeStr}</div>
-        <div data-iwb-date style="font-size:0.7rem;color:var(--text3);margin-top:2px;font-family:var(--font-mono);">${dateStr}</div>
+        <div style="font-family:var(--font-mono);font-size:0.8rem;color:var(--text);font-weight:500;">${timeStr}</div>
+        <div style="font-size:0.7rem;color:var(--text3);margin-top:2px;font-family:var(--font-mono);">${dateStr}</div>
       </div>`;
 
     // Insert right after the page-header in the landing panel
@@ -9131,18 +9069,6 @@
     } else {
       landingPanel.insertBefore(banner, landingPanel.firstChild);
     }
-
-    // Live clock — tick every second inside the injected banner
-    if (window._iwbClockTimer) clearInterval(window._iwbClockTimer);
-    window._iwbClockTimer = setInterval(() => {
-      const b = document.getElementById('interface-welcome-banner');
-      if (!b) { clearInterval(window._iwbClockTimer); return; }
-      const timeEl = b.querySelector('[data-iwb-time]');
-      const dateEl = b.querySelector('[data-iwb-date]');
-      const n = new Date();
-      if (timeEl) timeEl.textContent = n.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit', hour12:true });
-      if (dateEl) dateEl.textContent = n.toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
-    }, 1000);
   }
 
   // ── Write restriction engine ──────────────────────────────────────────────
@@ -15458,9 +15384,9 @@
     if (catTbody) {
       catTbody.innerHTML = cats.map(cat => {
         const rows = fl.filter(l=>l.category===cat);
-        const total = rows.reduce((s,l)=>s+(parseInt(l.totalSeats)||0),0);
-        const occ   = rows.reduce((s,l)=>s+(parseInt(l.occupiedSeats)||0),0);
-        const avail = Math.max(0, total - occ);  // v40: always derive from total-occ
+        const total = rows.reduce((s,l)=>s+l.totalSeats,0);
+        const occ   = rows.reduce((s,l)=>s+l.occupiedSeats,0);
+        const avail = rows.reduce((s,l)=>s+l.availableSeats,0);
         const util  = total > 0 ? occ/total : 0;
         const barColor = util >= 0.8 ? '#EF4444' : util >= 0.5 ? '#F97316' : '#10B981';
         const bar = `<div class="util-bar-wrap" style="min-width:100px;"><div class="util-bar-fill" style="width:${Math.min(util*100,100)}%;background:${barColor};"></div></div>`;
@@ -18719,47 +18645,9 @@ async function moduleRefresh(mod) {
   try {
     if (mod === 'people')       { await sysFetchAll(); }
     else if (mod === 'biometric') { const u=_resolveUrl('biometric'); if(u){const d=await _jsonpFetch(u,{action:'GET_BIOMETRIC',t:Date.now()});if(d&&(d.allUsers||d.totalActive!==undefined)){BM.raw=d;bmOnData(d);toast('✅ Biometric refreshed');}} else toast('⚠️ No biometric URL saved'); }
-    else if (mod === 'labs') {
-      const u = _resolveUrl('labs');
-      if (u) {
-        const d = await _jsonpFetch(u, {action:'GET_LAB', t:Date.now()});
-        if (d && (d.facultyLabs || d.facilityRooms)) {
-          const s = {
-            facultyLabs:   (d.facultyLabs||[]).map(l=>{ const o=l.occupiedSeats||0,tt=l.totalSeats||0; l.availableSeats=Math.max(0,tt-o); l.utilizationRate=tt>0?o/tt:0; l.statusIndicator=typeof labGetIndicator==='function'?labGetIndicator(l):''; if(!l.id)l.id='FL'+Math.random().toString(36).slice(2,8); return l; }),
-            facilityRooms: (d.facilityRooms||[]).map(r=>{ if(!r.id)r.id='FR'+Math.random().toString(36).slice(2,8); return r; }),
-            researchers:   (d.researchers||[]).map(r=>{ if(!r.id)r.id='RS'+Math.random().toString(36).slice(2,8); return r; }),
-            facultyRooms:  (d.facultyRooms||[]).map(r=>{ if(!r.id)r.id='FRM'+Math.random().toString(36).slice(2,8); return r; })
-          };
-          LAB.data=s; LAB.facultyLabs=s.facultyLabs; LAB.facilityRooms=s.facilityRooms; LAB.researchers=s.researchers; LAB.loaded=true;
-          toast('✅ Labs refreshed from sheet');
-        }
-      }
-      // Always re-render from whatever data is loaded (sheet or local)
-      if (LAB.data && (LAB.data.facultyLabs||[]).length) {
-        try { labRefreshKPIs(); labRenderFacultyLabs(); labRenderUtilizationRibbons(); labRenderCategoryAnalysis(); labRenderFacilityRooms(); } catch(e) {}
-        if (!_resolveUrl('labs')) toast('ℹ️ Labs re-rendered from local data (no URL saved)');
-      } else if (!_resolveUrl('labs')) {
-        toast('⚠️ No labs URL saved — set one in Google Drive Sheets tab');
-      }
-    }
+    else if (mod === 'labs')    { const u=_resolveUrl('labs'); if(u){const d=await _jsonpFetch(u,{action:'GET_LAB',t:Date.now()});if(d&&(d.facultyLabs||d.facilityRooms)){const s={facultyLabs:(d.facultyLabs||[]).map(l=>{const o=l.occupiedSeats||0,t=l.totalSeats||0;l.availableSeats=Math.max(0,t-o);l.utilizationRate=t>0?o/t:0;l.statusIndicator=typeof labGetIndicator==='function'?labGetIndicator(l):'';if(!l.id)l.id='FL'+Math.random().toString(36).slice(2,8);return l;}),facilityRooms:(d.facilityRooms||[]).map(r=>{if(!r.id)r.id='FR'+Math.random().toString(36).slice(2,8);return r;}),researchers:(d.researchers||[]).map(r=>{if(!r.id)r.id='RS'+Math.random().toString(36).slice(2,8);return r;}),facultyRooms:(d.facultyRooms||[]).map(r=>{if(!r.id)r.id='FRM'+Math.random().toString(36).slice(2,8);return r;})};LAB.data=s;LAB.facultyLabs=s.facultyLabs;LAB.facilityRooms=s.facilityRooms;LAB.researchers=s.researchers;LAB.loaded=true;if(document.getElementById('tab-labs')?.classList.contains('active')){try{labRefreshKPIs();labRenderFacultyLabs();}catch(e){}}toast('✅ Labs refreshed');}} else toast('⚠️ No labs URL saved'); }
     else if (mod === 'assets')  { await assetLoadFromSheet(false); }
-    else if (mod === 'expenses') {
-      const expUrl = _resolveUrl('expenses');
-      if (expUrl) {
-        await expLoadFromSheet();
-      } else {
-        // No URL saved: re-render from existing EXP data or load demo
-        const expArr = Array.isArray(window.EXP) ? window.EXP : ((window.EXP||{}).all||[]);
-        if (expArr.length) {
-          try { expRender(); expRenderKPIs && expRenderKPIs(); } catch(e) { try { expApplyFilters(); } catch(e2) {} }
-          toast('ℹ️ Expenses re-rendered from local data (no URL saved)');
-        } else {
-          try { expLoadDemoData(); toast('ℹ️ Expenses loaded from demo data (no URL saved)'); } catch(e) {
-            toast('⚠️ No Expenses sheet URL saved — set one in Google Drive Sheets tab');
-          }
-        }
-      }
-    }
+    else if (mod === 'expenses'){ await expLoadFromSheet(); }
     else if (mod === 'publications') { await pubLoadFromSheet(); }
     else if (mod === 'inventory') { await invSyncAll(); }
   } catch(e) { toast('⚠️ Refresh failed: ' + e.message); }
@@ -18776,8 +18664,6 @@ window.moveToAlumni = function(key, idx) {
   if (typeof _origMoveToAlumni === 'function') _origMoveToAlumni(key, idx);
   // also update sidebar analytics after decision
   try { refreshSidebarAnalytics(); } catch(e) {}
-  // Refresh My Dashboard KPI counts
-  if(typeof mydRefreshCOO==='function') { try { mydRefreshCOO(); } catch(e){} }
 };
 
 // Helper: mark person as pending (status update)
@@ -29430,8 +29316,28 @@ function mydInit() {
   const subEl = document.getElementById('myd-sub');
   const quoteEl = document.getElementById('myd-quote');
   const avatarEl = document.getElementById('myd-avatar');
+  const bannerEl = document.getElementById('myd-role-banner');
 
-  if (avatarEl) avatarEl.textContent = name.charAt(0).toUpperCase();
+  // Role → accent color mapping (v39 visual system)
+  const roleColors = {
+    coo:'#F59E0B', admin:'#3B82F6', creator:'#F59E0B',
+    faculty:'#06B6D4', hr_manager:'#8B5CF6', finance_mgr:'#F59E0B',
+    facility_mgr:'#06B6D4', edu_pgm_mgr:'#EC4899',
+    sys_admin:'#94A3B8', mis:'#3B82F6', staff:'#10B981'
+  };
+  const rc = roleColors[role] || '#3B82F6';
+
+  if (avatarEl) { avatarEl.textContent = name.charAt(0).toUpperCase(); avatarEl.style.background = rc; }
+  if (bannerEl) {
+    bannerEl.style.borderLeftColor = rc;
+    bannerEl.style.background = 'var(--surface)';
+  }
+  // Update sync dot color based on sheet connection
+  const syncDot = document.getElementById('myd-sync-dot');
+  const syncLabel = document.getElementById('myd-sync-label');
+  const isConnected = !!(window.WS_CONFIG && window.WS_CONFIG.webAppUrl);
+  if (syncDot) syncDot.style.background = isConnected ? '#10B981' : '#64748B';
+  if (syncLabel) syncLabel.textContent = isConnected ? 'Sheet Connected' : 'No Sheet Connected';
 
   if (greetEl) {
     if (role === 'coo' || role === 'admin' || role === 'creator') {
@@ -29441,14 +29347,18 @@ function mydInit() {
     } else {
       greetEl.textContent = 'Welcome, ' + name;
     }
+    greetEl.style.color = 'var(--text)';
   }
 
   const roleLabels = { coo:'Chief Operating Officer · WSAI', faculty:'Faculty · WSAI', staff:'Staff · WSAI', hr_manager:'HR Manager · WSAI', finance_mgr:'Accounts / Procurement Manager · WSAI', facility_mgr:'Facility Manager · WSAI', edu_pgm_mgr:'Education Program Manager · WSAI', sys_admin:'System Administrator · WSAI', mis:'MIS · WSAI' };
-  if (subEl) subEl.textContent = roleLabels[role] || (role.toUpperCase() + ' · WSAI');
+  if (subEl) { subEl.textContent = roleLabels[role] || (role.toUpperCase() + ' · WSAI'); subEl.style.color = rc; }
   if (quoteEl) {
     const qRole = (role === 'coo' || role === 'admin' || role === 'creator') ? 'coo' : (role === 'faculty' ? 'faculty' : 'staff');
     quoteEl.textContent = '"' + mydGetQuote(qRole) + '"';
   }
+
+  // Reset any open expand panels
+  _mydOpenPanel = null;
 
   document.getElementById('myd-coo-panel').style.display = 'none';
   document.getElementById('myd-faculty-panel').style.display = 'none';
@@ -29500,32 +29410,40 @@ function mydRefreshCOO() {
 
   mydRefreshBiometric();
 
-  // ── Facility KPIs (v40) ──
   const LAB = window.LAB || {};
-  const fLabs  = (LAB.facultyLabs  || LAB.data?.facultyLabs  || []);
-  const fRooms = (LAB.facilityRooms|| LAB.data?.facilityRooms|| []);
-  // Over-capacity count
-  const overCapCount = fLabs.filter(l => (l.statusIndicator||(typeof labGetIndicator==='function'?labGetIndicator(l):'')==='OVER-CAPACITY')).length;
-  sv('myd-fac-overcap', overCapCount || '—');
-  // Facility Rooms count
-  sv('myd-fac-facrooms', fRooms.length || '—');
-  // Lab cap = SUMIF facilityRooms where roomName/roomType contains 'LAB'
-  const labCapTotal  = fRooms.filter(r=>(r.roomName||'').toUpperCase().includes('LAB')||(r.roomType||'').toUpperCase().includes('LAB')).reduce((s,r)=>s+(r.capacity||0),0);
-  const classCapTotal= fRooms.filter(r=>(r.roomName||'').toUpperCase().includes('CLASSROOM')||(r.roomType||'').toUpperCase().includes('CLASSROOM')).reduce((s,r)=>s+(r.capacity||0),0);
-  sv('myd-fac-labcap',  labCapTotal  || fLabs.reduce((s,r)=>s+(parseInt(r.totalSeats)||0),0) || '—');
-  sv('myd-fac-classcap',classCapTotal|| '—');
-  // Occupied / Available
+  const fLabs = (LAB.facultyLabs || LAB.data?.facultyLabs || []);
+  const fRooms = (LAB.facilityRooms || LAB.data?.facilityRooms || []);
+  const facRooms = (LAB.facultyRooms || LAB.data?.facultyRooms || []);
+  sv('myd-fac-faclabs',      fLabs.length || '—');
+  sv('myd-fac-facrooms',     fRooms.length || '—');
+  sv('myd-fac-facroomscount',facRooms.length || '—');
   const occ = fLabs.reduce((s,r) => s + (parseInt(r.occupiedSeats)||0), 0);
   const tot = fLabs.reduce((s,r) => s + (parseInt(r.totalSeats)||0), 0);
   sv('myd-fac-occupied',  occ || '—');
-  sv('myd-fac-available', (tot > occ ? tot - occ : 0) || '—');
+  sv('myd-fac-available', tot > occ ? (tot - occ) : '—');
+  // New v36: total lab capacity, classroom capacity, over-capacity count
+  const classRooms = (LAB.classroomRooms || LAB.data?.classroomRooms || []);
+  const totalLabCap  = fLabs.reduce((s,r)  => s + (parseInt(r.totalSeats)||0), 0);
+  const totalClassCap= classRooms.reduce((s,r) => s + (parseInt(r.capacity||r.totalSeats)||0), 0);
+  const overCapCount = fLabs.filter(r => {
+    const pct = r.utilizationRate ? r.utilizationRate : (r.totalSeats ? (r.occupiedSeats||0)/r.totalSeats : 0);
+    return pct > 1.0 || (r.statusIndicator||'').toUpperCase() === 'OVER-CAPACITY';
+  }).length;
+  sv('myd-fac-labcap',  totalLabCap  || '—');
+  sv('myd-fac-classcap',totalClassCap || '—');
+  sv('myd-fac-overcap', overCapCount  || '—');
+
+  const ribbonsEl = document.getElementById('myd-fac-ribbons');
+  if (ribbonsEl && fLabs.length) {
+    ribbonsEl.innerHTML = fLabs.slice(0,8).map(r => {
+      const pct = r.utilizationRate ? Math.round(r.utilizationRate * 100) : (r.occupiedSeats && r.totalSeats ? Math.round(r.occupiedSeats/r.totalSeats*100) : 0);
+      const color = pct > 80 ? 'var(--red)' : pct >= 50 ? 'var(--green)' : 'var(--gold)';
+      return `<div title="${r.facultyName||''}: ${pct}%" style="width:${Math.max(4,pct*0.6)}px;height:6px;background:${color};border-radius:2px;flex-shrink:0;"></div>`;
+    }).join('');
+  }
 
   const EXP = window.EXP || window._expenses || [];
   const expAll = Array.isArray(EXP) ? EXP : (EXP.all || []);
-  // Biometric Total Active
-  const bioAreas = BM.areaOccupancy || BM.areas || [];
-  const bioTotalActive = bioAreas.reduce((s,a) => s + (a.occupied||0), 0) || BM.totalActive || (BM.enrolled||[]).filter(r=>(r.status||'').toLowerCase()==='active').length || '—';
-  sv('myd-bio-total-active', bioTotalActive);
   sv('myd-exp-paid',    expAll.filter(e => (e.status||'').toLowerCase() === 'paid').length || '—');
   sv('myd-exp-pending', expAll.filter(e => (e.status||'').toLowerCase() === 'pending').length || '—');
   sv('myd-exp-process', expAll.filter(e => (e.status||'').toLowerCase().includes('process')).length || '—');
@@ -29544,16 +29462,13 @@ function mydRefreshCOO() {
   sv('myd-inv-gifts',  gifts.length || '—');
   sv('myd-inv-stat',   stat.length || '—');
   sv('myd-inv-mem',    mem.length || '—');
-  // Low / Critical count across all inv categories
-  const allInvItems = [...gifts, ...stat, ...mem];
-  const lowCritCount = allInvItems.filter(i => {
-    const st = typeof getInvStatus === 'function' ? getInvStatus(i) : (
-      (i.status||'').toLowerCase() === 'low' || (i.status||'').toLowerCase() === 'critical' ||
-      (i.status||'').toLowerCase() === 'out' ? i.status : ''
-    );
-    return ['low','critical','out'].includes((st||'').toLowerCase());
+  // Low/critical stock count (items at or below threshold)
+  const lowCount = [...gifts,...stat,...mem].filter(i => {
+    const bal = parseInt(i.currentBalance||i.balance||0);
+    const thr = parseInt(i.lowThreshold||i.threshold||5);
+    return bal <= thr;
   }).length;
-  sv('myd-inv-lowcrit', lowCritCount || '—');
+  sv('myd-inv-low', lowCount || '—');
 }
 
 function mydRefreshBiometric() {
@@ -29564,19 +29479,126 @@ function mydRefreshBiometric() {
     if (areas.length) {
       container.innerHTML = areas.slice(0,6).map(a => {
         const pct = a.capacity > 0 ? Math.round((a.occupied||0)/a.capacity*100) : 0;
-        const color = pct > 80 ? 'var(--red)' : pct >= 50 ? 'var(--gold)' : 'var(--green)';
-        return `<div class="myd-kpi-card" onclick="mydOpenDrilldown('biometric','area')" style="border-color:${color}20;">
-          <div class="myd-kpi-icon">🏢</div>
-          <div class="myd-kpi-val" style="font-size:1.1rem;color:${color};">${a.occupied||0}/${a.capacity||0}</div>
+        const color = pct > 80 ? '#EF4444' : pct >= 50 ? '#F59E0B' : '#10B981';
+        return `<div class="myd-kpi-card" onclick="mydToggleExpand('biometric','area',this)" style="--myd-kpi-color:${color}">
+          <div class="myd-kpi-val">${a.occupied||0}/${a.capacity||0}</div>
           <div class="myd-kpi-lbl">${a.area||a.name||'Area'}</div>
           <div class="myd-kpi-sub">${pct}% occupied</div>
         </div>`;
       }).join('');
     }
   }
+  // Total active users
+  const totalActive = (BM.users||BM.biometricUsers||[]).filter(u=>(u.status||'').toLowerCase()==='active').length
+    || (BM.biometricUsers||[]).length || '—';
+  const activeEl = document.getElementById('myd-bio-active');
+  if (activeEl) activeEl.textContent = totalActive;
   const pending = (BM.pendingRequests || []).filter(r => (r.status||'').toLowerCase() === 'pending').length;
   const el = document.getElementById('myd-bio-pending');
   if (el) el.textContent = pending || (BM.pendingCount) || '—';
+}
+
+// ── v36: Expand-panel toggle (v39 visual pattern) ──────────────────────────
+// Clicking a KPI card opens an inline expand panel below the row.
+// A second click on the same card collapses it.
+let _mydOpenPanel = null; // tracks currently open panel key
+
+function mydToggleExpand(section, sub, cardEl) {
+  // Derive panel element id  e.g.  myd-ep-hr-people
+  const panelId = 'myd-ep-' + section;
+  const panel = document.getElementById(panelId);
+
+  // Collapse all cards in all rows & close all panels
+  document.querySelectorAll('.myd-kpi-card.active').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('.myd-expand-panel.open').forEach(p => p.classList.remove('open'));
+
+  const key = section + '_' + sub;
+  if (_mydOpenPanel === key) {
+    // Same card clicked again → just collapse
+    _mydOpenPanel = null;
+    return;
+  }
+  _mydOpenPanel = key;
+
+  // Mark card active
+  if (cardEl) cardEl.classList.add('active');
+
+  if (!panel) {
+    // Fallback to the full drilldown modal for sections without an expand panel
+    mydOpenDrilldown(section, sub);
+    return;
+  }
+
+  // Render the expand panel content
+  panel.innerHTML = _mydExpandContent(section, sub);
+  panel.classList.add('open');
+}
+
+function _mydExpandContent(section, sub) {
+  // Returns HTML for the expand panel — v39 ep-grid with ep-items
+  const EXPAND_MAP = {
+    'hr-people': {
+      staff:       { title:'Staff — People Module',          items:[{icon:'👔',t:'Staff Registry',d:'All active staff records'},{icon:'👔',t:'Add Staff Member',d:'Onboard new staff'},{icon:'🏛️',t:'Alumni Registry — Staff',d:'Departed staff archive'},{icon:'👥',t:'Staff Designation Distribution',d:'Role breakdown chart'}]},
+      faculty:     { title:'Faculty — People Module',        items:[{icon:'👨‍🏫',t:'Faculty Registry',d:'All registered faculty'},{icon:'👨‍🏫',t:'Add Faculty Member',d:'Register new faculty'},{icon:'🎓',t:'Faculty Category Distribution',d:'Incl. Associate + Affiliate + Grand Total'}]},
+      affifaculty: { title:'Affiliate Faculty — People Module', items:[{icon:'🔗',t:'Affiliate Faculty Registry',d:'All affiliate faculty'},{icon:'🔗',t:'Add Affiliate Faculty',d:'Register affiliate'},{icon:'🎓',t:'Faculty Category Distribution',d:'Incl. Associate + Core + Grand Total'}]},
+      assocfaculty:{ title:'Associate Faculty — People Module', items:[{icon:'👩‍🏫',t:'Associate Faculty Registry',d:'All associate faculty'},{icon:'👩‍🏫',t:'Add Associate Faculty',d:'Register associate'},{icon:'🏛️',t:'Alumni Registry — Associate Faculty',d:'Departed associate faculty'},{icon:'🎓',t:'Faculty Category Distribution',d:'Incl. Core + Affiliate + Grand Total'}]},
+      researchers: { title:'Researchers — People Module',    items:[{icon:'🔬',t:'Active Researchers Registry',d:'All ongoing researchers'},{icon:'🔬',t:'Add Active Researcher',d:'Onboard new researcher'},{icon:'🏛️',t:'Alumni Registry — Researchers',d:'Completed researchers'},{icon:'🔬',t:'Researcher Designation Distribution',d:'Role breakdown chart'}]},
+      fellows:     { title:'Associate Fellows — People Module', items:[{icon:'👥',t:'Associate Fellows Registry',d:'All associate fellows'},{icon:'👥',t:'Add Associate Fellow',d:'Register new fellow'}]},
+      students:    { title:'Students — People Module',       items:[{icon:'🎓',t:'Students Registry',d:'All enrolled students'},{icon:'🏛️',t:'Alumni Registry — Students',d:'Graduated students'},{icon:'🎓',t:'Student Designation Distribution',d:'Ph.D / M.Tech / B.Tech breakdown'}]},
+      tenure:      { title:'Tenure Risk — People Module',    items:[{icon:'⏰',t:'Tenure Actions Required',d:'Staff with expiring contracts (≤90 days)'}]},
+    },
+    asset: {
+      it:           { title:'IT Assets — Asset Module',         items:[{icon:'💻',t:'IT Assets — Category Breakdown',d:'Auto-updated from Google Sheet'}]},
+      nonit:        { title:'Non-IT Assets — Asset Module',     items:[{icon:'🏢',t:'Non-IT Assets — Category Breakdown',d:'Auto-updated from Google Sheet'}]},
+      ilds:         { title:'ILDS Cluster — Asset Module',      items:[{icon:'🌐',t:'ILDS Cluster — Item Breakdown',d:'Auto-updated from Google Sheet'}]},
+      gpu:          { title:'GPU Cluster — Asset Module',       items:[{icon:'🧠',t:'GPU Cluster — Item Breakdown',d:'Auto-updated from Google Sheet'}]},
+      books:        { title:'Books — Asset Module',             items:[{icon:'📚',t:'Books — Title Breakdown',d:'Auto-updated from Google Sheet'}]},
+      spares:       { title:'Spares — Asset Module',            items:[{icon:'🔧',t:'Spares — Breakdown',d:'Auto-updated from Google Sheet'}]},
+      consumables:  { title:'Consumables — Asset Module',       items:[{icon:'🗂️',t:'Consumables — Breakdown',d:'Auto-updated from Google Sheet'}]},
+      nonrepairable:{ title:'Non-Repairable — Asset Module',    items:[{icon:'🚫',t:'Non-Repairable — Breakdown',d:'Auto-updated from Google Sheet'}]},
+      vendor:       { title:'Vendor List — Asset Module',       items:[{icon:'🤝',t:'Vendor List — Breakdown',d:'Auto-updated from Google Sheet'}]},
+    },
+    biometric: {
+      enrolled: { title:'Biometric Access — Active Users',    items:[{icon:'🏢',t:'Area Occupancy',d:'Live seat occupancy per zone'},{icon:'📋',t:'User Registry',d:'All enrolled biometric users'}]},
+      pending:  { title:'Biometric Auth — Pending Requests',  items:[{icon:'⏳',t:'Pending Access Requests',d:'Awaiting approval'},{icon:'✅',t:'Approve / Reject',d:'Review and action requests'}]},
+      area:     { title:'Biometric — Area Occupancy',         items:[{icon:'🏢',t:'Area Occupancy Live',d:'Real-time seat data per zone'}]},
+    },
+    facility: {
+      'faculty-labs':    { title:'Faculty Labs — Facility Module',    items:[{icon:'🔬',t:'Faculty Labs — Live Status',d:'Seat allocation from sheet data'},{icon:'📊',t:'Utilization Ribbons',d:'Over / Optimum / Under utilized labs'}]},
+      'facility-rooms':  { title:'Facility Rooms — Facility Module',  items:[{icon:'🏛️',t:'Facility Rooms — Live Status',d:'Room capacity from sheet data'}]},
+      'faculty-rooms':   { title:'Faculty Rooms — Facility Module',   items:[{icon:'🚪',t:'Faculty Rooms — Breakdown',d:'All assigned faculty room spaces'}]},
+      capacity:          { title:'Capacity Overview — Facility',      items:[{icon:'📐',t:'Total Labs Capacity',d:'From config & dashboard script'},{icon:'🏫',t:'Total Classroom Capacity',d:'From config & dashboard script'}]},
+      overcap:           { title:'Over Capacity — Facility Module',   items:[{icon:'📊',t:'Utilization Ribbons',d:'Labs exceeding their seat limits'}]},
+    },
+    expenses: {
+      paid:        { title:'Paid Expenses — Expense Module',       items:[{icon:'✅',t:'Paid Expense Registry',d:'Registry of paid status from sheets'}]},
+      pending:     { title:'Pending Expenses — Expense Module',    items:[{icon:'⏳',t:'Pending Expense Registry',d:'Registry of pending status from sheets'}]},
+      underprocess:{ title:'Under-process Expenses',               items:[{icon:'🔄',t:'Under-process Registry',d:'Registry of in-review status from sheets'}]},
+    },
+    publications: {
+      journals:    { title:'Journal Papers — Publications Module', items:[{icon:'📄',t:'Journal Papers Registry',d:'All published journal articles'},{icon:'📊',t:'Year-wise Publication Matrix',d:'Auto-updated from Google Sheet'}]},
+      conferences: { title:'Conference Papers — Publications Module',items:[{icon:'🎤',t:'Conference Papers Registry',d:'All conference submissions'},{icon:'📊',t:'Year-wise Publication Matrix',d:'Auto-updated from Google Sheet'}]},
+      reports:     { title:'Reports — Publications Module',        items:[{icon:'📋',t:'Reports Registry',d:'All internal research reports'},{icon:'📊',t:'Year-wise Publication Matrix',d:'Auto-updated from Google Sheet'}]},
+      preprints:   { title:'Preprints — Publications Module',      items:[{icon:'📑',t:'Preprints Registry',d:'ArXiv and pre-published papers'},{icon:'📊',t:'Year-wise Publication Matrix',d:'Auto-updated from Google Sheet'}]},
+    },
+    inventory: {
+      gifts:        { title:'Gifts — Inventory Module',       items:[{icon:'📋',t:'Gifts — Transaction Ledger',d:'Ledger with filters (all transactions)'}]},
+      stationeries: { title:'Stationeries — Inventory Module',items:[{icon:'📋',t:'Stationeries — Transaction Ledger',d:'Ledger with filters (all transactions)'}]},
+      mementos:     { title:'Mementos — Inventory Module',    items:[{icon:'📋',t:'Mementos — Transaction Ledger',d:'Ledger with filters (all transactions)'}]},
+      lowstock:     { title:'Low Stock — Inventory Module',   items:[{icon:'🚨',t:'Low Stock Alert Summary',d:'Items at or below reorder threshold'}]},
+    },
+  };
+
+  const def = (EXPAND_MAP[section] || {})[sub];
+  if (!def) return '<div style="padding:8px;font-size:0.78rem;color:var(--text3);">No detail available</div>';
+
+  const itemsHtml = def.items.map(item =>
+    `<div class="myd-ep-item" onclick="mydOpenDrilldown('${section}','${sub}')">
+      <div class="myd-ep-item-title">${item.icon} ${item.t}</div>
+      <div class="myd-ep-item-desc">${item.d}</div>
+    </div>`
+  ).join('');
+  return `<div class="myd-ep-title">${def.title}</div><div class="myd-ep-grid">${itemsHtml}</div>`;
 }
 
 function mydOpenDrilldown(module, sub) {
@@ -29611,134 +29633,73 @@ function mydRenderDrilldown(module, sub) {
   const EXP   = window.EXP   || window._expenses || {};
   const PUB   = window.PUB   || window._publications || {};
 
-  // ─── HR & PEOPLE ─────────────────────────────────────────────────────────
   if (module === 'hr-people') {
-    function _alumniTable(records, label) {
-      if (!records.length) return `<div class="table-card" style="margin-bottom:1rem;"><div class="tc-header"><div class="tc-title">🏛️ ${label}</div></div><div style="padding:1.5rem;text-align:center;color:var(--text3);font-size:0.83rem;">No alumni records in this category</div></div>`;
-      return `<div class="table-card" style="margin-bottom:1rem;">
-        <div class="tc-header"><div class="tc-title">🏛️ ${label}</div></div>
-        <div style="overflow-x:auto;max-height:260px;overflow-y:auto;">
-          <table><thead><tr><th>#</th><th>Name</th><th>Designation</th><th>Center/Dept</th><th>Exit Date</th></tr></thead><tbody>
-          ${records.slice(0,50).map((r,i)=>`<tr><td>${i+1}</td><td>${r.name||'—'}</td><td>${r.designation||r.facultyType||'—'}</td><td>${r.center||r.department||r.unit||'—'}</td><td>${r.exitDate||'—'}</td></tr>`).join('')}
-          </tbody></table>
-        </div></div>`;
-    }
-    function _distTable(map, title, color) {
-      const entries = Object.entries(map).sort((a,b)=>b[1]-a[1]);
-      if (!entries.length) return '';
-      return `<div class="table-card" style="margin-bottom:1rem;">
-        <div class="tc-header"><div class="tc-title" style="color:${color};">${title}</div></div>
-        <table><thead><tr><th>Type / Designation</th><th style="text-align:center;">Count</th></tr></thead><tbody>
-        ${entries.map(([t,c])=>`<tr><td>${t}</td><td style="text-align:center;font-weight:700;">${c}</td></tr>`).join('')}
-        <tr style="background:rgba(99,179,237,0.07);font-weight:700;"><td>Grand Total</td><td style="text-align:center;">${Object.values(map).reduce((s,v)=>s+v,0)}</td></tr>
+    titleEl.textContent = '👤 HR & People — ' + sub.charAt(0).toUpperCase() + sub.slice(1);
+    let distHTML = '';
+    const facTypes = {};
+    [...(DB.faculty||[]),...(DB.assocFaculty||[]),...(DB.affiFaculty||[])].forEach(r => {
+      const t = r.facultyType || r._type || 'Faculty';
+      facTypes[t] = (facTypes[t]||0)+1;
+    });
+    distHTML += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+      <div class="table-card"><div class="tc-header"><div class="tc-title" style="color:#4CAF50;">🎓 Faculty Category Distribution</div></div>
+        <table><thead><tr><th>Faculty Type</th><th>Count</th></tr></thead><tbody>
+        ${Object.entries(facTypes).map(([t,c])=>`<tr><td>${t}</td><td style="text-align:center;font-weight:700;">${c}</td></tr>`).join('')||'<tr><td colspan="2" style="text-align:center;color:var(--text3);">No data</td></tr>'}
         </tbody></table></div>`;
-    }
-    function _facDistTable() {
-      const rows = [];
-      const facT = {}; (DB.faculty||[]).forEach(r=>{const t=r.facultyType||'Faculty'; facT[t]=(facT[t]||0)+1;});
-      rows.push(`<tr style="background:rgba(59,130,246,0.07);"><td colspan="2" style="font-size:0.68rem;font-family:monospace;color:var(--accent);text-transform:uppercase;letter-spacing:0.08em;padding:4px 8px;">👨‍🏫 Faculty</td></tr>`);
-      Object.entries(facT).forEach(([t,c])=>rows.push(`<tr><td style="padding-left:1rem;">${t}</td><td style="text-align:center;font-weight:700;">${c}</td></tr>`));
-      const assT = {}; (DB.assocFaculty||[]).forEach(r=>{const t=r.facultyType||'Assoc. Faculty'; assT[t]=(assT[t]||0)+1;});
-      rows.push(`<tr style="background:rgba(6,182,212,0.07);"><td colspan="2" style="font-size:0.68rem;font-family:monospace;color:#0891B2;text-transform:uppercase;letter-spacing:0.08em;padding:4px 8px;">👩‍🏫 Associate Faculty</td></tr>`);
-      if(Object.keys(assT).length) Object.entries(assT).forEach(([t,c])=>rows.push(`<tr><td style="padding-left:1rem;">${t}</td><td style="text-align:center;font-weight:700;">${c}</td></tr>`));
-      else rows.push(`<tr><td style="padding-left:1rem;color:var(--text3);">(All Types)</td><td style="text-align:center;font-weight:700;">${(DB.assocFaculty||[]).length}</td></tr>`);
-      const afiT = {}; (DB.affiFaculty||[]).forEach(r=>{const t=r.facultyType||'Affiliate Faculty'; afiT[t]=(afiT[t]||0)+1;});
-      rows.push(`<tr style="background:rgba(16,185,129,0.07);"><td colspan="2" style="font-size:0.68rem;font-family:monospace;color:var(--green);text-transform:uppercase;letter-spacing:0.08em;padding:4px 8px;">🔗 Affiliate Faculty</td></tr>`);
-      if(Object.keys(afiT).length) Object.entries(afiT).forEach(([t,c])=>rows.push(`<tr><td style="padding-left:1rem;">${t}</td><td style="text-align:center;font-weight:700;">${c}</td></tr>`));
-      else rows.push(`<tr><td style="padding-left:1rem;color:var(--text3);">(All Types)</td><td style="text-align:center;font-weight:700;">${(DB.affiFaculty||[]).length}</td></tr>`);
-      const grand = (DB.faculty||[]).length + (DB.assocFaculty||[]).length + (DB.affiFaculty||[]).length;
-      rows.push(`<tr style="background:rgba(40,167,69,0.12);font-weight:700;border-top:2px solid rgba(16,185,129,0.3);"><td>🧮 Grand Total (Faculty + Assoc + Affiliate)</td><td style="text-align:center;color:var(--green);font-size:1.05em;">${grand}</td></tr>`);
-      return `<div class="table-card" style="margin-bottom:1rem;">
-        <div class="tc-header"><div class="tc-title" style="color:#4CAF50;">🎓 Faculty Category Distribution</div></div>
-        <table><thead><tr><th>Faculty Type</th><th style="text-align:center;">Count</th></tr></thead><tbody>${rows.join('')}</tbody></table></div>`;
-    }
-    function _regTable(rows, sub) {
-      const addMap = {staff:'staff',faculty:'faculty',assocfaculty:'assocfaculty',affifaculty:'affifaculty',researchers:'researcher',fellows:'fellow',students:'student',tenure:''};
-      const titleMap = {staff:'👔 Staff Registry',faculty:'👨‍🏫 Faculty Registry',assocfaculty:'👩‍🏫 Associate Faculty Registry',affifaculty:'🔗 Affiliate Faculty Registry',researchers:'🔬 Active Researchers Registry',fellows:'👥 Associate Fellows Registry',students:'🎓 Students Registry',tenure:''};
-      return `<div class="table-card" style="margin-bottom:1rem;">
-        <div class="tc-header">
-          <div class="tc-title">${titleMap[sub]||'📋 Registry'}</div>
-          <div class="tc-actions">
-            <input type="text" placeholder="🔍 Search..." oninput="mydDDSearch(this.value)" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0.4rem 0.9rem;color:var(--text);font-size:0.82rem;outline:none;min-width:180px;">
-            ${addMap[sub] ? `<button class="tc-btn primary" onclick="openAddModal('${addMap[sub]}')">+ Add</button>` : ''}
-          </div>
-        </div>
-        <div style="overflow-x:auto;max-height:350px;overflow-y:auto;">
-          <table><thead><tr><th>#</th><th>Name</th><th>Designation / Type</th><th>Department / Center</th><th>Status</th><th>Actions</th></tr></thead>
-          <tbody id="myd-dd-reg-tbody">
-          ${rows.slice(0,100).map((r,i)=>`<tr><td>${i+1}</td><td><strong>${r.name||'—'}</strong></td><td>${r.designation||r.facultyType||r.category||'—'}</td><td>${r.department||r.center||r.affiliation||'—'}</td><td><span class="badge badge-${(r.status||'active').toLowerCase()}">${r.status||'Active'}</span></td><td><button class="tc-btn" onclick="openEditModal('${sub}','${r.id||''}')">Edit</button></td></tr>`).join('')||`<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text3);">Connect sheet to load data</td></tr>`}
-          </tbody></table>
-        </div>
-      </div>`;
-    }
-
-    let html = '';
-    const alumniAll = DB.alumni || [];
-
-    if (sub === 'staff') {
-      titleEl.textContent = '👔 Staff';
-      const alumniStaff = alumniAll.filter(r => ['staff','Staff'].includes(r.movedFrom||r.type||''));
-      const staffDist = {}; (DB.staff||[]).forEach(r=>{const d=r.designation||'Staff'; staffDist[d]=(staffDist[d]||0)+1;});
-      html += _regTable(DB.staff||[], 'staff');
-      html += `<div class="table-card" style="margin-bottom:1rem;"><div class="tc-header"><div class="tc-title" style="color:var(--accent);">👔 Add Staff Member</div></div><div style="padding:0.75rem 1.5rem 1rem;"><button class="submit-btn" onclick="mydCloseDrilldown();showTab('people');setTimeout(()=>{ const btn=document.querySelector('#tab-people .tc-btn.primary,[onclick*="openAddModal(\'staff\'"]');if(btn)btn.click();},300);">+ Add New Staff Member</button></div></div>`;
-      html += _alumniTable(alumniStaff, 'Alumni Registry — Staff');
-      html += _distTable(staffDist, '👥 Staff Designation Distribution', '#FB8C00');
-
-    } else if (sub === 'faculty') {
-      titleEl.textContent = '👨‍🏫 Faculty';
-      html += _regTable(DB.faculty||[], 'faculty');
-      html += `<div class="table-card" style="margin-bottom:1rem;"><div class="tc-header"><div class="tc-title" style="color:var(--accent2);">👨‍🏫 Add Faculty Member</div></div><div style="padding:0.75rem 1.5rem 1rem;"><button class="submit-btn" onclick="mydCloseDrilldown();showTab('people');setTimeout(()=>openAddModal('faculty'),300);">+ Add New Faculty Member</button></div></div>`;
-      html += _facDistTable();
-
-    } else if (sub === 'affifaculty') {
-      titleEl.textContent = '🔗 Affiliate Faculty';
-      html += _regTable(DB.affiFaculty||[], 'affifaculty');
-      html += `<div class="table-card" style="margin-bottom:1rem;"><div class="tc-header"><div class="tc-title" style="color:var(--green);">🔗 Add Affiliate Faculty</div></div><div style="padding:0.75rem 1.5rem 1rem;"><button class="submit-btn" onclick="mydCloseDrilldown();showTab('people');setTimeout(()=>openAddModal('affifaculty'),300);">+ Add Affiliate Faculty</button></div></div>`;
-      html += _facDistTable();
-
-    } else if (sub === 'assocfaculty') {
-      titleEl.textContent = '👩‍🏫 Associate Faculty';
-      const alumniAssoc = alumniAll.filter(r => ['assocFaculty','assocfaculty','Associate Faculty'].includes(r.movedFrom||r.type||''));
-      html += _regTable(DB.assocFaculty||[], 'assocfaculty');
-      html += `<div class="table-card" style="margin-bottom:1rem;"><div class="tc-header"><div class="tc-title" style="color:#0891B2;">👩‍🏫 Add Associate Faculty</div></div><div style="padding:0.75rem 1.5rem 1rem;"><button class="submit-btn" onclick="mydCloseDrilldown();showTab('people');setTimeout(()=>openAddModal('assocfaculty'),300);">+ Add Associate Faculty</button></div></div>`;
-      html += _alumniTable(alumniAssoc, 'Alumni Registry — Associate Faculty');
-      html += _facDistTable();
-
-    } else if (sub === 'researchers') {
-      titleEl.textContent = '🔬 Active Researchers';
-      const alumniRes = alumniAll.filter(r => ['researchers','Researchers','Active Researchers'].includes(r.movedFrom||r.type||''));
-      const resDist = {}; (DB.researchers||[]).forEach(r=>{const d=r.designation||'Researcher'; resDist[d]=(resDist[d]||0)+1;});
-      html += _regTable(DB.researchers||[], 'researchers');
-      html += `<div class="table-card" style="margin-bottom:1rem;"><div class="tc-header"><div class="tc-title" style="color:var(--accent);">🔬 Add Researcher</div></div><div style="padding:0.75rem 1.5rem 1rem;"><button class="submit-btn" onclick="mydCloseDrilldown();showTab('people');setTimeout(()=>openAddModal('researcher'),300);">+ Add Active Researcher</button></div></div>`;
-      html += _alumniTable(alumniRes, 'Alumni Registry — Researchers');
-      html += _distTable(resDist, '🔬 Researcher Designation Distribution', '#42A5F5');
-
-    } else if (sub === 'fellows') {
-      titleEl.textContent = '👥 Associate Fellows';
-      html += _regTable(DB.fellows||[], 'fellows');
-      html += `<div class="table-card" style="margin-bottom:1rem;"><div class="tc-header"><div class="tc-title" style="color:var(--purple);">👥 Add Associate Fellow</div></div><div style="padding:0.75rem 1.5rem 1rem;"><button class="submit-btn" onclick="mydCloseDrilldown();showTab('people');setTimeout(()=>openAddModal('fellow'),300);">+ Add Associate Fellow</button></div></div>`;
-
-    } else if (sub === 'students') {
-      titleEl.textContent = '🎓 Students';
-      const alumniStu = alumniAll.filter(r => ['students','Students'].includes(r.movedFrom||r.type||''));
-      const stuDist = {}; (DB.students||[]).forEach(r=>{const d=r.designation||'Student'; stuDist[d]=(stuDist[d]||0)+1;});
-      html += _regTable(DB.students||[], 'students');
-      html += _alumniTable(alumniStu, 'Alumni Registry — Students');
-      html += _distTable(stuDist, '🎓 Student Designation Distribution', '#7E57C2');
-
-    } else if (sub === 'tenure') {
-      titleEl.textContent = '⏰ Tenure Risk';
-      html += `<div class="table-card" style="margin-bottom:1rem;">
-        <div class="tc-header"><div class="tc-title" style="color:var(--red);">⏰ Tenure Actions Required</div></div>
-        <table><thead><tr><th>Name</th><th>Type</th><th>Center/Dept</th><th>Exit Date</th><th>Days Left</th><th>Action</th></tr></thead>
+    const resTypes = {};
+    (DB.researchers||[]).forEach(r => { const d=r.designation||'Other'; resTypes[d]=(resTypes[d]||0)+1; });
+    distHTML += `<div class="table-card"><div class="tc-header"><div class="tc-title" style="color:#42A5F5;">🔬 Researcher Designation Distribution</div></div>
+        <table><thead><tr><th>Designation</th><th>Count</th></tr></thead><tbody>
+        ${Object.entries(resTypes).sort((a,b)=>b[1]-a[1]).map(([t,c])=>`<tr><td>${t}</td><td style="text-align:center;font-weight:700;">${c}</td></tr>`).join('')||'<tr><td colspan="2" style="text-align:center;color:var(--text3);">No data</td></tr>'}
+        </tbody></table></div></div>`;
+    const staffTypes = {};
+    (DB.staff||[]).forEach(r => { const d=r.designation||'Staff'; staffTypes[d]=(staffTypes[d]||0)+1; });
+    const stuTypes = {};
+    (DB.students||[]).forEach(r => { const d=r.designation||'Student'; stuTypes[d]=(stuTypes[d]||0)+1; });
+    distHTML += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+      <div class="table-card"><div class="tc-header"><div class="tc-title" style="color:#FB8C00;">👥 Staff Designation Distribution</div></div>
+        <table><thead><tr><th>Designation</th><th>Count</th></tr></thead><tbody>
+        ${Object.entries(staffTypes).sort((a,b)=>b[1]-a[1]).map(([t,c])=>`<tr><td>${t}</td><td style="text-align:center;font-weight:700;">${c}</td></tr>`).join('')||'<tr><td colspan="2" style="text-align:center;color:var(--text3);">No data</td></tr>'}
+        </tbody></table></div>
+      <div class="table-card"><div class="tc-header"><div class="tc-title" style="color:#7E57C2;">🎓 Student Designation Distribution</div></div>
+        <table><thead><tr><th>Designation</th><th>Count</th></tr></thead><tbody>
+        ${Object.entries(stuTypes).sort((a,b)=>b[1]-a[1]).map(([t,c])=>`<tr><td>${t}</td><td style="text-align:center;font-weight:700;">${c}</td></tr>`).join('')||'<tr><td colspan="2" style="text-align:center;color:var(--text3);">No data</td></tr>'}
+        </tbody></table></div></div>`;
+    if (sub === 'tenure') {
+      distHTML += `<div class="table-card" style="margin-bottom:1rem;">
+        <div class="tc-header"><div class="tc-title">⏰ Tenure Actions Required</div></div>
+        <table><thead><tr><th>Name</th><th>Type</th><th>Center/Dept</th><th>Exit Date</th><th>Days Left</th><th>Decision</th></tr></thead>
         <tbody id="myd-dd-tenure-tbody"></tbody></table></div>`;
-    } else {
-      titleEl.textContent = '👤 HR & People';
-      html += _regTable([], sub);
     }
-
-    bodyEl.innerHTML = html;
-
+    const typeMap = {
+      staff: DB.staff||[], faculty: DB.faculty||[], assocfaculty: DB.assocFaculty||[],
+      affifaculty: DB.affiFaculty||[], researchers: DB.researchers||[],
+      fellows: DB.fellows||[], students: DB.students||[], tenure: []
+    };
+    const rows = typeMap[sub] || [];
+    distHTML += `<div class="table-card">
+      <div class="tc-header">
+        <div class="tc-title">📋 ${sub.charAt(0).toUpperCase()+sub.slice(1)} Registry</div>
+        <div class="tc-actions">
+          <input type="text" placeholder="🔍 Search..." oninput="mydDDSearch(this.value)" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0.4rem 0.9rem;color:var(--text);font-size:0.82rem;outline:none;min-width:180px;">
+          <button class="tc-btn primary" onclick="openAddModal('${sub === 'assocfaculty' ? 'assocfaculty' : sub === 'affifaculty' ? 'affifaculty' : sub === 'researchers' ? 'researcher' : sub === 'fellows' ? 'fellow' : sub}')">+ Add</button>
+        </div>
+      </div>
+      <div style="overflow-x:auto;max-height:350px;overflow-y:auto;">
+        <table><thead><tr><th>#</th><th>Name</th><th>Designation / Type</th><th>Department</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="myd-dd-reg-tbody">
+          ${rows.slice(0,50).map((r,i)=>`<tr>
+            <td>${i+1}</td>
+            <td>${r.name||'—'}</td>
+            <td>${r.designation||r.facultyType||r.category||r._type||'—'}</td>
+            <td>${r.department||r.center||'—'}</td>
+            <td><span class="badge badge-${(r.status||'active').toLowerCase()}">${r.status||'Active'}</span></td>
+            <td><button class="tc-btn" onclick="openEditModal('${sub}','${r.id||''}')">Edit</button> <button class="tc-btn" style="color:var(--red);" onclick="confirmDelete('${sub}','${r.id||''}')">Del</button></td>
+          </tr>`).join('')||`<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text3);">Connect sheet to load data</td></tr>`}
+        </tbody></table>
+      </div>
+    </div>`;
+    bodyEl.innerHTML = distHTML;
     if (sub === 'tenure') {
       const today = new Date();
       const at = [...(DB.researchers||[]),...(DB.assocFaculty||[]),...(DB.affiFaculty||[])].filter(r => {
@@ -29748,35 +29709,30 @@ function mydRenderDrilldown(module, sub) {
         return (exit - today)/86400000 <= 90;
       }).sort((a,b) => new Date(a.exitDate) - new Date(b.exitDate));
       const tb = document.getElementById('myd-dd-tenure-tbody');
-      if (tb) tb.innerHTML = at.map(r => {
-        const parts = String(r.exitDate).split('/');
-        const exit = parts.length===3 ? new Date(parts[2],parts[1]-1,parts[0]) : new Date(r.exitDate);
-        const days = Math.round((exit-today)/86400000);
-        const urgency = days < 30 ? 'var(--red)' : days < 60 ? 'var(--orange)' : 'var(--gold)';
-        return `<tr><td><strong>${r.name||'—'}</strong></td><td>${r._type||r.designation||'—'}</td><td>${r.center||r.department||'—'}</td><td>${r.exitDate||'—'}</td><td style="color:${urgency};font-weight:700;">${days}d</td><td><button class="tc-btn primary" style="font-size:0.72rem;">Decide</button></td></tr>`;
-      }).join('') || '<tr><td colspan="6" style="text-align:center;padding:1.5rem;color:var(--text3);">No tenure actions required within 90 days</td></tr>';
+      if (tb) {
+        tb.innerHTML = at.map(r => {
+          const parts = String(r.exitDate).split('/');
+          const exit = parts.length===3 ? new Date(parts[2],parts[1]-1,parts[0]) : new Date(r.exitDate);
+          const days = Math.round((exit-today)/86400000);
+          const urgency = days < 30 ? 'var(--red)' : days < 60 ? 'var(--orange)' : 'var(--gold)';
+          return `<tr><td>${r.name||'—'}</td><td>${r._type||r.designation||'—'}</td><td>${r.center||r.department||'—'}</td><td>${r.exitDate||'—'}</td><td style="color:${urgency};font-weight:700;">${days}d</td><td>—</td></tr>`;
+        }).join('') || '<tr><td colspan="6" style="text-align:center;padding:1.5rem;color:var(--text3);">No tenure actions</td></tr>';
+      }
     }
   }
-
-  // ─── ASSET ───────────────────────────────────────────────────────────────
   else if (module === 'asset') {
-    const assetMap = { it:ASSET.it||[], nonit:ASSET.nonit||[], ilds:ASSET.ilds||[], gpu:ASSET.gpu||[], books:ASSET.books||[], spares:ASSET.spares||[], consumables:ASSET.consumables||[], nonrepairable:ASSET.nonrepairable||[], vendor:ASSET.vendor||[] };
+    const assetMap = { it: ASSET.it||[], nonit: ASSET.nonit||[], ilds: ASSET.ilds||[], gpu: ASSET.gpu||[], books: ASSET.books||[], spares: ASSET.spares||[], consumables: ASSET.consumables||[], nonrepairable: ASSET.nonrepairable||[], vendor: ASSET.vendor||[] };
     const titleMap = { it:'💻 IT Assets', nonit:'🏢 Non-IT Assets', ilds:'🌐 ILDS Cluster', gpu:'🧠 GPU Cluster', books:'📚 Books Inventory', spares:'🔧 Spares', consumables:'🛒 Consumables', nonrepairable:'⚠️ Non-Repairable', vendor:'🏪 Vendor List' };
-    const labelMap = { it:'IT Assets — Category Breakdown', nonit:'Non-IT Assets — Category Breakdown', ilds:'ILDS Cluster — Item Breakdown', gpu:'GPU Cluster — Category Breakdown', books:'Books — Title Breakdown', spares:'Spares — Breakdown', consumables:'Consumables — Breakdown', nonrepairable:'Non-Repairable — Breakdown', vendor:'Vendor List — Breakdown' };
     titleEl.textContent = titleMap[sub] || ('📦 Asset — ' + sub);
     const rows = assetMap[sub] || [];
+    let catHTML = '';
     const catMap = {};
     rows.forEach(r => { const c = r.category||r.type||'Other'; catMap[c]=(catMap[c]||0)+1; });
-    const catTotal = Object.values(catMap).reduce((s,v)=>s+v,0);
-    let catHTML = '';
     if (Object.keys(catMap).length) {
       catHTML = `<div class="table-card" style="margin-bottom:1rem;">
-        <div class="tc-header"><div class="tc-title" style="color:var(--orange);">${titleMap[sub]||''} — ${labelMap[sub]||'Category Breakdown'}</div>
-        <div style="font-size:0.68rem;color:var(--text3);font-family:var(--font-mono);">Auto-updated from Google Sheet</div></div>
+        <div class="tc-header"><div class="tc-title">${titleMap[sub]||''} — Category Breakdown</div></div>
         <table><thead><tr><th>Category</th><th style="text-align:center;">Count</th></tr></thead>
-        <tbody>${Object.entries(catMap).sort((a,b)=>b[1]-a[1]).map(([c,n])=>`<tr><td>${c}</td><td style="text-align:center;font-weight:700;">${n}</td></tr>`).join('')}
-        <tr style="background:rgba(249,115,22,0.08);font-weight:700;"><td>Total</td><td style="text-align:center;color:var(--orange);">${catTotal}</td></tr>
-        </tbody></table></div>`;
+        <tbody>${Object.entries(catMap).sort((a,b)=>b[1]-a[1]).map(([c,n])=>`<tr><td>${c}</td><td style="text-align:center;font-weight:700;">${n}</td></tr>`).join('')}</tbody></table></div>`;
     }
     bodyEl.innerHTML = catHTML + `<div class="table-card">
       <div class="tc-header">
@@ -29789,306 +29745,110 @@ function mydRenderDrilldown(module, sub) {
       <div style="overflow-x:auto;max-height:400px;overflow-y:auto;">
         <table><thead><tr><th>#</th><th>Name / Label</th><th>Category</th><th>Status</th><th>Value ₹</th><th>Actions</th></tr></thead>
         <tbody>
-          ${rows.slice(0,100).map((r,i)=>`<tr><td>${i+1}</td><td><strong>${r.name||r.label||r.assetName||'—'}</strong></td><td>${r.category||r.type||'—'}</td><td><span class="badge">${r.status||'Active'}</span></td><td style="font-family:var(--font-mono);">${r.value||r.purchaseValue||'—'}</td><td><button class="tc-btn" onclick="openAssetEditModal('${sub}','${r.id||''}')">Edit</button></td></tr>`).join('')||`<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text3);">Connect sheet to load data</td></tr>`}
+          ${rows.slice(0,50).map((r,i)=>`<tr><td>${i+1}</td><td>${r.name||r.label||r.assetName||'—'}</td><td>${r.category||r.type||'—'}</td><td><span class="badge">${r.status||'Active'}</span></td><td>${r.value||r.purchaseValue||'—'}</td><td><button class="tc-btn" onclick="openAssetEditModal('${sub}','${r.id||''}')">Edit</button></td></tr>`).join('')||`<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text3);">Connect sheet to load data</td></tr>`}
         </tbody></table>
       </div>
     </div>`;
   }
-
-  // ─── BIOMETRIC ────────────────────────────────────────────────────────────
   else if (module === 'biometric') {
-    const areas   = BM.areaOccupancy || BM.areas || [];
-    const pending = BM.pendingRequests || [];
     titleEl.textContent = '🔐 Biometric Access';
-    if (sub === 'total-active' || sub === 'pending' || sub === 'area') {
-      if (sub === 'total-active') titleEl.textContent = '🔐 Biometric — Area Occupancy';
-      if (sub === 'pending')      titleEl.textContent = '🔐 Biometric — Pending Requests';
-      const areaGrid = areas.length ? areas.map(a => {
-        const pct = a.capacity > 0 ? Math.round((a.occupied||0)/a.capacity*100) : 0;
-        const color = pct>80?'var(--red)':pct>=50?'var(--gold)':'var(--green)';
-        return `<div style="background:var(--surface2);border:1px solid ${color}30;border-radius:10px;padding:0.85rem;text-align:center;">
-          <div style="font-size:0.68rem;color:var(--text3);text-transform:uppercase;margin-bottom:0.3rem;font-family:var(--font-mono);">${a.area||a.name||'Area'}</div>
-          <div style="font-size:1.4rem;font-weight:700;color:${color};font-family:var(--font-mono);">${a.occupied||0}<span style="font-size:0.9rem;opacity:0.6;">/${a.capacity||0}</span></div>
-          <div style="font-size:0.7rem;color:var(--text3);margin-top:2px;">${pct}% occupied</div>
-          <div style="width:100%;height:4px;background:var(--surface3);border-radius:2px;margin-top:6px;overflow:hidden;"><div style="width:${pct}%;height:100%;background:${color};border-radius:2px;transition:width 0.5s;"></div></div>
-        </div>`;
-      }).join('') : '<div style="color:var(--text3);font-size:0.85rem;padding:1rem;">No biometric area data — connect Google Sheet</div>';
-      const pendingRows = pending.filter(r=>(r.status||'').toLowerCase()==='pending').slice(0,50).map((r,i)=>`<tr><td>${r.id||r.biometricId||i+1}</td><td><strong>${r.name||r.employeeName||'—'}</strong></td><td>${r.category||r.role||'—'}</td><td>${r.department||'—'}</td><td style="font-family:var(--font-mono);">${r.requestDate||r.lastAccess||'—'}</td><td><span class="badge badge-pending">Pending</span></td><td><button class="tc-btn" style="color:var(--green);border-color:rgba(16,185,129,0.3);">✓ Auth</button> <button class="tc-btn" style="color:var(--red);border-color:rgba(239,68,68,0.3);">✕ Deny</button></td></tr>`).join('') || '<tr><td colspan="7" style="text-align:center;padding:1.5rem;color:var(--text3);">No pending biometric requests</td></tr>';
-      bodyEl.innerHTML = `<div class="table-card" style="margin-bottom:1rem;"><div class="tc-header"><div class="tc-title">🏢 Area Occupancy</div></div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:0.75rem;padding:0.75rem;">${areaGrid}</div></div>
-        <div class="table-card"><div class="tc-header"><div class="tc-title">⏳ Biometric Auth — Pending Requests</div></div><div style="overflow-x:auto;max-height:350px;overflow-y:auto;"><table><thead><tr><th>Req ID</th><th>Name</th><th>Role</th><th>Department</th><th>Request Date</th><th>Status</th><th>Actions</th></tr></thead><tbody>${pendingRows}</tbody></table></div></div>`;
-    }
-  }
-
-  // ─── FACILITY ─────────────────────────────────────────────────────────────
-  else if (module === 'facility') {
-    titleEl.textContent = '🏛️ Facility & Room Management';
-    const fLabs2  = LAB.facultyLabs  || LAB.data?.facultyLabs  || [];
-    const fRooms2 = LAB.facilityRooms|| LAB.data?.facilityRooms|| [];
-
-    if (sub === 'over-capacity') {
-      titleEl.textContent = '🏛️ Facility — Utilization Ribbons';
-      const active  = fLabs2.filter(l=>l.status==='Active'||!l.status);
-      const over    = active.filter(l=>{ const p=(l.occupiedSeats||0)/(l.totalSeats||1); return p>0.8; });
-      const opt     = active.filter(l=>{ const p=(l.occupiedSeats||0)/(l.totalSeats||1); return p>=0.5&&p<=0.8; });
-      const under   = active.filter(l=>{ const p=(l.occupiedSeats||0)/(l.totalSeats||1); return p>0&&p<0.5; });
-      function ribRow(arr, col) {
-        if(!arr.length) return '<div style="padding:0.6rem 1rem;font-size:0.78rem;color:var(--text3);font-style:italic;">No labs in this range</div>';
-        return arr.map((l,i)=>{
-          const tot=l.totalSeats||0,occ=l.occupiedSeats||0;
-          const pct=tot>0?Math.round(occ/tot*100):0;
-          return `<div style="display:flex;align-items:center;gap:0.75rem;padding:0.6rem 1rem;border-bottom:1px solid var(--border);">
-            <div style="flex:1;"><div style="font-weight:600;font-size:0.83rem;">${l.facultyName||l.name||'—'}</div><div style="font-size:0.7rem;color:var(--text3);">${l.category||'—'} · ${l.room||'—'}</div></div>
-            <div style="text-align:right;"><div style="font-family:var(--font-mono);font-size:0.82rem;">${occ}/${tot}</div><div style="width:80px;height:4px;background:var(--surface3);border-radius:2px;margin-top:3px;overflow:hidden;"><div style="width:${pct}%;height:100%;background:${col};border-radius:2px;"></div></div></div>
-            <div style="font-weight:700;font-size:0.82rem;color:${col};min-width:38px;">${pct}%</div>
-          </div>`;
-        }).join('');
-      }
-      bodyEl.innerHTML = `
-        <div style="margin-bottom:0.75rem;display:flex;gap:0.5rem;flex-wrap:wrap;">
-          <span style="font-size:0.7rem;padding:.2rem .6rem;border-radius:6px;background:rgba(239,68,68,.12);color:var(--red);font-family:var(--font-mono);">🔴 Over >80%</span>
-          <span style="font-size:0.7rem;padding:.2rem .6rem;border-radius:6px;background:rgba(16,185,129,.12);color:var(--green);font-family:var(--font-mono);">🟢 Optimum 50–80%</span>
-          <span style="font-size:0.7rem;padding:.2rem .6rem;border-radius:6px;background:rgba(245,158,11,.12);color:var(--gold);font-family:var(--font-mono);">🟡 Under <50%</span>
-        </div>
-        <div style="border:1px solid rgba(239,68,68,.3);border-radius:10px;overflow:hidden;margin-bottom:0.75rem;">
-          <div style="background:rgba(239,68,68,.12);padding:.5rem 1rem;font-weight:700;font-size:0.83rem;color:var(--red);">🔴 OVER UTILIZED (${over.length})</div>
-          ${ribRow(over,'var(--red)')}
-        </div>
-        <div style="border:1px solid rgba(16,185,129,.3);border-radius:10px;overflow:hidden;margin-bottom:0.75rem;">
-          <div style="background:rgba(16,185,129,.10);padding:.5rem 1rem;font-weight:700;font-size:0.83rem;color:var(--green);">🟢 OPTIMUM UTILIZED (${opt.length})</div>
-          ${ribRow(opt,'var(--green)')}
-        </div>
-        <div style="border:1px solid rgba(245,158,11,.3);border-radius:10px;overflow:hidden;">
-          <div style="background:rgba(245,158,11,.10);padding:.5rem 1rem;font-weight:700;font-size:0.83rem;color:var(--gold);">🟡 UNDER UTILIZED (${under.length})</div>
-          ${ribRow(under,'var(--gold)')}
-        </div>`;
-
-    } else if (sub === 'facility-rooms') {
-      titleEl.textContent = '🏛️ Facility Rooms — Live Status';
-      const rHTML = fRooms2.slice(0,100).map((r,i)=>{
-        const pct = (r.capacity||0)>0 ? Math.round(((r.allocated||r.occupied||0)/r.capacity)*100):0;
-        const col = pct>80?'var(--red)':pct>=50?'var(--gold)':'var(--green)';
-        return `<tr><td>${i+1}</td><td><strong>${r.roomName||r.name||'—'}</strong></td><td>${r.roomType||r.type||'—'}</td><td style="text-align:center;font-weight:700;">${r.capacity||'—'}</td><td style="text-align:center;">${r.allocated||r.occupied||0}</td><td style="text-align:center;color:${col};font-weight:700;">${Math.max(0,(r.capacity||0)-(r.allocated||r.occupied||0))}</td><td><div style="display:flex;align-items:center;gap:6px;"><div style="width:60px;height:4px;background:var(--surface3);border-radius:2px;overflow:hidden;"><div style="width:${pct}%;height:100%;background:${col};border-radius:2px;"></div></div><span style="font-size:0.72rem;color:${col};">${pct}%</span></div></td><td><span class="badge">${r.status||'Active'}</span></td></tr>`;
-      }).join('') || '<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--text3);">Connect sheet to load data</td></tr>';
-      bodyEl.innerHTML = `<div class="table-card"><div class="tc-header"><div class="tc-title">🏛️ Facility Rooms — Live Status</div></div><div style="overflow-x:auto;max-height:480px;overflow-y:auto;"><table><thead><tr><th>#</th><th>Room Name</th><th>Type</th><th style="text-align:center;">Capacity</th><th style="text-align:center;">Allocated</th><th style="text-align:center;">Available</th><th>Utilization</th><th>Status</th></tr></thead><tbody>${rHTML}</tbody></table></div></div>`;
-
-    } else if (sub === 'lab-cap') {
-      titleEl.textContent = '📐 Total Labs Capacity';
-      const labRooms = fRooms2.filter(r=>(r.roomName||'').toUpperCase().includes('LAB')||(r.roomType||'').toUpperCase().includes('LAB'));
-      const total = labRooms.reduce((s,r)=>s+(r.capacity||0),0) || fLabs2.reduce((s,r)=>s+(parseInt(r.totalSeats)||0),0);
-      const crHTML = labRooms.map((r,i)=>`<tr><td>${i+1}</td><td>${r.roomName||r.name||'—'}</td><td>${r.roomType||'—'}</td><td style="text-align:center;font-weight:700;">${r.capacity||'—'}</td><td style="text-align:center;">${r.allocated||0}</td><td><span class="badge">${r.status||'Active'}</span></td></tr>`).join('') || '<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text3);">No lab rooms found</td></tr>';
-      bodyEl.innerHTML = `<div style="padding:0.75rem;background:var(--surface2);border-radius:10px;margin-bottom:1rem;display:flex;align-items:center;gap:1rem;"><div style="font-size:2rem;font-weight:700;color:var(--accent2);">${total}</div><div style="font-size:0.8rem;color:var(--text2);">Total Lab Seats (SUMIF *LAB* in Facility Rooms)</div></div>
-        <div class="table-card" style="padding:0;"><div class="tc-header"><div class="tc-title">📐 Lab Rooms — Capacity Detail</div></div><div style="overflow-x:auto;"><table><thead><tr><th>#</th><th>Room Name</th><th>Type</th><th>Capacity</th><th>Allocated</th><th>Status</th></tr></thead><tbody>${crHTML}</tbody></table></div></div>`;
-
-    } else if (sub === 'classroom-cap') {
-      titleEl.textContent = '🏫 Total Classroom Capacity';
-      const classRooms = fRooms2.filter(r=>(r.roomName||'').toUpperCase().includes('CLASSROOM')||(r.roomType||'').toUpperCase().includes('CLASSROOM'));
-      const totalClassCap = classRooms.reduce((s,r)=>s+(r.capacity||0),0);
-      const crHTML = classRooms.map((r,i)=>`<tr><td>${i+1}</td><td>${r.roomName||r.name||'—'}</td><td>${r.roomType||'—'}</td><td style="text-align:center;font-weight:700;">${r.capacity||'—'}</td><td style="text-align:center;">${r.allocated||0}</td><td><span class="badge">${r.status||'Active'}</span></td></tr>`).join('') || '<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text3);">No classroom rooms found</td></tr>';
-      bodyEl.innerHTML = `<div style="padding:0.75rem;background:var(--surface2);border-radius:10px;margin-bottom:1rem;display:flex;align-items:center;gap:1rem;"><div style="font-size:2rem;font-weight:700;color:var(--purple);">${totalClassCap}</div><div style="font-size:0.8rem;color:var(--text2);">Total Classroom Seats (SUMIF *CLASSROOM* in Facility Rooms)</div></div>
-        <div class="table-card" style="padding:0;"><div class="tc-header"><div class="tc-title">🏫 Classroom Rooms — Capacity Detail</div></div><div style="overflow-x:auto;"><table><thead><tr><th>#</th><th>Room Name</th><th>Type</th><th>Capacity</th><th>Allocated</th><th>Status</th></tr></thead><tbody>${crHTML}</tbody></table></div></div>`;
-
-    } else if (sub === 'occupied-seats' || sub === 'available-seats' || sub === 'faculty-labs') {
-      titleEl.textContent = sub === 'occupied-seats' ? '🪑 Occupied Seats' : sub === 'available-seats' ? '🟢 Available Seats' : '🏛️ Faculty Labs';
-      const rHTML = fLabs2.slice(0,100).map((r,i)=>{
-        const pct=r.utilizationRate?Math.round(r.utilizationRate*100):(r.occupiedSeats&&r.totalSeats?Math.round(r.occupiedSeats/r.totalSeats*100):0);
-        const avail=Math.max(0,(r.totalSeats||0)-(r.occupiedSeats||0));
-        const ind=pct>80?'🔴':pct>=50?'🟢':'🟡';
-        const col=pct>80?'var(--red)':pct>=50?'var(--green)':'var(--gold)';
-        return `<tr><td>${i+1}</td><td><strong>${r.facultyName||r.name||'—'}</strong></td><td>${r.category||'—'}</td><td style="text-align:center;">${r.totalSeats||'—'}</td><td style="text-align:center;color:var(--orange);font-weight:700;">${r.occupiedSeats||'—'}</td><td style="text-align:center;color:var(--green);font-weight:700;">${avail||'—'}</td><td><span style="color:${col};">${ind} ${pct}%</span></td><td><span class="badge">${r.status||'Active'}</span></td><td><button class="tc-btn" onclick="labOpenEditModal('facultyLab','${r.id||''}')">Edit</button></td></tr>`;
-      }).join('') || '<tr><td colspan="9" style="text-align:center;padding:2rem;color:var(--text3);">Connect sheet to load data</td></tr>';
-      bodyEl.innerHTML = `<div class="table-card" style="padding:0;"><div class="tc-header"><div class="tc-title">📋 Faculty Labs — Occupancy Detail</div><div class="tc-actions"><input type="text" placeholder="🔍 Search..." style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0.4rem 0.9rem;color:var(--text);font-size:0.82rem;outline:none;min-width:180px;"><button class="tc-btn primary" onclick="labOpenAddModal('facultyLab')">+ Add</button></div></div><div style="overflow-x:auto;max-height:480px;overflow-y:auto;"><table><thead><tr><th>#</th><th>Faculty / Room</th><th>Category</th><th>Total Seats</th><th>Occupied</th><th>Available</th><th>Util %</th><th>Status</th><th>Actions</th></tr></thead><tbody>${rHTML}</tbody></table></div></div>`;
-    }
-  }
-
-  // ─── EXPENSES ────────────────────────────────────────────────────────────
-  else if (module === 'expenses') {
-    const expArr = Array.isArray(EXP) ? EXP : (EXP.all || []);
-    const filterMap = { paid:'paid', pending:'pending', underprocess:'under-process' };
-    const iconMap   = { paid:'✅', pending:'⏳', underprocess:'⚙️' };
-    const colorMap  = { paid:'var(--green)', pending:'var(--red)', underprocess:'var(--orange)' };
-    titleEl.textContent = `💰 Expenses — ${sub.charAt(0).toUpperCase()+sub.slice(1)}`;
-    const filtered = expArr.filter(e => (e.status||'').toLowerCase().includes(filterMap[sub]||sub));
-    const total = filtered.reduce((s,r)=>s+(parseFloat(r.amount)||0),0);
+    const areas = BM.areaOccupancy || BM.areas || [];
+    const pending = BM.pendingRequests || [];
     bodyEl.innerHTML = `
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.75rem;margin-bottom:1rem;">
-        <div style="background:var(--surface2);border-radius:10px;padding:0.85rem;text-align:center;border:1px solid var(--border);">
-          <div style="font-size:1.5rem;font-weight:700;color:${colorMap[sub]||'var(--text)'};">${filtered.length}</div>
-          <div style="font-size:0.7rem;color:var(--text3);margin-top:2px;">Records</div>
-        </div>
-        <div style="background:var(--surface2);border-radius:10px;padding:0.85rem;text-align:center;border:1px solid var(--border);">
-          <div style="font-size:1.2rem;font-weight:700;color:${colorMap[sub]||'var(--text)'};font-family:var(--font-mono);">₹${total.toLocaleString('en-IN')}</div>
-          <div style="font-size:0.7rem;color:var(--text3);margin-top:2px;">Total Amount</div>
-        </div>
-        <div style="background:var(--surface2);border-radius:10px;padding:0.85rem;text-align:center;border:1px solid var(--border);">
-          <div style="font-size:1.5rem;">${iconMap[sub]||'💰'}</div>
-          <div style="font-size:0.7rem;color:var(--text3);margin-top:2px;">Status: ${sub.charAt(0).toUpperCase()+sub.slice(1)}</div>
-        </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:0.75rem;margin-bottom:1.25rem;">
+        ${areas.map(a => {
+          const pct = a.capacity > 0 ? Math.round((a.occupied||0)/a.capacity*100) : 0;
+          const color = pct>80?'var(--red)':pct>=50?'var(--gold)':'var(--green)';
+          return `<div class="table-card" style="padding:0.85rem;border-color:${color}30;"><div style="font-size:0.7rem;color:var(--text3);text-transform:uppercase;margin-bottom:0.3rem;">${a.area||a.name||'Area'}</div><div style="font-size:1.3rem;font-weight:700;color:${color};">${a.occupied||0}/${a.capacity||0}</div><div style="font-size:0.72rem;color:var(--text3);">${pct}% occupied</div></div>`;
+        }).join('')||'<div style="color:var(--text3);font-size:0.85rem;">No biometric area data — connect sheet</div>'}
       </div>
       <div class="table-card">
-        <div class="tc-header">
-          <div class="tc-title">📋 Expenses — ${sub.charAt(0).toUpperCase()+sub.slice(1)} Registry</div>
-          <div class="tc-actions">
-            <input type="text" placeholder="🔍 Search..." oninput="mydDDSearch(this.value)" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0.4rem 0.9rem;color:var(--text);font-size:0.82rem;outline:none;min-width:180px;">
-            <button class="tc-btn primary" onclick="mydCloseDrilldown();showTab('expenses');">Open Module →</button>
-          </div>
-        </div>
-        <div style="overflow-x:auto;max-height:420px;overflow-y:auto;">
-          <table><thead><tr><th>Req ID</th><th>Submitted By</th><th>Category</th><th>Amount ₹</th><th>Date</th><th>Month</th><th>Status</th><th>Actions</th></tr></thead>
-          <tbody id="myd-dd-reg-tbody">
-            ${filtered.slice(0,100).map((r,i)=>`<tr><td style="font-family:var(--font-mono);font-size:0.78rem;">${r.reqId||r.id||i+1}</td><td><strong>${r.submittedBy||r.name||'—'}</strong></td><td>${r.category||'—'}</td><td style="font-family:var(--font-mono);font-weight:700;">${r.amount||'—'}</td><td style="font-family:var(--font-mono);font-size:0.78rem;">${r.date||'—'}</td><td>${r.month||'—'}</td><td><span class="badge badge-${(r.status||'').toLowerCase().replace(' ','-')}">${r.status||'—'}</span></td><td><button class="tc-btn">Edit</button></td></tr>`).join('')||'<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--text3);">No records for this status — connect Google Sheet</td></tr>'}
-          </tbody></table>
-        </div>
+        <div class="tc-header"><div class="tc-title">⏳ Biometric Auth — Pending Requests</div></div>
+        <div style="overflow-x:auto;"><table><thead><tr><th>Req ID</th><th>Employee Name</th><th>Role</th><th>Department</th><th>Request Date</th><th>Auth Type</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+          ${pending.filter(r=>(r.status||'').toLowerCase()==='pending').slice(0,50).map((r,i)=>`<tr><td>${r.id||r.biometricId||i+1}</td><td>${r.name||r.employeeName||'—'}</td><td>${r.category||r.role||'—'}</td><td>${r.department||'—'}</td><td>${r.lastAccess||r.requestDate||'—'}</td><td>${r.accessArea||r.authType||'—'}</td><td><span class="badge badge-pending">Pending</span></td><td><button class="tc-btn" style="color:var(--green);">✓ Auth</button> <button class="tc-btn" style="color:var(--red);">✕ Deny</button></td></tr>`).join('')||'<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--text3);">No pending requests</td></tr>'}
+        </tbody></table></div>
       </div>`;
   }
-
-  // ─── PUBLICATIONS ────────────────────────────────────────────────────────
-  else if (module === 'publications') {
-    const pubArr = Array.isArray(PUB) ? PUB : (PUB.all || []);
-    const filterKey = { journals:'journal', conferences:'conference', reports:'report', preprints:'preprint' };
-    const iconMap2  = { journals:'📰', conferences:'🎤', reports:'📋', preprints:'📄' };
-    titleEl.textContent = `📚 Publications — ${sub.charAt(0).toUpperCase()+sub.slice(1)}`;
-    const filtered = pubArr.filter(p => (p.type||p.publicationType||'').toLowerCase().includes(filterKey[sub]||sub));
-    // Year-wise matrix
-    const yearMap = {};
-    const typeSet = new Set();
-    pubArr.forEach(p => {
-      const y = p.year||p.dateOfPublication||'Unknown';
-      const t = (p.type||p.publicationType||'Other').toLowerCase().includes('journal')?'Journal':
-                (p.type||p.publicationType||'Other').toLowerCase().includes('conference')?'Conference':
-                (p.type||p.publicationType||'Other').toLowerCase().includes('report')?'Report':
-                (p.type||p.publicationType||'Other').toLowerCase().includes('preprint')?'Preprint':'Other';
-      typeSet.add(t);
-      if(!yearMap[y]) yearMap[y]={};
-      yearMap[y][t]=(yearMap[y][t]||0)+1;
-    });
-    const years = Object.keys(yearMap).sort().reverse().slice(0,10);
-    const types = [...typeSet].sort();
-    const matrixHTML = years.length ? `
-      <div class="table-card" style="margin-bottom:1rem;">
-        <div class="tc-header"><div class="tc-title">📊 Year-wise Publication Matrix</div><div style="font-size:0.68rem;color:var(--text3);font-family:var(--font-mono);">Auto-updated from Google Sheet</div></div>
-        <div style="overflow-x:auto;"><table><thead><tr><th>Year</th>${types.map(t=>`<th style="text-align:center;">${t}</th>`).join('')}<th style="text-align:center;">Total</th></tr></thead>
-        <tbody>${years.map(y=>{
-          const rowTotal=types.reduce((s,t)=>s+(yearMap[y][t]||0),0);
-          return `<tr><td style="font-weight:700;font-family:var(--font-mono);">${y}</td>${types.map(t=>`<td style="text-align:center;">${yearMap[y][t]||'—'}</td>`).join('')}<td style="text-align:center;font-weight:700;color:var(--accent);">${rowTotal}</td></tr>`;
-        }).join('')}
-        <tr style="background:rgba(59,130,246,0.08);font-weight:700;border-top:2px solid var(--border);"><td>Total</td>${types.map(t=>`<td style="text-align:center;color:var(--accent);">${pubArr.filter(p=>(p.type||p.publicationType||'').toLowerCase().includes(t.toLowerCase())).length}</td>`).join('')}<td style="text-align:center;color:var(--accent);">${pubArr.length}</td></tr>
-        </tbody></table></div></div>` : '<div style="color:var(--text3);font-size:0.83rem;margin-bottom:1rem;">Connect Google Sheet for Year-wise Matrix</div>';
-    bodyEl.innerHTML = matrixHTML + `<div class="table-card">
+  else if (module === 'facility') {
+    const subMap = { 'faculty-labs': LAB.facultyLabs||LAB.data?.facultyLabs||[], 'facility-rooms': LAB.facilityRooms||LAB.data?.facilityRooms||[], 'faculty-rooms': LAB.facultyRooms||LAB.data?.facultyRooms||[] };
+    titleEl.textContent = '🏛️ Facility & Room Management — ' + sub;
+    const rows = subMap[sub] || [];
+    bodyEl.innerHTML = `<div class="table-card">
       <div class="tc-header">
-        <div class="tc-title">${iconMap2[sub]||'📋'} ${sub.charAt(0).toUpperCase()+sub.slice(1)} Registry</div>
+        <div class="tc-title">📋 ${sub.charAt(0).toUpperCase()+sub.slice(1).replace('-',' ')} Registry</div>
         <div class="tc-actions">
-          <input type="text" placeholder="🔍 Search..." oninput="mydDDSearch(this.value)" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0.4rem 0.9rem;color:var(--text);font-size:0.82rem;outline:none;min-width:180px;">
-          <button class="tc-btn primary" onclick="mydCloseDrilldown();showTab('publications');">Open Module →</button>
+          <input type="text" placeholder="🔍 Search..." style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0.4rem 0.9rem;color:var(--text);font-size:0.82rem;outline:none;min-width:180px;">
+          <button class="tc-btn primary" onclick="labOpenAddModal('${sub==='faculty-labs'?'facultyLab':sub==='facility-rooms'?'facilityRoom':'facultyRoom'}')">+ Add</button>
         </div>
       </div>
-      <div style="overflow-x:auto;max-height:380px;overflow-y:auto;">
-        <table><thead><tr><th>#</th><th>Title</th><th>Authors</th><th>Type</th><th>Year</th><th>Status</th><th>Actions</th></tr></thead>
-        <tbody id="myd-dd-reg-tbody">
-          ${filtered.slice(0,100).map((r,i)=>`<tr><td>${i+1}</td><td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${r.title||''}">${r.title||'—'}</td><td style="font-size:0.78rem;">${r.authors||r.author||'—'}</td><td>${r.type||r.publicationType||'—'}</td><td style="font-family:var(--font-mono);">${r.year||r.dateOfPublication||'—'}</td><td><span class="badge">${r.status||'—'}</span></td><td><button class="tc-btn">Edit</button></td></tr>`).join('')||'<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text3);">Connect sheet to load data</td></tr>'}
+      <div style="overflow-x:auto;max-height:450px;overflow-y:auto;">
+        <table><thead><tr><th>#</th><th>Faculty / Room</th><th>Category</th><th>Total</th><th>Occupied</th><th>Util %</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+          ${rows.slice(0,50).map((r,i)=>{
+            const pct = r.utilizationRate ? Math.round(r.utilizationRate*100) : (r.occupiedSeats&&r.totalSeats ? Math.round(r.occupiedSeats/r.totalSeats*100) : 0);
+            const ind = pct>80?'🔴':pct>=50?'🟢':'🟡';
+            return `<tr><td>${i+1}</td><td>${r.facultyName||r.roomName||r.name||'—'}</td><td>${r.category||'—'}</td><td>${r.totalSeats||r.capacity||'—'}</td><td>${r.occupiedSeats||r.occupied||'—'}</td><td>${ind} ${pct}%</td><td><span class="badge">${r.status||'Active'}</span></td><td><button class="tc-btn" onclick="labOpenEditModal('${sub}','${r.id||''}')">Edit</button></td></tr>`;
+          }).join('')||'<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--text3);">Connect sheet to load data</td></tr>'}
         </tbody></table>
       </div>
     </div>`;
   }
-
-  // ─── INVENTORY ────────────────────────────────────────────────────────────
-  else if (module === 'inventory') {
-    const gifts  = INV.gifts  || [];
-    const stat   = INV.stationeries || INV.stat || [];
-    const mem    = INV.mementos || INV.mem || [];
-    const invTypeMap = { gifts:gifts, stationeries:stat, mementos:mem };
-    const invTitleMap = { gifts:'🎁 Gifts — Transaction Ledger', stationeries:'✏️ Stationeries — Transaction Ledger', mementos:'🏆 Mementos — Transaction Ledger', 'low-critical':'🚨 Low / Critical Stock Alert' };
-    const invIconMap  = { gifts:'🎁', stationeries:'✏️', mementos:'🏆' };
-    titleEl.textContent = invTitleMap[sub] || '📦 Inventory';
-
-    if (sub === 'low-critical') {
-      const allItems = [...gifts, ...stat, ...mem];
-      const lowItems = allItems.filter(i => {
-        const st = typeof getInvStatus === 'function' ? getInvStatus(i) : (i.status||'').toLowerCase();
-        return ['low','critical','out'].includes(st);
-      });
-      const rows = lowItems.slice(0,100).map((r,i)=>{
-        const st = typeof getInvStatus === 'function' ? getInvStatus(r) : (r.status||'').toLowerCase();
-        const stColor = st==='out'?'var(--red)':st==='critical'?'var(--red)':'var(--gold)';
-        const cat = gifts.includes(r)?'Gift':stat.includes(r)?'Stationery':mem.includes(r)?'Memento':'Item';
-        return `<tr><td>${i+1}</td><td><strong>${r.name||r.itemName||'—'}</strong></td><td>${cat}</td><td>${r.category||r.type||'—'}</td><td style="font-weight:700;color:${stColor};font-family:var(--font-mono);">${r.balance||r.stock||0}</td><td style="font-family:var(--font-mono);">${r.reorderLevel||r.threshold||'—'}</td><td><span class="badge" style="color:${stColor};border-color:${stColor}40;background:${stColor}12;">${st.toUpperCase()}</span></td></tr>`;
-      }).join('') || '<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text3);">No low/critical stock items — all inventory is healthy!</td></tr>';
-      bodyEl.innerHTML = `
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.75rem;margin-bottom:1rem;">
-          <div style="background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.25);border-radius:10px;padding:0.85rem;text-align:center;">
-            <div style="font-size:1.5rem;font-weight:700;color:var(--red);">${allItems.filter(i=>{const s=typeof getInvStatus==='function'?getInvStatus(i):(i.status||'');return s==='out';}).length}</div>
-            <div style="font-size:0.7rem;color:var(--text3);margin-top:2px;">Out of Stock</div>
-          </div>
-          <div style="background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.2);border-radius:10px;padding:0.85rem;text-align:center;">
-            <div style="font-size:1.5rem;font-weight:700;color:var(--red);">${allItems.filter(i=>{const s=typeof getInvStatus==='function'?getInvStatus(i):(i.status||'');return s==='critical';}).length}</div>
-            <div style="font-size:0.7rem;color:var(--text3);margin-top:2px;">Critical</div>
-          </div>
-          <div style="background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.25);border-radius:10px;padding:0.85rem;text-align:center;">
-            <div style="font-size:1.5rem;font-weight:700;color:var(--gold);">${allItems.filter(i=>{const s=typeof getInvStatus==='function'?getInvStatus(i):(i.status||'');return s==='low';}).length}</div>
-            <div style="font-size:0.7rem;color:var(--text3);margin-top:2px;">Low Stock</div>
-          </div>
+  else if (module === 'expenses') {
+    titleEl.textContent = '💰 Expenses — ' + sub.charAt(0).toUpperCase() + sub.slice(1);
+    const expArr = Array.isArray(EXP) ? EXP : (EXP.all || []);
+    const filterMap = { paid: 'paid', pending: 'pending', underprocess: 'under-process' };
+    const filtered = expArr.filter(e => (e.status||'').toLowerCase().includes(filterMap[sub]||sub));
+    bodyEl.innerHTML = `<div class="table-card">
+      <div class="tc-header">
+        <div class="tc-title">📋 Expenses — ${sub.charAt(0).toUpperCase()+sub.slice(1)}</div>
+        <div class="tc-actions">
+          <button class="tc-btn primary" onclick="showTab('expenses'); setTimeout(()=>document.querySelector('#tab-expenses .tc-btn.primary')?.click(),300)">+ Add Expense</button>
         </div>
-        <div class="table-card">
-          <div class="tc-header"><div class="tc-title" style="color:var(--red);">🚨 Low Stock Alert Summary</div><div class="tc-actions"><button class="tc-btn primary" onclick="mydCloseDrilldown();showTab('inventory');">Open Inventory →</button></div></div>
-          <div style="overflow-x:auto;max-height:420px;overflow-y:auto;">
-            <table><thead><tr><th>#</th><th>Item Name</th><th>Category</th><th>Sub-Type</th><th>Current Stock</th><th>Reorder Level</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table>
-          </div>
-        </div>`;
-    } else {
-      // Gifts / Stationeries / Mementos — full Transaction Ledger
-      const rows = (invTypeMap[sub]||[]);
-      titleEl.textContent = invTitleMap[sub] || ('📦 '+sub);
-      // Stats row
-      const totalItems = rows.length;
-      const totalIssued = rows.reduce((s,r)=>s+(parseInt(r.totalIssued||r.issued)||0),0);
-      const lowCount = rows.filter(r=>{const s=typeof getInvStatus==='function'?getInvStatus(r):(r.status||'').toLowerCase();return ['low','critical','out'].includes(s);}).length;
-      bodyEl.innerHTML = `
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.75rem;margin-bottom:1rem;">
-          <div style="background:var(--surface2);border-radius:10px;padding:0.85rem;text-align:center;border:1px solid var(--border);">
-            <div style="font-size:1.5rem;font-weight:700;color:var(--text);">${totalItems}</div><div style="font-size:0.7rem;color:var(--text3);margin-top:2px;">Total Items</div>
-          </div>
-          <div style="background:var(--surface2);border-radius:10px;padding:0.85rem;text-align:center;border:1px solid var(--border);">
-            <div style="font-size:1.5rem;font-weight:700;color:var(--orange);">${totalIssued}</div><div style="font-size:0.7rem;color:var(--text3);margin-top:2px;">Total Issued</div>
-          </div>
-          <div style="background:rgba(239,68,68,0.06);border-radius:10px;padding:0.85rem;text-align:center;border:1px solid rgba(239,68,68,0.2);">
-            <div style="font-size:1.5rem;font-weight:700;color:var(--red);">${lowCount}</div><div style="font-size:0.7rem;color:var(--text3);margin-top:2px;">Low/Critical</div>
-          </div>
-        </div>
-        <div class="table-card">
-          <div class="tc-header">
-            <div class="tc-title">${invTitleMap[sub]||'📋 Registry'}</div>
-            <div class="tc-actions">
-              <input type="text" placeholder="🔍 Search..." oninput="mydDDSearch(this.value)" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0.4rem 0.9rem;color:var(--text);font-size:0.82rem;outline:none;min-width:180px;">
-              <select oninput="mydDDFilter(this.value)" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0.4rem 0.75rem;color:var(--text);font-size:0.78rem;outline:none;">
-                <option value="">All Status</option><option value="ok">OK</option><option value="low">Low</option><option value="critical">Critical</option><option value="out">Out of Stock</option>
-              </select>
-              <button class="tc-btn primary" onclick="mydCloseDrilldown();showTab('inventory');switchInvTab('${sub}');">Open Module →</button>
-            </div>
-          </div>
-          <div style="overflow-x:auto;max-height:420px;overflow-y:auto;">
-            <table><thead><tr><th>#</th><th>Item Name</th><th>Category</th><th>Balance</th><th>Issued</th><th>Reorder Level</th><th>Status</th><th>Actions</th></tr></thead>
-            <tbody id="myd-dd-reg-tbody">
-              ${rows.slice(0,100).map((r,i)=>{
-                const st = typeof getInvStatus==='function'?getInvStatus(r):(r.status||'ok').toLowerCase();
-                const stColor = st==='out'||st==='critical'?'var(--red)':st==='low'?'var(--gold)':'var(--green)';
-                const bal = parseInt(r.balance||r.stock||0);
-                const pct = (r.reorderLevel||0)>0?Math.round(bal/(r.reorderLevel||1)*100):100;
-                return `<tr><td>${i+1}</td><td><strong>${r.name||r.itemName||'—'}</strong></td><td>${r.category||r.type||'—'}</td><td><div style="font-family:var(--font-mono);font-weight:700;color:${stColor};">${bal}</div><div style="width:60px;height:3px;background:var(--surface3);border-radius:2px;margin-top:2px;overflow:hidden;"><div style="width:${Math.min(pct,100)}%;height:100%;background:${stColor};border-radius:2px;"></div></div></td><td style="font-family:var(--font-mono);">${r.totalIssued||r.issued||'—'}</td><td style="font-family:var(--font-mono);">${r.reorderLevel||r.threshold||'—'}</td><td><span class="badge" style="color:${stColor};border-color:${stColor}40;background:${stColor}12;">${st.toUpperCase()}</span></td><td><button class="tc-btn">Issue</button> <button class="tc-btn">Edit</button></td></tr>`;
-              }).join('')||'<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--text3);">Connect sheet to load data</td></tr>'}
-            </tbody></table>
-          </div>
-        </div>`;
-    }
+      </div>
+      <div style="overflow-x:auto;max-height:450px;overflow-y:auto;">
+        <table><thead><tr><th>Req ID</th><th>Submitted By</th><th>Category</th><th>Amount ₹</th><th>Date</th><th>Month</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+          ${filtered.slice(0,50).map((r,i)=>`<tr><td>${r.reqId||r.id||i+1}</td><td>${r.submittedBy||r.name||'—'}</td><td>${r.category||'—'}</td><td>${r.amount||'—'}</td><td>${r.date||'—'}</td><td>${r.month||'—'}</td><td><span class="badge badge-${(r.status||'').toLowerCase().replace(' ','-')}">${r.status||'—'}</span></td><td><button class="tc-btn">Edit</button></td></tr>`).join('')||'<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--text3);">No records for this status</td></tr>'}
+        </tbody></table>
+      </div>
+    </div>`;
   }
-}
-
-function mydDDFilter(status) {
-  const tbody = document.getElementById('myd-dd-reg-tbody');
-  if (!tbody) return;
-  tbody.querySelectorAll('tr').forEach(tr => {
-    if (!status) { tr.style.display = ''; return; }
-    const txt = tr.textContent.toLowerCase();
-    tr.style.display = txt.includes(status.toLowerCase()) ? '' : 'none';
-  });
+  else if (module === 'publications') {
+    titleEl.textContent = '📚 Publications — ' + sub.charAt(0).toUpperCase() + sub.slice(1);
+    const pubArr = Array.isArray(PUB) ? PUB : (PUB.all || []);
+    const filterKey = { journals: 'journal', conferences: 'conference', reports: 'report', preprints: 'preprint' };
+    const filtered = pubArr.filter(p => (p.type||p.publicationType||'').toLowerCase().includes(filterKey[sub]||sub));
+    bodyEl.innerHTML = `<div class="table-card">
+      <div class="tc-header">
+        <div class="tc-title">📋 Publications — ${sub}</div>
+        <div class="tc-actions"><button class="tc-btn primary" onclick="showTab('publications'); setTimeout(()=>document.querySelector('#tab-publications .tc-btn.primary')?.click(),300)">+ Add</button></div>
+      </div>
+      <div style="overflow-x:auto;max-height:450px;overflow-y:auto;">
+        <table><thead><tr><th>#</th><th>Title</th><th>Authors</th><th>Type</th><th>Year</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+          ${filtered.slice(0,50).map((r,i)=>`<tr><td>${i+1}</td><td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.title||'—'}</td><td>${r.authors||r.author||'—'}</td><td>${r.type||r.publicationType||'—'}</td><td>${r.year||r.dateOfPublication||'—'}</td><td><span class="badge">${r.status||'—'}</span></td><td><button class="tc-btn">Edit</button></td></tr>`).join('')||'<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text3);">Connect sheet to load data</td></tr>'}
+        </tbody></table>
+      </div>
+    </div>`;
+  }
+  else if (module === 'inventory') {
+    titleEl.textContent = '📦 Inventory — ' + sub.charAt(0).toUpperCase() + sub.slice(1);
+    const invMap = { all: [...(INV.gifts||[]),...(INV.stationeries||INV.stat||[]),...(INV.mementos||INV.mem||[])], gifts: INV.gifts||[], stationeries: INV.stationeries||INV.stat||[], mementos: INV.mementos||INV.mem||[] };
+    const rows = invMap[sub] || [];
+    bodyEl.innerHTML = `<div class="table-card">
+      <div class="tc-header">
+        <div class="tc-title">📋 Inventory — ${sub}</div>
+        <div class="tc-actions"><button class="tc-btn primary" onclick="showTab('inventory'); switchInvTab('${sub==='all'?'gifts':sub}')">+ Add Item</button></div>
+      </div>
+      <div style="overflow-x:auto;max-height:450px;overflow-y:auto;">
+        <table><thead><tr><th>#</th><th>Item Name</th><th>Category</th><th>Balance</th><th>Issued</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+          ${rows.slice(0,50).map((r,i)=>`<tr><td>${i+1}</td><td>${r.name||r.itemName||'—'}</td><td>${r.category||r.type||'—'}</td><td>${r.balance||r.stock||'—'}</td><td>${r.totalIssued||r.issued||'—'}</td><td><span class="badge">${r.status||'Active'}</span></td><td><button class="tc-btn">Edit</button></td></tr>`).join('')||'<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text3);">Connect sheet to load data</td></tr>'}
+        </tbody></table>
+      </div>
+    </div>`;
+  }
 }
 
 function mydDDSearch(val) {
