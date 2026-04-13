@@ -1,9 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WSAI - PORTAL v37</title>
+<title>WSAI - PORTAL v33</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
@@ -95,75 +96,6 @@
     border-radius: 14px;
   }
   [data-theme="light"] .table-card:hover { box-shadow: var(--shadow-md); }
-  /* ── Login gate: app hidden until authenticated ── */
-  #app { display:none; opacity:0; transition:opacity 0.4s ease; }
-  #app.visible { display:flex; flex-direction:column; min-height:100vh; opacity:1; }
-
-  /* ── Login gate overlay ── */
-  #access-gate {
-    position:fixed; inset:0; z-index:99999;
-    background:var(--color-background-primary,#0A0E1A);
-    display:flex; align-items:center; justify-content:center;
-    padding:1rem; overflow-y:auto;
-  }
-  .gate-card {
-    width:100%; max-width:420px;
-    background:var(--surface,#111827);
-    border:1px solid var(--border,rgba(99,179,237,0.15));
-    border-radius:20px;
-    padding:2.5rem 2rem 2rem;
-    position:relative; overflow:hidden;
-    box-shadow:0 25px 80px rgba(0,0,0,0.5);
-    animation:appIn 0.45s both;
-  }
-  .gate-card::before {
-    content:''; position:absolute; top:0; left:0; right:0; height:3px;
-    background:linear-gradient(90deg,#3B82F6,#06B6D4,#8B5CF6);
-  }
-  .gate-logo {
-    display:flex; align-items:center; gap:10px;
-    margin-bottom:1.75rem;
-  }
-  .gate-logo-img {
-    width:38px; height:38px; border-radius:9px;
-    background:#fff; padding:2px; object-fit:contain; flex-shrink:0;
-  }
-  .gate-logo-name { font-size:1.15rem; font-weight:700; color:var(--text,#E2E8F0); font-family:var(--font-display); }
-  .gate-logo-sub  { font-size:0.65rem; color:var(--text3,#64748B); font-family:var(--font-mono); letter-spacing:.08em; text-transform:uppercase; }
-  .gate-title { font-size:1.05rem; font-weight:600; color:var(--text,#E2E8F0); margin-bottom:0.25rem; }
-  .gate-sub   { font-size:0.78rem; color:var(--text2,#94A3B8); margin-bottom:1.5rem; }
-  .gate-field { margin-bottom:1rem; }
-  .gate-field label { display:block; font-size:0.72rem; font-family:var(--font-mono); color:var(--text2,#94A3B8); text-transform:uppercase; letter-spacing:.06em; margin-bottom:0.4rem; }
-  .gate-field input {
-    width:100%; background:var(--surface2,#1E293B); border:1px solid var(--border,rgba(99,179,237,0.15));
-    border-radius:10px; padding:0.7rem 0.9rem; color:var(--text,#E2E8F0);
-    font-family:var(--font-body); font-size:0.88rem; outline:none;
-    transition:border-color .2s, box-shadow .2s;
-  }
-  .gate-field input:focus { border-color:var(--accent,#3B82F6); box-shadow:0 0 0 3px rgba(59,130,246,0.18); }
-  .gate-btn {
-    width:100%; padding:0.78rem; border:none; border-radius:10px; cursor:pointer;
-    background:linear-gradient(135deg,#3B82F6,#06B6D4); color:#fff;
-    font-size:0.92rem; font-weight:600; font-family:var(--font-body);
-    transition:opacity .2s, transform .15s; margin-top:0.5rem;
-  }
-  .gate-btn:hover { opacity:0.88; transform:translateY(-1px); }
-  .gate-btn:active { transform:translateY(0); }
-  .gate-error {
-    display:none; margin-top:0.75rem; padding:0.6rem 0.85rem;
-    background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.25);
-    border-radius:8px; color:#F87171; font-size:0.78rem; font-family:var(--font-mono);
-    animation:gateShake .4s ease;
-  }
-  .gate-footer {
-    margin-top:1.5rem; padding-top:1rem; border-top:1px solid var(--border,rgba(99,179,237,0.1));
-    font-size:0.68rem; font-family:var(--font-mono); color:var(--text3,#64748B);
-    text-align:center; line-height:1.7;
-  }
-  @keyframes gateShake {
-    0%,100%{transform:translateX(0)} 20%{transform:translateX(-7px)}
-    40%{transform:translateX(7px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)}
-  }
   [data-theme="light"] .gate-card {
     background: #FFFFFF;
     border: 1px solid rgba(30,58,138,0.12);
@@ -1322,37 +1254,6 @@
   </div>
 </div>
 
-
-<!-- ════════════════════════ LOGIN GATE ════════════════════════ -->
-<div id="access-gate">
-  <div class="gate-card">
-    <div class="gate-logo">
-      <div style="width:38px;height:38px;border-radius:9px;background:linear-gradient(135deg,#3B82F6,#06B6D4);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-        <span style="color:#fff;font-weight:800;font-size:14px;font-family:var(--font-display);">WS</span>
-      </div>
-      <div>
-        <div class="gate-logo-name">WSAI Portal</div>
-        <div class="gate-logo-sub">IIT Madras · Unified Management</div>
-      </div>
-    </div>
-    <div class="gate-title">Sign in to your account</div>
-    <div class="gate-sub">Use your IIT Madras institutional email</div>
-    <div class="gate-field">
-      <label>Email address</label>
-      <input type="email" id="g-user" placeholder="you@iitm.ac.in" autocomplete="username" spellcheck="false">
-    </div>
-    <div class="gate-field">
-      <label>Password</label>
-      <input type="password" id="g-pass" placeholder="Enter your password" autocomplete="current-password">
-    </div>
-    <div id="gate-err" class="gate-error"></div>
-    <button class="gate-btn" onclick="attemptLogin()">Sign in →</button>
-    <div class="gate-footer">
-      WSAI Portal · IIT Madras<br>
-      <span style="color:var(--accent,#3B82F6);">Restricted to @iitm.ac.in institutional accounts</span>
-    </div>
-  </div>
-</div>
 
 <!-- ════════════════════════ MAIN APP ════════════════════════ -->
 <div id="app">
@@ -4643,20 +4544,17 @@
           <div class="table-card" style="overflow:visible;">
             <div class="tc-header">
               <div class="tc-title">📊 Year-wise Publication Matrix</div>
-              <span style="font-size:0.7rem;font-family:var(--font-mono);color:var(--text3);">Journals · Conferences · Reports · Preprints · Natl / Intl · Auto-updated from Sheet</span>
+              <span style="font-size:0.7rem;font-family:var(--font-mono);color:var(--text3);">Journal · Conference · National · International</span>
             </div>
             <div style="overflow-x:auto;">
               <table>
                 <thead>
                   <tr>
-                    <th>Year</th>
-                    <th title="Journal — National">📚 J-Natl</th>
-                    <th title="Journal — International">📚 J-Intl</th>
-                    <th title="Conference — National">🎤 C-Natl</th>
-                    <th title="Conference — International">🎤 C-Intl</th>
-                    <th title="Reports &amp; Preprints">📄 Rpts</th>
-                    <th title="Preprints / ArXiv">🌐 Pre</th>
-                    <th style="background:#2E7D32;color:#fff;" title="Grand total for the year">Total</th>
+                    <th>Year</th><th>Jrnl-Natl</th><th>Jrnl-Intl</th>
+                    <th>Conf-Natl</th><th>Conf-Intl</th>
+                    <th style="background:#37474F;color:var(--gold);">Natl Total</th>
+                    <th style="background:#37474F;color:var(--accent2);">Intl Total</th>
+                    <th style="background:#2E7D32;color:#fff;">Year Total</th>
                   </tr>
                 </thead>
                 <tbody id="pub-matrix-tbody">
@@ -6151,10 +6049,6 @@
             toastMsg = '🎓 Welcome, ' + uName + ' — Education Program Console ready';
           } else if (iface === 'sys_admin') {
             toastMsg = '⚙️ Welcome, ' + uName + ' — System Admin Console ready';
-          } else if (iface === 'mis' || iface === 'creator' || iface === 'admin') {
-            toastMsg = '📊 Welcome, ' + uName + ' — Management Console ready';
-          } else if (iface === 'staff') {
-            toastMsg = '🏢 Welcome, ' + uName + ' — Staff Portal ready';
           } else {
             toastMsg = '👋 Welcome back, ' + uName;
           }
@@ -8561,25 +8455,16 @@
 
   // ── Role → landing tab ────────────────────────────────────────────────────
   const INTERFACE_LANDING = {
-    // All interfaces land on My Dashboard (v37 fix: complete mapping)
-    creator:     'my-dashboard',
-    admin:       'my-dashboard',
-    full:        'my-dashboard',
     coo:         'my-dashboard',
     faculty:     'my-dashboard',
-    staff:       'my-dashboard',
     hr_manager:  'my-dashboard',
     finance_mgr: 'my-dashboard',
     facility_mgr:'my-dashboard',
-    edu_pgm_mgr: 'my-dashboard',
     event_mgr:   'my-dashboard',
+    edu_pgm_mgr: 'my-dashboard',
     sys_admin:   'my-dashboard',
     mis:         'my-dashboard',
-    hr:          'my-dashboard',
-    finance:     'my-dashboard',
-    labs:        'my-dashboard',
-    publications:'my-dashboard',
-    readonly:    'my-dashboard'
+    full:        'my-dashboard'
   };
 
   // ── Role → welcome banner config ─────────────────────────────────────────
@@ -8628,47 +8513,6 @@
       icon: '🛡️', color: '#3B82F6', bg: 'rgba(59,130,246,0.08)', border: 'rgba(59,130,246,0.25)',
       title: 'Administrator Dashboard',
       access: 'Full portal access · All modules · Complete management'
-    },
-    /* ── v37 fix: added missing interface welcome configs ── */
-    staff: {
-      icon: '🏢', color: '#10B981', bg: 'rgba(16,185,129,0.08)', border: 'rgba(16,185,129,0.25)',
-      title: 'Staff Portal',
-      access: 'HR overview · Expenses · Inventory management'
-    },
-    creator: {
-      icon: '🛡️', color: '#3B82F6', bg: 'rgba(59,130,246,0.08)', border: 'rgba(59,130,246,0.25)',
-      title: 'Creator (Full Admin)',
-      access: 'Full portal access · All modules · Complete management · System configuration'
-    },
-    admin: {
-      icon: '🛡️', color: '#3B82F6', bg: 'rgba(59,130,246,0.08)', border: 'rgba(59,130,246,0.25)',
-      title: 'Administrator Dashboard',
-      access: 'Full portal access · All modules · Complete management'
-    },
-    hr: {
-      icon: '👤', color: '#8B5CF6', bg: 'rgba(139,92,246,0.08)', border: 'rgba(139,92,246,0.25)',
-      title: 'HR & People Portal',
-      access: 'People management · HR registry · Activity log'
-    },
-    finance: {
-      icon: '💳', color: '#F59E0B', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.25)',
-      title: 'Finance Portal',
-      access: 'Expense management · Financial records · Activity log'
-    },
-    labs: {
-      icon: '🔬', color: '#06B6D4', bg: 'rgba(6,182,212,0.08)', border: 'rgba(6,182,212,0.25)',
-      title: 'Labs & Assets Portal',
-      access: 'Lab management · Asset tracking · Inventory · Biometric'
-    },
-    publications: {
-      icon: '📚', color: '#7C3AED', bg: 'rgba(124,58,237,0.08)', border: 'rgba(124,58,237,0.25)',
-      title: 'Publications Portal',
-      access: 'Publication records · Research output · Journal & conference papers'
-    },
-    readonly: {
-      icon: '👁️', color: '#64748B', bg: 'rgba(100,116,139,0.08)', border: 'rgba(100,116,139,0.25)',
-      title: 'Read-Only Access',
-      access: 'View-only · People · Expenses · Publications · Inventory'
     }
   };
 
@@ -8713,7 +8557,7 @@
     document.body.setAttribute('data-interface', iface);
 
     // ── 4. Landing tab ──────────────────────────────────────────────────────
-    const landing = INTERFACE_LANDING[iface] || INTERFACE_LANDING[role] || 'my-dashboard';
+    const landing = INTERFACE_LANDING[iface] || INTERFACE_LANDING['full'];
     setTimeout(() => { try { showTab(landing); } catch(e){} }, 200);
 
     // ── 5. Write-button visibility ──────────────────────────────────────────
@@ -8738,8 +8582,8 @@
     const existing = document.getElementById('interface-welcome-banner');
     if (existing) existing.remove();
 
-    const cfg = INTERFACE_WELCOME[iface] || INTERFACE_WELCOME[role] || INTERFACE_WELCOME['full'];
-    const landing = INTERFACE_LANDING[iface] || INTERFACE_LANDING[role] || 'my-dashboard';
+    const cfg = INTERFACE_WELCOME[iface] || INTERFACE_WELCOME['full'];
+    const landing = INTERFACE_LANDING[iface] || 'dashboard';
     const landingPanel = document.getElementById('tab-' + landing);
     if (!landingPanel) return;
 
@@ -8749,26 +8593,15 @@
     if (userObj) displayName = userObj.name;
     else displayName = (_currentUser||'').split('@')[0] || '';
 
-    // Greeting — role-aware for every interface
+    // Faculty get "Professor <Surname>" greeting
     let greeting = '';
     if (iface === 'faculty') {
       const surname = displayName.split(/[\s.]+/).filter(Boolean).pop() || displayName;
       greeting = `Welcome, Professor ${surname}`;
     } else if (iface === 'coo') {
-      greeting = displayName ? `Welcome, ${displayName} Sir` : 'Welcome, COO';
-    } else if (iface === 'sys_admin' || iface === 'mis' || iface === 'creator' || iface === 'admin') {
-      greeting = displayName ? `Welcome, ${displayName}` : 'Welcome, Administrator';
-    } else if (iface === 'hr_manager') {
-      greeting = displayName ? `Welcome, ${displayName}` : 'Welcome, HR Manager';
-    } else if (iface === 'finance_mgr') {
-      greeting = displayName ? `Welcome, ${displayName}` : 'Welcome, Finance Manager';
-    } else if (iface === 'facility_mgr') {
-      greeting = displayName ? `Welcome, ${displayName}` : 'Welcome, Facility Manager';
-    } else if (iface === 'edu_pgm_mgr') {
-      greeting = displayName ? `Welcome, ${displayName}` : 'Welcome, Education Manager';
-    } else if (iface === 'staff') {
-      greeting = displayName ? `Welcome, ${displayName}` : 'Welcome, Staff';
+      greeting = `Welcome, ${displayName}`;
     } else {
+      // Use designation if known
       const desg = userObj && userObj.designation ? userObj.designation : cfg.title;
       greeting = displayName ? `Welcome, ${displayName}` : `Welcome to ${desg}`;
     }
@@ -10683,13 +10516,12 @@
   // ══════════════════════════════════════════════════════════════════
 
   const EXP = {
-    all:         [],
-    filtered:    [],
-    sortKey:     'invoiceDate',
-    sortDir:     'desc',
-    page:        1,
-    pageSize:    30,
-    activeSheet: 'all'   // v37: tracks which sheet tab is active; used by per-tab refresh
+    all:       [],
+    filtered:  [],
+    sortKey:   'invoiceDate',
+    sortDir:   'desc',
+    page:      1,
+    pageSize:  30
   };
 
   const EXP_CATEGORIES = [
@@ -11530,7 +11362,6 @@
     sortDir:   'desc',
     page:      1,
     pageSize:  30,
-    matrix:    null,   // v37: populated by GET_PUBLICATION_MATRIX; used by pubRenderMatrix()
   };
 
   // ── CONFIG mirrors CONFIG.publications from Apps Script ──
@@ -11622,36 +11453,11 @@
     }
 
     pubOnData(data);
-
-    // v37: also fetch the pre-aggregated year×type matrix from GAS backend
-    // This gives us jurisdiction sub-counts and auto-detected years without
-    // a second client-side aggregation loop over PUB.all
-    try {
-      const mData = await _jsonpFetch(url, { action: 'GET_PUBLICATION_MATRIX', t: Date.now() });
-      if (mData && mData.status === 'ok' && mData.matrix) {
-        PUB.matrix = mData;
-        // Merge backend years into PUB_YEARS so the year filter stays complete
-        (mData.years || []).forEach(y => {
-          const yi = parseInt(y);
-          if (yi && !PUB_YEARS.includes(yi)) PUB_YEARS.push(yi);
-        });
-        PUB_YEARS.sort((a, b) => a - b);
-        pubPopulateFilters();   // refresh year dropdown with backend years
-        pubRenderMatrix();      // re-render now that PUB.matrix is available
-      }
-    } catch(e) {
-      // Non-fatal: portal falls back to client-side matrix rendering from PUB.all
-    }
-
     logAction('Sync Publications', _currentUser||'Admin', 'Publications', 'Loaded from sheet via JSONP');
   }
 
   // ── Ingest sheet payload — strict per-sheet column mapping from CONFIG ──
-  // v37: clears PUB.matrix at entry so stale backend data never bleeds into
-  // a fresh sync. GET_PUBLICATION_MATRIX is fetched *after* pubOnData returns
-  // inside pubLoadFromSheet and will set PUB.matrix only on success.
   function pubOnData(data) {
-    PUB.matrix = null;   // reset — will be re-populated by GET_PUBLICATION_MATRIX fetch
     const merged = [];
 
     // Journal (10 cols): sNo,faculty,doi,publications,journalName,impactFactor,dateOfPublication,jurisdiction,publishedPaper,comments
@@ -11760,13 +11566,8 @@
   }
 
   function pubPopulateFilters() {
-    // Year filter: prefer years from GET_PUBLICATION_MATRIX (auto-detected from sheet)
-    // then merge with PUB_YEARS seed and any years found in PUB.all
+    // Year filter from PUB_YEARS + any years in data
     const yearSet = new Set(PUB_YEARS.map(String));
-    // If backend matrix is loaded, use its year list (most authoritative source)
-    if (PUB.matrix && Array.isArray(PUB.matrix.years)) {
-      PUB.matrix.years.forEach(y => { if (y !== 'Unknown') yearSet.add(String(y)); });
-    }
     PUB.all.forEach(r => { const y=pubExtractYear(r.dateOfPublication); if(y) yearSet.add(String(y)); });
     const ySel = document.getElementById('pub-filter-year');
     if (ySel) {
@@ -11853,112 +11654,24 @@
     }).length + ' A/A* conf');
   }
 
-  // ── Publication Matrix — v37: uses GET_PUBLICATION_MATRIX backend data when
-  //    available; falls back to client-side aggregation from PUB.all.
-  //
-  //  Columns (when backend matrix available — full jurisdiction breakdown):
-  //    Year | Journals | Conferences | Reports | Preprints | Total
-  //    Each type column shows: Natl / Intl / Total sub-columns
-  //
-  //  Columns (fallback — client-side from PUB.all, jurisdiction split):
-  //    Year | Jrnl-Natl | Jrnl-Intl | Conf-Natl | Conf-Intl | Natl Total | Intl Total | Year Total
-  // ──────────────────────────────────────────────────────────────────────────────
+  // ── Publication Matrix — mirrors createPublicationMatrix() with SEARCH-based year matching ──
   function pubRenderMatrix() {
     const tbody = document.getElementById('pub-matrix-tbody');
     if (!tbody) return;
-
-    // ── PATH A: backend matrix data available (GET_PUBLICATION_MATRIX) ──
-    if (PUB.matrix && PUB.matrix.status === 'ok' && PUB.matrix.years && PUB.matrix.matrix) {
-      const m       = PUB.matrix;
-      const years   = m.years || [];
-      const matrix  = m.matrix || {};
-      const totals  = m.totals || {};
-
-      // Ensure the <thead> reflects the full 4-type layout
-      const thead = tbody.closest('table')?.querySelector('thead tr');
-      if (thead) {
-        thead.innerHTML = `
-          <th style="min-width:60px;">Year</th>
-          <th style="background:rgba(59,130,246,0.18);color:var(--accent);" title="Journals">📚 J-Natl</th>
-          <th style="background:rgba(59,130,246,0.12);color:var(--accent);" title="Journals">📚 J-Intl</th>
-          <th style="background:rgba(139,92,246,0.18);color:var(--purple);" title="Conferences">🎤 C-Natl</th>
-          <th style="background:rgba(139,92,246,0.12);color:var(--purple);" title="Conferences">🎤 C-Intl</th>
-          <th style="background:rgba(16,185,129,0.15);color:var(--green);" title="Reports">📄 Rpts</th>
-          <th style="background:rgba(245,158,11,0.15);color:var(--gold);" title="Preprints/ArXiv">🌐 Pre</th>
-          <th style="background:#2E7D32;color:#fff;" title="Year grand total">Total</th>`;
-      }
-
-      const rowsHtml = years.map(yr => {
-        const row    = matrix[yr] || {};
-        const jCell  = row.journals      || { total:0, national:0, international:0 };
-        const cCell  = row.conferences   || { total:0, national:0, international:0 };
-        const rCell  = row.reports       || { total:0, national:0, international:0 };
-        const pCell  = row.preprintArxiv || { total:0, national:0, international:0 };
-        const rowTot = row.rowTotal || (jCell.total + cCell.total + rCell.total + pCell.total);
-        const isEmpty = rowTot === 0;
-        const dash    = v => isEmpty ? '—' : (v || 0);
-        return `<tr style="${isEmpty ? 'opacity:0.45' : ''}">
-          <td style="font-weight:700;text-align:center;background:var(--surface2);font-family:var(--font-mono);">${yr}</td>
-          <td style="text-align:center;background:rgba(59,130,246,0.06);">${dash(jCell.national)}</td>
-          <td style="text-align:center;background:rgba(59,130,246,0.03);">${dash(jCell.international)}</td>
-          <td style="text-align:center;background:rgba(139,92,246,0.06);">${dash(cCell.national)}</td>
-          <td style="text-align:center;background:rgba(139,92,246,0.03);">${dash(cCell.international)}</td>
-          <td style="text-align:center;background:rgba(16,185,129,0.06);">${dash(rCell.total)}</td>
-          <td style="text-align:center;background:rgba(245,158,11,0.06);">${dash(pCell.total)}</td>
-          <td style="text-align:center;font-weight:800;font-size:1rem;background:rgba(16,185,129,0.12);color:var(--green);">${rowTot || '—'}</td>
-        </tr>`;
-      });
-
-      // Cumulative totals row from backend totals block
-      const tJ = totals.journals      || { total:0, national:0, international:0 };
-      const tC = totals.conferences   || { total:0, national:0, international:0 };
-      const tR = totals.reports       || { total:0, national:0, international:0 };
-      const tP = totals.preprintArxiv || { total:0, national:0, international:0 };
-      const gT = totals.grandTotal    || 0;
-      rowsHtml.push(`<tr style="background:rgba(16,185,129,0.08);font-weight:700;border-top:2px solid rgba(16,185,129,0.3);">
-        <td style="text-align:center;font-size:0.68rem;letter-spacing:0.06em;font-family:var(--font-mono);background:rgba(16,185,129,0.08);">TOTAL</td>
-        <td style="text-align:center;background:rgba(59,130,246,0.08);color:var(--accent);">${tJ.national}</td>
-        <td style="text-align:center;background:rgba(59,130,246,0.05);color:var(--accent);">${tJ.international}</td>
-        <td style="text-align:center;background:rgba(139,92,246,0.08);color:var(--purple);">${tC.national}</td>
-        <td style="text-align:center;background:rgba(139,92,246,0.05);color:var(--purple);">${tC.international}</td>
-        <td style="text-align:center;background:rgba(16,185,129,0.08);color:var(--green);">${tR.total}</td>
-        <td style="text-align:center;background:rgba(245,158,11,0.08);color:var(--gold);">${tP.total}</td>
-        <td style="text-align:center;font-size:1.1rem;color:var(--green);background:rgba(16,185,129,0.15);">${gT}</td>
-      </tr>`);
-
-      tbody.innerHTML = rowsHtml.join('');
-      return; // done — backend path taken
-    }
-
-    // ── PATH B: fallback — client-side aggregation from PUB.all ──
-    // (same logic as before; also covers all 4 types now)
     const all = PUB.all;
 
-    // Auto-detect all years from data + PUB_YEARS seed
+    // Build year list from PUB_YEARS + any years found in data (auto-expand for new years)
     const yearSet = new Set(PUB_YEARS.map(String));
-    all.forEach(r => { const y = pubExtractYear(r.dateOfPublication); if (y) yearSet.add(String(y)); });
+    all.forEach(r => { const y=pubExtractYear(r.dateOfPublication); if(y) yearSet.add(String(y)); });
     const years = [...yearSet].sort();
 
-    // Restore original 8-column thead (Natl/Intl split for J+C, totals)
-    const thead = tbody.closest('table')?.querySelector('thead tr');
-    if (thead) {
-      thead.innerHTML = `
-        <th>Year</th><th>Jrnl-Natl</th><th>Jrnl-Intl</th>
-        <th>Conf-Natl</th><th>Conf-Intl</th>
-        <th style="background:#37474F;color:var(--gold);">Natl Total</th>
-        <th style="background:#37474F;color:var(--accent2);">Intl Total</th>
-        <th style="background:#2E7D32;color:#fff;">Year Total</th>`;
-    }
-
     const rowsHtml = years.map(y => {
+      // SUMPRODUCT((jurisdiction="National") * ISNUMBER(SEARCH(year, dateCol))) — per GAS formula
       const jN = all.filter(r => r._type==='journal'    && r.jurisdiction==='National'      && pubYearMatch(r.dateOfPublication,y)).length;
       const jI = all.filter(r => r._type==='journal'    && r.jurisdiction==='International' && pubYearMatch(r.dateOfPublication,y)).length;
       const cN = all.filter(r => r._type==='conference' && r.jurisdiction==='National'      && pubYearMatch(r.dateOfPublication,y)).length;
       const cI = all.filter(r => r._type==='conference' && r.jurisdiction==='International' && pubYearMatch(r.dateOfPublication,y)).length;
-      // Reports + Preprints contribute to totals too
-      const rN = all.filter(r => (r._type==='report'||r._type==='preprint') && r.jurisdiction==='National'      && pubYearMatch(r.dateOfPublication,y)).length;
-      const rI = all.filter(r => (r._type==='report'||r._type==='preprint') && r.jurisdiction==='International' && pubYearMatch(r.dateOfPublication,y)).length;
-      const tN = jN+cN+rN, tI=jI+cI+rI, tot=tN+tI;
+      const tN = jN+cN, tI=jI+cI, tot=tN+tI;
       const isEmpty = tot === 0;
       return `<tr style="${isEmpty?'opacity:0.45':''}">
         <td style="font-weight:700;text-align:center;background:var(--surface2);font-family:var(--font-mono);">${y}</td>
@@ -11972,16 +11685,14 @@
       </tr>`;
     });
 
-    // Cumulative total row
+    // Cumulative Total row — mirrors SUM(col_startRow:col_endRow) formula in GAS
     const tJN = all.filter(r => r._type==='journal'    && r.jurisdiction==='National').length;
     const tJI = all.filter(r => r._type==='journal'    && r.jurisdiction==='International').length;
     const tCN = all.filter(r => r._type==='conference' && r.jurisdiction==='National').length;
     const tCI = all.filter(r => r._type==='conference' && r.jurisdiction==='International').length;
-    const tRN = all.filter(r => (r._type==='report'||r._type==='preprint') && r.jurisdiction==='National').length;
-    const tRI = all.filter(r => (r._type==='report'||r._type==='preprint') && r.jurisdiction==='International').length;
-    const tN  = tJN+tCN+tRN, tI=tJI+tCI+tRI, grand=tN+tI;
+    const tN  = tJN+tCN, tI=tJI+tCI, grand=tN+tI;
     rowsHtml.push(`<tr style="background:rgba(16,185,129,0.08);font-weight:700;border-top:2px solid rgba(16,185,129,0.3);">
-      <td style="text-align:center;font-size:0.68rem;letter-spacing:0.06em;font-family:var(--font-mono);background:rgba(16,185,129,0.08);">TOTAL</td>
+      <td style="text-align:center;font-size:0.7rem;letter-spacing:0.06em;font-family:var(--font-mono);background:rgba(16,185,129,0.08);">CUMULATIVE TOTAL</td>
       <td style="text-align:center;">${tJN}</td><td style="text-align:center;">${tJI}</td>
       <td style="text-align:center;">${tCN}</td><td style="text-align:center;">${tCI}</td>
       <td style="text-align:center;color:var(--gold);font-size:1rem;">${tN}</td>
@@ -18561,51 +18272,7 @@ async function moduleRefresh(mod) {
     else if (mod === 'biometric') { const u=_resolveUrl('biometric'); if(u){const d=await _jsonpFetch(u,{action:'GET_BIOMETRIC',t:Date.now()});if(d&&(d.allUsers||d.totalActive!==undefined)){BM.raw=d;bmOnData(d);toast('✅ Biometric refreshed');}} else toast('⚠️ No biometric URL saved'); }
     else if (mod === 'labs')    { const u=_resolveUrl('labs'); if(u){const d=await _jsonpFetch(u,{action:'GET_LAB',t:Date.now()});if(d&&(d.facultyLabs||d.facilityRooms)){const s={facultyLabs:(d.facultyLabs||[]).map(l=>{const o=l.occupiedSeats||0,t=l.totalSeats||0;l.availableSeats=Math.max(0,t-o);l.utilizationRate=t>0?o/t:0;l.statusIndicator=typeof labGetIndicator==='function'?labGetIndicator(l):'';if(!l.id)l.id='FL'+Math.random().toString(36).slice(2,8);return l;}),facilityRooms:(d.facilityRooms||[]).map(r=>{if(!r.id)r.id='FR'+Math.random().toString(36).slice(2,8);return r;}),researchers:(d.researchers||[]).map(r=>{if(!r.id)r.id='RS'+Math.random().toString(36).slice(2,8);return r;}),facultyRooms:(d.facultyRooms||[]).map(r=>{if(!r.id)r.id='FRM'+Math.random().toString(36).slice(2,8);return r;})};LAB.data=s;LAB.facultyLabs=s.facultyLabs;LAB.facilityRooms=s.facilityRooms;LAB.researchers=s.researchers;LAB.loaded=true;if(document.getElementById('tab-labs')?.classList.contains('active')){try{labRefreshKPIs();labRenderFacultyLabs();}catch(e){}}toast('✅ Labs refreshed');}} else toast('⚠️ No labs URL saved'); }
     else if (mod === 'assets')  { await assetLoadFromSheet(false); }
-    else if (mod === 'expenses'){
-      // v37: pass the currently active sheet so only that tab's data is re-fetched
-      // Falls back to full sync (all sheets) when activeSheet is 'all' or not set
-      const activeSheet = (typeof EXP !== 'undefined' && EXP.activeSheet) ? EXP.activeSheet : 'all';
-      if (activeSheet && activeSheet !== 'all') {
-        // Per-tab refresh: GET_EXPENSES_SHEET with sheet filter
-        const u = _resolveUrl('expenses');
-        if (!u) { toast('⚠️ No Expenses sheet URL saved'); return; }
-        try {
-          const d = await _jsonpFetch(u, { action: 'GET_EXPENSES_SHEET', sheet: activeSheet, t: Date.now() });
-          if (d && d.status === 'ok') {
-            // Merge the returned sub-sheet rows into EXP.all by sheet name
-            const KEY_MAP = { 'Expense Sheet': 'expenses', 'Paid Log': 'paidLog', 'Archive': 'archive', 'Transactions': 'transactions' };
-            const key = KEY_MAP[activeSheet];
-            if (key && Array.isArray(d[key])) {
-              // Replace only records that belong to this sheet (by status/source matching)
-              // Simple approach: replace all and re-merge — backend gives canonical rows
-              EXP.all = d[key].map(r => ({
-                invoiceDate:   r.invoiceDate   || r.date            || r.invoice_date   || '',
-                description:   r.description   || r.desc            || '',
-                category:      r.category      || r.cat             || 'Others',
-                amount:        parseFloat(r.amount || r.amt         || 0),
-                projectNumber: r.projectNumber || r.project         || r.project_number || '',
-                submittedDate: r.submittedDate || r.submitted        || r.submit_date    || '',
-                status:        r.status        || 'Pending',
-                paidDate:      r.paidDate      || r.paid_date        || '',
-                department:    r.department    || r.dept             || '',
-                notes:         r.notes         || r.remarks          || '',
-                _sheet:        activeSheet
-              }));
-              expApplyFilters();
-              toast('✅ ' + activeSheet + ' refreshed — ' + EXP.all.length + ' records');
-            } else {
-              // Fallback: full reload if key not found in response
-              await expLoadFromSheet();
-            }
-          } else {
-            await expLoadFromSheet();
-          }
-        } catch(e) { await expLoadFromSheet(); }
-      } else {
-        // Full sync: all sheets
-        await expLoadFromSheet();
-      }
-    }
+    else if (mod === 'expenses'){ await expLoadFromSheet(); }
     else if (mod === 'publications') { await pubLoadFromSheet(); }
     else if (mod === 'inventory') { await invSyncAll(); }
   } catch(e) { toast('⚠️ Refresh failed: ' + e.message); }
@@ -29800,18 +29467,13 @@ window.mydRebuild = function() {
 (function _hookApplyAccess() {
   const _orig = typeof window.applyAccessLevelUI === 'function' ? window.applyAccessLevelUI : null;
   if (!_orig) { setTimeout(_hookApplyAccess, 200); return; }
-  // Guard against double-hook: check both the stored ref AND the live fn
-  if (_orig._myd_hooked || window.applyAccessLevelUI._myd_hooked) return;
+  if (_orig._myd_hooked) return;
   window.applyAccessLevelUI = function(role) {
     _orig.apply(this, arguments);
-    // Rebuild My Dashboard after the landing tab animates in (~400ms)
-    setTimeout(() => {
-      try { mydBuild(); } catch(e) {}
-      try { _myd_refreshValues(); } catch(e) {}
-    }, 450);
+    // Rebuild after the landing tab switch animates in (350ms covers that)
+    setTimeout(() => { mydBuild(); _myd_refreshValues(); }, 400);
   };
   window.applyAccessLevelUI._myd_hooked = true;
-  _orig._myd_hooked = true; // mark original so any future re-wrap sees it
 })();
 
 /* ── Hook 3: _wsai_renderAll → fires after every 30s poll & manual fetch ── */
@@ -29872,15 +29534,7 @@ window.mydRebuild = function() {
 
 /* ── Initial build on DOMContentLoaded (before login gates appear) ───────── */
 function _myd_init() {
-  // Only build KPI rows if a user is already logged in (session restore path).
-  // On fresh page load _currentRole is undefined — the gate is showing, nothing to render yet.
-  // applyAccessLevelUI (Hook 2) will call mydBuild() after the user logs in.
-  const isLoggedIn = typeof _currentRole !== 'undefined' && _currentRole !== null &&
-                     (document.getElementById('app') || {}).classList &&
-                     document.getElementById('app').classList.contains('visible');
-  if (isLoggedIn) {
-    mydBuild();
-  }
+  mydBuild();
   // Check if sheet is already connected (URL persisted in localStorage)
   const hasUrl = (function() {
     try {
