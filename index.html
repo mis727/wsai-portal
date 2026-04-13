@@ -1,10 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WSAI - PORTAL v33</title>
+<title>WSAI - PORTAL v37</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
@@ -96,6 +95,75 @@
     border-radius: 14px;
   }
   [data-theme="light"] .table-card:hover { box-shadow: var(--shadow-md); }
+  /* ── Login gate: app hidden until authenticated ── */
+  #app { display:none; opacity:0; transition:opacity 0.4s ease; }
+  #app.visible { display:flex; flex-direction:column; min-height:100vh; opacity:1; }
+
+  /* ── Login gate overlay ── */
+  #access-gate {
+    position:fixed; inset:0; z-index:99999;
+    background:var(--color-background-primary,#0A0E1A);
+    display:flex; align-items:center; justify-content:center;
+    padding:1rem; overflow-y:auto;
+  }
+  .gate-card {
+    width:100%; max-width:420px;
+    background:var(--surface,#111827);
+    border:1px solid var(--border,rgba(99,179,237,0.15));
+    border-radius:20px;
+    padding:2.5rem 2rem 2rem;
+    position:relative; overflow:hidden;
+    box-shadow:0 25px 80px rgba(0,0,0,0.5);
+    animation:appIn 0.45s both;
+  }
+  .gate-card::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:3px;
+    background:linear-gradient(90deg,#3B82F6,#06B6D4,#8B5CF6);
+  }
+  .gate-logo {
+    display:flex; align-items:center; gap:10px;
+    margin-bottom:1.75rem;
+  }
+  .gate-logo-img {
+    width:38px; height:38px; border-radius:9px;
+    background:#fff; padding:2px; object-fit:contain; flex-shrink:0;
+  }
+  .gate-logo-name { font-size:1.15rem; font-weight:700; color:var(--text,#E2E8F0); font-family:var(--font-display); }
+  .gate-logo-sub  { font-size:0.65rem; color:var(--text3,#64748B); font-family:var(--font-mono); letter-spacing:.08em; text-transform:uppercase; }
+  .gate-title { font-size:1.05rem; font-weight:600; color:var(--text,#E2E8F0); margin-bottom:0.25rem; }
+  .gate-sub   { font-size:0.78rem; color:var(--text2,#94A3B8); margin-bottom:1.5rem; }
+  .gate-field { margin-bottom:1rem; }
+  .gate-field label { display:block; font-size:0.72rem; font-family:var(--font-mono); color:var(--text2,#94A3B8); text-transform:uppercase; letter-spacing:.06em; margin-bottom:0.4rem; }
+  .gate-field input {
+    width:100%; background:var(--surface2,#1E293B); border:1px solid var(--border,rgba(99,179,237,0.15));
+    border-radius:10px; padding:0.7rem 0.9rem; color:var(--text,#E2E8F0);
+    font-family:var(--font-body); font-size:0.88rem; outline:none;
+    transition:border-color .2s, box-shadow .2s;
+  }
+  .gate-field input:focus { border-color:var(--accent,#3B82F6); box-shadow:0 0 0 3px rgba(59,130,246,0.18); }
+  .gate-btn {
+    width:100%; padding:0.78rem; border:none; border-radius:10px; cursor:pointer;
+    background:linear-gradient(135deg,#3B82F6,#06B6D4); color:#fff;
+    font-size:0.92rem; font-weight:600; font-family:var(--font-body);
+    transition:opacity .2s, transform .15s; margin-top:0.5rem;
+  }
+  .gate-btn:hover { opacity:0.88; transform:translateY(-1px); }
+  .gate-btn:active { transform:translateY(0); }
+  .gate-error {
+    display:none; margin-top:0.75rem; padding:0.6rem 0.85rem;
+    background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.25);
+    border-radius:8px; color:#F87171; font-size:0.78rem; font-family:var(--font-mono);
+    animation:gateShake .4s ease;
+  }
+  .gate-footer {
+    margin-top:1.5rem; padding-top:1rem; border-top:1px solid var(--border,rgba(99,179,237,0.1));
+    font-size:0.68rem; font-family:var(--font-mono); color:var(--text3,#64748B);
+    text-align:center; line-height:1.7;
+  }
+  @keyframes gateShake {
+    0%,100%{transform:translateX(0)} 20%{transform:translateX(-7px)}
+    40%{transform:translateX(7px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)}
+  }
   [data-theme="light"] .gate-card {
     background: #FFFFFF;
     border: 1px solid rgba(30,58,138,0.12);
@@ -1254,6 +1322,37 @@
   </div>
 </div>
 
+
+<!-- ════════════════════════ LOGIN GATE ════════════════════════ -->
+<div id="access-gate">
+  <div class="gate-card">
+    <div class="gate-logo">
+      <div style="width:38px;height:38px;border-radius:9px;background:linear-gradient(135deg,#3B82F6,#06B6D4);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <span style="color:#fff;font-weight:800;font-size:14px;font-family:var(--font-display);">WS</span>
+      </div>
+      <div>
+        <div class="gate-logo-name">WSAI Portal</div>
+        <div class="gate-logo-sub">IIT Madras · Unified Management</div>
+      </div>
+    </div>
+    <div class="gate-title">Sign in to your account</div>
+    <div class="gate-sub">Use your IIT Madras institutional email</div>
+    <div class="gate-field">
+      <label>Email address</label>
+      <input type="email" id="g-user" placeholder="you@iitm.ac.in" autocomplete="username" spellcheck="false">
+    </div>
+    <div class="gate-field">
+      <label>Password</label>
+      <input type="password" id="g-pass" placeholder="Enter your password" autocomplete="current-password">
+    </div>
+    <div id="gate-err" class="gate-error"></div>
+    <button class="gate-btn" onclick="attemptLogin()">Sign in →</button>
+    <div class="gate-footer">
+      WSAI Portal · IIT Madras<br>
+      <span style="color:var(--accent,#3B82F6);">Restricted to @iitm.ac.in institutional accounts</span>
+    </div>
+  </div>
+</div>
 
 <!-- ════════════════════════ MAIN APP ════════════════════════ -->
 <div id="app">
@@ -4544,17 +4643,20 @@
           <div class="table-card" style="overflow:visible;">
             <div class="tc-header">
               <div class="tc-title">📊 Year-wise Publication Matrix</div>
-              <span style="font-size:0.7rem;font-family:var(--font-mono);color:var(--text3);">Journal · Conference · National · International</span>
+              <span style="font-size:0.7rem;font-family:var(--font-mono);color:var(--text3);">Journals · Conferences · Reports · Preprints · Natl / Intl · Auto-updated from Sheet</span>
             </div>
             <div style="overflow-x:auto;">
               <table>
                 <thead>
                   <tr>
-                    <th>Year</th><th>Jrnl-Natl</th><th>Jrnl-Intl</th>
-                    <th>Conf-Natl</th><th>Conf-Intl</th>
-                    <th style="background:#37474F;color:var(--gold);">Natl Total</th>
-                    <th style="background:#37474F;color:var(--accent2);">Intl Total</th>
-                    <th style="background:#2E7D32;color:#fff;">Year Total</th>
+                    <th>Year</th>
+                    <th title="Journal — National">📚 J-Natl</th>
+                    <th title="Journal — International">📚 J-Intl</th>
+                    <th title="Conference — National">🎤 C-Natl</th>
+                    <th title="Conference — International">🎤 C-Intl</th>
+                    <th title="Reports &amp; Preprints">📄 Rpts</th>
+                    <th title="Preprints / ArXiv">🌐 Pre</th>
+                    <th style="background:#2E7D32;color:#fff;" title="Grand total for the year">Total</th>
                   </tr>
                 </thead>
                 <tbody id="pub-matrix-tbody">
@@ -6689,9 +6791,7 @@
     document.getElementById('kpi-faculty').textContent = DB.faculty.length;
     document.getElementById('kpi-researchers').textContent = DB.researchers.length;
     document.getElementById('kpi-students').textContent = DB.students.length;
-    document.getElementById('kpi-assocfaculty').textContent = DB.assocFaculty.length;
-    document.getElementById('kpi-affifaculty').textContent = DB.affiFaculty.length;
-    document.getElementById('kpi-fellows').textContent = DB.fellows.length;
+    document.getElementById('kpi-assocfaculty').textContent = DB.assocFaculty.length + DB.affiFaculty.length;
     document.getElementById('kpi-alumni').textContent = DB.alumni.length;
   }
 
@@ -6885,13 +6985,13 @@
     'Associate Fellows': 'fellows'
   };
 
-  // Human labels for each sub-tab
+  // Human labels for each sub-tab (Faculty, Students & Affiliate Faculty removed per requirement)
   const ALUMNI_SUB_LABELS = {
     all:          '🏛️ Alumni Registry — All',
     staff:        '🏛️ Alumni Registry — Staff',
     assocfaculty: '🏛️ Alumni Registry — Associate Faculty',
     researchers:  '🏛️ Alumni Registry — Researchers',
-    students:     '🏛️ Alumni Registry — Students'
+    fellows:      '🏛️ Alumni Registry — Associate Fellows'
   };
 
   // movedFrom filter values for each sub-tab key
@@ -6899,7 +6999,7 @@
     staff:        ['staff','Staff'],
     assocfaculty: ['assocFaculty','assocfaculty','Associate Faculty'],
     researchers:  ['researchers','Researchers','Active Researchers'],
-    students:     ['students','Students']
+    fellows:      ['fellows','Fellows','Associate Fellows']
   };
 
   function switchAlumniSub(sub) {
@@ -7861,27 +7961,15 @@
     // Faculty Distribution
     const facultyTypes = WS_CONFIG.facultyType;
     const assocTypes = WS_CONFIG.associateFacultyType;
-    const affilTypes = WS_CONFIG.affiliateFacultyType;
     const tbody = document.getElementById('dash-faculty-dist');
     if (tbody) {
+      // FIX (v24.3): Only show faculty types (not assocFaculty types) in this table.
+      // Associate Faculty has its own section. Previously assocTypes were rendered
+      // here as "(Assoc.)" rows which caused confusion and clutter.
       const rows = [];
-      // Core Faculty types
-      rows.push(`<tr style="background:rgba(76,175,80,0.06);"><td colspan="3" style="font-size:0.68rem;font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.07em;color:var(--text3);padding:0.3rem 0.75rem;">── Core Faculty ──</td></tr>`);
       facultyTypes.forEach(t => {
         const cnt = DB.faculty.filter(f => f.facultyType === t).length;
-        rows.push(`<tr><td>${t}</td><td style="font-weight:700;text-align:center;">${cnt}</td><td style="text-align:center;color:${cnt>0?'var(--green)':'var(--text3)'};">${cnt>0?'✓ Active':'-- Inactive'}</td></tr>`);
-      });
-      // Associate Faculty types
-      rows.push(`<tr style="background:rgba(6,182,212,0.06);"><td colspan="3" style="font-size:0.68rem;font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.07em;color:var(--text3);padding:0.3rem 0.75rem;">── Associate Faculty ──</td></tr>`);
-      assocTypes.forEach(t => {
-        const cnt = DB.assocFaculty.filter(f => f.facultyType === t).length;
-        rows.push(`<tr><td>${t}</td><td style="font-weight:700;text-align:center;">${cnt}</td><td style="text-align:center;color:${cnt>0?'var(--accent2)':'var(--text3)'};">${cnt>0?'✓ Active':'-- Inactive'}</td></tr>`);
-      });
-      // Affiliate Faculty types
-      rows.push(`<tr style="background:rgba(245,158,11,0.06);"><td colspan="3" style="font-size:0.68rem;font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.07em;color:var(--text3);padding:0.3rem 0.75rem;">── Affiliate Faculty ──</td></tr>`);
-      affilTypes.forEach(t => {
-        const cnt = DB.affiFaculty.filter(f => f.facultyType === t).length;
-        rows.push(`<tr><td>${t}</td><td style="font-weight:700;text-align:center;">${cnt}</td><td style="text-align:center;color:${cnt>0?'var(--gold)':'var(--text3)'};">${cnt>0?'✓ Active':'-- Inactive'}</td></tr>`);
+        rows.push(`<tr><td>${t}</td><td style="font-weight:700;text-align:center;">${cnt}</td><td style="text-align:center;color:${cnt>0?'var(--green)':'var(--text3)'};"> ${cnt>0?'✓ Active':'-- Inactive'}</td></tr>`);
       });
       const grandTotal = DB.faculty.length + DB.assocFaculty.length + DB.affiFaculty.length;
       rows.push(`<tr style="background:rgba(40,167,69,0.12);font-weight:700;"><td>🧮 Grand Total (All Faculty)</td><td style="text-align:center;color:var(--green);">${grandTotal}</td><td style="text-align:center;">✓</td></tr>`);
@@ -14646,26 +14734,7 @@
             if (!l.id) l.id = 'FL' + Math.random().toString(36).slice(2,8);
             return l;
           });
-          source.facilityRooms = source.facilityRooms.map(r => {
-            if (!r.id) r.id = 'FR'+Math.random().toString(36).slice(2,8);
-            // Ensure capacity is always a number, not a string from GAS
-            if (typeof r.capacity === 'string') r.capacity = parseInt(r.capacity) || 0;
-            // Derive roomType from name if missing (GAS sheet has no roomType column)
-            if (!r.roomType && r.roomName) {
-              const n = (r.roomName||'').toUpperCase();
-              if (n.includes('LAB'))             r.roomType = 'LAB';
-              else if (n.includes('CLASSROOM'))  r.roomType = 'CLASSROOM';
-              else if (n.includes('MEETING'))    r.roomType = 'MEETING ROOM';
-              else if (n.includes('BOARD'))      r.roomType = 'BOARD ROOM';
-              else if (n.includes('SEMINAR'))    r.roomType = 'SEMINAR HALL';
-              else if (n.includes('PANTRY'))     r.roomType = 'STAFF PANTRY';
-              else if (n.includes('RECORDING'))  r.roomType = 'RECORDING ROOM';
-              else if (n.includes('VISITING'))   r.roomType = 'VISITING FACULTY';
-              else if (n.includes('OFFICE'))     r.roomType = 'OFFICE';
-              else                               r.roomType = r.roomName;
-            }
-            return r;
-          });
+          source.facilityRooms = source.facilityRooms.map(r => { if (!r.id) r.id = 'FR'+Math.random().toString(36).slice(2,8); return r; });
           source.researchers   = source.researchers.map(r => { if (!r.id) r.id = 'RS'+Math.random().toString(36).slice(2,8); return r; });
           source.facultyRooms  = source.facultyRooms.map(r => { if (!r.id) r.id = 'FRM'+Math.random().toString(36).slice(2,8); return r; });
           logAction('Sync', _currentUser||'Admin', 'Facility & Room Mgmt', 'Live data loaded — ' + source.facultyLabs.length + ' labs');
@@ -14703,57 +14772,25 @@
   }
 
   async function labRefreshAll() {
-    const btn = document.querySelector('[onclick="labRefreshAll()"]');
-    if (btn) { btn.textContent = '↻ Refreshing…'; btn.disabled = true; }
     LAB.loaded = false;
     await labInit();
-    // Always normalise facilityRooms regardless of which fetch path populated them
-    if (typeof _normaliseFacilityRooms === 'function' && LAB.data.facilityRooms.length) {
-      LAB.data.facilityRooms = _normaliseFacilityRooms(LAB.data.facilityRooms);
-      LAB.facilityRooms = LAB.data.facilityRooms;
-    }
-    // Recompute all derived fields on facultyLabs (availableSeats, utilizationRate, statusIndicator)
-    LAB.data.facultyLabs.forEach(l => {
-      const occ = l.occupiedSeats || 0;
-      const tot = l.totalSeats    || 0;
-      l.availableSeats  = Math.max(0, tot - occ);
-      l.utilizationRate = tot > 0 ? occ / tot : 0;
-      const roomCap  = LAB.data.facilityRooms.find(r => r.roomName === l.room)?.capacity || tot;
-      const totalOcc = LAB.data.facultyLabs.filter(x => x.room === l.room).reduce((s,x)=>s+(x.occupiedSeats||0),0);
-      l.availAtRoom     = Math.max(0, roomCap - totalOcc);
-      l.statusIndicator = labGetIndicator(l);
-    });
-    // Re-render all sections with fresh data
-    labRefreshKPIs();
-    labRenderFacultyLabs();
-    labRenderUtilizationRibbons();
-    labRenderCategoryAnalysis();
-    labRenderFacilityRooms();
-    labRenderResearchers();
-    labRenderFacultyRooms();
-    if (btn) { btn.textContent = '↻ Refresh All'; btn.disabled = false; }
     toast('🔄 Lab data refreshed');
     logAction('Refresh', _currentUser||'Admin', 'Facility & Room Mgmt', 'Full data refresh');
   }
 
   // ── KPI refresh (mirrors GAS KPI_METRICS v5.1) ─────────────────────────
-  // KPI_METRICS: totalLabs=SUMIF(*LAB*,cap), totalClassroom=SUMIF(*CLASSROOM*,cap),
-  //              occupiedSeats=SUM(G), availableSeats=IFERROR(totalLabs−SUM(occupied))
+  // KPI_METRICS: totalLabs=SUMIF(*LAB*,cap), totalCapacity=Lab+Classroom,
+  //              totalClassroom=SUMIF(*CLASSROOM*,cap), occupiedSeats=SUM(G),
+  //              availableSeats=IFERROR(totalLabs−SUM(occupied))
   function labRefreshKPIs() {
     const fl  = LAB.data.facultyLabs;
-    // Always normalise facilityRooms before reading capacity — handles column-shift
-    // and string-typed capacity values from any GAS fetch path
-    if (typeof _normaliseFacilityRooms === 'function' && LAB.data.facilityRooms.length) {
-      LAB.data.facilityRooms = _normaliseFacilityRooms(LAB.data.facilityRooms);
-      LAB.facilityRooms = LAB.data.facilityRooms;
-    }
     const fr  = LAB.data.facilityRooms;
     const res = LAB.data.researchers;
     // Mirror GAS KPI_METRICS formulas exactly
     const labRoomsCap       = fr.filter(r => (r.roomName||'').toUpperCase().includes('LAB') || (r.roomType||'').toUpperCase().includes('LAB')).reduce((s,r)=>s+(r.capacity||0),0);
     const classroomRoomsCap = fr.filter(r => (r.roomName||'').toUpperCase().includes('CLASSROOM') || (r.roomType||'').toUpperCase().includes('CLASSROOM')).reduce((s,r)=>s+(r.capacity||0),0);
-    const totalLabCap       = labRoomsCap;          // GAS KPI_METRICS.totalLabs
-    const totalClassroomCap = classroomRoomsCap;    // GAS KPI_METRICS.totalClassroom (renamed card)
+    const totalLabCap       = labRoomsCap;                          // GAS KPI_METRICS.totalLabs
+    const totalCombinedCap  = labRoomsCap + classroomRoomsCap;      // GAS KPI_METRICS.totalCapacity
     const totalSeats        = fl.reduce((s,l)=>s+(l.totalSeats||0),0);
     const occSeats          = fl.reduce((s,l)=>s+(l.occupiedSeats||0),0);
     const availSeats        = Math.max(0, totalLabCap - occSeats) || Math.max(0, totalSeats - occSeats); // GAS KPI_METRICS.availableSeats
@@ -14764,7 +14801,7 @@
     _set('lab-kpi-labs',            fl.length);
     _set('lab-kpi-rooms',           fr.length);
     _set('lab-kpi-total-cap',       totalLabCap  || totalSeats);
-    _set('lab-kpi-total-combined',  totalClassroomCap);  // Total Classroom Capacity
+    _set('lab-kpi-total-combined',  totalCombinedCap || totalSeats);
     _set('lab-kpi-occ',             occSeats);
     _set('lab-kpi-avail',           availSeats);
     _set('lab-kpi-util',            Math.round(util*100)+'%');
@@ -15009,9 +15046,9 @@
     if (catTbody) {
       catTbody.innerHTML = cats.map(cat => {
         const rows = fl.filter(l=>l.category===cat);
-        const total = rows.reduce((s,l)=>s+(l.totalSeats||0),0);
-        const occ   = rows.reduce((s,l)=>s+(l.occupiedSeats||0),0);
-        const avail = Math.max(0, total - occ); // computed inline — mirrors GAS SUMIF(avail) = total − occupied
+        const total = rows.reduce((s,l)=>s+l.totalSeats,0);
+        const occ   = rows.reduce((s,l)=>s+l.occupiedSeats,0);
+        const avail = rows.reduce((s,l)=>s+l.availableSeats,0);
         const util  = total > 0 ? occ/total : 0;
         const barColor = util >= 0.8 ? '#EF4444' : util >= 0.5 ? '#F97316' : '#10B981';
         const bar = `<div class="util-bar-wrap" style="min-width:100px;"><div class="util-bar-fill" style="width:${Math.min(util*100,100)}%;background:${barColor};"></div></div>`;
@@ -28856,709 +28893,528 @@ tbody td { vertical-align: middle; }
 
 })();
 
-<!-- ═══════════════════════════════════════════════════════════════════════
-     WSAI PORTAL v36 — MY DASHBOARD ENGINE
-     7 KPI rows with expandable panels wired seamlessly to v35 module visuals.
-     Reads live from: DB · ASSET_DB · BM · LAB · EXP · PUB · INV_DB
-     Auto-syncs with every module fetch · 30-second poll · tab-visibility refresh
-═══════════════════════════════════════════════════════════════════════ -->
-<script>
-(function _myd_engine() {
-'use strict';
+// ══════════════════════════════════════════════════════
+//  MY DASHBOARD — v35
+// ══════════════════════════════════════════════════════
 
-/* ── showPeopleSection shim — maps to v35's switchPeopleTab ──────────────── */
-window.showPeopleSection = function(section) {
-  // Map My Dashboard section names → v35 switchPeopleTab tab ids
-  const MAP = {
-    staff:'staff', faculty:'faculty', assocFaculty:'assocfaculty',
-    affiFaculty:'affifaculty', researchers:'researchers', students:'students',
-    fellows:'fellows', alumni:'alumni', actions:'actions'
-  };
-  const tab = MAP[section] || section;
-  if (typeof switchPeopleTab === 'function') switchPeopleTab(tab);
+const MYD_QUOTES = {
+  coo: [
+    "Your leadership steers the institution forward. Here's today's overview.",
+    "Great institutions are built by great leaders — welcome back.",
+    "Vision without execution is hallucination. Let's execute today.",
+    "The best way to predict the future is to create it.",
+    "Leadership is not about being in charge — it's about taking care of those in your charge.",
+    "Excellence is never an accident. It is always the result of high intention and skilled execution.",
+    "A leader is one who knows the way, goes the way, and shows the way.",
+    "Your decisions today shape the institution of tomorrow.",
+    "Data drives clarity. Clarity drives action. Action drives impact.",
+    "The strength of a team is each individual member. The strength of each member is the team.",
+    "Innovation distinguishes between a leader and a follower.",
+    "Good leadership consists of showing average people how to do the work of superior ones."
+  ],
+  faculty: [
+    "Knowledge is the light that guides every student's journey.",
+    "A great teacher inspires, a great researcher discovers — you do both.",
+    "The art of teaching is the art of assisting discovery.",
+    "Education is not the filling of a pail, but the lighting of a fire.",
+    "Research is creating new knowledge. Teaching is sharing it. You are the bridge.",
+    "The mediocre teacher tells. The good teacher explains. The great teacher inspires.",
+    "Your research today becomes tomorrow's textbook.",
+    "Every student you inspire carries your legacy forward.",
+    "Teaching is the one profession that creates all other professions.",
+    "In the pursuit of knowledge, your curiosity is contagious.",
+    "The best teachers are those who show you where to look, but don't tell you what to see.",
+    "Science is not only a disciple of reason but also one of romance and passion."
+  ],
+  staff: [
+    "Every great institution runs on the dedication of its people.",
+    "The details are not the details — they make the design.",
+    "Excellence is doing ordinary things extraordinarily well.",
+    "Behind every successful initiative is a team that made it happen.",
+    "Your contribution matters more than you know.",
+    "The strength of the institution is the strength of its staff.",
+    "Quality is never an accident — it is always the result of intelligent effort.",
+    "The secret of getting ahead is getting started.",
+    "Success is the sum of small efforts, repeated day in and day out.",
+    "Hard work beats talent when talent doesn't work hard."
+  ]
 };
 
-/* ── Role → which KPI rows to show ──────────────────────────────────────── */
-const MYD_ROLE_ROWS = {
-  creator:      ['hr','assets','biometric','facility','expenses','publications','inventory'],
-  admin:        ['hr','assets','biometric','facility','expenses','publications','inventory'],
-  full:         ['hr','assets','biometric','facility','expenses','publications','inventory'],
-  coo:          ['hr','assets','biometric','facility','expenses','publications','inventory'],
-  faculty:      ['hr','publications','facility'],
-  hr_manager:   ['hr','biometric'],
-  finance_mgr:  ['expenses','assets'],
-  facility_mgr: ['facility','assets','biometric'],
-  edu_pgm_mgr:  ['hr','publications','facility'],
-  sys_admin:    ['hr','assets','biometric','facility','expenses','publications','inventory'],
-  mis:          ['hr','assets','biometric','facility','expenses','publications','inventory'],
-  staff:        ['hr','expenses','inventory'],
-  hr:           ['hr'],
-  finance:      ['expenses'],
-  labs:         ['facility','assets'],
-  publications: ['publications'],
-  readonly:     ['hr','expenses','publications','inventory']
-};
-
-/* ── Role → accent colour ────────────────────────────────────────────────── */
-const MYD_ROLE_COLORS = {
-  creator:'#3B82F6', admin:'#3B82F6', full:'#3B82F6', coo:'#F59E0B',
-  faculty:'#06B6D4', hr_manager:'#8B5CF6', finance_mgr:'#F59E0B',
-  facility_mgr:'#06B6D4', edu_pgm_mgr:'#EC4899', sys_admin:'#64748B',
-  mis:'#3B82F6', staff:'#10B981', hr:'#8B5CF6', finance:'#F59E0B',
-  labs:'#06B6D4', publications:'#8B5CF6', readonly:'#64748B'
-};
-
-/* ── Helper: balance from v35 INV_DB item ────────────────────────────────── */
-function _invBal(item) {
-  if (typeof getInvBalance === 'function') return getInvBalance(item);
-  return Math.max(0, (item.openingBal||0) + (item.totalReceived||0) - (item.totalIssued||0));
-}
-function _invItems(cat) {
-  if (typeof INV_DB === 'undefined') return [];
-  return (INV_DB.items||[]).filter(i => i.category === cat);
-}
-function _invLowCrit(items) {
-  return items.filter(i => {
-    if (typeof getInvStatus === 'function') { const s = getInvStatus(i); return s === 'low' || s === 'critical' || s === 'out'; }
-    return _invBal(i) <= (i.threshold || 20);
-  }).length;
+function mydGetQuote(role) {
+  const pool = MYD_QUOTES[role] || MYD_QUOTES.staff;
+  return pool[Math.floor(Math.random() * pool.length)];
 }
 
-/* ── Helper: expense amount by status ───────────────────────────────────── */
-function _expAmt(status) {
-  const rows = (typeof EXP !== 'undefined' ? EXP.all||[] : []);
-  const filtered = rows.filter(r => {
-    const s = (r.status||'').toLowerCase().trim();
-    if (status === 'paid')    return s === 'paid';
-    if (status === 'pending') return s === 'pending';
-    if (status === 'under')   return s === 'under-process' || s === 'under process' || s.includes('process');
-    return false;
-  });
-  if (!filtered.length) return '\u20b90';
-  const total = filtered.reduce((s,r) => s + (parseFloat((r.amount||'').toString().replace(/[\u20b9,\s]/g,'')) || 0), 0);
-  return _fmtCrore(total);
+let _mydClockInterval = null;
+function mydStartClock() {
+  function _tick() {
+    const now = new Date();
+    const timeEl = document.getElementById('myd-clock-time');
+    const dateEl = document.getElementById('myd-clock-date');
+    if (timeEl) {
+      let h = now.getHours(), m = now.getMinutes();
+      const ampm = h >= 12 ? 'pm' : 'am';
+      h = h % 12 || 12;
+      timeEl.textContent = h + ':' + String(m).padStart(2,'0') + ' ' + ampm;
+    }
+    if (dateEl) {
+      const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+      const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+      dateEl.textContent = days[now.getDay()] + ', ' + String(now.getDate()).padStart(2,'0') + ' ' + months[now.getMonth()] + ' ' + now.getFullYear();
+    }
+  }
+  _tick();
+  if (_mydClockInterval) clearInterval(_mydClockInterval);
+  _mydClockInterval = setInterval(_tick, 1000);
 }
 
-/* ── Helper: count tenure risk (exit date within 90 days) ───────────────── */
-function _countTenureRisk() {
-  const all = [...(window.DB?.staff||[]), ...(window.DB?.researchers||[]), ...(window.DB?.faculty||[])];
-  const now = new Date(); const in90 = new Date(now.getTime() + 90*86400000);
-  return all.filter(r => {
+function mydInit() {
+  mydStartClock();
+  const role = (window._currentRole || 'staff').toLowerCase();
+  const loginData = window._loginData || {};
+  const name = loginData.name || loginData.fullName || 'User';
+
+  const greetEl = document.getElementById('myd-greeting');
+  const subEl = document.getElementById('myd-sub');
+  const quoteEl = document.getElementById('myd-quote');
+  const avatarEl = document.getElementById('myd-avatar');
+
+  if (avatarEl) avatarEl.textContent = name.charAt(0).toUpperCase();
+
+  if (greetEl) {
+    if (role === 'coo' || role === 'admin' || role === 'creator') {
+      greetEl.textContent = 'Welcome, ' + name + ' Sir';
+    } else if (role === 'faculty') {
+      greetEl.textContent = 'Welcome, Prof. ' + name;
+    } else {
+      greetEl.textContent = 'Welcome, ' + name;
+    }
+  }
+
+  const roleLabels = { coo:'Chief Operating Officer · WSAI', faculty:'Faculty · WSAI', staff:'Staff · WSAI', hr_manager:'HR Manager · WSAI', finance_mgr:'Accounts / Procurement Manager · WSAI', facility_mgr:'Facility Manager · WSAI', edu_pgm_mgr:'Education Program Manager · WSAI', sys_admin:'System Administrator · WSAI', mis:'MIS · WSAI' };
+  if (subEl) subEl.textContent = roleLabels[role] || (role.toUpperCase() + ' · WSAI');
+  if (quoteEl) {
+    const qRole = (role === 'coo' || role === 'admin' || role === 'creator') ? 'coo' : (role === 'faculty' ? 'faculty' : 'staff');
+    quoteEl.textContent = '"' + mydGetQuote(qRole) + '"';
+  }
+
+  document.getElementById('myd-coo-panel').style.display = 'none';
+  document.getElementById('myd-faculty-panel').style.display = 'none';
+  document.getElementById('myd-staff-panel').style.display = 'none';
+
+  if (role === 'coo' || role === 'admin' || role === 'creator') {
+    document.getElementById('myd-coo-panel').style.display = 'block';
+    mydRefreshCOO();
+  } else if (role === 'faculty') {
+    document.getElementById('myd-faculty-panel').style.display = 'block';
+    try { if (typeof v31PopulateFaculty === 'function') v31PopulateFaculty(); } catch(e) {}
+  } else {
+    document.getElementById('myd-staff-panel').style.display = 'block';
+    mydInitStaff(role);
+  }
+}
+
+function mydRefreshCOO() {
+  const DB = window.DB || {};
+  const sv = (id, v) => { const el = document.getElementById(id); if(el) el.textContent = v; };
+  sv('myd-hr-staff',       (DB.staff||[]).filter(r=>r.status!=='Alumni'&&r.status!=='Inactive').length || (DB.staff||[]).length || '—');
+  sv('myd-hr-faculty',     (DB.faculty||[]).length || '—');
+  sv('myd-hr-affifac',     (DB.affiFaculty||[]).length || '—');
+  sv('myd-hr-assocfac',    (DB.assocFaculty||[]).length || '—');
+  sv('myd-hr-researchers', (DB.researchers||[]).filter(r=>r.status==='On-going'||r.status==='Active').length || (DB.researchers||[]).length || '—');
+  sv('myd-hr-fellows',     (DB.fellows||[]).length || '—');
+  sv('myd-hr-students',    (DB.students||[]).length || '—');
+
+  const today = new Date();
+  const tenureCount = [...(DB.researchers||[]),...(DB.assocFaculty||[]),...(DB.affiFaculty||[])].filter(r => {
     if (!r.exitDate) return false;
-    const parts = r.exitDate.split('/');
-    const d = parts.length === 3 ? new Date(parts[2], parts[1]-1, parts[0]) : new Date(r.exitDate);
-    return !isNaN(d) && d >= now && d <= in90;
+    const parts = String(r.exitDate).split('/');
+    const exit = parts.length===3 ? new Date(parts[2],parts[1]-1,parts[0]) : new Date(r.exitDate);
+    const days = (exit - today) / 86400000;
+    return days >= 0 && days <= 90;
   }).length;
+  sv('myd-hr-tenure', tenureCount || '—');
+
+  const ASSET = window.ASSET || {};
+  sv('myd-ast-it',          (ASSET.it||[]).length || '—');
+  sv('myd-ast-nonit',       (ASSET.nonit||[]).length || '—');
+  sv('myd-ast-ilds',        (ASSET.ilds||[]).length || '—');
+  sv('myd-ast-gpu',         (ASSET.gpu||[]).length || '—');
+  sv('myd-ast-books',       (ASSET.books||[]).length || '—');
+  sv('myd-ast-spares',      (ASSET.spares||[]).length || '—');
+  sv('myd-ast-consumables', (ASSET.consumables||[]).length || '—');
+  sv('myd-ast-nonrep',      (ASSET.nonrepairable||[]).length || '—');
+  sv('myd-ast-vendor',      (ASSET.vendor||[]).length || '—');
+
+  mydRefreshBiometric();
+
+  const LAB = window.LAB || {};
+  const fLabs = (LAB.facultyLabs || LAB.data?.facultyLabs || []);
+  const fRooms = (LAB.facilityRooms || LAB.data?.facilityRooms || []);
+  const facRooms = (LAB.facultyRooms || LAB.data?.facultyRooms || []);
+  sv('myd-fac-faclabs',      fLabs.length || '—');
+  sv('myd-fac-facrooms',     fRooms.length || '—');
+  sv('myd-fac-facroomscount',facRooms.length || '—');
+  const occ = fLabs.reduce((s,r) => s + (parseInt(r.occupiedSeats)||0), 0);
+  const tot = fLabs.reduce((s,r) => s + (parseInt(r.totalSeats)||0), 0);
+  sv('myd-fac-occupied',  occ || '—');
+  sv('myd-fac-available', tot > occ ? (tot - occ) : '—');
+
+  const ribbonsEl = document.getElementById('myd-fac-ribbons');
+  if (ribbonsEl && fLabs.length) {
+    ribbonsEl.innerHTML = fLabs.slice(0,8).map(r => {
+      const pct = r.utilizationRate ? Math.round(r.utilizationRate * 100) : (r.occupiedSeats && r.totalSeats ? Math.round(r.occupiedSeats/r.totalSeats*100) : 0);
+      const color = pct > 80 ? 'var(--red)' : pct >= 50 ? 'var(--green)' : 'var(--gold)';
+      return `<div title="${r.facultyName||''}: ${pct}%" style="width:${Math.max(4,pct*0.6)}px;height:6px;background:${color};border-radius:2px;flex-shrink:0;"></div>`;
+    }).join('');
+  }
+
+  const EXP = window.EXP || window._expenses || [];
+  const expAll = Array.isArray(EXP) ? EXP : (EXP.all || []);
+  sv('myd-exp-paid',    expAll.filter(e => (e.status||'').toLowerCase() === 'paid').length || '—');
+  sv('myd-exp-pending', expAll.filter(e => (e.status||'').toLowerCase() === 'pending').length || '—');
+  sv('myd-exp-process', expAll.filter(e => (e.status||'').toLowerCase().includes('process')).length || '—');
+
+  const PUB = window.PUB || window._publications || {};
+  const pubAll = Array.isArray(PUB) ? PUB : (PUB.all || []);
+  sv('myd-pub-journals',  pubAll.filter(p => (p.type||p.publicationType||'').toLowerCase().includes('journal')).length || '—');
+  sv('myd-pub-conf',      pubAll.filter(p => (p.type||p.publicationType||'').toLowerCase().includes('conference')).length || '—');
+  sv('myd-pub-reports',   pubAll.filter(p => (p.type||p.publicationType||'').toLowerCase().includes('report')).length || '—');
+  sv('myd-pub-preprints', pubAll.filter(p => (p.type||p.publicationType||'').toLowerCase().includes('preprint')||((p.type||'').toLowerCase().includes('arxiv'))).length || '—');
+
+  const INV = window.INV || {};
+  const gifts = INV.gifts || [];
+  const stat  = INV.stationeries || INV.stat || [];
+  const mem   = INV.mementos || INV.mem || [];
+  sv('myd-inv-all',    gifts.length + stat.length + mem.length || '—');
+  sv('myd-inv-gifts',  gifts.length || '—');
+  sv('myd-inv-stat',   stat.length || '—');
+  sv('myd-inv-mem',    mem.length || '—');
 }
 
-/* ── Helper: format crore / lakh ────────────────────────────────────────── */
-function _fmtCrore(n) {
-  if (!n || isNaN(n)) return '\u20b90';
-  if (n >= 10000000) return '\u20b9' + (n/10000000).toFixed(1) + 'Cr';
-  if (n >= 100000)   return '\u20b9' + (n/100000).toFixed(1) + 'L';
-  if (n >= 1000)     return '\u20b9' + Math.round(n/1000) + 'K';
-  return '\u20b9' + Math.round(n);
-}
-
-/* ── Navigate to module + section cleanly ───────────────────────────────── */
-function _goAsset(tab)    { showTab('assets');       setTimeout(() => { if(typeof switchAssetTab==='function') switchAssetTab(tab); }, 180); }
-function _goPub(tab)      { showTab('publications'); setTimeout(() => { if(typeof pubSwitchTab==='function') pubSwitchTab(tab); }, 180); }
-function _goLab(tab)      { showTab('labs');         setTimeout(() => { if(typeof switchLabTab==='function') switchLabTab(tab); }, 180); }
-function _goInv(tab)      { showTab('inventory');    setTimeout(() => { if(typeof switchInvTab==='function') switchInvTab(tab); }, 180); }
-function _goPeople(sec)   { showTab('people');       setTimeout(() => window.showPeopleSection(sec), 180); }
-function _goBioPending()  { showTab('biometric');    setTimeout(() => { if(typeof refreshBiometricPendingPanel==='function') refreshBiometricPendingPanel(); document.getElementById('bm-inline-pending-list')?.scrollIntoView({behavior:'smooth',block:'center'}); }, 250); }
-function _goBioArea()     { showTab('biometric');    setTimeout(() => { document.getElementById('bm-area-grid')?.scrollIntoView({behavior:'smooth',block:'center'}); }, 200); }
-function _goExp(status)   {
-  showTab('expenses');
-  setTimeout(() => {
-    const sel = document.getElementById('exp-filter-status');
-    if (sel) { sel.value = status; sel.dispatchEvent(new Event('change')); }
-    if (typeof expApplyFilters === 'function') expApplyFilters();
-  }, 200);
-}
-
-/* ════════════════════════════════════════════════════════════════════════════
-   KPI ROW DEFINITIONS — all wired to correct v35 data stores and functions
-════════════════════════════════════════════════════════════════════════════ */
-const MYD_ROWS = {
-
-  /* 1. HR & People */
-  hr: {
-    id:'hr', icon:'\u{1F464}', title:'HR & People', sub:'People Overview', color:'#3B82F6',
-    cards: [
-      { id:'staff', icon:'\u{1F454}', label:'Staff', color:'#3B82F6',
-        valFn: ()=>(window.DB?.staff||[]).filter(r=>r.status!=='Inactive'&&r.status!=='Terminated').length,
-        subFn: ()=>'Active members',
-        expandTitle:'\u{1F454} Staff \u2014 People Management',
-        expandItems:[
-          { icon:'\u{1F454}', title:'Staff Registry', desc:'All active staff records', action:()=>_goPeople('staff') },
-          { icon:'\u{1F454}', title:'Add Staff Member', desc:'Onboard a new staff member', action:()=>_goPeople('staff') },
-          { icon:'\u{1F3DB}', title:'Alumni Registry \u2014 Staff', desc:'Departed staff archive', action:()=>_goPeople('alumni') },
-          { icon:'\u{1F465}', title:'Staff Designation Distribution', desc:'Role breakdown from people module', action:()=>_goPeople('staff') },
-        ]
-      },
-      { id:'faculty', icon:'\u{1F468}\u200D\u{1F3EB}', label:'Faculty', color:'#3B82F6',
-        valFn: ()=>(window.DB?.faculty||[]).length,
-        subFn: ()=>'Core faculty',
-        expandTitle:'\u{1F468}\u200D\u{1F3EB} Faculty \u2014 People Management',
-        expandItems:[
-          { icon:'\u{1F468}\u200D\u{1F3EB}', title:'Faculty Registry', desc:'All registered faculty', action:()=>_goPeople('faculty') },
-          { icon:'\u{1F468}\u200D\u{1F3EB}', title:'Add Faculty Member', desc:'Register new faculty', action:()=>_goPeople('faculty') },
-          { icon:'\u{1F393}', title:'Faculty Category Distribution', desc:'Incl. Associate + Affiliate + Grand Total', action:()=>_goPeople('faculty') },
-        ]
-      },
-      { id:'affifac', icon:'\u{1F517}', label:'Affiliate Faculty', color:'#8B5CF6',
-        valFn: ()=>(window.DB?.affiFaculty||[]).length,
-        subFn: ()=>'Industry links',
-        expandTitle:'\u{1F517} Affiliate Faculty \u2014 People Management',
-        expandItems:[
-          { icon:'\u{1F517}', title:'Affiliate Faculty Registry', desc:'All affiliate faculty', action:()=>_goPeople('affiFaculty') },
-          { icon:'\u{1F517}', title:'Add Affiliate Faculty', desc:'Register a new affiliate', action:()=>_goPeople('affiFaculty') },
-          { icon:'\u{1F393}', title:'Faculty Category Distribution', desc:'Incl. Associate + Core + Grand Total', action:()=>_goPeople('faculty') },
-        ]
-      },
-      { id:'assocfac', icon:'\u{1F469}\u200D\u{1F3EB}', label:'Associate Faculty', color:'#8B5CF6',
-        valFn: ()=>(window.DB?.assocFaculty||[]).length,
-        subFn: ()=>'With tenure',
-        expandTitle:'\u{1F469}\u200D\u{1F3EB} Associate Faculty \u2014 People Management',
-        expandItems:[
-          { icon:'\u{1F469}\u200D\u{1F3EB}', title:'Associate Faculty Registry', desc:'All associate faculty', action:()=>_goPeople('assocFaculty') },
-          { icon:'\u{1F469}\u200D\u{1F3EB}', title:'Add Associate Faculty', desc:'Register associate faculty', action:()=>_goPeople('assocFaculty') },
-          { icon:'\u{1F3DB}', title:'Alumni Registry \u2014 Associate Faculty', desc:'Departed associate faculty', action:()=>_goPeople('alumni') },
-          { icon:'\u{1F393}', title:'Faculty Category Distribution', desc:'Incl. Core + Affiliate + Grand Total', action:()=>_goPeople('faculty') },
-        ]
-      },
-      { id:'researchers', icon:'\u{1F52C}', label:'Active Researchers', color:'#06B6D4',
-        valFn: ()=>(window.DB?.researchers||[]).filter(r=>{ if(!r.exitDate) return true; const p=r.exitDate.split('/'); const d=p.length===3?new Date(p[2],p[1]-1,p[0]):new Date(r.exitDate); return isNaN(d)||d>=new Date(); }).length,
-        subFn: ()=>'Ongoing',
-        expandTitle:'\u{1F52C} Active Researchers \u2014 People Management',
-        expandItems:[
-          { icon:'\u{1F52C}', title:'Active Researchers Registry', desc:'All ongoing researchers', action:()=>_goPeople('researchers') },
-          { icon:'\u{1F52C}', title:'Add Active Researcher', desc:'Onboard new researcher', action:()=>_goPeople('researchers') },
-          { icon:'\u{1F3DB}', title:'Alumni Registry \u2014 Researchers', desc:'Completed researchers', action:()=>_goPeople('alumni') },
-          { icon:'\u{1F52C}', title:'Researcher Designation Distribution', desc:'Role breakdown chart', action:()=>_goPeople('researchers') },
-        ]
-      },
-      { id:'fellows', icon:'\u{1F465}', label:'Associate Fellows', color:'#06B6D4',
-        valFn: ()=>(window.DB?.fellows||[]).length,
-        subFn: ()=>'Program fellows',
-        expandTitle:'\u{1F465} Associate Fellows \u2014 People Management',
-        expandItems:[
-          { icon:'\u{1F465}', title:'Associate Fellows Registry', desc:'All associate fellows', action:()=>_goPeople('fellows') },
-          { icon:'\u{1F465}', title:'Add Associate Fellow', desc:'Register new fellow', action:()=>_goPeople('fellows') },
-        ]
-      },
-      { id:'students', icon:'\u{1F393}', label:'Students', color:'#10B981',
-        valFn: ()=>(window.DB?.students||[]).filter(r=>r.status!=='Graduated'&&r.status!=='Dropped').length,
-        subFn: ()=>'Enrolled',
-        expandTitle:'\u{1F393} Students \u2014 People Management',
-        expandItems:[
-          { icon:'\u{1F393}', title:'Students Registry', desc:'All enrolled students', action:()=>_goPeople('students') },
-          { icon:'\u{1F3DB}', title:'Alumni Registry \u2014 Students', desc:'Graduated students', action:()=>_goPeople('alumni') },
-          { icon:'\u{1F393}', title:'Student Designation Distribution', desc:'Ph.D / M.Tech / B.Tech breakdown', action:()=>_goPeople('students') },
-        ]
-      },
-      { id:'tenure', icon:'\u23F0', label:'Tenure Risk', color:'#EF4444',
-        valFn: ()=>_countTenureRisk(),
-        subFn: ()=>'Actions needed',
-        expandTitle:'\u23F0 Tenure Risk \u2014 People Management',
-        expandItems:[
-          { icon:'\u23F0', title:'Tenure Actions Required', desc:'Staff with exit dates within 90 days', action:()=>_goPeople('actions') },
-        ]
-      },
-    ]
-  },
-
-  /* 2. Asset Management */
-  assets: {
-    id:'assets', icon:'\u{1F4E6}', title:'Asset Management', sub:'Equipment Portfolio', color:'#F59E0B',
-    cards: [
-      { id:'it', icon:'\u{1F4BB}', label:'IT Assets', color:'#3B82F6', valFn:()=>(window.ASSET_DB?.it||[]).length, subFn:()=>'Devices & hardware',
-        expandTitle:'\u{1F4BB} IT Assets \u2014 Asset Management',
-        expandItems:[{ icon:'\u{1F4BB}', title:'IT Assets \u2014 Category Breakdown', desc:'Auto-updated from Google Sheet', action:()=>_goAsset('it') }] },
-      { id:'nonit', icon:'\u{1F3E2}', label:'Non-IT Assets', color:'#F59E0B', valFn:()=>(window.ASSET_DB?.nonit||[]).length, subFn:()=>'Furniture & equipment',
-        expandTitle:'\u{1F3E2} Non-IT Assets \u2014 Asset Management',
-        expandItems:[{ icon:'\u{1F3E2}', title:'Non-IT Assets \u2014 Category Breakdown', desc:'Auto-updated from Google Sheet', action:()=>_goAsset('nonit') }] },
-      { id:'ilds', icon:'\u{1F310}', label:'ILDS Cluster', color:'#06B6D4', valFn:()=>(window.ASSET_DB?.ilds||[]).length, subFn:()=>'Storage nodes',
-        expandTitle:'\u{1F310} ILDS Cluster \u2014 Asset Management',
-        expandItems:[{ icon:'\u{1F310}', title:'ILDS Cluster \u2014 Item Breakdown', desc:'Auto-updated from Google Sheet', action:()=>_goAsset('ilds') }] },
-      { id:'gpu', icon:'\u{1F9E0}', label:'GPU Cluster', color:'#8B5CF6', valFn:()=>(window.ASSET_DB?.gpu||[]).length, subFn:()=>'Compute nodes',
-        expandTitle:'\u{1F9E0} GPU Cluster \u2014 Asset Management',
-        expandItems:[{ icon:'\u{1F9E0}', title:'GPU Cluster \u2014 Item Breakdown', desc:'Auto-updated from Google Sheet', action:()=>_goAsset('gpu') }] },
-      { id:'books', icon:'\u{1F4DA}', label:'Books Inventory', color:'#10B981', valFn:()=>(window.ASSET_DB?.books||[]).length, subFn:()=>'Library stock',
-        expandTitle:'\u{1F4DA} Books \u2014 Asset Management',
-        expandItems:[{ icon:'\u{1F4DA}', title:'Books \u2014 Title Breakdown', desc:'Auto-updated from Google Sheet', action:()=>_goAsset('books') }] },
-      { id:'spares', icon:'\u{1F527}', label:'Spares', color:'#10B981', valFn:()=>(window.ASSET_DB?.spares||[]).length, subFn:()=>'Parts store',
-        expandTitle:'\u{1F527} Spares \u2014 Asset Management',
-        expandItems:[{ icon:'\u{1F527}', title:'Spares \u2014 Breakdown', desc:'Auto-updated from Google Sheet', action:()=>_goAsset('spares') }] },
-      { id:'consumables', icon:'\u{1F5C2}', label:'Consumables', color:'#F97316', valFn:()=>(window.ASSET_DB?.consumables||[]).length, subFn:()=>'Stock items',
-        expandTitle:'\u{1F5C2} Consumables \u2014 Asset Management',
-        expandItems:[{ icon:'\u{1F5C2}', title:'Consumables \u2014 Breakdown', desc:'Auto-updated from Google Sheet', action:()=>_goAsset('consumables') }] },
-      { id:'nonrep', icon:'\u{1F6AB}', label:'Non Repairable', color:'#EF4444', valFn:()=>(window.ASSET_DB?.nonRepairable||[]).length, subFn:()=>'Write-offs',
-        expandTitle:'\u{1F6AB} Non-Repairable \u2014 Asset Management',
-        expandItems:[{ icon:'\u{1F6AB}', title:'Non-Repairable \u2014 Breakdown', desc:'Auto-updated from Google Sheet', action:()=>_goAsset('nonrepairable') }] },
-      { id:'vendors', icon:'\u{1F91D}', label:'Vendor List', color:'#64748B', valFn:()=>(window.ASSET_DB?.vendors||[]).length, subFn:()=>'Active vendors',
-        expandTitle:'\u{1F91D} Vendor List \u2014 Asset Management',
-        expandItems:[{ icon:'\u{1F91D}', title:'Vendor List \u2014 Breakdown', desc:'Auto-updated from Google Sheet', action:()=>_goAsset('vendor') }] },
-    ]
-  },
-
-  /* 3. Biometric Access */
-  biometric: {
-    id:'biometric', icon:'\u{1F510}', title:'Biometric Access', sub:'Area Occupancy', color:'#8B5CF6',
-    cards: [
-      { id:'bmactive', icon:'\u{1F510}', label:'Total Active', color:'#8B5CF6',
-        valFn: ()=>{ const bm=window.BM; if(!bm) return '\u2014'; return bm?.raw?.totalActive ?? (bm?.raw?.allUsers||[]).filter(u=>u.authorizationStatus==='Authorized'||u.accountStatus==='Active').length; },
-        subFn: ()=>'Authorized users',
-        expandTitle:'\u{1F510} Biometric Access \u2014 Biometric Module',
-        expandItems:[
-          { icon:'\u{1F3E2}', title:'Area Occupancy', desc:'Live seat occupancy per zone', action:()=>_goBioArea() },
-          { icon:'\u23F3', title:'Biometric Auth \u2014 Pending Requests', desc:'Awaiting access approval', action:()=>_goBioPending() },
-        ]
-      },
-    ]
-  },
-
-  /* 4. Facility & Room Management */
-  facility: {
-    id:'facility', icon:'\u{1F3DB}', title:'Facility & Room Management', sub:'Labs & Rooms', color:'#06B6D4',
-    cards: [
-      { id:'overcap', icon:'\u26A0\uFE0F', label:'Over Capacity', color:'#EF4444',
-        valFn: ()=>{ const labs=(window.LAB?.data?.facultyLabs||window.LAB?.facultyLabs||[]); return labs.filter(l=>(l.occupiedSeats||0)>(l.totalSeats||0)&&(l.totalSeats||0)>0).length; },
-        subFn: ()=>'Labs exceeding limit',
-        expandTitle:'\u26A0\uFE0F Over Capacity \u2014 Facility Module',
-        expandItems:[{ icon:'\u{1F4CA}', title:'Utilization Ribbons', desc:'Over / Optimum / Under-utilized labs', action:()=>_goLab('utilization') }]
-      },
-      { id:'facrooms', icon:'\u{1F3DB}', label:'Facility Rooms', color:'#06B6D4',
-        valFn: ()=>(window.LAB?.data?.facilityRooms||window.LAB?.facilityRooms||[]).length,
-        subFn: ()=>'All spaces',
-        expandTitle:'\u{1F3DB} Facility Rooms \u2014 Facility Module',
-        expandItems:[{ icon:'\u{1F3DB}', title:'Facility Rooms \u2014 Live Status', desc:'Room capacity from sheet data', action:()=>_goLab('facility-rooms') }]
-      },
-      { id:'labcap', icon:'\u{1F4D0}', label:'Total Labs Capacity', color:'#10B981',
-        valFn: ()=>{ const labs=(window.LAB?.data?.facultyLabs||window.LAB?.facultyLabs||[]); const t=labs.reduce((s,l)=>s+(l.totalSeats||l.capacity||0),0); return t||'\u2014'; },
-        subFn: ()=>'Lab seats total',
-        expandTitle:'\u{1F4D0} Labs Capacity \u2014 Facility Module',
-        expandItems:[{ icon:'\u{1F4D0}', title:'Total Labs Capacity', desc:'From config & dashboard script', action:()=>_goLab('faculty-labs') }]
-      },
-      { id:'classcap', icon:'\u{1F3EB}', label:'Total Classroom Capacity', color:'#10B981',
-        valFn: ()=>{ const rooms=(window.LAB?.data?.facilityRooms||window.LAB?.facilityRooms||[]); const cls=rooms.filter(r=>(r.category||r.roomType||r.type||'').toLowerCase().includes('class')); return cls.reduce((s,r)=>s+(r.capacity||r.totalSeats||0),0)||'\u2014'; },
-        subFn: ()=>'Classroom seats',
-        expandTitle:'\u{1F3EB} Total Classroom Capacity \u2014 Facility Module',
-        expandItems:[{ icon:'\u{1F3EB}', title:'Total Classroom Capacity', desc:'From config & dashboard script', action:()=>_goLab('category') }]
-      },
-      { id:'occupied', icon:'\u{1FA91}', label:'Occupied Seats', color:'#F59E0B',
-        valFn: ()=>{ const labs=(window.LAB?.data?.facultyLabs||window.LAB?.facultyLabs||[]); const v=labs.reduce((s,l)=>s+(l.occupiedSeats||0),0); return v||'\u2014'; },
-        subFn: ()=>'Current occupancy',
-        expandTitle:'\u{1FA91} Occupied Seats \u2014 Facility Module',
-        expandItems:[{ icon:'\u{1FA91}', title:'Occupied Seats', desc:'From config & dashboard script', action:()=>_goLab('faculty-labs') }]
-      },
-      { id:'available', icon:'\u2705', label:'Available Seats', color:'#10B981',
-        valFn: ()=>{ const labs=(window.LAB?.data?.facultyLabs||window.LAB?.facultyLabs||[]); const tot=labs.reduce((s,l)=>s+(l.totalSeats||l.capacity||0),0); const occ=labs.reduce((s,l)=>s+(l.occupiedSeats||0),0); return tot>0?Math.max(0,tot-occ):'\u2014'; },
-        subFn: ()=>'Seats free now',
-        expandTitle:'\u2705 Available Seats \u2014 Facility Module',
-        expandItems:[{ icon:'\u2705', title:'Available Seats', desc:'From config & dashboard script', action:()=>_goLab('faculty-labs') }]
-      },
-    ]
-  },
-
-  /* 5. Expenses */
-  expenses: {
-    id:'expenses', icon:'\u{1F4B0}', title:'Expenses', sub:'Financial Tracker', color:'#F59E0B',
-    cards: [
-      { id:'paid', icon:'\u2705', label:'Paid', color:'#10B981',
-        valFn: ()=>_expAmt('paid'),
-        subFn: ()=>{ const n=(typeof EXP!=='undefined'?EXP.all||[]:[]).filter(r=>(r.status||'').toLowerCase()==='paid').length; return n+' transactions'; },
-        expandTitle:'\u2705 Paid Expenses \u2014 Expense Management',
-        expandItems:[{ icon:'\u2705', title:'Paid Expense Registry', desc:'Registry of paid status from sheets', action:()=>_goExp('Paid') }]
-      },
-      { id:'pending', icon:'\u23F3', label:'Pending', color:'#F59E0B',
-        valFn: ()=>_expAmt('pending'),
-        subFn: ()=>{ const n=(typeof EXP!=='undefined'?EXP.all||[]:[]).filter(r=>(r.status||'').toLowerCase()==='pending').length; return n+' transactions'; },
-        expandTitle:'\u23F3 Pending Expenses \u2014 Expense Management',
-        expandItems:[{ icon:'\u23F3', title:'Pending Expense Registry', desc:'Registry of pending status from sheets', action:()=>_goExp('Pending') }]
-      },
-      { id:'underproc', icon:'\u{1F504}', label:'Under-process', color:'#F97316',
-        valFn: ()=>_expAmt('under'),
-        subFn: ()=>{ const n=(typeof EXP!=='undefined'?EXP.all||[]:[]).filter(r=>(r.status||'').toLowerCase().includes('process')).length; return n+' transactions'; },
-        expandTitle:'\u{1F504} Under-process Expenses \u2014 Expense Management',
-        expandItems:[{ icon:'\u{1F504}', title:'Under-process Registry', desc:'Registry of in-review status from sheets', action:()=>_goExp('Under-process') }]
-      },
-    ]
-  },
-
-  /* 6. Publications */
-  publications: {
-    id:'publications', icon:'\u{1F4DA}', title:'Publications', sub:'Research Output', color:'#8B5CF6',
-    cards: [
-      { id:'journals', icon:'\u{1F4C4}', label:'Journal Papers', color:'#8B5CF6',
-        valFn: ()=>(window.PUB?.journals||[]).length || (window.PUB?.all||[]).filter(r=>(r.type||r.pubType||'').toLowerCase().includes('journal')).length,
-        subFn: ()=>'Published articles',
-        expandTitle:'\u{1F4C4} Journal Papers \u2014 Publications Management',
-        expandItems:[
-          { icon:'\u{1F4C4}', title:'Journal Papers Registry', desc:'All published journal articles', action:()=>_goPub('journal') },
-          { icon:'\u{1F4CA}', title:'Year-wise Publication Matrix', desc:'Auto-updated from Google Sheet', action:()=>_goPub('all') },
-        ]
-      },
-      { id:'conferences', icon:'\u{1F3A4}', label:'Conference Papers', color:'#7C3AED',
-        valFn: ()=>(window.PUB?.conferences||[]).length || (window.PUB?.all||[]).filter(r=>(r.type||r.pubType||'').toLowerCase().includes('conference')).length,
-        subFn: ()=>'Presented papers',
-        expandTitle:'\u{1F3A4} Conference Papers \u2014 Publications Management',
-        expandItems:[
-          { icon:'\u{1F3A4}', title:'Conference Papers Registry', desc:'All conference submissions', action:()=>_goPub('conference') },
-          { icon:'\u{1F4CA}', title:'Year-wise Publication Matrix', desc:'Auto-updated from Google Sheet', action:()=>_goPub('all') },
-        ]
-      },
-      { id:'reports', icon:'\u{1F4CB}', label:'Reports', color:'#06B6D4',
-        valFn: ()=>(window.PUB?.reports||[]).length || (window.PUB?.all||[]).filter(r=>(r.type||r.pubType||'').toLowerCase().includes('report')).length,
-        subFn: ()=>'Internal documents',
-        expandTitle:'\u{1F4CB} Reports \u2014 Publications Management',
-        expandItems:[
-          { icon:'\u{1F4CB}', title:'Reports Registry', desc:'All internal research reports', action:()=>_goPub('report') },
-          { icon:'\u{1F4CA}', title:'Year-wise Publication Matrix', desc:'Auto-updated from Google Sheet', action:()=>_goPub('all') },
-        ]
-      },
-      { id:'preprints', icon:'\u{1F4D1}', label:'Preprints / ArXiv', color:'#F59E0B',
-        valFn: ()=>(window.PUB?.preprintArxiv||window.PUB?.preprints||[]).length || (window.PUB?.all||[]).filter(r=>(r.type||r.pubType||'').toLowerCase().includes('preprint')||(r.type||r.pubType||'').toLowerCase().includes('arxiv')).length,
-        subFn: ()=>'Pre-published',
-        expandTitle:'\u{1F4D1} Preprints / ArXiv \u2014 Publications Management',
-        expandItems:[
-          { icon:'\u{1F4D1}', title:'Preprints Registry', desc:'ArXiv and pre-published papers', action:()=>_goPub('preprint') },
-          { icon:'\u{1F4CA}', title:'Year-wise Publication Matrix', desc:'Auto-updated from Google Sheet', action:()=>_goPub('all') },
-        ]
-      },
-    ]
-  },
-
-  /* 7. Inventory Management */
-  inventory: {
-    id:'inventory', icon:'\u{1F4E6}', title:'Inventory Management', sub:'Gifts \u00B7 Stationeries \u00B7 Mementos', color:'#10B981',
-    cards: [
-      { id:'gifts', icon:'\u{1F381}', label:'Gifts', color:'#10B981',
-        valFn: ()=>_invItems('Gifts').reduce((s,i)=>s+_invBal(i),0),
-        subFn: ()=>_invItems('Gifts').length+' item types',
-        expandTitle:'\u{1F381} Gifts \u2014 Inventory Management',
-        expandItems:[{ icon:'\u{1F4CB}', title:'Gifts \u2014 Transaction Ledger', desc:'Ledger with filters (all transactions)', action:()=>_goInv('gifts') }]
-      },
-      { id:'stationeries', icon:'\u270F\uFE0F', label:'Stationeries', color:'#06B6D4',
-        valFn: ()=>_invItems('Stationeries').reduce((s,i)=>s+_invBal(i),0),
-        subFn: ()=>_invItems('Stationeries').length+' item types',
-        expandTitle:'\u270F\uFE0F Stationeries \u2014 Inventory Management',
-        expandItems:[{ icon:'\u{1F4CB}', title:'Stationeries \u2014 Transaction Ledger', desc:'Ledger with filters (all transactions)', action:()=>_goInv('stationeries') }]
-      },
-      { id:'mementos', icon:'\u{1F3C6}', label:'Mementos', color:'#8B5CF6',
-        valFn: ()=>_invItems('Mementos').reduce((s,i)=>s+_invBal(i),0),
-        subFn: ()=>_invItems('Mementos').length+' item types',
-        expandTitle:'\u{1F3C6} Mementos \u2014 Inventory Management',
-        expandItems:[{ icon:'\u{1F4CB}', title:'Mementos \u2014 Transaction Ledger', desc:'Ledger with filters (all transactions)', action:()=>_goInv('mementos') }]
-      },
-      { id:'lowstock', icon:'\u{1F6A8}', label:'Low / Critical', color:'#EF4444',
-        valFn: ()=>{ if(typeof INV_DB==='undefined') return '\u2014'; return _invLowCrit(INV_DB.items||[]); },
-        subFn: ()=>'Items needing reorder',
-        expandTitle:'\u{1F6A8} Low Stock \u2014 Inventory Management',
-        expandItems:[{ icon:'\u{1F6A8}', title:'Low Stock Alert Summary', desc:'Items at or below reorder threshold', action:()=>_goInv('actions') }]
-      },
-    ]
-  },
-
-}; // end MYD_ROWS
-
-let _myd_openCard = null; // 'rowId_cardId'
-
-/* ── Render engine ───────────────────────────────────────────────────────── */
-function mydBuild() {
-  const role = (typeof _currentRole !== 'undefined' ? _currentRole : null) || 'admin';
-  const rowKeys = MYD_ROLE_ROWS[role] || MYD_ROLE_ROWS['admin'];
-  const roleColor = MYD_ROLE_COLORS[role] || '#3B82F6';
-  const container = document.getElementById('myd-kpi-container');
-  if (!container) return;
-
-  let html = '';
-  rowKeys.forEach(rowKey => {
-    const row = MYD_ROWS[rowKey]; if (!row) return;
-    html += `
-    <div class="myd-kpi-section" id="myd-section-${rowKey}" style="margin-bottom:1.75rem;">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border);">
-        <span style="font-size:1rem;">${row.icon}</span>
-        <span style="font-size:0.9rem;font-weight:600;color:var(--text);">${row.title}</span>
-        <span style="font-size:0.68rem;font-family:var(--font-mono);color:var(--text3);background:var(--surface2);border:1px solid var(--border);border-radius:100px;padding:1px 8px;">${row.sub}</span>
-        <span style="margin-left:auto;font-size:0.62rem;font-family:var(--font-mono);color:var(--text3);" id="myd-row-ts-${rowKey}"></span>
-      </div>
-      <div class="myd-card-row" style="display:flex;gap:8px;flex-wrap:wrap;" id="myd-cards-${rowKey}">`;
-    row.cards.forEach(card => {
-      const key = rowKey + '_' + card.id;
-      const val = _safeVal(card.valFn);
-      html += `
-        <div style="min-width:90px;flex:1;">
-          <div class="myd-kpi-card" id="myd-kc-${key}"
-            data-myd-key="${key}"
-            onclick="mydToggle('${key}')"
-            style="background:var(--surface);border:0.5px solid var(--border);border-radius:12px;padding:12px 14px;cursor:pointer;position:relative;overflow:hidden;transition:border-color .15s,transform .15s;border-top:2.5px solid ${card.color};">
-            <div style="font-size:1.5rem;font-weight:600;font-family:var(--font-mono);color:${card.color};line-height:1.1;" id="myd-val-${key}">${val}</div>
-            <div style="font-size:0.68rem;font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.06em;color:var(--text2);margin-top:3px;">${card.label}</div>
-            <div style="font-size:0.65rem;color:var(--text3);margin-top:2px;" id="myd-sub-${key}">${_safeVal(card.subFn)}</div>
-            <div style="position:absolute;bottom:6px;right:8px;font-size:0.55rem;font-family:var(--font-mono);color:var(--text3);opacity:0.7;">▼ expand</div>
-          </div>
+function mydRefreshBiometric() {
+  const BM = window.BM || window._biometricData || {};
+  const areas = BM.areaOccupancy || BM.areas || [];
+  const container = document.getElementById('myd-bio-area-cards');
+  if (container) {
+    if (areas.length) {
+      container.innerHTML = areas.slice(0,6).map(a => {
+        const pct = a.capacity > 0 ? Math.round((a.occupied||0)/a.capacity*100) : 0;
+        const color = pct > 80 ? 'var(--red)' : pct >= 50 ? 'var(--gold)' : 'var(--green)';
+        return `<div class="myd-kpi-card" onclick="mydOpenDrilldown('biometric','area')" style="border-color:${color}20;">
+          <div class="myd-kpi-icon">🏢</div>
+          <div class="myd-kpi-val" style="font-size:1.1rem;color:${color};">${a.occupied||0}/${a.capacity||0}</div>
+          <div class="myd-kpi-lbl">${a.area||a.name||'Area'}</div>
+          <div class="myd-kpi-sub">${pct}% occupied</div>
         </div>`;
-    });
-    html += `</div>`;
+      }).join('');
+    }
+  }
+  const pending = (BM.pendingRequests || []).filter(r => (r.status||'').toLowerCase() === 'pending').length;
+  const el = document.getElementById('myd-bio-pending');
+  if (el) el.textContent = pending || (BM.pendingCount) || '—';
+}
 
-    // Expand panels (one per card, outside card row)
-    row.cards.forEach(card => {
-      const key = rowKey + '_' + card.id;
-      if (!card.expandItems) return;
-      html += `
-      <div class="myd-expand-panel" id="myd-ep-${key}" style="display:none;background:var(--surface);border:0.5px solid var(--border);border-top:2px solid ${card.color};border-radius:0 0 12px 12px;padding:14px 16px;margin-top:0;animation:myd_fadeIn 0.2s ease;">
-        <div style="font-size:0.8rem;font-weight:600;color:var(--text);margin-bottom:10px;padding-bottom:7px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:6px;">
-          <span style="color:${card.color};">${card.icon}</span> ${card.expandTitle}
+function mydOpenDrilldown(module, sub) {
+  let overlay = document.getElementById('myd-drilldown-overlay');
+  if (!overlay) {
+    const div = document.createElement('div');
+    div.id = 'myd-drilldown-overlay';
+    div.innerHTML = `<div id="myd-drilldown-box"><div class="myd-dd-header"><div class="myd-dd-title" id="myd-dd-title">Detail View</div><button class="myd-dd-close" onclick="mydCloseDrilldown()">✕</button></div><div class="myd-dd-body" id="myd-dd-body"></div></div>`;
+    div.onclick = function(e){ if(e.target===div) mydCloseDrilldown(); };
+    document.body.appendChild(div);
+    overlay = div;
+  }
+  overlay.classList.add('open');
+  mydRenderDrilldown(module, sub);
+}
+
+function mydCloseDrilldown() {
+  const ov = document.getElementById('myd-drilldown-overlay');
+  if (ov) ov.classList.remove('open');
+}
+
+function mydRenderDrilldown(module, sub) {
+  const titleEl = document.getElementById('myd-dd-title');
+  const bodyEl  = document.getElementById('myd-dd-body');
+  if (!titleEl || !bodyEl) return;
+
+  const DB    = window.DB    || {};
+  const ASSET = window.ASSET || {};
+  const LAB   = window.LAB   || {};
+  const INV   = window.INV   || {};
+  const BM    = window.BM    || window._biometricData || {};
+  const EXP   = window.EXP   || window._expenses || {};
+  const PUB   = window.PUB   || window._publications || {};
+
+  if (module === 'hr-people') {
+    titleEl.textContent = '👤 HR & People — ' + sub.charAt(0).toUpperCase() + sub.slice(1);
+    let distHTML = '';
+    const facTypes = {};
+    [...(DB.faculty||[]),...(DB.assocFaculty||[]),...(DB.affiFaculty||[])].forEach(r => {
+      const t = r.facultyType || r._type || 'Faculty';
+      facTypes[t] = (facTypes[t]||0)+1;
+    });
+    distHTML += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+      <div class="table-card"><div class="tc-header"><div class="tc-title" style="color:#4CAF50;">🎓 Faculty Category Distribution</div></div>
+        <table><thead><tr><th>Faculty Type</th><th>Count</th></tr></thead><tbody>
+        ${Object.entries(facTypes).map(([t,c])=>`<tr><td>${t}</td><td style="text-align:center;font-weight:700;">${c}</td></tr>`).join('')||'<tr><td colspan="2" style="text-align:center;color:var(--text3);">No data</td></tr>'}
+        </tbody></table></div>`;
+    const resTypes = {};
+    (DB.researchers||[]).forEach(r => { const d=r.designation||'Other'; resTypes[d]=(resTypes[d]||0)+1; });
+    distHTML += `<div class="table-card"><div class="tc-header"><div class="tc-title" style="color:#42A5F5;">🔬 Researcher Designation Distribution</div></div>
+        <table><thead><tr><th>Designation</th><th>Count</th></tr></thead><tbody>
+        ${Object.entries(resTypes).sort((a,b)=>b[1]-a[1]).map(([t,c])=>`<tr><td>${t}</td><td style="text-align:center;font-weight:700;">${c}</td></tr>`).join('')||'<tr><td colspan="2" style="text-align:center;color:var(--text3);">No data</td></tr>'}
+        </tbody></table></div></div>`;
+    const staffTypes = {};
+    (DB.staff||[]).forEach(r => { const d=r.designation||'Staff'; staffTypes[d]=(staffTypes[d]||0)+1; });
+    const stuTypes = {};
+    (DB.students||[]).forEach(r => { const d=r.designation||'Student'; stuTypes[d]=(stuTypes[d]||0)+1; });
+    distHTML += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+      <div class="table-card"><div class="tc-header"><div class="tc-title" style="color:#FB8C00;">👥 Staff Designation Distribution</div></div>
+        <table><thead><tr><th>Designation</th><th>Count</th></tr></thead><tbody>
+        ${Object.entries(staffTypes).sort((a,b)=>b[1]-a[1]).map(([t,c])=>`<tr><td>${t}</td><td style="text-align:center;font-weight:700;">${c}</td></tr>`).join('')||'<tr><td colspan="2" style="text-align:center;color:var(--text3);">No data</td></tr>'}
+        </tbody></table></div>
+      <div class="table-card"><div class="tc-header"><div class="tc-title" style="color:#7E57C2;">🎓 Student Designation Distribution</div></div>
+        <table><thead><tr><th>Designation</th><th>Count</th></tr></thead><tbody>
+        ${Object.entries(stuTypes).sort((a,b)=>b[1]-a[1]).map(([t,c])=>`<tr><td>${t}</td><td style="text-align:center;font-weight:700;">${c}</td></tr>`).join('')||'<tr><td colspan="2" style="text-align:center;color:var(--text3);">No data</td></tr>'}
+        </tbody></table></div></div>`;
+    if (sub === 'tenure') {
+      distHTML += `<div class="table-card" style="margin-bottom:1rem;">
+        <div class="tc-header"><div class="tc-title">⏰ Tenure Actions Required</div></div>
+        <table><thead><tr><th>Name</th><th>Type</th><th>Center/Dept</th><th>Exit Date</th><th>Days Left</th><th>Decision</th></tr></thead>
+        <tbody id="myd-dd-tenure-tbody"></tbody></table></div>`;
+    }
+    const typeMap = {
+      staff: DB.staff||[], faculty: DB.faculty||[], assocfaculty: DB.assocFaculty||[],
+      affifaculty: DB.affiFaculty||[], researchers: DB.researchers||[],
+      fellows: DB.fellows||[], students: DB.students||[], tenure: []
+    };
+    const rows = typeMap[sub] || [];
+    distHTML += `<div class="table-card">
+      <div class="tc-header">
+        <div class="tc-title">📋 ${sub.charAt(0).toUpperCase()+sub.slice(1)} Registry</div>
+        <div class="tc-actions">
+          <input type="text" placeholder="🔍 Search..." oninput="mydDDSearch(this.value)" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0.4rem 0.9rem;color:var(--text);font-size:0.82rem;outline:none;min-width:180px;">
+          <button class="tc-btn primary" onclick="openAddModal('${sub === 'assocfaculty' ? 'assocfaculty' : sub === 'affifaculty' ? 'affifaculty' : sub === 'researchers' ? 'researcher' : sub === 'fellows' ? 'fellow' : sub}')">+ Add</button>
         </div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px;">
-          ${card.expandItems.map((item, idx) => `
-          <div class="myd-ep-item" data-myd-key="${key}" data-myd-idx="${idx}"
-            style="background:var(--surface2);border:0.5px solid var(--border);border-radius:10px;padding:10px 12px;cursor:pointer;transition:all .15s;"
-            onmouseover="this.style.borderColor='${card.color}55';this.style.background='var(--surface3)'"
-            onmouseout="this.style.borderColor='var(--border)';this.style.background='var(--surface2)'"
-            onclick="mydItemClick('${key}',${idx})">
-            <div style="font-size:0.82rem;font-weight:500;color:var(--text);display:flex;align-items:center;gap:6px;">
-              <span>${item.icon}</span><span>${item.title}</span>
-            </div>
-            <div style="font-size:0.68rem;color:var(--text3);font-family:var(--font-mono);margin-top:3px;">${item.desc}</div>
-          </div>`).join('')}
-        </div>
-      </div>`;
-    });
-
-    html += `</div>`; // /myd-kpi-section
-  });
-
-  container.innerHTML = html;
-  _myd_wireHover();
-
-  // Inject keyframe if not present
-  if (!document.getElementById('myd-anim-css')) {
-    const s = document.createElement('style');
-    s.id = 'myd-anim-css';
-    s.textContent = `
-      @keyframes myd_fadeIn { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:none} }
-      .myd-kpi-card:hover { transform:translateY(-2px)!important; border-color:rgba(99,179,237,0.35)!important; box-shadow:0 6px 20px rgba(0,0,0,0.18); }
-      .myd-kpi-card.myd-active { box-shadow:0 8px 28px rgba(0,0,0,0.22); }
-      [data-theme="light"] .myd-kpi-card:hover { box-shadow:0 4px 14px rgba(15,23,42,0.12); }
-      [data-theme="light"] .myd-kpi-card { background:#fff!important; border-color:rgba(30,58,138,0.1)!important; }
-      [data-theme="light"] .myd-expand-panel { background:#fff!important; border-color:rgba(30,58,138,0.1)!important; }
-      [data-theme="light"] .myd-ep-item { background:#F5F7FC!important; }
-    `;
-    document.head.appendChild(s);
-  }
-}
-
-function _myd_wireHover() {
-  document.querySelectorAll('.myd-kpi-card').forEach(el => {
-    el.addEventListener('mouseenter', () => el.style.transform = 'translateY(-2px)');
-    el.addEventListener('mouseleave', () => { if (!el.classList.contains('myd-active')) el.style.transform = ''; });
-  });
-}
-
-function _safeVal(fn) {
-  try { const v = fn(); return (v === null || v === undefined) ? '—' : v; } catch(e) { return '—'; }
-}
-
-/* ── Toggle card expand ──────────────────────────────────────────────────── */
-window.mydToggle = function(key) {
-  const wasOpen = _myd_openCard === key;
-  // Close all
-  document.querySelectorAll('.myd-expand-panel').forEach(p => p.style.display = 'none');
-  document.querySelectorAll('.myd-kpi-card').forEach(c => { c.classList.remove('myd-active'); c.style.borderRadius = '12px'; });
-  _myd_openCard = null;
-  if (!wasOpen) {
-    _myd_openCard = key;
-    const panel = document.getElementById('myd-ep-' + key);
-    const card  = document.getElementById('myd-kc-' + key);
-    if (panel) { panel.style.display = 'block'; }
-    if (card)  { card.classList.add('myd-active'); card.style.borderRadius = '12px 12px 0 0'; }
-    // Scroll into view smoothly
-    setTimeout(() => panel?.scrollIntoView({ behavior:'smooth', block:'nearest' }), 50);
-  }
-};
-
-/* ── Handle item click → navigate to module ─────────────────────────────── */
-window.mydItemClick = function(key, idx) {
-  const [rowKey, cardId] = key.split('_');
-  const row  = MYD_ROWS[rowKey]; if (!row) return;
-  const card = row.cards.find(c => c.id === cardId); if (!card) return;
-  const item = card.expandItems[idx]; if (!item || typeof item.action !== 'function') return;
-  item.action();
-};
-
-/* ── Refresh all KPI values ──────────────────────────────────────────────── */
-function _myd_refreshValues() {
-  const role = (typeof _currentRole !== 'undefined' ? _currentRole : null) || 'admin';
-  const rowKeys = MYD_ROLE_ROWS[role] || MYD_ROLE_ROWS['admin'];
-  rowKeys.forEach(rowKey => {
-    const row = MYD_ROWS[rowKey]; if (!row) return;
-    row.cards.forEach(card => {
-      const key = rowKey + '_' + card.id;
-      const valEl = document.getElementById('myd-val-' + key);
-      const subEl = document.getElementById('myd-sub-' + key);
-      if (valEl) { const v = _safeVal(card.valFn); valEl.textContent = v; }
-      if (subEl && card.subFn) subEl.textContent = _safeVal(card.subFn);
-    });
-    const tsEl = document.getElementById('myd-row-ts-' + rowKey);
-    if (tsEl) tsEl.textContent = 'Updated ' + new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
-  });
-  _myd_setSyncStatus('ok');
-}
-
-/* ── Sync bar helpers ────────────────────────────────────────────────────── */
-function _myd_setSyncStatus(state, msg) {
-  const dot   = document.getElementById('myd-sync-dot');
-  const label = document.getElementById('myd-sync-label');
-  const ts    = document.getElementById('myd-sync-ts');
-  const colors = { ok:'var(--green)', syncing:'var(--accent)', error:'var(--red)', idle:'var(--text3)' };
-  if (dot)   dot.style.background = colors[state] || colors.idle;
-  if (label) label.textContent = msg || (state==='ok'?'Dashboard live':'Syncing data…');
-  if (ts && state==='ok') ts.textContent = new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
-}
-
-/* ── Public: full refresh ────────────────────────────────────────────────── */
-window.mydRefreshAll = async function() {
-  _myd_setSyncStatus('syncing', 'Refreshing data…');
-  if (window.WS_CONFIG?.webAppUrl && typeof window._wsai_fetchAll === 'function') {
-    try { await window._wsai_fetchAll(); } catch(e){}
-  }
-  _myd_refreshValues();
-};
-
-/* ── Public: rebuild on role change ─────────────────────────────────────── */
-window.mydRebuild = function() {
-  mydBuild();
-  _myd_refreshValues();
-};
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   AUTO-SYNC WIRING
-   My Dashboard values update automatically via four paths:
-   1. showTab('my-dashboard') → always refreshes on open
-   2. applyAccessLevelUI(role) → rebuilds for role on login / role switch
-   3. _wsai_renderAll() hook → fires after every 30s poll + manual fetch
-   4. syncToSheet() hook → fires 3s after every write (optimistic UI)
-   Result: KPI numbers stay identical to what each module tab would show.
-═══════════════════════════════════════════════════════════════════════════ */
-
-/* ── Hook 1: showTab ────────────────────────────────────────────────────── */
-(function _hookShowTab() {
-  const _origST = typeof window.showTab === 'function' ? window.showTab : null;
-  if (!_origST) { setTimeout(_hookShowTab, 200); return; }
-  if (_origST._myd_hooked) return;
-  window.showTab = function(tabId) {
-    _origST.apply(this, arguments);
-    if (tabId === 'my-dashboard') {
-      const cont = document.getElementById('myd-kpi-container');
-      if (!cont || cont.innerHTML.trim() === '') {
-        setTimeout(() => { mydBuild(); _myd_refreshValues(); _myd_setSyncStatus('ok'); }, 80);
-      } else {
-        setTimeout(_myd_refreshValues, 80);
+      </div>
+      <div style="overflow-x:auto;max-height:350px;overflow-y:auto;">
+        <table><thead><tr><th>#</th><th>Name</th><th>Designation / Type</th><th>Department</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="myd-dd-reg-tbody">
+          ${rows.slice(0,50).map((r,i)=>`<tr>
+            <td>${i+1}</td>
+            <td>${r.name||'—'}</td>
+            <td>${r.designation||r.facultyType||r.category||r._type||'—'}</td>
+            <td>${r.department||r.center||'—'}</td>
+            <td><span class="badge badge-${(r.status||'active').toLowerCase()}">${r.status||'Active'}</span></td>
+            <td><button class="tc-btn" onclick="openEditModal('${sub}','${r.id||''}')">Edit</button> <button class="tc-btn" style="color:var(--red);" onclick="confirmDelete('${sub}','${r.id||''}')">Del</button></td>
+          </tr>`).join('')||`<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text3);">Connect sheet to load data</td></tr>`}
+        </tbody></table>
+      </div>
+    </div>`;
+    bodyEl.innerHTML = distHTML;
+    if (sub === 'tenure') {
+      const today = new Date();
+      const at = [...(DB.researchers||[]),...(DB.assocFaculty||[]),...(DB.affiFaculty||[])].filter(r => {
+        if (!r.exitDate) return false;
+        const parts = String(r.exitDate).split('/');
+        const exit = parts.length===3 ? new Date(parts[2],parts[1]-1,parts[0]) : new Date(r.exitDate);
+        return (exit - today)/86400000 <= 90;
+      }).sort((a,b) => new Date(a.exitDate) - new Date(b.exitDate));
+      const tb = document.getElementById('myd-dd-tenure-tbody');
+      if (tb) {
+        tb.innerHTML = at.map(r => {
+          const parts = String(r.exitDate).split('/');
+          const exit = parts.length===3 ? new Date(parts[2],parts[1]-1,parts[0]) : new Date(r.exitDate);
+          const days = Math.round((exit-today)/86400000);
+          const urgency = days < 30 ? 'var(--red)' : days < 60 ? 'var(--orange)' : 'var(--gold)';
+          return `<tr><td>${r.name||'—'}</td><td>${r._type||r.designation||'—'}</td><td>${r.center||r.department||'—'}</td><td>${r.exitDate||'—'}</td><td style="color:${urgency};font-weight:700;">${days}d</td><td>—</td></tr>`;
+        }).join('') || '<tr><td colspan="6" style="text-align:center;padding:1.5rem;color:var(--text3);">No tenure actions</td></tr>';
       }
     }
-  };
-  window.showTab._myd_hooked = true;
-})();
-
-/* ── Hook 2: applyAccessLevelUI → rebuild rows for new role ─────────────── */
-(function _hookApplyAccess() {
-  const _orig = typeof window.applyAccessLevelUI === 'function' ? window.applyAccessLevelUI : null;
-  if (!_orig) { setTimeout(_hookApplyAccess, 200); return; }
-  if (_orig._myd_hooked) return;
-  window.applyAccessLevelUI = function(role) {
-    _orig.apply(this, arguments);
-    // Rebuild after the landing tab switch animates in (350ms covers that)
-    setTimeout(() => { mydBuild(); _myd_refreshValues(); }, 400);
-  };
-  window.applyAccessLevelUI._myd_hooked = true;
-})();
-
-/* ── Hook 3: _wsai_renderAll → fires after every 30s poll & manual fetch ── */
-(function _hookRenderAll() {
-  const _orig = typeof window._wsai_renderAll === 'function' ? window._wsai_renderAll : null;
-  if (!_orig) { setTimeout(_hookRenderAll, 300); return; }
-  if (_orig._myd_hooked) return;
-  window._wsai_renderAll = function() {
-    _orig.apply(this, arguments);
-    // Always refresh values — tab may not be active but values must stay current
-    try {
-      _myd_refreshValues();
-      // Update sync indicator dot to green to mirror the rest of the portal
-      const dot = document.getElementById('myd-sync-dot');
-      if (dot) dot.style.background = 'var(--green)';
-      const lbl = document.getElementById('myd-sync-label');
-      if (lbl) lbl.textContent = 'Live \u2014 synced with all modules';
-      const ts = document.getElementById('myd-sync-ts');
-      if (ts) ts.textContent = new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
-    } catch(e) {}
-  };
-  window._wsai_renderAll._myd_hooked = true;
-})();
-
-/* ── Hook 4: syncToSheet → refresh 3s after any write (matches v35 pattern) */
-(function _hookSyncToSheet() {
-  const _orig = typeof window.syncToSheet === 'function' ? window.syncToSheet : null;
-  if (!_orig) { setTimeout(_hookSyncToSheet, 500); return; }
-  if (_orig._myd_hooked) return;
-  let _pending = null;
-  window.syncToSheet = async function() {
-    const result = await _orig.apply(this, arguments);
-    // Optimistic immediate refresh
-    try { _myd_refreshValues(); } catch(e) {}
-    // Confirmed refresh after GAS write round-trips (mirrors _wsai_fetchAll pattern)
-    if (_pending) clearTimeout(_pending);
-    _pending = setTimeout(() => { _pending = null; try { _myd_refreshValues(); } catch(e){} }, 3000);
-    return result;
-  };
-  window.syncToSheet._myd_hooked = true;
-})();
-
-/* ── Hook 5: _startAutoSync → show sync indicator on dashboard ──────────── */
-(function _hookStartAutoSync() {
-  const _orig = typeof window._startAutoSync === 'function' ? window._startAutoSync : null;
-  if (!_orig) { setTimeout(_hookStartAutoSync, 600); return; }
-  if (_orig._myd_hooked) return;
-  window._startAutoSync = function() {
-    _orig.apply(this, arguments);
-    // Show green dot once auto-sync starts (means sheet is connected)
-    const dot = document.getElementById('myd-sync-dot');
-    const lbl = document.getElementById('myd-sync-label');
-    if (dot) dot.style.background = 'var(--green)';
-    if (lbl) lbl.textContent = 'Auto-sync active \u2014 every 30s';
-  };
-  window._startAutoSync._myd_hooked = true;
-})();
-
-/* ── Initial build on DOMContentLoaded (before login gates appear) ───────── */
-function _myd_init() {
-  mydBuild();
-  // Check if sheet is already connected (URL persisted in localStorage)
-  const hasUrl = (function() {
-    try {
-      return ['people','assets','biometric','labs','expenses','publications','gifts']
-        .some(m => !!localStorage.getItem('wsai_url_' + m)) ||
-        !!localStorage.getItem('wsai_webAppUrl');
-    } catch(e) { return false; }
-  })();
-  _myd_setSyncStatus(hasUrl ? 'ok' : 'idle', hasUrl ? 'Loading from saved sheet\u2026' : 'Connect a sheet to load live data');
-  // If data is already in memory (session restore), refresh immediately
-  setTimeout(() => {
-    try { _myd_refreshValues(); } catch(e) {}
-  }, 500);
+  }
+  else if (module === 'asset') {
+    const assetMap = { it: ASSET.it||[], nonit: ASSET.nonit||[], ilds: ASSET.ilds||[], gpu: ASSET.gpu||[], books: ASSET.books||[], spares: ASSET.spares||[], consumables: ASSET.consumables||[], nonrepairable: ASSET.nonrepairable||[], vendor: ASSET.vendor||[] };
+    const titleMap = { it:'💻 IT Assets', nonit:'🏢 Non-IT Assets', ilds:'🌐 ILDS Cluster', gpu:'🧠 GPU Cluster', books:'📚 Books Inventory', spares:'🔧 Spares', consumables:'🛒 Consumables', nonrepairable:'⚠️ Non-Repairable', vendor:'🏪 Vendor List' };
+    titleEl.textContent = titleMap[sub] || ('📦 Asset — ' + sub);
+    const rows = assetMap[sub] || [];
+    let catHTML = '';
+    const catMap = {};
+    rows.forEach(r => { const c = r.category||r.type||'Other'; catMap[c]=(catMap[c]||0)+1; });
+    if (Object.keys(catMap).length) {
+      catHTML = `<div class="table-card" style="margin-bottom:1rem;">
+        <div class="tc-header"><div class="tc-title">${titleMap[sub]||''} — Category Breakdown</div></div>
+        <table><thead><tr><th>Category</th><th style="text-align:center;">Count</th></tr></thead>
+        <tbody>${Object.entries(catMap).sort((a,b)=>b[1]-a[1]).map(([c,n])=>`<tr><td>${c}</td><td style="text-align:center;font-weight:700;">${n}</td></tr>`).join('')}</tbody></table></div>`;
+    }
+    bodyEl.innerHTML = catHTML + `<div class="table-card">
+      <div class="tc-header">
+        <div class="tc-title">📋 ${titleMap[sub]||'Asset'} Registry</div>
+        <div class="tc-actions">
+          <input type="text" placeholder="🔍 Search..." style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0.4rem 0.9rem;color:var(--text);font-size:0.82rem;outline:none;min-width:180px;">
+          <button class="tc-btn primary" onclick="openAssetAddModal('${sub}')">+ Add</button>
+        </div>
+      </div>
+      <div style="overflow-x:auto;max-height:400px;overflow-y:auto;">
+        <table><thead><tr><th>#</th><th>Name / Label</th><th>Category</th><th>Status</th><th>Value ₹</th><th>Actions</th></tr></thead>
+        <tbody>
+          ${rows.slice(0,50).map((r,i)=>`<tr><td>${i+1}</td><td>${r.name||r.label||r.assetName||'—'}</td><td>${r.category||r.type||'—'}</td><td><span class="badge">${r.status||'Active'}</span></td><td>${r.value||r.purchaseValue||'—'}</td><td><button class="tc-btn" onclick="openAssetEditModal('${sub}','${r.id||''}')">Edit</button></td></tr>`).join('')||`<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text3);">Connect sheet to load data</td></tr>`}
+        </tbody></table>
+      </div>
+    </div>`;
+  }
+  else if (module === 'biometric') {
+    titleEl.textContent = '🔐 Biometric Access';
+    const areas = BM.areaOccupancy || BM.areas || [];
+    const pending = BM.pendingRequests || [];
+    bodyEl.innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:0.75rem;margin-bottom:1.25rem;">
+        ${areas.map(a => {
+          const pct = a.capacity > 0 ? Math.round((a.occupied||0)/a.capacity*100) : 0;
+          const color = pct>80?'var(--red)':pct>=50?'var(--gold)':'var(--green)';
+          return `<div class="table-card" style="padding:0.85rem;border-color:${color}30;"><div style="font-size:0.7rem;color:var(--text3);text-transform:uppercase;margin-bottom:0.3rem;">${a.area||a.name||'Area'}</div><div style="font-size:1.3rem;font-weight:700;color:${color};">${a.occupied||0}/${a.capacity||0}</div><div style="font-size:0.72rem;color:var(--text3);">${pct}% occupied</div></div>`;
+        }).join('')||'<div style="color:var(--text3);font-size:0.85rem;">No biometric area data — connect sheet</div>'}
+      </div>
+      <div class="table-card">
+        <div class="tc-header"><div class="tc-title">⏳ Biometric Auth — Pending Requests</div></div>
+        <div style="overflow-x:auto;"><table><thead><tr><th>Req ID</th><th>Employee Name</th><th>Role</th><th>Department</th><th>Request Date</th><th>Auth Type</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+          ${pending.filter(r=>(r.status||'').toLowerCase()==='pending').slice(0,50).map((r,i)=>`<tr><td>${r.id||r.biometricId||i+1}</td><td>${r.name||r.employeeName||'—'}</td><td>${r.category||r.role||'—'}</td><td>${r.department||'—'}</td><td>${r.lastAccess||r.requestDate||'—'}</td><td>${r.accessArea||r.authType||'—'}</td><td><span class="badge badge-pending">Pending</span></td><td><button class="tc-btn" style="color:var(--green);">✓ Auth</button> <button class="tc-btn" style="color:var(--red);">✕ Deny</button></td></tr>`).join('')||'<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--text3);">No pending requests</td></tr>'}
+        </tbody></table></div>
+      </div>`;
+  }
+  else if (module === 'facility') {
+    const subMap = { 'faculty-labs': LAB.facultyLabs||LAB.data?.facultyLabs||[], 'facility-rooms': LAB.facilityRooms||LAB.data?.facilityRooms||[], 'faculty-rooms': LAB.facultyRooms||LAB.data?.facultyRooms||[] };
+    titleEl.textContent = '🏛️ Facility & Room Management — ' + sub;
+    const rows = subMap[sub] || [];
+    bodyEl.innerHTML = `<div class="table-card">
+      <div class="tc-header">
+        <div class="tc-title">📋 ${sub.charAt(0).toUpperCase()+sub.slice(1).replace('-',' ')} Registry</div>
+        <div class="tc-actions">
+          <input type="text" placeholder="🔍 Search..." style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0.4rem 0.9rem;color:var(--text);font-size:0.82rem;outline:none;min-width:180px;">
+          <button class="tc-btn primary" onclick="labOpenAddModal('${sub==='faculty-labs'?'facultyLab':sub==='facility-rooms'?'facilityRoom':'facultyRoom'}')">+ Add</button>
+        </div>
+      </div>
+      <div style="overflow-x:auto;max-height:450px;overflow-y:auto;">
+        <table><thead><tr><th>#</th><th>Faculty / Room</th><th>Category</th><th>Total</th><th>Occupied</th><th>Util %</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+          ${rows.slice(0,50).map((r,i)=>{
+            const pct = r.utilizationRate ? Math.round(r.utilizationRate*100) : (r.occupiedSeats&&r.totalSeats ? Math.round(r.occupiedSeats/r.totalSeats*100) : 0);
+            const ind = pct>80?'🔴':pct>=50?'🟢':'🟡';
+            return `<tr><td>${i+1}</td><td>${r.facultyName||r.roomName||r.name||'—'}</td><td>${r.category||'—'}</td><td>${r.totalSeats||r.capacity||'—'}</td><td>${r.occupiedSeats||r.occupied||'—'}</td><td>${ind} ${pct}%</td><td><span class="badge">${r.status||'Active'}</span></td><td><button class="tc-btn" onclick="labOpenEditModal('${sub}','${r.id||''}')">Edit</button></td></tr>`;
+          }).join('')||'<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--text3);">Connect sheet to load data</td></tr>'}
+        </tbody></table>
+      </div>
+    </div>`;
+  }
+  else if (module === 'expenses') {
+    titleEl.textContent = '💰 Expenses — ' + sub.charAt(0).toUpperCase() + sub.slice(1);
+    const expArr = Array.isArray(EXP) ? EXP : (EXP.all || []);
+    const filterMap = { paid: 'paid', pending: 'pending', underprocess: 'under-process' };
+    const filtered = expArr.filter(e => (e.status||'').toLowerCase().includes(filterMap[sub]||sub));
+    bodyEl.innerHTML = `<div class="table-card">
+      <div class="tc-header">
+        <div class="tc-title">📋 Expenses — ${sub.charAt(0).toUpperCase()+sub.slice(1)}</div>
+        <div class="tc-actions">
+          <button class="tc-btn primary" onclick="showTab('expenses'); setTimeout(()=>document.querySelector('#tab-expenses .tc-btn.primary')?.click(),300)">+ Add Expense</button>
+        </div>
+      </div>
+      <div style="overflow-x:auto;max-height:450px;overflow-y:auto;">
+        <table><thead><tr><th>Req ID</th><th>Submitted By</th><th>Category</th><th>Amount ₹</th><th>Date</th><th>Month</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+          ${filtered.slice(0,50).map((r,i)=>`<tr><td>${r.reqId||r.id||i+1}</td><td>${r.submittedBy||r.name||'—'}</td><td>${r.category||'—'}</td><td>${r.amount||'—'}</td><td>${r.date||'—'}</td><td>${r.month||'—'}</td><td><span class="badge badge-${(r.status||'').toLowerCase().replace(' ','-')}">${r.status||'—'}</span></td><td><button class="tc-btn">Edit</button></td></tr>`).join('')||'<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--text3);">No records for this status</td></tr>'}
+        </tbody></table>
+      </div>
+    </div>`;
+  }
+  else if (module === 'publications') {
+    titleEl.textContent = '📚 Publications — ' + sub.charAt(0).toUpperCase() + sub.slice(1);
+    const pubArr = Array.isArray(PUB) ? PUB : (PUB.all || []);
+    const filterKey = { journals: 'journal', conferences: 'conference', reports: 'report', preprints: 'preprint' };
+    const filtered = pubArr.filter(p => (p.type||p.publicationType||'').toLowerCase().includes(filterKey[sub]||sub));
+    bodyEl.innerHTML = `<div class="table-card">
+      <div class="tc-header">
+        <div class="tc-title">📋 Publications — ${sub}</div>
+        <div class="tc-actions"><button class="tc-btn primary" onclick="showTab('publications'); setTimeout(()=>document.querySelector('#tab-publications .tc-btn.primary')?.click(),300)">+ Add</button></div>
+      </div>
+      <div style="overflow-x:auto;max-height:450px;overflow-y:auto;">
+        <table><thead><tr><th>#</th><th>Title</th><th>Authors</th><th>Type</th><th>Year</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+          ${filtered.slice(0,50).map((r,i)=>`<tr><td>${i+1}</td><td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.title||'—'}</td><td>${r.authors||r.author||'—'}</td><td>${r.type||r.publicationType||'—'}</td><td>${r.year||r.dateOfPublication||'—'}</td><td><span class="badge">${r.status||'—'}</span></td><td><button class="tc-btn">Edit</button></td></tr>`).join('')||'<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text3);">Connect sheet to load data</td></tr>'}
+        </tbody></table>
+      </div>
+    </div>`;
+  }
+  else if (module === 'inventory') {
+    titleEl.textContent = '📦 Inventory — ' + sub.charAt(0).toUpperCase() + sub.slice(1);
+    const invMap = { all: [...(INV.gifts||[]),...(INV.stationeries||INV.stat||[]),...(INV.mementos||INV.mem||[])], gifts: INV.gifts||[], stationeries: INV.stationeries||INV.stat||[], mementos: INV.mementos||INV.mem||[] };
+    const rows = invMap[sub] || [];
+    bodyEl.innerHTML = `<div class="table-card">
+      <div class="tc-header">
+        <div class="tc-title">📋 Inventory — ${sub}</div>
+        <div class="tc-actions"><button class="tc-btn primary" onclick="showTab('inventory'); switchInvTab('${sub==='all'?'gifts':sub}')">+ Add Item</button></div>
+      </div>
+      <div style="overflow-x:auto;max-height:450px;overflow-y:auto;">
+        <table><thead><tr><th>#</th><th>Item Name</th><th>Category</th><th>Balance</th><th>Issued</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+          ${rows.slice(0,50).map((r,i)=>`<tr><td>${i+1}</td><td>${r.name||r.itemName||'—'}</td><td>${r.category||r.type||'—'}</td><td>${r.balance||r.stock||'—'}</td><td>${r.totalIssued||r.issued||'—'}</td><td><span class="badge">${r.status||'Active'}</span></td><td><button class="tc-btn">Edit</button></td></tr>`).join('')||'<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text3);">Connect sheet to load data</td></tr>'}
+        </tbody></table>
+      </div>
+    </div>`;
+  }
 }
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', _myd_init);
-} else {
-  setTimeout(_myd_init, 60);
+function mydDDSearch(val) {
+  const tbody = document.getElementById('myd-dd-reg-tbody');
+  if (!tbody) return;
+  const q = val.toLowerCase();
+  tbody.querySelectorAll('tr').forEach(tr => {
+    tr.style.display = !q || tr.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
 }
 
-console.log('%c\u2705 WSAI My Dashboard v36 \u2014 Engine loaded (5 auto-sync hooks active)', 'color:#3B82F6;font-weight:700;font-size:11px;');
+function mydInitStaff(role) {
+  const contentEl = document.getElementById('myd-staff-content');
+  if (!contentEl) return;
+  const accessMap = {
+    hr_manager:   ['hr-people','biometric'],
+    finance_mgr:  ['expenses','asset'],
+    facility_mgr: ['facility','biometric'],
+    edu_pgm_mgr:  ['hr-people','publications'],
+    sys_admin:    ['hr-people','asset','biometric','facility','expenses','publications','inventory'],
+    mis:          ['hr-people','asset','biometric','facility','expenses','publications','inventory'],
+    staff:        ['hr-people','expenses','inventory']
+  };
+  const allowed = accessMap[role] || accessMap.staff;
+  const iconMap = {'hr-people':'👤','asset':'📦','biometric':'🔐','facility':'🏛️','expenses':'💰','publications':'📚','inventory':'📦'};
+  mydRefreshCOO();
+  contentEl.innerHTML = `<div style="color:var(--text2);font-size:0.88rem;margin-bottom:1rem;">Your accessible modules are shown below.</div>
+  <div style="display:flex;flex-wrap:wrap;gap:0.85rem;">
+    ${allowed.map(mod => `<div class="myd-kpi-card" style="max-width:200px;" onclick="mydOpenDrilldown('${mod}','all')">
+      <div class="myd-kpi-icon">${iconMap[mod]||'📋'}</div>
+      <div class="myd-kpi-lbl" style="font-size:0.85rem;font-weight:600;">${mod.replace('-',' ').replace(/(^\w|\s\w)/g, m=>m.toUpperCase())}</div>
+      <div class="myd-kpi-sub">Click to view details</div>
+    </div>`).join('')}
+  </div>`;
+}
 
-})(); // end _myd_engine
+// Hook into showTab — must be at very end
+(function() {
+  const _prev = typeof showTab === 'function' ? showTab : null;
+  window.showTab = function(tabId) {
+    if (_prev) _prev.call(this, tabId);
+    if (tabId === 'my-dashboard') {
+      setTimeout(mydInit, 80);
+    }
+  };
+})();
+
+if (document.getElementById('tab-my-dashboard')?.classList.contains('active')) {
+  setTimeout(mydInit, 200);
+}
+
 </script>
 
 </body>
+  
