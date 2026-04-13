@@ -1,10 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WSAI - PORTAL v33</title>
+<title>WSAI - PORTAL v38</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
@@ -1428,17 +1427,14 @@
     <nav class="sidebar">
       <div class="sidebar-section">
         <div class="sidebar-label">Overview</div>
+        <div class="nav-item" data-tab="my-dashboard" onclick="showTab('my-dashboard')" id="nav-my-dashboard" style="border-left:2px solid var(--accent);background:rgba(59,130,246,0.06);">
+          <span class="ni-icon">⊞</span> <span style="font-weight:600;">My Dashboard</span>
+        </div>
         <div class="nav-item active" data-tab="dashboard" onclick="showTab('dashboard')">
-          <span class="ni-icon">🏠</span> Dashboard
-        </div>
-        <div class="nav-item" data-tab="analytics" onclick="showTab('analytics')">
-          <span class="ni-icon">📊</span> Analytics
-        </div>
-        <div class="nav-item" data-tab="exec-dashboard" onclick="showTab('exec-dashboard')">
-          <span class="ni-icon">🏛️</span> Executive Summary
+          <span class="ni-icon">📊</span> Dashboard
         </div>
         <div class="nav-item" data-tab="role-dashboard" onclick="showTab('role-dashboard')" id="nav-role-dashboard" style="display:none !important;">
-          <span class="ni-icon" id="nav-role-icon">📊</span> <span id="nav-role-label">My Dashboard</span>
+          <span class="ni-icon" id="nav-role-icon">📊</span> <span id="nav-role-label">Role Dashboard</span>
         </div>
       </div>
       <div class="sidebar-divider"></div>
@@ -1534,6 +1530,32 @@
 
     <!-- MAIN CONTENT -->
     <main class="main">
+
+      <!-- ══════════════════════════════════════════════════════════════════
+           MY DASHBOARD — v38  (KPI rows with expandable module panels)
+           Landing page for all roles. Reads live from DB/ASSET_DB/BM/LAB/EXP/PUB/INV_DB.
+      ══════════════════════════════════════════════════════════════════ -->
+      <div class="tabs" id="tab-my-dashboard">
+        <!-- Page header — greeting injected here by _renderWelcomeBanner() after login -->
+        <div class="page-header" id="myd-page-header">
+          <h2 style="font-family:var(--font-display);display:flex;align-items:center;gap:10px;">
+            <span style="font-size:1.4rem;">⊞</span> My Dashboard
+          </h2>
+          <p>Personalised overview of all WSAI management modules · IIT Madras</p>
+        </div>
+
+        <!-- Auto-sync indicator strip -->
+        <div id="myd-sync-bar" style="display:flex;align-items:center;gap:8px;padding:0.5rem 0.85rem;background:rgba(59,130,246,0.06);border:1px solid rgba(59,130,246,0.12);border-radius:9px;margin-bottom:1.25rem;font-size:0.72rem;font-family:var(--font-mono);color:var(--text2);">
+          <span id="myd-sync-dot" style="width:7px;height:7px;border-radius:50%;background:var(--text3);flex-shrink:0;transition:background 0.3s;"></span>
+          <span id="myd-sync-label">Initialising dashboard…</span>
+          <span style="margin-left:auto;color:var(--text3);" id="myd-sync-ts"></span>
+          <button onclick="mydRefreshAll()" style="padding:2px 9px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text2);font-size:0.68rem;font-family:var(--font-mono);cursor:pointer;transition:all 0.15s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">↻ Refresh</button>
+        </div>
+
+        <!-- KPI ROWS CONTAINER — populated by _myd_engine() -->
+        <div id="myd-kpi-container"></div>
+
+      </div><!-- /tab-my-dashboard -->
 
       <!-- ── DASHBOARD ── -->
       <div class="tabs active" id="tab-dashboard">
@@ -6341,6 +6363,7 @@
     }
     window.scrollTo(0, 0);
     if (tabId === 'people')    { setTimeout(initPeopleManagement, 50); }
+    if (tabId === 'my-dashboard') { setTimeout(() => { if (typeof _myd_refreshValues === 'function') _myd_refreshValues(); }, 80); }
     if (tabId === 'analytics') { setTimeout(() => { renderAnSec(); }, 80); }
     if (tabId === 'systems')   { setTimeout(sysInitViewer, 80); }
     if (tabId === 'dropdown-manager') { setTimeout(ddmInit, 60); }
@@ -8246,6 +8269,8 @@
       if (el) el.textContent = _syncCount;
       setSyncStatus('ok', 'Synced ✓ ' + new Date().toLocaleTimeString('en-IN'));
       logAction('Sheet Sync', _currentUser, 'Google Sheets', action + ': ' + (payload?.name || JSON.stringify(payload||{}).slice(0,40)));
+      // Refresh My Dashboard KPI values 3s after write (optimistic UI update)
+      setTimeout(() => { try { if (typeof _myd_refreshValues === 'function') _myd_refreshValues(); } catch(e){} }, 3000);
     } catch(e) {
       // Attempt no-cors fallback silently
       try {
@@ -8482,27 +8507,27 @@
 
   // Access level definitions — maps role key to visible tabs/sections
   const ACCESS_LEVEL_MAP = {
-    'creator':      { label:'Creator (Full Admin)',    tabs:['role-dashboard','dashboard','people','biometric','labs','assets','expenses','publications','inventory','analytics','drive','systems','access','activity','exec-dashboard','dropdown-manager'], canEdit:true,  interface:'full'    },
-    'admin':        { label:'Full Access (Admin)',      tabs:['role-dashboard','dashboard','people','biometric','labs','assets','expenses','publications','inventory','analytics','drive','systems','access','activity','exec-dashboard','dropdown-manager'], canEdit:true,  interface:'full'    },
+    'creator':      { label:'Creator (Full Admin)',    tabs:['my-dashboard','dashboard','people','biometric','labs','assets','expenses','publications','inventory','analytics','drive','systems','access','activity','exec-dashboard','dropdown-manager'], canEdit:true,  interface:'full'    },
+    'admin':        { label:'Full Access (Admin)',      tabs:['my-dashboard','dashboard','people','biometric','labs','assets','expenses','publications','inventory','analytics','drive','systems','access','activity','exec-dashboard','dropdown-manager'], canEdit:true,  interface:'full'    },
 
     // ── v27 — Dedicated interfaces ─────────────────────────────────────────
-    'coo':          { label:'COO / Leadership View',   tabs:['role-dashboard','exec-dashboard','dashboard','analytics','people','biometric','labs','assets','expenses','publications','inventory','drive','systems','access','activity','dropdown-manager'], canEdit:true,  interface:'coo',     badge:'👔 COO',    color:'#F59E0B' },
-    'faculty':      { label:'Faculty Interface',        tabs:['role-dashboard','exec-dashboard','dashboard','analytics','people','labs','publications','biometric','activity'],                     canEdit:false, interface:'faculty', badge:'👨‍🏫 Faculty', color:'#06B6D4' },
+    'coo':          { label:'COO / Leadership View',   tabs:['my-dashboard','exec-dashboard','dashboard','analytics','people','biometric','labs','assets','expenses','publications','inventory','drive','systems','access','activity','dropdown-manager'], canEdit:true,  interface:'coo',     badge:'👔 COO',    color:'#F59E0B' },
+    'faculty':      { label:'Faculty Interface',        tabs:['my-dashboard','exec-dashboard','dashboard','analytics','people','labs','publications','biometric','activity'],                     canEdit:false, interface:'faculty', badge:'👨‍🏫 Faculty', color:'#06B6D4' },
     // ── Staff sub-roles: one per management function ─────────────────────────
-    'staff':        { label:'Staff Interface',           tabs:['role-dashboard','dashboard','people','expenses','inventory','activity'],                                                             canEdit:true,  interface:'staff',        badge:'🏢 Staff',                    color:'#10B981' },
-    'hr_manager':   { label:'HR Manager',                tabs:['role-dashboard','dashboard','people','biometric','activity'],                                                                       canEdit:true,  interface:'hr_manager',   badge:'👥 HR Manager',               color:'#8B5CF6' },
-    'finance_mgr':  { label:'Accounts / Procurement Manager',           tabs:['role-dashboard','dashboard','expenses','analytics','exec-dashboard','activity'],                                                    canEdit:true,  interface:'finance_mgr',  badge:'💰 Accounts / Procurement Manager',          color:'#F59E0B' },
-    'facility_mgr': { label:'Facility Manager',          tabs:['role-dashboard','dashboard','labs','assets','biometric','inventory','activity'],                                                    canEdit:true,  interface:'facility_mgr', badge:'🏗️ Facility Manager',         color:'#06B6D4' },
-    'edu_pgm_mgr':  { label:'Education Program Manager', tabs:['role-dashboard','dashboard','people','publications','labs','activity'],                                                             canEdit:true,  interface:'edu_pgm_mgr',  badge:'🎓 Education Program Manager', color:'#EC4899' },
-    'sys_admin':    { label:'System Administrator',      tabs:['role-dashboard','dashboard','people','biometric','labs','assets','expenses','publications','inventory','analytics','drive','systems','access','activity','dropdown-manager'], canEdit:true, interface:'sys_admin', badge:'⚙️ Sys Admin', color:'#64748B' },
-    'mis':          { label:'MIS',                       tabs:['role-dashboard','dashboard','people','biometric','labs','assets','expenses','publications','inventory','analytics','drive','systems','access','activity','exec-dashboard','dropdown-manager'], canEdit:true, interface:'full', badge:'📊 MIS', color:'#3B82F6' },
+    'staff':        { label:'Staff Interface',           tabs:['my-dashboard','dashboard','people','expenses','inventory','activity'],                                                             canEdit:true,  interface:'staff',        badge:'🏢 Staff',                    color:'#10B981' },
+    'hr_manager':   { label:'HR Manager',                tabs:['my-dashboard','dashboard','people','biometric','activity'],                                                                       canEdit:true,  interface:'hr_manager',   badge:'👥 HR Manager',               color:'#8B5CF6' },
+    'finance_mgr':  { label:'Accounts / Procurement Manager',           tabs:['my-dashboard','dashboard','expenses','analytics','exec-dashboard','activity'],                                                    canEdit:true,  interface:'finance_mgr',  badge:'💰 Accounts / Procurement Manager',          color:'#F59E0B' },
+    'facility_mgr': { label:'Facility Manager',          tabs:['my-dashboard','dashboard','labs','assets','biometric','inventory','activity'],                                                    canEdit:true,  interface:'facility_mgr', badge:'🏗️ Facility Manager',         color:'#06B6D4' },
+    'edu_pgm_mgr':  { label:'Education Program Manager', tabs:['my-dashboard','dashboard','people','publications','labs','activity'],                                                             canEdit:true,  interface:'edu_pgm_mgr',  badge:'🎓 Education Program Manager', color:'#EC4899' },
+    'sys_admin':    { label:'System Administrator',      tabs:['my-dashboard','dashboard','people','biometric','labs','assets','expenses','publications','inventory','analytics','drive','systems','access','activity','dropdown-manager'], canEdit:true, interface:'sys_admin', badge:'⚙️ Sys Admin', color:'#64748B' },
+    'mis':          { label:'MIS',                       tabs:['my-dashboard','dashboard','people','biometric','labs','assets','expenses','publications','inventory','analytics','drive','systems','access','activity','exec-dashboard','dropdown-manager'], canEdit:true, interface:'full', badge:'📊 MIS', color:'#3B82F6' },
 
     // ── Legacy / granular roles ────────────────────────────────────────────
-    'hr':           { label:'HR & People Only',         tabs:['role-dashboard','dashboard','people','activity'],                                                                                    canEdit:true,  interface:'full'    },
-    'finance':      { label:'Finance Only',             tabs:['role-dashboard','dashboard','expenses','activity'],                                                                                  canEdit:true,  interface:'full'    },
-    'labs':         { label:'Labs & Assets Only',       tabs:['role-dashboard','dashboard','labs','assets','inventory','biometric','activity'],                                                      canEdit:true,  interface:'full'    },
-    'publications': { label:'Publications Only',        tabs:['role-dashboard','dashboard','publications','activity'],                                                                               canEdit:true,  interface:'full'    },
-    'readonly':     { label:'Read Only',                tabs:['role-dashboard','dashboard','people','expenses','publications','inventory','activity'],                                                canEdit:false, interface:'full'    }
+    'hr':           { label:'HR & People Only',         tabs:['my-dashboard','dashboard','people','activity'],                                                                                    canEdit:true,  interface:'full'    },
+    'finance':      { label:'Finance Only',             tabs:['my-dashboard','dashboard','expenses','activity'],                                                                                  canEdit:true,  interface:'full'    },
+    'labs':         { label:'Labs & Assets Only',       tabs:['my-dashboard','dashboard','labs','assets','inventory','biometric','activity'],                                                      canEdit:true,  interface:'full'    },
+    'publications': { label:'Publications Only',        tabs:['my-dashboard','dashboard','publications','activity'],                                                                               canEdit:true,  interface:'full'    },
+    'readonly':     { label:'Read Only',                tabs:['my-dashboard','dashboard','people','expenses','publications','inventory','activity'],                                                canEdit:false, interface:'full'    }
   };
 
   // User registry — load from localStorage, seed with defaults if first run
@@ -8557,16 +8582,16 @@
 
   // ── Role → landing tab ────────────────────────────────────────────────────
   const INTERFACE_LANDING = {
-    coo:         'role-dashboard',
-    faculty:     'role-dashboard',
-    hr_manager:  'role-dashboard',
-    finance_mgr: 'role-dashboard',
-    facility_mgr:'role-dashboard',
-    event_mgr:   'role-dashboard',
-    edu_pgm_mgr: 'role-dashboard',
-    sys_admin:   'role-dashboard',
-    mis:         'role-dashboard',
-    full:        'role-dashboard'
+    coo:         'my-dashboard',
+    faculty:     'my-dashboard',
+    hr_manager:  'my-dashboard',
+    finance_mgr: 'my-dashboard',
+    facility_mgr:'my-dashboard',
+    event_mgr:   'my-dashboard',
+    edu_pgm_mgr: 'my-dashboard',
+    sys_admin:   'my-dashboard',
+    mis:         'my-dashboard',
+    full:        'my-dashboard'
   };
 
   // ── Role → welcome banner config ─────────────────────────────────────────
@@ -8661,6 +8686,9 @@
     // ── 4. Landing tab ──────────────────────────────────────────────────────
     const landing = INTERFACE_LANDING[iface] || INTERFACE_LANDING['full'];
     setTimeout(() => { try { showTab(landing); } catch(e){} }, 200);
+
+    // ── 4b. Rebuild My Dashboard for new role ───────────────────────────────
+    setTimeout(() => { try { if (typeof window.mydRebuild === 'function') window.mydRebuild(); } catch(e){} }, 400);
 
     // ── 5. Write-button visibility ──────────────────────────────────────────
     // Interfaces that are fully read-only:
@@ -9426,6 +9454,7 @@
       try { if (typeof refreshDashboard === 'function') refreshDashboard(); } catch(e) {}
       try { if (typeof _refreshSysCards === 'function') _refreshSysCards(); } catch(e) {}
       try { if (typeof refreshLowStockAlerts === 'function') refreshLowStockAlerts(); } catch(e) {}
+      try { if (typeof _myd_refreshValues === 'function') _myd_refreshValues(); } catch(e) {}
     }
   }
 
@@ -19029,8 +19058,8 @@ async function _runAutoSync() {
     if (lsEl)  lsEl.textContent  = ts;
     if (dLsEl) dLsEl.textContent = ts;
     setSyncStatus('ok', 'Auto-synced ✓ ' + ts);
+    try { if (typeof _myd_refreshValues === 'function') _myd_refreshValues(); } catch(e) {}
 
-  } catch(e) {
     if (dot)    dot.style.background = 'var(--red)';
     if (label)  label.textContent    = 'Sync failed';
     if (timeEl) timeEl.textContent   = '';
@@ -25331,22 +25360,23 @@ function _v31SimpleTable(tbodyId, rows, rowFn, countId) {
   // Maps each role to exactly the sidebar sections + nav tabs it should access
   // ─────────────────────────────────────────────────────────────────────────────
   const V32_ROLE_ACCESS = {
-    creator:      { tabs: ['dashboard','people','biometric','labs','assets','expenses','publications','inventory','analytics','drive','systems','access','activity','exec-dashboard','dropdown-manager','role-dashboard'], canEdit: true  },
-    admin:        { tabs: ['dashboard','people','biometric','labs','assets','expenses','publications','inventory','analytics','drive','systems','access','activity','exec-dashboard','dropdown-manager','role-dashboard'], canEdit: true  },
-    coo:          { tabs: ['exec-dashboard','dashboard','analytics','people','biometric','labs','assets','expenses','publications','inventory','drive','systems','access','activity','role-dashboard'], canEdit: true  },
-    faculty:      { tabs: ['exec-dashboard','dashboard','analytics','people','labs','publications','biometric','activity','role-dashboard'], canEdit: false },
-    hr_manager:   { tabs: ['dashboard','people','analytics','activity','role-dashboard'], canEdit: true  },
-    finance_mgr:  { tabs: ['dashboard','expenses','analytics','exec-dashboard','activity','role-dashboard'], canEdit: true  },
-    facility_mgr: { tabs: ['dashboard','analytics','activity','role-dashboard'], canEdit: true  },
-    event_mgr:    { tabs: ['dashboard','analytics','activity','role-dashboard'], canEdit: true  },
-    mis:          { tabs: ['dashboard','people','biometric','labs','assets','expenses','publications','inventory','analytics','drive','systems','access','activity','exec-dashboard','dropdown-manager','role-dashboard'], canEdit: true  },
-    sys_admin:    { tabs: ['dashboard','biometric','systems','analytics','activity','role-dashboard'], canEdit: true  },
-    edu_pgm_mgr:  { tabs: ['dashboard','people','analytics','activity','role-dashboard'], canEdit: true  },
-    hr:           { tabs: ['dashboard','people','analytics','activity'], canEdit: true  },
-    finance:      { tabs: ['dashboard','expenses','analytics','activity'], canEdit: true  },
-    labs:         { tabs: ['dashboard','labs','assets','analytics','activity'], canEdit: true  },
-    publications: { tabs: ['dashboard','publications','analytics','activity'], canEdit: false },
-    readonly:     { tabs: ['dashboard','analytics'], canEdit: false },
+    creator:      { tabs: ['my-dashboard','dashboard','people','biometric','labs','assets','expenses','publications','inventory','analytics','drive','systems','access','activity','exec-dashboard','dropdown-manager','role-dashboard'], canEdit: true  },
+    admin:        { tabs: ['my-dashboard','dashboard','people','biometric','labs','assets','expenses','publications','inventory','analytics','drive','systems','access','activity','exec-dashboard','dropdown-manager','role-dashboard'], canEdit: true  },
+    coo:          { tabs: ['my-dashboard','exec-dashboard','dashboard','analytics','people','biometric','labs','assets','expenses','publications','inventory','drive','systems','access','activity','role-dashboard'], canEdit: true  },
+    faculty:      { tabs: ['my-dashboard','exec-dashboard','dashboard','analytics','people','labs','publications','biometric','activity','role-dashboard'], canEdit: false },
+    hr_manager:   { tabs: ['my-dashboard','dashboard','people','analytics','activity','role-dashboard'], canEdit: true  },
+    finance_mgr:  { tabs: ['my-dashboard','dashboard','expenses','analytics','exec-dashboard','activity','role-dashboard'], canEdit: true  },
+    facility_mgr: { tabs: ['my-dashboard','dashboard','labs','assets','analytics','activity','role-dashboard'], canEdit: true  },
+    event_mgr:    { tabs: ['my-dashboard','dashboard','analytics','activity','role-dashboard'], canEdit: true  },
+    mis:          { tabs: ['my-dashboard','dashboard','people','biometric','labs','assets','expenses','publications','inventory','analytics','drive','systems','access','activity','exec-dashboard','dropdown-manager','role-dashboard'], canEdit: true  },
+    sys_admin:    { tabs: ['my-dashboard','dashboard','biometric','systems','analytics','activity','role-dashboard'], canEdit: true  },
+    edu_pgm_mgr:  { tabs: ['my-dashboard','dashboard','people','publications','labs','analytics','activity','role-dashboard'], canEdit: true  },
+    hr:           { tabs: ['my-dashboard','dashboard','people','analytics','activity'], canEdit: true  },
+    finance:      { tabs: ['my-dashboard','dashboard','expenses','analytics','activity'], canEdit: true  },
+    labs:         { tabs: ['my-dashboard','dashboard','labs','assets','analytics','activity'], canEdit: true  },
+    publications: { tabs: ['my-dashboard','dashboard','publications','analytics','activity'], canEdit: false },
+    readonly:     { tabs: ['my-dashboard','dashboard','analytics'], canEdit: false },
+    staff:        { tabs: ['my-dashboard','dashboard','people','expenses','inventory','activity'], canEdit: true  },
   };
 
   function _applyV32RoleAccess(role) {
@@ -28921,5 +28951,609 @@ tbody td { vertical-align: middle; }
 
 })();
 
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     MY DASHBOARD ENGINE — v38
+     Injected after all other scripts so it can hook into existing functions.
+     Reads from DB, ASSET_DB, BM, LAB, EXP, PUB, INV_DB — no extra fetches.
+     ═══════════════════════════════════════════════════════════════════════ -->
+<script>
+(function _myd_engine() {
+'use strict';
+
+/* ── showPeopleSection shim — maps to v34's switchPeopleTab ─────────────── */
+window.showPeopleSection = function(section) {
+  const MAP = {
+    staff:'staff', faculty:'faculty', assocFaculty:'assocfaculty',
+    affiFaculty:'affifaculty', researchers:'researchers', students:'students',
+    fellows:'fellows', alumni:'alumni', actions:'actions'
+  };
+  const tab = MAP[section] || section;
+  if (typeof switchPeopleTab === 'function') switchPeopleTab(tab);
+};
+
+/* ── Role → which KPI rows to show ─────────────────────────────────────── */
+const MYD_ROLE_ROWS = {
+  creator:      ['hr','assets','biometric','facility','expenses','publications','inventory'],
+  admin:        ['hr','assets','biometric','facility','expenses','publications','inventory'],
+  full:         ['hr','assets','biometric','facility','expenses','publications','inventory'],
+  coo:          ['hr','assets','biometric','facility','expenses','publications','inventory'],
+  faculty:      ['hr','publications','facility'],
+  hr_manager:   ['hr','biometric'],
+  finance_mgr:  ['expenses','assets'],
+  facility_mgr: ['facility','assets','biometric'],
+  edu_pgm_mgr:  ['hr','publications','facility'],
+  sys_admin:    ['hr','assets','biometric','facility','expenses','publications','inventory'],
+  mis:          ['hr','assets','biometric','facility','expenses','publications','inventory'],
+  staff:        ['hr','expenses','inventory'],
+  hr:           ['hr'],
+  finance:      ['expenses'],
+  labs:         ['facility','assets'],
+  publications: ['publications'],
+  readonly:     ['hr','expenses','publications','inventory']
+};
+
+/* ── Role → accent colour ───────────────────────────────────────────────── */
+const MYD_ROLE_COLORS = {
+  creator:'#3B82F6', admin:'#3B82F6', full:'#3B82F6', coo:'#F59E0B',
+  faculty:'#06B6D4', hr_manager:'#8B5CF6', finance_mgr:'#F59E0B',
+  facility_mgr:'#06B6D4', edu_pgm_mgr:'#EC4899', sys_admin:'#64748B',
+  mis:'#3B82F6', staff:'#10B981', hr:'#8B5CF6', finance:'#F59E0B',
+  labs:'#06B6D4', publications:'#8B5CF6', readonly:'#64748B'
+};
+
+/* ── Inventory helpers ──────────────────────────────────────────────────── */
+function _invBal(item) {
+  if (typeof getInvBalance === 'function') return getInvBalance(item);
+  return Math.max(0, (item.openingBal||0) + (item.totalReceived||0) - (item.totalIssued||0));
+}
+function _invItems(cat) {
+  if (typeof INV_DB === 'undefined') return [];
+  return (INV_DB.items||[]).filter(i => i.category === cat);
+}
+function _invLowCrit(items) {
+  return items.filter(i => {
+    if (typeof getInvStatus === 'function') { const s = getInvStatus(i); return s === 'low' || s === 'critical' || s === 'out'; }
+    return _invBal(i) <= (i.threshold || 20);
+  }).length;
+}
+
+/* ── Expense amount helper ──────────────────────────────────────────────── */
+function _expAmt(status) {
+  const rows = (typeof EXP !== 'undefined' ? EXP.all||[] : []);
+  const filtered = rows.filter(r => {
+    const s = (r.status||'').toLowerCase().trim();
+    if (status === 'paid')    return s === 'paid';
+    if (status === 'pending') return s === 'pending';
+    if (status === 'under')   return s === 'under-process' || s === 'under process' || s.includes('process');
+    return false;
+  });
+  if (!filtered.length) return '\u20b90';
+  const total = filtered.reduce((s,r) => s + (parseFloat((r.amount||'').toString().replace(/[\u20b9,\s]/g,'')) || 0), 0);
+  return _fmtCrore(total);
+}
+
+/* ── Tenure risk counter ────────────────────────────────────────────────── */
+function _countTenureRisk() {
+  const all = [...(window.DB?.staff||[]), ...(window.DB?.researchers||[]), ...(window.DB?.faculty||[])];
+  const now = new Date(); const in90 = new Date(now.getTime() + 90*86400000);
+  return all.filter(r => {
+    if (!r.exitDate) return false;
+    const parts = r.exitDate.split('/');
+    const d = parts.length === 3 ? new Date(parts[2], parts[1]-1, parts[0]) : new Date(r.exitDate);
+    return !isNaN(d) && d >= now && d <= in90;
+  }).length;
+}
+
+/* ── Currency formatter ─────────────────────────────────────────────────── */
+function _fmtCrore(n) {
+  if (!n || isNaN(n)) return '\u20b90';
+  if (n >= 10000000) return '\u20b9' + (n/10000000).toFixed(1) + 'Cr';
+  if (n >= 100000)   return '\u20b9' + (n/100000).toFixed(1) + 'L';
+  if (n >= 1000)     return '\u20b9' + Math.round(n/1000) + 'K';
+  return '\u20b9' + Math.round(n);
+}
+
+/* ── Module navigation helpers ──────────────────────────────────────────── */
+function _goAsset(tab)   { showTab('assets');       setTimeout(() => { if(typeof switchAssetTab==='function') switchAssetTab(tab); }, 180); }
+function _goPub(tab)     { showTab('publications'); setTimeout(() => { if(typeof pubSwitchTab==='function') pubSwitchTab(tab); }, 180); }
+function _goLab(tab)     { showTab('labs');         setTimeout(() => { if(typeof switchLabTab==='function') switchLabTab(tab); }, 180); }
+function _goInv(tab)     { showTab('inventory');    setTimeout(() => { if(typeof switchInvTab==='function') switchInvTab(tab); }, 180); }
+function _goPeople(sec)  { showTab('people');       setTimeout(() => window.showPeopleSection(sec), 180); }
+function _goBioPending() { showTab('biometric');    setTimeout(() => { if(typeof refreshBiometricPendingPanel==='function') refreshBiometricPendingPanel(); document.getElementById('bm-inline-pending-list')?.scrollIntoView({behavior:'smooth',block:'center'}); }, 250); }
+function _goBioArea()    { showTab('biometric');    setTimeout(() => { document.getElementById('bm-area-grid')?.scrollIntoView({behavior:'smooth',block:'center'}); }, 200); }
+function _goExp(status)  {
+  showTab('expenses');
+  setTimeout(() => {
+    const sel = document.getElementById('exp-filter-status');
+    if (sel) { sel.value = status; sel.dispatchEvent(new Event('change')); }
+    if (typeof expApplyFilters === 'function') expApplyFilters();
+  }, 200);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   KPI ROW DEFINITIONS
+══════════════════════════════════════════════════════════════════════════ */
+const MYD_ROWS = {
+
+  /* 1. HR & People */
+  hr: {
+    id:'hr', icon:'\u{1F464}', title:'HR & People', sub:'People Overview', color:'#3B82F6',
+    cards: [
+      { id:'staff', icon:'\u{1F454}', label:'Staff', color:'#3B82F6',
+        valFn: ()=>(window.DB?.staff||[]).filter(r=>r.status!=='Inactive'&&r.status!=='Terminated').length,
+        subFn: ()=>'Active members',
+        expandTitle:'\u{1F454} Staff \u2014 People Management',
+        expandItems:[
+          { icon:'\u{1F454}', title:'Staff Registry', desc:'All active staff records', action:()=>_goPeople('staff') },
+          { icon:'\u{1F454}', title:'Add Staff Member', desc:'Onboard a new staff member', action:()=>_goPeople('staff') },
+          { icon:'\u{1F3DB}', title:'Alumni Registry \u2014 Staff', desc:'Departed staff archive', action:()=>_goPeople('alumni') },
+        ]
+      },
+      { id:'faculty', icon:'\u{1F468}\u200D\u{1F3EB}', label:'Faculty', color:'#3B82F6',
+        valFn: ()=>(window.DB?.faculty||[]).length,
+        subFn: ()=>'Core faculty',
+        expandTitle:'\u{1F468}\u200D\u{1F3EB} Faculty \u2014 People Management',
+        expandItems:[
+          { icon:'\u{1F468}\u200D\u{1F3EB}', title:'Faculty Registry', desc:'All registered faculty', action:()=>_goPeople('faculty') },
+          { icon:'\u{1F468}\u200D\u{1F3EB}', title:'Add Faculty Member', desc:'Register new faculty', action:()=>_goPeople('faculty') },
+        ]
+      },
+      { id:'affifac', icon:'\u{1F517}', label:'Affiliate Faculty', color:'#8B5CF6',
+        valFn: ()=>(window.DB?.affiFaculty||[]).length,
+        subFn: ()=>'Industry links',
+        expandTitle:'\u{1F517} Affiliate Faculty \u2014 People Management',
+        expandItems:[
+          { icon:'\u{1F517}', title:'Affiliate Faculty Registry', desc:'All affiliate faculty', action:()=>_goPeople('affiFaculty') },
+          { icon:'\u{1F3DB}', title:'Alumni Registry \u2014 Affiliate Faculty', desc:'Departed affiliates', action:()=>_goPeople('alumni') },
+        ]
+      },
+      { id:'assocfac', icon:'\u{1F469}\u200D\u{1F3EB}', label:'Associate Faculty', color:'#8B5CF6',
+        valFn: ()=>(window.DB?.assocFaculty||[]).length,
+        subFn: ()=>'With tenure',
+        expandTitle:'\u{1F469}\u200D\u{1F3EB} Associate Faculty \u2014 People Management',
+        expandItems:[
+          { icon:'\u{1F469}\u200D\u{1F3EB}', title:'Associate Faculty Registry', desc:'All associate faculty', action:()=>_goPeople('assocFaculty') },
+          { icon:'\u{1F3DB}', title:'Alumni Registry \u2014 Associate Faculty', desc:'Departed associates', action:()=>_goPeople('alumni') },
+        ]
+      },
+      { id:'researchers', icon:'\u{1F52C}', label:'Active Researchers', color:'#06B6D4',
+        valFn: ()=>(window.DB?.researchers||[]).filter(r=>{ if(!r.exitDate) return true; const p=r.exitDate.split('/'); const d=p.length===3?new Date(p[2],p[1]-1,p[0]):new Date(r.exitDate); return isNaN(d)||d>=new Date(); }).length,
+        subFn: ()=>'Ongoing',
+        expandTitle:'\u{1F52C} Active Researchers \u2014 People Management',
+        expandItems:[
+          { icon:'\u{1F52C}', title:'Active Researchers Registry', desc:'All ongoing researchers', action:()=>_goPeople('researchers') },
+          { icon:'\u{1F3DB}', title:'Alumni Registry \u2014 Researchers', desc:'Completed researchers', action:()=>_goPeople('alumni') },
+        ]
+      },
+      { id:'fellows', icon:'\u{1F465}', label:'Associate Fellows', color:'#06B6D4',
+        valFn: ()=>(window.DB?.fellows||[]).length,
+        subFn: ()=>'Program fellows',
+        expandTitle:'\u{1F465} Associate Fellows \u2014 People Management',
+        expandItems:[
+          { icon:'\u{1F465}', title:'Associate Fellows Registry', desc:'All associate fellows', action:()=>_goPeople('fellows') },
+          { icon:'\u{1F465}', title:'Add Associate Fellow', desc:'Register new fellow', action:()=>_goPeople('fellows') },
+        ]
+      },
+      { id:'students', icon:'\u{1F393}', label:'Students', color:'#10B981',
+        valFn: ()=>(window.DB?.students||[]).filter(r=>r.status!=='Graduated'&&r.status!=='Dropped').length,
+        subFn: ()=>'Enrolled',
+        expandTitle:'\u{1F393} Students \u2014 People Management',
+        expandItems:[
+          { icon:'\u{1F393}', title:'Students Registry', desc:'All enrolled students', action:()=>_goPeople('students') },
+          { icon:'\u{1F3DB}', title:'Alumni Registry \u2014 Students', desc:'Graduated students', action:()=>_goPeople('alumni') },
+        ]
+      },
+      { id:'tenure', icon:'\u23F0', label:'Tenure Risk', color:'#EF4444',
+        valFn: ()=>_countTenureRisk(),
+        subFn: ()=>'Actions needed',
+        expandTitle:'\u23F0 Tenure Risk \u2014 People Management',
+        expandItems:[
+          { icon:'\u23F0', title:'Tenure Actions Required', desc:'Staff with exit dates within 90 days', action:()=>_goPeople('actions') },
+        ]
+      },
+    ]
+  },
+
+  /* 2. Asset Management */
+  assets: {
+    id:'assets', icon:'\u{1F4E6}', title:'Asset Management', sub:'Equipment Portfolio', color:'#F59E0B',
+    cards: [
+      { id:'it',          icon:'\u{1F4BB}', label:'IT Assets',       color:'#3B82F6', valFn:()=>(window.ASSET_DB?.it||[]).length,           subFn:()=>'Devices & hardware',
+        expandTitle:'\u{1F4BB} IT Assets \u2014 Asset Management',
+        expandItems:[{ icon:'\u{1F4BB}', title:'IT Assets Breakdown',     desc:'Auto-updated from Google Sheet', action:()=>_goAsset('it') }] },
+      { id:'nonit',       icon:'\u{1F3E2}', label:'Non-IT Assets',    color:'#F59E0B', valFn:()=>(window.ASSET_DB?.nonit||[]).length,        subFn:()=>'Furniture & equipment',
+        expandTitle:'\u{1F3E2} Non-IT Assets \u2014 Asset Management',
+        expandItems:[{ icon:'\u{1F3E2}', title:'Non-IT Assets Breakdown', desc:'Auto-updated from Google Sheet', action:()=>_goAsset('nonit') }] },
+      { id:'ilds',        icon:'\u{1F310}', label:'ILDS Cluster',     color:'#06B6D4', valFn:()=>(window.ASSET_DB?.ilds||[]).length,         subFn:()=>'Storage nodes',
+        expandTitle:'\u{1F310} ILDS Cluster \u2014 Asset Management',
+        expandItems:[{ icon:'\u{1F310}', title:'ILDS Cluster Breakdown',  desc:'Auto-updated from Google Sheet', action:()=>_goAsset('ilds') }] },
+      { id:'gpu',         icon:'\u{1F9E0}', label:'GPU Cluster',      color:'#8B5CF6', valFn:()=>(window.ASSET_DB?.gpu||[]).length,          subFn:()=>'Compute nodes',
+        expandTitle:'\u{1F9E0} GPU Cluster \u2014 Asset Management',
+        expandItems:[{ icon:'\u{1F9E0}', title:'GPU Cluster Breakdown',   desc:'Auto-updated from Google Sheet', action:()=>_goAsset('gpu') }] },
+      { id:'books',       icon:'\u{1F4DA}', label:'Books',            color:'#10B981', valFn:()=>(window.ASSET_DB?.books||[]).length,        subFn:()=>'Library stock',
+        expandTitle:'\u{1F4DA} Books \u2014 Asset Management',
+        expandItems:[{ icon:'\u{1F4DA}', title:'Books Breakdown',         desc:'Auto-updated from Google Sheet', action:()=>_goAsset('books') }] },
+      { id:'spares',      icon:'\u{1F527}', label:'Spares',           color:'#10B981', valFn:()=>(window.ASSET_DB?.spares||[]).length,       subFn:()=>'Parts store',
+        expandTitle:'\u{1F527} Spares \u2014 Asset Management',
+        expandItems:[{ icon:'\u{1F527}', title:'Spares Breakdown',        desc:'Auto-updated from Google Sheet', action:()=>_goAsset('spares') }] },
+      { id:'consumables', icon:'\u{1F5C2}', label:'Consumables',      color:'#F97316', valFn:()=>(window.ASSET_DB?.consumables||[]).length,  subFn:()=>'Stock items',
+        expandTitle:'\u{1F5C2} Consumables \u2014 Asset Management',
+        expandItems:[{ icon:'\u{1F5C2}', title:'Consumables Breakdown',   desc:'Auto-updated from Google Sheet', action:()=>_goAsset('consumables') }] },
+      { id:'vendors',     icon:'\u{1F91D}', label:'Vendor List',      color:'#64748B', valFn:()=>(window.ASSET_DB?.vendors||[]).length,      subFn:()=>'Active vendors',
+        expandTitle:'\u{1F91D} Vendor List \u2014 Asset Management',
+        expandItems:[{ icon:'\u{1F91D}', title:'Vendor List Breakdown',   desc:'Auto-updated from Google Sheet', action:()=>_goAsset('vendor') }] },
+    ]
+  },
+
+  /* 3. Biometric Access */
+  biometric: {
+    id:'biometric', icon:'\u{1F510}', title:'Biometric Access', sub:'Area Occupancy', color:'#8B5CF6',
+    cards: [
+      { id:'bmactive', icon:'\u{1F510}', label:'Total Active', color:'#8B5CF6',
+        valFn: ()=>{ const bm=window.BM; if(!bm) return '\u2014'; return bm?.raw?.totalActive ?? (bm?.raw?.allUsers||[]).filter(u=>u.authorizationStatus==='Authorized'||u.accountStatus==='Active').length; },
+        subFn: ()=>'Authorized users',
+        expandTitle:'\u{1F510} Biometric Access \u2014 Biometric Module',
+        expandItems:[
+          { icon:'\u{1F3E2}', title:'Area Occupancy',              desc:'Live seat occupancy per zone',      action:()=>_goBioArea()    },
+          { icon:'\u23F3',    title:'Pending Auth Requests',       desc:'Awaiting access approval',          action:()=>_goBioPending() },
+        ]
+      },
+    ]
+  },
+
+  /* 4. Facility & Room Management */
+  facility: {
+    id:'facility', icon:'\u{1F3DB}', title:'Facility & Room Management', sub:'Labs & Rooms', color:'#06B6D4',
+    cards: [
+      { id:'overcap', icon:'\u26A0\uFE0F', label:'Over Capacity', color:'#EF4444',
+        valFn: ()=>{ const labs=(window.LAB?.data?.facultyLabs||window.LAB?.facultyLabs||[]); return labs.filter(l=>(l.occupiedSeats||0)>(l.totalSeats||0)&&(l.totalSeats||0)>0).length; },
+        subFn: ()=>'Labs exceeding limit',
+        expandTitle:'\u26A0\uFE0F Over Capacity \u2014 Facility Module',
+        expandItems:[{ icon:'\u{1F4CA}', title:'Utilization Overview', desc:'Over / Optimum / Under-utilized labs', action:()=>_goLab('utilization') }]
+      },
+      { id:'facrooms', icon:'\u{1F3DB}', label:'Facility Rooms', color:'#06B6D4',
+        valFn: ()=>(window.LAB?.data?.facilityRooms||window.LAB?.facilityRooms||[]).length,
+        subFn: ()=>'All spaces',
+        expandTitle:'\u{1F3DB} Facility Rooms \u2014 Facility Module',
+        expandItems:[{ icon:'\u{1F3DB}', title:'Facility Rooms Live Status', desc:'Room capacity from sheet data', action:()=>_goLab('facility-rooms') }]
+      },
+      { id:'labcap', icon:'\u{1F4D0}', label:'Total Labs Capacity', color:'#10B981',
+        valFn: ()=>{ const labs=(window.LAB?.data?.facultyLabs||window.LAB?.facultyLabs||[]); const t=labs.reduce((s,l)=>s+(l.totalSeats||l.capacity||0),0); return t||'\u2014'; },
+        subFn: ()=>'Lab seats total',
+        expandTitle:'\u{1F4D0} Labs Capacity \u2014 Facility Module',
+        expandItems:[{ icon:'\u{1F4D0}', title:'Faculty Labs Overview', desc:'Total lab capacity breakdown', action:()=>_goLab('faculty-labs') }]
+      },
+      { id:'occupied', icon:'\u{1FA91}', label:'Occupied Seats', color:'#F59E0B',
+        valFn: ()=>{ const labs=(window.LAB?.data?.facultyLabs||window.LAB?.facultyLabs||[]); const v=labs.reduce((s,l)=>s+(l.occupiedSeats||0),0); return v||'\u2014'; },
+        subFn: ()=>'Current occupancy',
+        expandTitle:'\u{1FA91} Occupied Seats \u2014 Facility Module',
+        expandItems:[{ icon:'\u{1FA91}', title:'Occupied Seats Detail', desc:'Per-faculty occupancy data', action:()=>_goLab('faculty-labs') }]
+      },
+      { id:'available', icon:'\u2705', label:'Available Seats', color:'#10B981',
+        valFn: ()=>{ const labs=(window.LAB?.data?.facultyLabs||window.LAB?.facultyLabs||[]); const tot=labs.reduce((s,l)=>s+(l.totalSeats||l.capacity||0),0); const occ=labs.reduce((s,l)=>s+(l.occupiedSeats||0),0); return tot>0?Math.max(0,tot-occ):'\u2014'; },
+        subFn: ()=>'Seats free now',
+        expandTitle:'\u2705 Available Seats \u2014 Facility Module',
+        expandItems:[{ icon:'\u2705', title:'Available Seats Overview', desc:'Free capacity at each lab', action:()=>_goLab('faculty-labs') }]
+      },
+    ]
+  },
+
+  /* 5. Expenses */
+  expenses: {
+    id:'expenses', icon:'\u{1F4B0}', title:'Expenses', sub:'Financial Tracker', color:'#F59E0B',
+    cards: [
+      { id:'paid', icon:'\u2705', label:'Paid', color:'#10B981',
+        valFn: ()=>_expAmt('paid'),
+        subFn: ()=>{ const n=(typeof EXP!=='undefined'?EXP.all||[]:[]).filter(r=>(r.status||'').toLowerCase()==='paid').length; return n+' transactions'; },
+        expandTitle:'\u2705 Paid Expenses \u2014 Expense Management',
+        expandItems:[{ icon:'\u2705', title:'Paid Expense Registry', desc:'Registry of paid status from sheets', action:()=>_goExp('Paid') }]
+      },
+      { id:'pending', icon:'\u23F3', label:'Pending', color:'#F59E0B',
+        valFn: ()=>_expAmt('pending'),
+        subFn: ()=>{ const n=(typeof EXP!=='undefined'?EXP.all||[]:[]).filter(r=>(r.status||'').toLowerCase()==='pending').length; return n+' transactions'; },
+        expandTitle:'\u23F3 Pending Expenses \u2014 Expense Management',
+        expandItems:[{ icon:'\u23F3', title:'Pending Expense Registry', desc:'Registry of pending status from sheets', action:()=>_goExp('Pending') }]
+      },
+      { id:'underproc', icon:'\u{1F504}', label:'Under-process', color:'#F97316',
+        valFn: ()=>_expAmt('under'),
+        subFn: ()=>{ const n=(typeof EXP!=='undefined'?EXP.all||[]:[]).filter(r=>(r.status||'').toLowerCase().includes('process')).length; return n+' transactions'; },
+        expandTitle:'\u{1F504} Under-process \u2014 Expense Management',
+        expandItems:[{ icon:'\u{1F504}', title:'Under-process Registry', desc:'Registry of in-review status from sheets', action:()=>_goExp('Under-process') }]
+      },
+    ]
+  },
+
+  /* 6. Publications */
+  publications: {
+    id:'publications', icon:'\u{1F4DA}', title:'Publications', sub:'Research Output', color:'#8B5CF6',
+    cards: [
+      { id:'journals', icon:'\u{1F4C4}', label:'Journal Papers', color:'#8B5CF6',
+        valFn: ()=>(window.PUB?.journals||[]).length || (window.PUB?.all||[]).filter(r=>(r.type||r.pubType||'').toLowerCase().includes('journal')).length,
+        subFn: ()=>'Published articles',
+        expandTitle:'\u{1F4C4} Journal Papers \u2014 Publications',
+        expandItems:[
+          { icon:'\u{1F4C4}', title:'Journal Papers Registry',     desc:'All published journal articles', action:()=>_goPub('journal') },
+          { icon:'\u{1F4CA}', title:'Year-wise Publication Matrix', desc:'Auto-updated from Google Sheet', action:()=>_goPub('all') },
+        ]
+      },
+      { id:'conferences', icon:'\u{1F3A4}', label:'Conference Papers', color:'#7C3AED',
+        valFn: ()=>(window.PUB?.conferences||[]).length || (window.PUB?.all||[]).filter(r=>(r.type||r.pubType||'').toLowerCase().includes('conference')).length,
+        subFn: ()=>'Presented papers',
+        expandTitle:'\u{1F3A4} Conference Papers \u2014 Publications',
+        expandItems:[
+          { icon:'\u{1F3A4}', title:'Conference Papers Registry',  desc:'All conference submissions', action:()=>_goPub('conference') },
+          { icon:'\u{1F4CA}', title:'Year-wise Publication Matrix', desc:'Auto-updated from Google Sheet', action:()=>_goPub('all') },
+        ]
+      },
+      { id:'reports', icon:'\u{1F4CB}', label:'Reports', color:'#06B6D4',
+        valFn: ()=>(window.PUB?.reports||[]).length || (window.PUB?.all||[]).filter(r=>(r.type||r.pubType||'').toLowerCase().includes('report')).length,
+        subFn: ()=>'Internal documents',
+        expandTitle:'\u{1F4CB} Reports \u2014 Publications',
+        expandItems:[
+          { icon:'\u{1F4CB}', title:'Reports Registry',            desc:'All internal research reports', action:()=>_goPub('report') },
+          { icon:'\u{1F4CA}', title:'Year-wise Publication Matrix', desc:'Auto-updated from Google Sheet', action:()=>_goPub('all') },
+        ]
+      },
+      { id:'preprints', icon:'\u{1F4D1}', label:'Preprints / ArXiv', color:'#F59E0B',
+        valFn: ()=>(window.PUB?.preprintArxiv||window.PUB?.preprints||[]).length || (window.PUB?.all||[]).filter(r=>(r.type||r.pubType||'').toLowerCase().includes('preprint')||(r.type||r.pubType||'').toLowerCase().includes('arxiv')).length,
+        subFn: ()=>'Pre-published',
+        expandTitle:'\u{1F4D1} Preprints / ArXiv \u2014 Publications',
+        expandItems:[
+          { icon:'\u{1F4D1}', title:'Preprints Registry',          desc:'ArXiv and pre-published papers', action:()=>_goPub('preprint') },
+          { icon:'\u{1F4CA}', title:'Year-wise Publication Matrix', desc:'Auto-updated from Google Sheet', action:()=>_goPub('all') },
+        ]
+      },
+    ]
+  },
+
+  /* 7. Inventory */
+  inventory: {
+    id:'inventory', icon:'\u{1F4E6}', title:'Inventory Management', sub:'Gifts \u00B7 Stationeries \u00B7 Mementos', color:'#10B981',
+    cards: [
+      { id:'gifts', icon:'\u{1F381}', label:'Gifts', color:'#10B981',
+        valFn: ()=>_invItems('Gifts').reduce((s,i)=>s+_invBal(i),0),
+        subFn: ()=>_invItems('Gifts').length+' item types',
+        expandTitle:'\u{1F381} Gifts \u2014 Inventory Management',
+        expandItems:[{ icon:'\u{1F4CB}', title:'Gifts Transaction Ledger', desc:'Ledger with filters (all transactions)', action:()=>_goInv('gifts') }]
+      },
+      { id:'stationeries', icon:'\u270F\uFE0F', label:'Stationeries', color:'#06B6D4',
+        valFn: ()=>_invItems('Stationeries').reduce((s,i)=>s+_invBal(i),0),
+        subFn: ()=>_invItems('Stationeries').length+' item types',
+        expandTitle:'\u270F\uFE0F Stationeries \u2014 Inventory Management',
+        expandItems:[{ icon:'\u{1F4CB}', title:'Stationeries Transaction Ledger', desc:'Ledger with filters (all transactions)', action:()=>_goInv('stationeries') }]
+      },
+      { id:'mementos', icon:'\u{1F3C6}', label:'Mementos', color:'#8B5CF6',
+        valFn: ()=>_invItems('Mementos').reduce((s,i)=>s+_invBal(i),0),
+        subFn: ()=>_invItems('Mementos').length+' item types',
+        expandTitle:'\u{1F3C6} Mementos \u2014 Inventory Management',
+        expandItems:[{ icon:'\u{1F4CB}', title:'Mementos Transaction Ledger', desc:'Ledger with filters (all transactions)', action:()=>_goInv('mementos') }]
+      },
+      { id:'lowstock', icon:'\u{1F6A8}', label:'Low / Critical', color:'#EF4444',
+        valFn: ()=>{ if(typeof INV_DB==='undefined') return '\u2014'; return _invLowCrit(INV_DB.items||[]); },
+        subFn: ()=>'Items needing reorder',
+        expandTitle:'\u{1F6A8} Low Stock \u2014 Inventory Management',
+        expandItems:[{ icon:'\u{1F6A8}', title:'Low Stock Alert Summary', desc:'Items at or below reorder threshold', action:()=>_goInv('actions') }]
+      },
+    ]
+  },
+
+}; // end MYD_ROWS
+
+let _myd_openCard = null;
+
+/* ── Safe value evaluator ─────────────────────────────────────────────── */
+function _safeVal(fn) {
+  try { const v = fn(); return (v === null || v === undefined) ? '\u2014' : v; } catch(e) { return '\u2014'; }
+}
+
+/* ── Build / render all KPI rows for current role ─────────────────────── */
+function mydBuild() {
+  const role     = (typeof _currentRole !== 'undefined' ? _currentRole : null) || 'admin';
+  const rowKeys  = MYD_ROLE_ROWS[role] || MYD_ROLE_ROWS['admin'];
+  const container = document.getElementById('myd-kpi-container');
+  if (!container) return;
+
+  let html = '';
+  rowKeys.forEach(rowKey => {
+    const row = MYD_ROWS[rowKey]; if (!row) return;
+    html += `
+    <div class="myd-kpi-section" id="myd-section-${rowKey}" style="margin-bottom:1.75rem;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border);">
+        <span style="font-size:1rem;">${row.icon}</span>
+        <span style="font-size:0.9rem;font-weight:600;color:var(--text);">${row.title}</span>
+        <span style="font-size:0.68rem;font-family:var(--font-mono);color:var(--text3);background:var(--surface2);border:1px solid var(--border);border-radius:100px;padding:1px 8px;">${row.sub}</span>
+        <span style="margin-left:auto;font-size:0.62rem;font-family:var(--font-mono);color:var(--text3);" id="myd-row-ts-${rowKey}"></span>
+      </div>
+      <div class="myd-card-row" style="display:flex;gap:8px;flex-wrap:wrap;" id="myd-cards-${rowKey}">`;
+
+    row.cards.forEach(card => {
+      const key = rowKey + '_' + card.id;
+      const val = _safeVal(card.valFn);
+      html += `
+        <div style="min-width:90px;flex:1;">
+          <div class="myd-kpi-card" id="myd-kc-${key}"
+            data-myd-key="${key}"
+            onclick="mydToggle('${key}')"
+            style="background:var(--surface);border:0.5px solid var(--border);border-radius:12px;padding:12px 14px;cursor:pointer;position:relative;overflow:hidden;transition:border-color .15s,transform .15s;border-top:2.5px solid ${card.color};">
+            <div style="font-size:1.5rem;font-weight:600;font-family:var(--font-mono);color:${card.color};line-height:1.1;" id="myd-val-${key}">${val}</div>
+            <div style="font-size:0.68rem;font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.06em;color:var(--text2);margin-top:3px;">${card.label}</div>
+            <div style="font-size:0.65rem;color:var(--text3);margin-top:2px;" id="myd-sub-${key}">${_safeVal(card.subFn)}</div>
+            <div style="position:absolute;bottom:6px;right:8px;font-size:0.55rem;font-family:var(--font-mono);color:var(--text3);opacity:0.7;">▼ expand</div>
+          </div>
+        </div>`;
+    });
+    html += `</div>`;
+
+    // Expand panels
+    row.cards.forEach(card => {
+      const key = rowKey + '_' + card.id;
+      if (!card.expandItems || !card.expandItems.length) return;
+      html += `
+      <div class="myd-expand-panel" id="myd-ep-${key}" style="display:none;background:var(--surface);border:0.5px solid var(--border);border-top:2px solid ${card.color};border-radius:0 0 12px 12px;padding:14px 16px;margin-top:0;animation:myd_fadeIn 0.2s ease;">
+        <div style="font-size:0.8rem;font-weight:600;color:var(--text);margin-bottom:10px;padding-bottom:7px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:6px;">
+          <span style="color:${card.color};">${card.icon}</span> ${card.expandTitle}
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px;">
+          ${card.expandItems.map((item, idx) => `
+          <div class="myd-ep-item" data-myd-key="${key}" data-myd-idx="${idx}"
+            style="background:var(--surface2);border:0.5px solid var(--border);border-radius:10px;padding:10px 12px;cursor:pointer;transition:all .15s;"
+            onmouseover="this.style.borderColor='${card.color}55';this.style.background='var(--surface3)'"
+            onmouseout="this.style.borderColor='var(--border)';this.style.background='var(--surface2)'"
+            onclick="mydItemClick('${key}',${idx})">
+            <div style="font-size:0.82rem;font-weight:500;color:var(--text);display:flex;align-items:center;gap:6px;">
+              <span>${item.icon}</span><span>${item.title}</span>
+            </div>
+            <div style="font-size:0.68rem;color:var(--text3);font-family:var(--font-mono);margin-top:3px;">${item.desc}</div>
+          </div>`).join('')}
+        </div>
+      </div>`;
+    });
+
+    html += `</div>`; // /myd-kpi-section
+  });
+
+  container.innerHTML = html;
+  _myd_wireHover();
+
+  // Inject animation CSS once
+  if (!document.getElementById('myd-anim-css')) {
+    const s = document.createElement('style');
+    s.id = 'myd-anim-css';
+    s.textContent = `
+      @keyframes myd_fadeIn { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:none} }
+      .myd-kpi-card:hover { transform:translateY(-2px)!important; border-color:rgba(99,179,237,0.35)!important; box-shadow:0 6px 20px rgba(0,0,0,0.18); }
+      .myd-kpi-card.myd-active { box-shadow:0 8px 28px rgba(0,0,0,0.22); }
+      [data-theme="light"] .myd-kpi-card:hover  { box-shadow:0 4px 14px rgba(15,23,42,0.12); }
+      [data-theme="light"] .myd-kpi-card        { background:#fff!important; border-color:rgba(30,58,138,0.1)!important; }
+      [data-theme="light"] .myd-expand-panel    { background:#fff!important; border-color:rgba(30,58,138,0.1)!important; }
+      [data-theme="light"] .myd-ep-item         { background:#F5F7FC!important; }
+    `;
+    document.head.appendChild(s);
+  }
+}
+
+/* ── Hover wire-up ─────────────────────────────────────────────────────── */
+function _myd_wireHover() {
+  document.querySelectorAll('.myd-kpi-card').forEach(el => {
+    el.addEventListener('mouseenter', () => el.style.transform = 'translateY(-2px)');
+    el.addEventListener('mouseleave', () => { if (!el.classList.contains('myd-active')) el.style.transform = ''; });
+  });
+}
+
+/* ── Toggle card expand panel ─────────────────────────────────────────── */
+window.mydToggle = function(key) {
+  const wasOpen = _myd_openCard === key;
+  document.querySelectorAll('.myd-expand-panel').forEach(p => p.style.display = 'none');
+  document.querySelectorAll('.myd-kpi-card').forEach(c => { c.classList.remove('myd-active'); c.style.borderRadius = '12px'; });
+  _myd_openCard = null;
+  if (!wasOpen) {
+    _myd_openCard = key;
+    const panel = document.getElementById('myd-ep-' + key);
+    const card  = document.getElementById('myd-kc-' + key);
+    if (panel) panel.style.display = 'block';
+    if (card)  { card.classList.add('myd-active'); card.style.borderRadius = '12px 12px 0 0'; }
+    setTimeout(() => panel?.scrollIntoView({ behavior:'smooth', block:'nearest' }), 50);
+  }
+};
+
+/* ── Item click → navigate to module ─────────────────────────────────── */
+window.mydItemClick = function(key, idx) {
+  const [rowKey, cardId] = key.split('_');
+  const row  = MYD_ROWS[rowKey]; if (!row) return;
+  const card = row.cards.find(c => c.id === cardId); if (!card) return;
+  const item = card.expandItems[idx]; if (!item || typeof item.action !== 'function') return;
+  item.action();
+};
+
+/* ── Refresh all KPI values in place (no re-render) ──────────────────── */
+window._myd_refreshValues = function() {
+  const role    = (typeof _currentRole !== 'undefined' ? _currentRole : null) || 'admin';
+  const rowKeys = MYD_ROLE_ROWS[role] || MYD_ROLE_ROWS['admin'];
+  rowKeys.forEach(rowKey => {
+    const row = MYD_ROWS[rowKey]; if (!row) return;
+    row.cards.forEach(card => {
+      const key   = rowKey + '_' + card.id;
+      const valEl = document.getElementById('myd-val-' + key);
+      const subEl = document.getElementById('myd-sub-' + key);
+      if (valEl) valEl.textContent = _safeVal(card.valFn);
+      if (subEl && card.subFn) subEl.textContent = _safeVal(card.subFn);
+    });
+    const tsEl = document.getElementById('myd-row-ts-' + rowKey);
+    if (tsEl) tsEl.textContent = 'Updated ' + new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+  });
+  _myd_setSyncStatus('ok');
+};
+
+/* ── Sync bar state helpers ───────────────────────────────────────────── */
+function _myd_setSyncStatus(state, msg) {
+  const dot   = document.getElementById('myd-sync-dot');
+  const label = document.getElementById('myd-sync-label');
+  const ts    = document.getElementById('myd-sync-ts');
+  const colors = { ok:'var(--green)', syncing:'var(--accent)', error:'var(--red)', idle:'var(--text3)' };
+  if (dot)   dot.style.background = colors[state] || colors.idle;
+  if (label) label.textContent    = msg || (state==='ok' ? 'Dashboard live' : 'Syncing data\u2026');
+  if (ts && state==='ok') ts.textContent = new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+}
+
+/* ── Public: full refresh (fetch + re-render values) ─────────────────── */
+window.mydRefreshAll = async function() {
+  _myd_setSyncStatus('syncing', 'Refreshing data\u2026');
+  if (window.WS_CONFIG?.webAppUrl && typeof window.sysFetchAll === 'function') {
+    try { await window.sysFetchAll(); } catch(e){}
+  }
+  window._myd_refreshValues();
+};
+
+/* ── Public: rebuild for role change (login / role switch) ───────────── */
+window.mydRebuild = function() {
+  mydBuild();
+  window._myd_refreshValues();
+};
+
+/* ══════════════════════════════════════════════════════════════════════════
+   AUTO-SYNC WIRING
+   My Dashboard values update via:
+   1. showTab('my-dashboard')           → refreshes on every open
+   2. applyAccessLevelUI(role)          → rebuilds for role on login
+   3. sysFetchAll / _runAutoSync        → fires after every poll/manual fetch
+   4. syncToSheet()                     → fires 3s after every write
+══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Hook showTab to refresh My Dashboard values on open ─────────────── */
+(function _hookShowTab() {
+  const _orig = typeof window.showTab === 'function' ? window.showTab : null;
+  if (!_orig) { setTimeout(_hookShowTab, 300); return; }
+  if (_orig._myd_hooked) return;
+  window.showTab = function(tabId) {
+    _orig.call(this, tabId);
+    if (tabId === 'my-dashboard') {
+      setTimeout(() => { try { window._myd_refreshValues(); } catch(e){} }, 100);
+    }
+  };
+  window.showTab._myd_hooked = true;
+})();
+
+/* ── Initial build: wait for DOM + _currentRole to be set ────────────── */
+(function _myd_init() {
+  function tryBuild() {
+    if (document.getElementById('myd-kpi-container')) {
+      mydBuild();
+      _myd_setSyncStatus('idle', 'Waiting for data\u2026');
+      // If already logged in (session restore), refresh values immediately
+      setTimeout(() => { try { window._myd_refreshValues(); } catch(e){} }, 500);
+    } else {
+      setTimeout(tryBuild, 200);
+    }
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', tryBuild);
+  } else {
+    tryBuild();
+  }
+})();
+
+})(); // end _myd_engine
 </script>
 </body>
