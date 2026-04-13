@@ -95,75 +95,93 @@
     border-radius: 14px;
   }
   [data-theme="light"] .table-card:hover { box-shadow: var(--shadow-md); }
-  /* ── Login gate: app hidden until authenticated ── */
-  #app { display:none; opacity:0; transition:opacity 0.4s ease; }
-  #app.visible { display:flex; flex-direction:column; min-height:100vh; opacity:1; }
-
-  /* ── Login gate overlay ── */
   #access-gate {
-    position:fixed; inset:0; z-index:99999;
-    background:var(--color-background-primary,#0A0E1A);
-    display:flex; align-items:center; justify-content:center;
-    padding:1rem; overflow-y:auto;
+    position: fixed; inset: 0; z-index: 9999;
+    background: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+    padding: 1rem;
   }
   .gate-card {
-    width:100%; max-width:420px;
-    background:var(--surface,#111827);
-    border:1px solid var(--border,rgba(99,179,237,0.15));
-    border-radius:20px;
-    padding:2.5rem 2rem 2rem;
-    position:relative; overflow:hidden;
-    box-shadow:0 25px 80px rgba(0,0,0,0.5);
-    animation:appIn 0.45s both;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 3rem 2.5rem;
+    max-width: 440px; width: 100%;
+    position: relative;
+    overflow: hidden;
+    animation: gateIn 0.6s cubic-bezier(.22,1,.36,1) both;
   }
+  @keyframes gateIn { from { opacity:0; transform: translateY(30px) scale(0.96); } }
   .gate-card::before {
-    content:''; position:absolute; top:0; left:0; right:0; height:3px;
-    background:linear-gradient(90deg,#3B82F6,#06B6D4,#8B5CF6);
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2), var(--purple));
   }
   .gate-logo {
-    display:flex; align-items:center; gap:10px;
-    margin-bottom:1.75rem;
+    display: flex; align-items: center; gap: 12px; margin-bottom: 2rem;
   }
-  .gate-logo-img {
-    width:38px; height:38px; border-radius:9px;
-    background:#fff; padding:2px; object-fit:contain; flex-shrink:0;
+  .gate-logo .logo-mark {
+    width: 44px; height: 44px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem; font-weight: 700; color: white;
+    font-family: var(--font-mono);
   }
-  .gate-logo-name { font-size:1.15rem; font-weight:700; color:var(--text,#E2E8F0); font-family:var(--font-display); }
-  .gate-logo-sub  { font-size:0.65rem; color:var(--text3,#64748B); font-family:var(--font-mono); letter-spacing:.08em; text-transform:uppercase; }
-  .gate-title { font-size:1.05rem; font-weight:600; color:var(--text,#E2E8F0); margin-bottom:0.25rem; }
-  .gate-sub   { font-size:0.78rem; color:var(--text2,#94A3B8); margin-bottom:1.5rem; }
-  .gate-field { margin-bottom:1rem; }
-  .gate-field label { display:block; font-size:0.72rem; font-family:var(--font-mono); color:var(--text2,#94A3B8); text-transform:uppercase; letter-spacing:.06em; margin-bottom:0.4rem; }
+  .gate-logo h1 { font-family: var(--font-display); font-size: 1.5rem; color: var(--text); }
+  .gate-logo span { display: block; font-size: 0.7rem; color: var(--text2); font-family: var(--font-mono); letter-spacing: 0.1em; }
+  .gate-title { font-family: var(--font-display); font-size: 1.8rem; color: var(--text); margin-bottom: 0.4rem; }
+  .gate-sub { font-size: 0.85rem; color: var(--text2); margin-bottom: 2rem; }
+  .gate-field { margin-bottom: 1.2rem; }
+  .gate-field label { display: block; font-size: 0.75rem; font-family: var(--font-mono); color: var(--text2); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.5rem; }
   .gate-field input {
-    width:100%; background:var(--surface2,#1E293B); border:1px solid var(--border,rgba(99,179,237,0.15));
-    border-radius:10px; padding:0.7rem 0.9rem; color:var(--text,#E2E8F0);
-    font-family:var(--font-body); font-size:0.88rem; outline:none;
-    transition:border-color .2s, box-shadow .2s;
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s;
   }
-  .gate-field input:focus { border-color:var(--accent,#3B82F6); box-shadow:0 0 0 3px rgba(59,130,246,0.18); }
+  .gate-field input:focus { border-color: var(--accent); }
+  .gate-field input[type="password"] { letter-spacing: 0.15em; }
   .gate-btn {
-    width:100%; padding:0.78rem; border:none; border-radius:10px; cursor:pointer;
-    background:linear-gradient(135deg,#3B82F6,#06B6D4); color:#fff;
-    font-size:0.92rem; font-weight:600; font-family:var(--font-body);
-    transition:opacity .2s, transform .15s; margin-top:0.5rem;
+    width: 100%;
+    padding: 0.85rem;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border: none; border-radius: 10px;
+    color: white; font-family: var(--font-body); font-size: 0.95rem; font-weight: 600;
+    cursor: pointer; transition: all 0.2s; margin-top: 0.5rem;
+    position: relative; overflow: hidden;
   }
-  .gate-btn:hover { opacity:0.88; transform:translateY(-1px); }
-  .gate-btn:active { transform:translateY(0); }
+  .gate-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 25px rgba(59,130,246,0.35); }
+  .gate-btn:active { transform: translateY(0); }
   .gate-error {
-    display:none; margin-top:0.75rem; padding:0.6rem 0.85rem;
-    background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.25);
-    border-radius:8px; color:#F87171; font-size:0.78rem; font-family:var(--font-mono);
-    animation:gateShake .4s ease;
+    background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3);
+    border-radius: 8px; padding: 0.65rem 1rem;
+    font-size: 0.82rem; color: #FCA5A5;
+    margin-top: 1rem; display: none;
+    font-family: var(--font-mono);
   }
-  .gate-footer {
-    margin-top:1.5rem; padding-top:1rem; border-top:1px solid var(--border,rgba(99,179,237,0.1));
-    font-size:0.68rem; font-family:var(--font-mono); color:var(--text3,#64748B);
-    text-align:center; line-height:1.7;
+  .gate-notice {
+    margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border);
+    display: flex; align-items: center; gap: 8px;
+    font-size: 0.78rem; color: var(--text3);
+    font-family: var(--font-mono);
   }
+  .gate-notice .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); flex-shrink: 0; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
   @keyframes gateShake {
     0%,100%{transform:translateX(0)} 20%{transform:translateX(-7px)}
     40%{transform:translateX(7px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)}
   }
+
+  /* ── MAIN APP ── */
+  #app { display: none; }
+  #app.visible { display: flex; flex-direction: column; min-height: 100vh; animation: appIn 0.5s ease both; }
+  @keyframes appIn { from { opacity:0; transform: translateY(8px); } }
   [data-theme="light"] .gate-card {
     background: #FFFFFF;
     border: 1px solid rgba(30,58,138,0.12);
@@ -1327,29 +1345,27 @@
 <div id="access-gate">
   <div class="gate-card">
     <div class="gate-logo">
-      <div style="width:38px;height:38px;border-radius:9px;background:linear-gradient(135deg,#3B82F6,#06B6D4);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-        <span style="color:#fff;font-weight:800;font-size:14px;font-family:var(--font-display);">WS</span>
-      </div>
+      <div class="logo-mark">WS</div>
       <div>
-        <div class="gate-logo-name">WSAI Portal</div>
-        <div class="gate-logo-sub">IIT Madras · Unified Management</div>
+        <h1>WSAI Portal</h1>
+        <span>IIT MADRAS · UNIFIED MANAGEMENT</span>
       </div>
     </div>
-    <div class="gate-title">Sign in to your account</div>
-    <div class="gate-sub">Use your IIT Madras institutional email</div>
+    <h2 class="gate-title">IIT Madras Portal Access</h2>
+    <p class="gate-sub">Access restricted to <strong style="color:var(--accent);">IIT Madras</strong> institutional email addresses only. Use your <strong style="color:var(--accent);">@iitm.ac.in</strong> or authorised departmental sub-domain email to sign in.</p>
     <div class="gate-field">
-      <label>Email address</label>
-      <input type="email" id="g-user" placeholder="you@iitm.ac.in" autocomplete="username" spellcheck="false">
+      <label>IIT Madras Institutional Email</label>
+      <input type="text" id="g-user" placeholder="yourname@iitm.ac.in" autocomplete="off">
     </div>
     <div class="gate-field">
-      <label>Password</label>
-      <input type="password" id="g-pass" placeholder="Enter your password" autocomplete="current-password">
+      <label>Access Key</label>
+      <input type="password" id="g-pass" placeholder="Enter your access key" autocomplete="off">
     </div>
-    <div id="gate-err" class="gate-error"></div>
-    <button class="gate-btn" onclick="attemptLogin()">Sign in →</button>
-    <div class="gate-footer">
-      WSAI Portal · IIT Madras<br>
-      <span style="color:var(--accent,#3B82F6);">Restricted to @iitm.ac.in institutional accounts</span>
+    <button class="gate-btn" onclick="attemptLogin()">🔐 Request Access</button>
+    <div class="gate-error" id="gate-err">⚠ Invalid credentials. Contact the system creator for access.</div>
+    <div class="gate-notice">
+      <div class="dot"></div>
+      @iitm.ac.in email required · IIT Madras accounts only · WSAI IIT Madras
     </div>
   </div>
 </div>
@@ -29417,4 +29433,3 @@ if (document.getElementById('tab-my-dashboard')?.classList.contains('active')) {
 </script>
 
 </body>
-  
