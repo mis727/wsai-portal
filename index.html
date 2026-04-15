@@ -4974,9 +4974,8 @@
       return;
     }
 
-    // IIT domain enforcement
-    if (!user.includes('@')) { _showErr('⚠ Enter a valid IIT Madras institutional email.'); _auditFailedLogin(user,'no-at-sign'); return; }
-    if (!_isIITEmail(user))  { _showErr('🚫 Access restricted to IIT Madras (@iitm.ac.in) institutional emails only.'); _auditFailedLogin(user,'domain-not-iitm'); return; }
+    // Basic email format check
+    if (!user.includes('@')) { _showErr('⚠ Enter a valid email address.'); _auditFailedLogin(user,'no-at-sign'); return; }
 
     // Hash-compare
     const inputHash = await _sha256(pass);
@@ -7940,7 +7939,6 @@
 
     if (!email || !name || !pass || !role) { toast('⚠️ Please fill all fields'); return; }
     if (!email.includes('@')) { toast('⚠️ Enter a valid email address'); return; }
-    if (!_isIITEmail(email)) { toast('🚫 Only IIT institutional emails (@iit*.ac.in) can be registered.'); return; }
     // Single duplicate check — covers both credential stores
     if (CREDENTIALS[email] || (window._passwords && _passwords[email])) {
       toast('⚠️ User already exists: ' + email); return;
@@ -25624,13 +25622,8 @@ tbody td { vertical-align: middle; }
         return orig.apply(this, arguments);
       }
 
-      var domain = user.split('@')[1] || '';
-      var DOMAINS = ['iitm.ac.in','dsai.iitm.ac.in','research.iitm.ac.in',
-                     'cse.iitm.ac.in','ee.iitm.ac.in','rbcdsai.iitm.ac.in','ai4bharat.org'];
       if (!user.includes('@')) {
         _record(user, 'failed', 'No @ sign');
-      } else if (!DOMAINS.some(function(d){ return domain === d || domain.endsWith('.'+d); })) {
-        _record(user, 'domain_rejected', 'Non-IITM domain: ' + domain);
       }
 
       var result = await orig.apply(this, arguments);
