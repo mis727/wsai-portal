@@ -27592,53 +27592,28 @@ tbody td { vertical-align: middle; }
   }
 
   // ── Patch v31Init to inject role-specific random quote ────────────────────
-  function _patchQuoteSystem() {
-    const origV31Init = window.v31Init;
-    if (typeof origV31Init !== 'function') {
-      setTimeout(_patchQuoteSystem, 200);
-      return;
-    }
-    // Guard: never double-wrap v31Init — prevents ghost second banner
-    if (origV31Init._v34quotePatchApplied) {
-      _log('Quote patch already applied — skipping');
-      return;
-    }
-    window.v31Init = function () {
-      origV31Init.apply(this, arguments);
-      // Build KPI rows on every login (internal guard prevents duplication)
-      setTimeout(_buildCOOKPIRows, 80);
-      // Populate KPIs after data loads
-      setTimeout(_populateCOOKPIs, 900);
-      // Delay slightly so the banner is rendered first
-      setTimeout(() => {
-        const role = (typeof _currentRole !== 'undefined' ? _currentRole : '') || 'admin';
-        const banner = _id('v31-role-banner');
-        if (!banner) return;
-
-        // Remove any existing warm word
-        const existing = banner.querySelector('.v32-warm-word, .v34-quote');
-        if (existing) existing.remove();
-
-        const q = _getSessionQuote(role);
-        const div = document.createElement('div');
-        div.className = 'v34-quote';
-        div.style.cssText = [
-          'margin-top:0.75rem', 'padding:0.65rem 1rem', 'border-radius:10px',
-          'background:rgba(255,255,255,0.06)', 'border:1px solid rgba(255,255,255,0.1)',
-          'display:flex', 'align-items:flex-start', 'gap:8px', 'animation:appIn 0.6s both'
-        ].join(';');
-        div.innerHTML = `
-          <span style="font-size:1rem;flex-shrink:0;opacity:0.7;">💡</span>
-          <div>
-            <div style="font-size:0.76rem;color:rgba(255,255,255,0.82);font-style:italic;line-height:1.5;">"${q.text}"</div>
-            <div style="font-size:0.62rem;color:rgba(255,255,255,0.45);font-family:var(--font-mono);margin-top:3px;text-transform:uppercase;letter-spacing:0.06em;">— ${q.author}</div>
-          </div>`;
-        banner.appendChild(div);
-        _log('Injected role quote for: ' + role);
-      }, 250);
-    };
-    window.v31Init._v34quotePatchApplied = true;
-    _log('Patched v31Init with role-specific quote system');
+  // ─────────────────────────────────────────────────────────────────────────
+  // QUOTE INJECTION — fires on every login via _onEveryLogin()
+  // ─────────────────────────────────────────────────────────────────────────
+  function _injectRoleQuote(role) {
+    const banner = _id('v31-role-banner');
+    if (!banner) return;
+    // Remove any previously injected quote
+    banner.querySelectorAll('.v32-warm-word, .v34-quote').forEach(el => el.remove());
+    const pool = ROLE_QUOTES[role] || ROLE_QUOTES.coo;
+    const q    = pool[Math.floor(Math.random() * pool.length)];
+    const div  = document.createElement('div');
+    div.className = 'v34-quote';
+    div.style.cssText = 'margin-top:0.75rem;padding:0.65rem 1rem;border-radius:10px;' +
+      'background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);' +
+      'display:flex;align-items:flex-start;gap:8px;animation:appIn 0.6s both';
+    div.innerHTML =
+      '<span style="font-size:1rem;flex-shrink:0;opacity:0.7;">💡</span>' +
+      '<div>' +
+        '<div style="font-size:0.76rem;color:rgba(255,255,255,0.82);font-style:italic;line-height:1.5;">"' + q.text + '"</div>' +
+        '<div style="font-size:0.62rem;color:rgba(255,255,255,0.45);font-family:var(--font-mono);margin-top:3px;text-transform:uppercase;letter-spacing:0.06em;">— ' + q.author + '</div>' +
+      '</div>';
+    banner.appendChild(div);
   }
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -27647,22 +27622,16 @@ tbody td { vertical-align: middle; }
   // complete 7-category KPI structure per the prompt.
   // ══════════════════════════════════════════════════════════════════════════
   function _buildCOOKPIRows() {
-    // Guard: prevent duplicate injection
-    if (_id('coo-enhanced-kpi-rows')) {
-      _log('COO KPI rows already injected — skipping');
-      return;
-    }
+    // Guard — only inject once per page load
+    if (_id('coo-enhanced-kpi-rows')) return;
 
-    // Primary section: coo / admin / creator all share [data-show~="coo"]
     const cooSection = _qs('[data-show~="coo"]');
     if (!cooSection) return;
 
-    // MIS and sys_admin have their own [data-show] sections — also need full rows
-    const misSection = _qs('[data-show="mis"]');
-    const sysSection = _qs('[data-show="sys_admin"]');
-
-    // Hide legacy 9-card "Institution Overview" grid + header in ALL sections
-    [cooSection, misSection, sysSection].forEach(sec => {
+    // Hide the legacy 9-card "Institution Overview" grid and its header
+    // in coo / mis / sys_admin sections so only our new rows show
+    ['[data-show~="coo"]','[data-show="mis"]','[data-show="sys_admin"]'].forEach(sel => {
+      const sec = _qs(sel);
       if (!sec) return;
       const g = _qs('.v31-kpi-grid', sec);
       const h = _qs('.v31-sec-hdr',  sec);
@@ -27853,24 +27822,31 @@ tbody td { vertical-align: middle; }
   <div class="v31-kpi-card k-green"><div class="v31-kpi-icon">🎁</div><div class="v31-kpi-val" id="coo-inv-gifts">—</div><div class="v31-kpi-lbl">Gifts / Mementos</div></div>
 </div>
 `;
-    // Inject into COO/admin/creator section
+    // Inject into COO section (covers coo / admin / creator roles)
     const container = document.createElement('div');
     container.id = 'coo-enhanced-kpi-rows';
     container.innerHTML = rowsHTML;
     cooSection.insertBefore(container, cooSection.firstChild);
 
-    // Inject clones into MIS and sys_admin sections (suffixed IDs to avoid clashes)
-    [misSection, sysSection].forEach((sec, idx) => {
-      if (!sec) return;
-      const prefix = idx === 0 ? 'mis' : 'sys';
-      const clone = document.createElement('div');
-      clone.id = 'coo-enhanced-kpi-rows-' + prefix;
-      // Rewrite all id="coo-* to id="mis-coo-* / id="sys-coo-* so populate can target them
-      clone.innerHTML = rowsHTML.replace(/id="coo-/g, 'id="' + prefix + '-coo-');
-      sec.insertBefore(clone, sec.firstChild);
-    });
+    // Clone into MIS section (mis role shows [data-show="mis"])
+    const misSection = _qs('[data-show="mis"]');
+    if (misSection) {
+      const mc = document.createElement('div');
+      mc.id = 'coo-enhanced-kpi-rows-mis';
+      mc.innerHTML = rowsHTML.replace(/id="coo-/g, 'id="mis-coo-');
+      misSection.insertBefore(mc, misSection.firstChild);
+    }
 
-    _log('KPI rows injected for coo/mis/sys_admin ✅');
+    // Clone into sys_admin section
+    const sysSection = _qs('[data-show="sys_admin"]');
+    if (sysSection) {
+      const sc = document.createElement('div');
+      sc.id = 'coo-enhanced-kpi-rows-sys';
+      sc.innerHTML = rowsHTML.replace(/id="coo-/g, 'id="sys-coo-');
+      sysSection.insertBefore(sc, sysSection.firstChild);
+    }
+
+    _log('KPI rows injected for coo + mis + sys_admin ✅');
   }
 
   // ── Populate COO KPI rows from live DB ─────────────────────────────────────
@@ -27883,11 +27859,10 @@ tbody td { vertical-align: middle; }
       const BM  = window.BM   || {};
       const INV_DB = window.INV_DB || {};
 
-      // sv() sets the primary COO copy AND the cloned MIS + sys_admin copies
+      // sv() writes to COO copy AND the cloned mis/sys_admin copies simultaneously
       const sv = (id, v) => {
-        ['', 'mis-', 'sys-'].forEach(pfx => {
-          const e = _id(pfx + id);
-          if (e) e.textContent = v;
+        [id, 'mis-' + id, 'sys-' + id].forEach(rid => {
+          const e = _id(rid); if (e) e.textContent = v;
         });
       };
 
@@ -28309,7 +28284,17 @@ tbody td { vertical-align: middle; }
 
     window.applyAccessLevelUI = function(role) {
       origApply.apply(this, arguments);
-      // §3 Staff access
+
+      // §1 — Build KPI rows once (guard inside prevents duplication)
+      setTimeout(_buildCOOKPIRows, 150);
+
+      // §1 — Inject random role quote into v31-role-banner
+      setTimeout(() => _injectRoleQuote(role), 350);
+
+      // §1 — Populate KPI values after data has had time to load
+      setTimeout(_populateCOOKPIs, 1500);
+
+      // §3 — Staff access per designation
       const staffRoles = ['hr_manager','finance_mgr','facility_mgr','edu_pgm_mgr'];
       if (staffRoles.includes(role)) {
         setTimeout(() => _applyStaffDesignationAccess(role), 400);
@@ -28347,15 +28332,9 @@ tbody td { vertical-align: middle; }
   function _boot() {
     _log('Booting v34 patch…');
 
-    // §1+2 — Role-specific quotes
-    _patchQuoteSystem();
-
-    // §1 — COO KPI rows (inject HTML, then populate)
-    _waitFor('tab-role-dashboard', () => {
-      _buildCOOKPIRows();
-      _patchV31FetchAllForCOO();
-      setTimeout(_populateCOOKPIs, 1200); // initial population from cached data
-    });
+    // §1 — KPI rows + quotes are now wired through _patchApplyAccessLevel
+    //       (fires on every login). _patchV31FetchAllForCOO keeps them live.
+    _patchV31FetchAllForCOO();
 
     // §3 — Staff access map
     _patchApplyAccessLevel();
