@@ -28830,6 +28830,10 @@ tbody td { vertical-align: middle; }
       if (role) { _injectRoleQuote(role); _patchGreetingSubLine(role); }
     }, 2200);
 
+    // Expose internals so v39 patch can call them directly from outside the closure
+    window._v36BuildCOOKPIRows = _buildCOOKPIRows;
+    window._populateCOOKPIs    = _populateCOOKPIs;
+
     _log('v36 My Dashboard patch boot complete ✅');
   }
 
@@ -28841,3 +28845,749 @@ tbody td { vertical-align: middle; }
 </script>
 
 </body>
+<!-- ══════════════════════════════════════════════════════════════════════════
+     WSAI PORTAL v39 MERGED PATCH
+     Adds:
+       • Faculty → auto-lands on My Dashboard with scoped KPI rows
+       • Staff roles (HR/Finance/Facility/SysAdmin/MIS) → scoped KPI rows
+       • Banner greeting: "Welcome, Name Sir" (COO) / "Welcome, Prof. Name" (Faculty)
+       • Random quotes per role per login (extends v36 pool)
+       • Faculty KPIs: My Publications, Lab / Room, My Researchers, My Expenses
+       • HR Manager KPIs: People row + Biometric row (scoped)
+       • Finance Manager KPIs: Expenses row + Assets row (scoped)
+       • Facility Manager KPIs: Facility row + Assets row (scoped)
+       • Sys Admin / MIS already get full 7-row via v36 clone — greeting fix only
+     All patches are additive; zero v36 functionality removed.
+══════════════════════════════════════════════════════════════════════════ -->
+<script>
+(function WSAI_V39_PATCH() {
+  'use strict';
+
+  const _id  = id => document.getElementById(id);
+  const _qs  = (s,r)=>(r||document).querySelector(s);
+  const _qsa = (s,r)=>Array.from((r||document).querySelectorAll(s));
+  const _log = m => console.log('%c[v39 Patch] '+m,'color:#8B5CF6;font-size:0.72rem;');
+
+  function _ready(fn){
+    if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',fn);
+    else fn();
+  }
+  function _waitFor(id,fn,ms){
+    const el=_id(id); if(el){fn(el);return;}
+    let t=0;
+    const iv=setInterval(()=>{
+      const e=_id(id);
+      if(e||t>(ms||8000)){clearInterval(iv);if(e)fn(e);}
+      t+=100;
+    },100);
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // §A — ROLE LANDING: Faculty & Staff → My Dashboard
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  const ROLE_LANDING_MAP = {
+    faculty:      'role-dashboard',
+    hr_manager:   'role-dashboard',
+    finance_mgr:  'role-dashboard',
+    facility_mgr: 'role-dashboard',
+    edu_pgm_mgr:  'role-dashboard',
+    sys_admin:    'role-dashboard',
+    mis:          'role-dashboard',
+  };
+
+  function _patchRoleLanding() {
+    const origApply = window.applyAccessLevelUI;
+    if (typeof origApply !== 'function') { setTimeout(_patchRoleLanding, 250); return; }
+    if (origApply._v39landingPatched) return;
+    window.applyAccessLevelUI = function(role) {
+      origApply.apply(this, arguments);
+      const landing = ROLE_LANDING_MAP[role];
+      if (landing && typeof window.showTab === 'function') {
+        setTimeout(() => window.showTab(landing), 200);
+      }
+      // Activate My Dashboard nav item
+      setTimeout(() => {
+        const nav = document.getElementById('nav-role-dashboard');
+        if (nav) nav.style.removeProperty('display');
+      }, 150);
+      _log('Landing override for '+role+' → '+landing);
+    };
+    window.applyAccessLevelUI._v39landingPatched = true;
+    _log('Role landing patch applied');
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // §B — GREETING FORMAT FIX
+  //  COO/admin/creator : "Welcome, [Name] Sir"
+  //  Faculty           : "Welcome, Prof. [LastName]"
+  //  Staff             : "Welcome, [FirstName]"  (designation on sub-line)
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  function _patchBannerGreeting(role) {
+    const greetEl = _id('v31-greeting');
+    if (!greetEl) return;
+    const raw = (window._currentUser || window.currentUserName || greetEl.textContent || '').trim();
+    const name = raw.replace(/^Welcome[,\s]*/i,'').replace(/\bSir\b/i,'').replace(/\bProf\.?\s*/i,'').trim();
+    if (!name) return;
+    const firstName = name.split(' ')[0];
+    const lastName  = name.split(' ').pop();
+    let greeting = '';
+    if (['coo','admin','creator'].includes(role)) {
+      greeting = 'Welcome, ' + name + ' Sir';
+    } else if (role === 'faculty') {
+      greeting = 'Welcome, Prof. ' + lastName;
+    } else {
+      greeting = 'Welcome, ' + firstName;
+    }
+    greetEl.textContent = greeting;
+    _log('Greeting set: ' + greeting);
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // §C — SHARED BUILDER HELPERS (reuse v36 pattern)
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  function _regPanel(tblId, headers, addLabel, goTab, filters) {
+    const fid = tblId+'-srch';
+    return `<div class="v36-filter-row">
+      <input class="v36-filter-input" id="${fid}" placeholder="🔍 Search..." oninput="v36FilterTable('${tblId}',this.value)">
+      ${(filters||[]).map(f=>`<select class="v36-filter-select" onchange="v36FilterTable('${tblId}',_id('${fid}').value,this.value,'${f.col}')"><option value="">All ${f.label}</option>${f.opts.map(o=>`<option>${o}</option>`).join('')}</select>`).join('')}
+      <span style="flex:1"></span>
+      <button class="v36-add-btn" onclick="showTab('${goTab}')">+ ${addLabel}</button>
+    </div>
+    <div style="overflow-x:auto;"><table id="${tblId}">
+      <thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}<th>Actions</th></tr></thead>
+      <tbody><tr><td colspan="${headers.length+1}" style="text-align:center;padding:1.75rem;color:var(--text3);font-size:0.82rem;">Connect Google Sheet to load live data</td></tr></tbody>
+    </table></div>`;
+  }
+
+  function _distPanel(items, accent) {
+    return '<div class="v36-dist-grid">'+items.map(d=>
+      `<div class="v36-dist-card">
+        <div class="v36-dist-lbl">${d.label}</div>
+        <div class="v36-dist-val" style="color:${d.color||accent}">${d.val||0}</div>
+        <div class="v36-dist-bar-wrap"><div class="v36-dist-bar-fill" style="width:${d.pct||0}%;background:${d.color||accent}"></div></div>
+      </div>`
+    ).join('')+'</div>';
+  }
+
+  function _expandPanel(cfg) {
+    const tabs = cfg.tabs||['Registry'];
+    const panels = cfg.panels||{};
+    const tabsHtml = '<div class="v36-ep-tabs">'+
+      tabs.map((t,i)=>`<div class="v36-ep-tab${i===0?' active':''}" onclick="v36SwitchTab(this,'${cfg.id}-panel-${i}')">${t}</div>`).join('')+
+    '</div>';
+    const panelsHtml = tabs.map((t,i)=>
+      `<div class="v36-ep-panel${i===0?' active':''}" id="${cfg.id}-panel-${i}">${panels[t]||''}</div>`
+    ).join('');
+    return `<div class="v36-expand" id="${cfg.id}-expand">
+      <div class="v36-ep-hdr">
+        <span class="v36-ep-title">${cfg.title}</span>
+        <div class="v36-ep-actions">
+          <button class="v31-act-btn" style="font-size:0.7rem;" onclick="showTab('${cfg.module}')">Open Module →</button>
+          <button class="v31-act-btn" style="font-size:0.7rem;" onclick="v36CloseExpand('${cfg.id}')">✕ Close</button>
+        </div>
+      </div>${tabsHtml}${panelsHtml}</div>`;
+  }
+
+  function _kpiSection(icon, title, sectionId, goTab, cards, expands, extraHtml) {
+    const cardHtml = cards.map((c,i)=>`<div>
+      <div class="v31-kpi-card ${c.cls} v36-kpi-clickable" id="${c.id}-card" style="cursor:pointer;"
+        onclick="v36ToggleExpand('${c.id}')" title="${c.lbl}">
+        <div class="v31-kpi-icon">${c.icon}</div>
+        <div class="v31-kpi-val" id="${c.id}">${c.val||'—'}</div>
+        <div class="v31-kpi-lbl">${c.lbl}</div>
+        ${c.sub?`<div class="v31-kpi-sub">${c.sub}</div>`:''}
+      </div>${expands[i]||''}</div>`
+    ).join('');
+    return `<div class="v36-kpi-section" style="margin-bottom:1.5rem;">
+      <div class="v31-sec-hdr" style="margin-top:1rem;">
+        <div class="v31-sec-title">${icon} ${title}</div>
+        <div class="v31-sec-actions">
+          <button class="v31-act-btn" style="font-size:0.7rem;padding:0.28rem 0.7rem;" onclick="showTab('${goTab}')">${title.split(' ')[0]} Module →</button>
+        </div>
+      </div>
+      <div class="v31-kpi-grid" id="${sectionId}" style="grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:0.6rem;">
+        ${cardHtml}
+      </div>${extraHtml||''}
+    </div>`;
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // §D — FACULTY KPI ROWS
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  function _buildFacultyKPIs() {
+    if (_id('v39-faculty-kpi-rows')) return;
+    const facSection = _qs('[data-show~="faculty"]');
+    if (!facSection) return;
+
+    // Hide legacy v31 KPI grid (the original simple one)
+    const legGrid = _qs('.v31-kpi-grid', facSection);
+    const legHdr  = _qs('.v31-sec-hdr', facSection);
+    if (legGrid) legGrid.style.display = 'none';
+    if (legHdr)  legHdr.style.display  = 'none';
+
+    // Publications expands
+    const pubExp = [
+      _expandPanel({id:'fac-pub-journal', title:'📄 Journal Papers — Registry', module:'publications',
+        tabs:['Registry'],
+        panels:{'Registry':_regPanel('fac-journals-reg',['Pub ID','Title','Authors','Journal','Year','Status'],'Add Journal Paper','publications',[{label:'Year',col:4,opts:['2026','2025','2024','2023','2022']}])}}),
+      _expandPanel({id:'fac-pub-conf', title:'🎤 Conference Papers — Registry', module:'publications',
+        tabs:['Registry'],
+        panels:{'Registry':_regPanel('fac-conf-reg',['Pub ID','Title','Authors','Conference','Year','Status'],'Add Conference Paper','publications')}}),
+      _expandPanel({id:'fac-pub-report', title:'📋 Reports — Registry', module:'publications',
+        tabs:['Registry'],
+        panels:{'Registry':_regPanel('fac-reports-reg',['Rep ID','Title','Author(s)','Type','Date','Visibility'],'Add Report','publications')}}),
+      _expandPanel({id:'fac-pub-preprint', title:'📑 Preprints / ArXiv — Registry', module:'publications',
+        tabs:['Registry'],
+        panels:{'Registry':_regPanel('fac-preprints-reg',['ArXiv ID','Title','Authors','Submitted','Category','Status'],'Add Preprint','publications')}}),
+    ];
+
+    // Researchers expands
+    const resExp = [
+      _expandPanel({id:'fac-res-all', title:'🔬 My Researchers — Registry', module:'people',
+        tabs:['Registry','Designation Distribution','Alumni'],
+        panels:{
+          'Registry': _regPanel('fac-res-reg',['ID','Name','Designation','Project','Start Date','Status'],'Add Researcher','people',[{label:'Desig.',col:2,opts:['Post-Doc','Sr. Researcher','Research Assoc.','Jr. Researcher']}]),
+          'Designation Distribution': _distPanel([
+            {label:'Post-Doc',val:0,color:'#06B6D4',pct:0},{label:'Sr. Researcher',val:0,color:'#3B82F6',pct:0},
+            {label:'Research Assoc.',val:0,color:'#8B5CF6',pct:0},{label:'Jr. Researcher',val:0,color:'#10B981',pct:0}
+          ],'#06B6D4'),
+          'Alumni': _regPanel('fac-res-alumni',['ID','Name','Last Role','Project','Exit Date'],'Export Alumni','people'),
+        }
+      }),
+    ];
+
+    // Facility expands
+    const facilExp = [
+      _expandPanel({id:'fac-lab-my', title:'🔬 My Faculty Labs — Registry', module:'labs',
+        tabs:['Registry'],
+        panels:{'Registry':_regPanel('fac-labs-reg',['Lab ID','Name','Capacity','Occupied','Free Seats','Status'],'Add Lab','labs',[{label:'Status',col:5,opts:['Active','Inactive','Under Maintenance']}])}}),
+      _expandPanel({id:'fac-room-my', title:'🏛️ My Facility Rooms — Utilization', module:'labs',
+        tabs:['Utilization Ribbons','Registry'],
+        panels:{
+          'Utilization Ribbons': `<div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.75rem;">
+            <span style="font-size:0.72rem;padding:0.3rem 0.75rem;border-radius:6px;background:rgba(239,68,68,0.15);color:#EF4444;font-family:var(--font-mono);border:1px solid rgba(239,68,68,0.25);">🔴 Over-Capacity: <span id="fac-rib-over">—</span></span>
+            <span style="font-size:0.72rem;padding:0.3rem 0.75rem;border-radius:6px;background:rgba(249,115,22,0.12);color:#F97316;font-family:var(--font-mono);border:1px solid rgba(249,115,22,0.22);">🟠 High (80–100%): <span id="fac-rib-high">—</span></span>
+            <span style="font-size:0.72rem;padding:0.3rem 0.75rem;border-radius:6px;background:rgba(245,158,11,0.12);color:#F59E0B;font-family:var(--font-mono);border:1px solid rgba(245,158,11,0.22);">🟡 Medium (50–80%): <span id="fac-rib-med">—</span></span>
+            <span style="font-size:0.72rem;padding:0.3rem 0.75rem;border-radius:6px;background:rgba(16,185,129,0.12);color:#10B981;font-family:var(--font-mono);border:1px solid rgba(16,185,129,0.22);">🟢 Low (&lt;50%): <span id="fac-rib-low">—</span></span>
+          </div>
+          <div style="overflow-x:auto;"><table id="fac-frooms-util-tbl">
+            <thead><tr><th>Room</th><th>Block</th><th>Capacity</th><th>Occupied</th><th>Utilization</th><th>Status</th></tr></thead>
+            <tbody><tr><td colspan="6" style="text-align:center;padding:1.5rem;color:var(--text3);">Connect sheet to load data</td></tr></tbody>
+          </table></div>`,
+          'Registry': _regPanel('fac-frooms-reg',['Room ID','Name','Faculty','Capacity','Block','Status'],'Add Room','labs'),
+        }
+      }),
+    ];
+
+    // Expenses expands
+    const expExp = [
+      _expandPanel({id:'fac-exp-paid', title:'✅ My Paid Expenses — Registry', module:'expenses',
+        tabs:['Registry'],
+        panels:{'Registry':_regPanel('fac-exp-paid-reg',['Exp ID','Description','Category','Amount ₹','Paid On','Status'],'Add Expense','expenses',[{label:'Category',col:2,opts:['Travel','Lab','Events','Training','Others']}])}}),
+      _expandPanel({id:'fac-exp-pending', title:'⏳ My Pending Expenses — Registry', module:'expenses',
+        tabs:['Registry'],
+        panels:{'Registry':_regPanel('fac-exp-pend-reg',['Exp ID','Description','Category','Amount ₹','Submitted On','Status'],'Add Expense','expenses')}}),
+      _expandPanel({id:'fac-exp-process', title:'🔄 My Under-process Expenses', module:'expenses',
+        tabs:['Registry'],
+        panels:{'Registry':_regPanel('fac-exp-proc-reg',['Exp ID','Description','Amount ₹','Stage','Est. Clearance','Status'],'Add Expense','expenses')}}),
+    ];
+
+    const rowsHTML =
+      _kpiSection('📚','Publications','fac-pub-kpi','publications',[
+        {id:'fac-pub-journal',  cls:'k-purple', icon:'📰', lbl:'Journal Papers',    sub:'Published'},
+        {id:'fac-pub-conf',     cls:'k-blue',   icon:'🎤', lbl:'Conference Papers', sub:'Presented'},
+        {id:'fac-pub-report',   cls:'k-cyan',   icon:'📋', lbl:'Reports',           sub:'Internal docs'},
+        {id:'fac-pub-preprint', cls:'k-orange', icon:'🔬', lbl:'Preprints / ArXiv', sub:'Pre-published'},
+      ], pubExp) +
+
+      _kpiSection('🔬','My Researchers','fac-res-kpi','people',[
+        {id:'fac-res-all', cls:'k-cyan', icon:'🔬', lbl:'Active Researchers', sub:'Under supervision'},
+      ], resExp) +
+
+      _kpiSection('🏛️','Facility & Room','fac-lab-kpi','labs',[
+        {id:'fac-lab-my',   cls:'k-blue',  icon:'🏢', lbl:'Faculty Labs',    sub:'My labs'},
+        {id:'fac-room-my',  cls:'k-purple',icon:'🚪', lbl:'Faculty Rooms',   sub:'Utilization view'},
+        {id:'fac-occ-seats',cls:'k-orange',icon:'👨‍🔬',lbl:'Occupied Seats',  sub:'Current'},
+        {id:'fac-avail-seats',cls:'k-green',icon:'✨',lbl:'Available Seats', sub:'Free now'},
+      ], [facilExp[0], facilExp[1], '', '']) +
+
+      _kpiSection('💰','My Expenses','fac-exp-kpi','expenses',[
+        {id:'fac-exp-paid',    cls:'k-green',  icon:'✅', lbl:'Paid',          sub:'Cleared'},
+        {id:'fac-exp-pending', cls:'k-gold',   icon:'⏳', lbl:'Pending',       sub:'Awaiting approval'},
+        {id:'fac-exp-process', cls:'k-orange', icon:'🔄', lbl:'Under-process', sub:'In review'},
+      ], expExp);
+
+    const container = document.createElement('div');
+    container.id = 'v39-faculty-kpi-rows';
+    container.innerHTML = rowsHTML;
+    facSection.insertBefore(container, facSection.firstChild);
+    _log('Faculty KPI rows injected ✅');
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // §E — HR MANAGER KPI ROWS
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  function _buildHRKPIs() {
+    if (_id('v39-hr-kpi-rows')) return;
+    const hrSection = _qs('[data-show~="hr_manager"]');
+    if (!hrSection) return;
+    const legGrid = _qs('.v31-kpi-grid', hrSection);
+    if (legGrid) legGrid.style.display = 'none';
+
+    const hrExpands = [
+      _expandPanel({id:'hr-staff-kpi', title:'👔 Staff — Registry', module:'people',
+        tabs:['Registry','Designation Distribution'],
+        panels:{
+          'Registry': _regPanel('hr-staff-reg',['ID','Name','Designation','Department','Status','Joined'],'Add Staff','people',[{label:'Status',col:4,opts:['Active','On Leave','Inactive']}]),
+          'Designation Distribution': _distPanel([{label:'Admin Staff',val:0,color:'#3B82F6',pct:0},{label:'Technical',val:0,color:'#06B6D4',pct:0},{label:'Support',val:0,color:'#10B981',pct:0},{label:'Research Support',val:0,color:'#8B5CF6',pct:0}],'#3B82F6'),
+        }}),
+      _expandPanel({id:'hr-faculty-kpi', title:'🎓 Faculty — Registry & Category Distribution', module:'people',
+        tabs:['Registry','Category Distribution','Alumni'],
+        panels:{
+          'Registry': _regPanel('hr-faculty-reg',['ID','Name','Designation','Specialisation','Status','Joined'],'Add Faculty','people',[{label:'Type',col:2,opts:['Professor','Assoc. Professor','Asst. Professor','Visiting']}]),
+          'Category Distribution': _distPanel([{label:'Associate Faculty',val:0,color:'#3B82F6',pct:0},{label:'Affiliate Faculty',val:0,color:'#8B5CF6',pct:0},{label:'Core Faculty',val:0,color:'#06B6D4',pct:0}],'#3B82F6'),
+          'Alumni': _regPanel('hr-faculty-alumni',['ID','Name','Last Role','Dept','Reason','Exit Date'],'Export Alumni','people'),
+        }}),
+      _expandPanel({id:'hr-res-kpi', title:'🔬 Researchers — Registry & Distribution', module:'people',
+        tabs:['Registry','Designation Distribution','Alumni'],
+        panels:{
+          'Registry': _regPanel('hr-res-reg',['ID','Name','Designation','Lab','Project','Status'],'Add Researcher','people',[{label:'Desig.',col:2,opts:['Post-Doc','Sr. Researcher','Research Assoc.','Jr. Researcher']}]),
+          'Designation Distribution': _distPanel([{label:'Post-Doc',val:0,color:'#06B6D4',pct:0},{label:'Sr. Researcher',val:0,color:'#3B82F6',pct:0},{label:'Research Assoc.',val:0,color:'#8B5CF6',pct:0},{label:'Jr. Researcher',val:0,color:'#10B981',pct:0}],'#06B6D4'),
+          'Alumni': _regPanel('hr-res-alumni',['ID','Name','Last Role','Project','Exit Date'],'Export Alumni','people'),
+        }}),
+      _expandPanel({id:'hr-students-kpi', title:'🎓 Students — Registry & Distribution', module:'people',
+        tabs:['Registry','Designation Distribution','Alumni'],
+        panels:{
+          'Registry': _regPanel('hr-students-reg',['ID','Name','Program','Batch','Advisor','Status'],'Add Student','people',[{label:'Program',col:2,opts:['Ph.D','M.Tech','M.S. Research','B.Tech']}]),
+          'Designation Distribution': _distPanel([{label:'Ph.D',val:0,color:'#10B981',pct:0},{label:'M.Tech',val:0,color:'#3B82F6',pct:0},{label:'M.S. Research',val:0,color:'#8B5CF6',pct:0},{label:'B.Tech',val:0,color:'#06B6D4',pct:0}],'#10B981'),
+          'Alumni': _regPanel('hr-students-alumni',['ID','Name','Program','Grad Year','Placement'],'Export Alumni','people'),
+        }}),
+      _expandPanel({id:'hr-tenure-kpi', title:'⚠️ Tenure Risk — Action Required', module:'people',
+        tabs:['Alerts'],
+        panels:{'Alerts': _regPanel('hr-tenure-alerts',['ID','Name','Role','Contract End','Days Left','Priority'],'Manage Tenures','people')}}),
+    ];
+
+    // Biometric expands
+    const bioExpandHR = [
+      _expandPanel({id:'hr-bio-kpi', title:'🔐 Biometric Access — Overview', module:'biometric',
+        tabs:['Area Occupancy','Pending Requests'],
+        panels:{
+          'Area Occupancy': `<div style="overflow-x:auto;"><table id="hr-bio-area-tbl">
+            <thead><tr><th>Zone / Area</th><th>Enrolled</th><th>Currently In</th><th>Capacity</th><th>Utilization</th><th>Status</th></tr></thead>
+            <tbody><tr><td colspan="6" style="text-align:center;padding:1.5rem;color:var(--text3);">Connect sheet to load data</td></tr></tbody>
+          </table></div>`,
+          'Pending Requests': _regPanel('hr-bio-pend-tbl',['Name','Role','Request Date','Auth Type'],'Manage Biometric','biometric'),
+        }}),
+    ];
+
+    const rowsHTML =
+      _kpiSection('👤','HR & People','hr-people-kpi','people',[
+        {id:'hr-staff-kpi',    cls:'k-blue',   icon:'👔', lbl:'Staff',            sub:'Active members'},
+        {id:'hr-faculty-kpi',  cls:'k-cyan',   icon:'👨‍🏫',lbl:'Faculty',           sub:'Core faculty'},
+        {id:'hr-res-kpi',      cls:'k-green',  icon:'🔬', lbl:'Active Researchers',sub:'Ongoing'},
+        {id:'hr-students-kpi', cls:'k-purple', icon:'🎓', lbl:'Students',          sub:'Enrolled'},
+        {id:'hr-tenure-kpi',   cls:'k-red',    icon:'⏰', lbl:'Tenure Risk',       sub:'≤ 30 days'},
+      ], hrExpands) +
+
+      _kpiSection('🔐','Biometric Access','hr-bio-kpi-row','biometric',[
+        {id:'hr-bio-kpi', cls:'k-purple', icon:'🔐', lbl:'Area Occupancy & Pending', sub:'Click to expand'},
+      ], bioExpandHR);
+
+    const container = document.createElement('div');
+    container.id = 'v39-hr-kpi-rows';
+    container.innerHTML = rowsHTML;
+    hrSection.insertBefore(container, hrSection.firstChild);
+    _log('HR Manager KPI rows injected ✅');
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // §F — FINANCE MANAGER KPI ROWS
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  function _buildFinanceKPIs() {
+    if (_id('v39-fin-kpi-rows')) return;
+    const finSection = _qs('[data-show~="finance_mgr"]');
+    if (!finSection) return;
+    const legGrid = _qs('.v31-kpi-grid', finSection);
+    if (legGrid) legGrid.style.display = 'none';
+
+    const expExp = [
+      _expandPanel({id:'fin-exp-paid-kpi', title:'✅ Paid Expenses — Registry', module:'expenses',
+        tabs:['Registry'],
+        panels:{'Registry':_regPanel('fin-exp-paid-reg',['Exp ID','Description','Vendor','Category','Amount ₹','Paid On'],'Add Expense','expenses',[{label:'Category',col:3,opts:['IT Infrastructure','Lab Setup','AMC','Events','Travel']}])}}),
+      _expandPanel({id:'fin-exp-pend-kpi', title:'⏳ Pending Expenses — Registry', module:'expenses',
+        tabs:['Registry'],
+        panels:{'Registry':_regPanel('fin-exp-pend-reg',['Exp ID','Description','Vendor','Category','Amount ₹','Submitted On'],'Add Expense','expenses')}}),
+      _expandPanel({id:'fin-exp-proc-kpi', title:'🔄 Under-process Expenses — Registry', module:'expenses',
+        tabs:['Registry'],
+        panels:{'Registry':_regPanel('fin-exp-proc-reg',['Exp ID','Description','Vendor','Amount ₹','Stage','Est. Clearance'],'Add Expense','expenses')}}),
+    ];
+    const assetExp = [
+      _expandPanel({id:'fin-ast-it', title:'💻 IT Assets — Category Breakdown', module:'assets',
+        tabs:['Registry','Category Breakdown'],
+        panels:{
+          'Registry': _regPanel('fin-it-reg',['Asset ID','Name','Category','Location','Assigned To','Status'],'Add IT Asset','assets',[{label:'Category',col:2,opts:['Laptop','Desktop','Server','Networking','Peripherals']}]),
+          'Category Breakdown': _distPanel([{label:'Laptops',val:0,color:'#3B82F6',pct:0},{label:'Desktops',val:0,color:'#06B6D4',pct:0},{label:'Servers',val:0,color:'#8B5CF6',pct:0},{label:'Networking',val:0,color:'#10B981',pct:0}],'#3B82F6'),
+        }}),
+      _expandPanel({id:'fin-ast-nonit', title:'🏢 Non-IT Assets — Category Breakdown', module:'assets',
+        tabs:['Registry','Category Breakdown'],
+        panels:{
+          'Registry': _regPanel('fin-nonit-reg',['Asset ID','Name','Category','Location','Condition','Status'],'Add Non-IT Asset','assets',[{label:'Category',col:2,opts:['Furniture','Lab Equipment','Office Equipment','Electrical']}]),
+          'Category Breakdown': _distPanel([{label:'Furniture',val:0,color:'#F59E0B',pct:0},{label:'Lab Equipment',val:0,color:'#06B6D4',pct:0},{label:'Office Equipment',val:0,color:'#3B82F6',pct:0},{label:'Electrical',val:0,color:'#10B981',pct:0}],'#F59E0B'),
+        }}),
+      _expandPanel({id:'fin-vendor-kpi', title:'🏪 Vendor List — Breakdown', module:'assets',
+        tabs:['Registry','Category Breakdown'],
+        panels:{
+          'Registry': _regPanel('fin-vendors-reg',['Vendor ID','Name','Category','Contact','GST No.','Status'],'Add Vendor','assets',[{label:'Category',col:2,opts:['IT Hardware','Lab Chemicals','Office Supplies','Services']}]),
+          'Category Breakdown': _distPanel([{label:'IT Vendors',val:0,color:'#3B82F6',pct:0},{label:'Lab Vendors',val:0,color:'#06B6D4',pct:0},{label:'Office Vendors',val:0,color:'#F59E0B',pct:0},{label:'Service Vendors',val:0,color:'#8B5CF6',pct:0}],'#64748B'),
+        }}),
+    ];
+
+    const rowsHTML =
+      _kpiSection('💰','Expenses','fin-exp-kpi','expenses',[
+        {id:'fin-exp-paid-kpi', cls:'k-green',  icon:'✅', lbl:'Paid',          sub:'Cleared'},
+        {id:'fin-exp-pend-kpi', cls:'k-gold',   icon:'⏳', lbl:'Pending',       sub:'Awaiting approval'},
+        {id:'fin-exp-proc-kpi', cls:'k-orange', icon:'🔄', lbl:'Under-process', sub:'In review'},
+      ], expExp) +
+      _kpiSection('📦','Asset','fin-asset-kpi','assets',[
+        {id:'fin-ast-it',      cls:'k-blue',   icon:'💻', lbl:'IT Assets',    sub:'Devices & HW'},
+        {id:'fin-ast-nonit',   cls:'k-orange', icon:'🏢', lbl:'Non-IT Assets',sub:'Furniture & HW'},
+        {id:'fin-vendor-kpi',  cls:'k-blue',   icon:'🏪', lbl:'Vendor List',  sub:'Active vendors'},
+      ], assetExp);
+
+    const container = document.createElement('div');
+    container.id = 'v39-fin-kpi-rows';
+    container.innerHTML = rowsHTML;
+    finSection.insertBefore(container, finSection.firstChild);
+    _log('Finance Manager KPI rows injected ✅');
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // §G — FACILITY MANAGER KPI ROWS
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  function _buildFacilityKPIs() {
+    if (_id('v39-facmgr-kpi-rows')) return;
+    const facSection = _qs('[data-show~="facility_mgr"]');
+    if (!facSection) return;
+    const legGrid = _qs('.v31-kpi-grid', facSection);
+    if (legGrid) legGrid.style.display = 'none';
+
+    const labExp = [
+      _expandPanel({id:'facmgr-lab-faculty', title:'🔬 Faculty Labs — Registry', module:'labs',
+        tabs:['Registry'],
+        panels:{'Registry':_regPanel('facmgr-faclabs-reg',['Lab ID','Name','PI / Faculty','Capacity','Occupied','Status'],'Add Lab','labs',[{label:'Status',col:5,opts:['Active','Inactive','Under Maintenance']}])}}),
+      _expandPanel({id:'facmgr-lab-facility', title:'🏛️ Facility Rooms — Registry', module:'labs',
+        tabs:['Registry'],
+        panels:{'Registry':_regPanel('facmgr-facilityrooms-reg',['Room ID','Name','Type','Capacity','Status','Block'],'Add Room','labs',[{label:'Type',col:2,opts:['Conference','Seminar','Meeting','Library','Classroom']}])}}),
+      _expandPanel({id:'facmgr-lab-frooms', title:'🏢 Faculty Rooms — Utilization Overview', module:'labs',
+        tabs:['Utilization Ribbons','Registry'],
+        panels:{
+          'Utilization Ribbons': `<div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.75rem;">
+            <span style="font-size:0.72rem;padding:0.3rem 0.75rem;border-radius:6px;background:rgba(239,68,68,0.15);color:#EF4444;font-family:var(--font-mono);border:1px solid rgba(239,68,68,0.25);">🔴 Over-Capacity: <span id="facmgr-rib-over">—</span></span>
+            <span style="font-size:0.72rem;padding:0.3rem 0.75rem;border-radius:6px;background:rgba(249,115,22,0.12);color:#F97316;font-family:var(--font-mono);border:1px solid rgba(249,115,22,0.22);">🟠 High (80–100%): <span id="facmgr-rib-high">—</span></span>
+            <span style="font-size:0.72rem;padding:0.3rem 0.75rem;border-radius:6px;background:rgba(245,158,11,0.12);color:#F59E0B;font-family:var(--font-mono);border:1px solid rgba(245,158,11,0.22);">🟡 Medium (50–80%): <span id="facmgr-rib-med">—</span></span>
+            <span style="font-size:0.72rem;padding:0.3rem 0.75rem;border-radius:6px;background:rgba(16,185,129,0.12);color:#10B981;font-family:var(--font-mono);border:1px solid rgba(16,185,129,0.22);">🟢 Low (&lt;50%): <span id="facmgr-rib-low">—</span></span>
+          </div>
+          <div style="overflow-x:auto;"><table id="facmgr-frooms-util-tbl">
+            <thead><tr><th>Room</th><th>Block</th><th>Capacity</th><th>Occupied</th><th>Utilization</th><th>Status</th></tr></thead>
+            <tbody><tr><td colspan="6" style="text-align:center;padding:1.5rem;color:var(--text3);">Connect sheet to load data</td></tr></tbody>
+          </table></div>`,
+          'Registry': _regPanel('facmgr-frooms-reg',['Room ID','Name','Faculty','Capacity','Block','Status'],'Add Room','labs'),
+        }}),
+    ];
+    const assetExpFac = [
+      _expandPanel({id:'facmgr-ast-it', title:'💻 IT Assets — Category Breakdown', module:'assets',
+        tabs:['Registry','Category Breakdown'],
+        panels:{
+          'Registry': _regPanel('facmgr-it-reg',['Asset ID','Name','Category','Location','Assigned To','Status'],'Add IT Asset','assets',[{label:'Category',col:2,opts:['Laptop','Desktop','Server','Networking','Peripherals']}]),
+          'Category Breakdown': _distPanel([{label:'Laptops',val:0,color:'#3B82F6',pct:0},{label:'Desktops',val:0,color:'#06B6D4',pct:0},{label:'Servers',val:0,color:'#8B5CF6',pct:0}],'#3B82F6'),
+        }}),
+      _expandPanel({id:'facmgr-ast-nonit', title:'🏢 Non-IT Assets — Category Breakdown', module:'assets',
+        tabs:['Registry','Category Breakdown'],
+        panels:{
+          'Registry': _regPanel('facmgr-nonit-reg',['Asset ID','Name','Category','Location','Condition','Status'],'Add Non-IT Asset','assets',[{label:'Category',col:2,opts:['Furniture','Lab Equipment','Office Equipment','Electrical']}]),
+          'Category Breakdown': _distPanel([{label:'Furniture',val:0,color:'#F59E0B',pct:0},{label:'Lab Equipment',val:0,color:'#06B6D4',pct:0}],'#F59E0B'),
+        }}),
+    ];
+
+    const rowsHTML =
+      _kpiSection('🏛️','Facility & Room','facmgr-lab-kpi','labs',[
+        {id:'facmgr-lab-faculty',  cls:'k-blue',   icon:'🏢', lbl:'Faculty Labs',    sub:'All labs'},
+        {id:'facmgr-lab-facility', cls:'k-cyan',   icon:'🚪', lbl:'Facility Rooms',  sub:'All rooms'},
+        {id:'facmgr-lab-frooms',   cls:'k-purple', icon:'🏫', lbl:'Faculty Rooms',   sub:'Utilization view'},
+        {id:'facmgr-occ',          cls:'k-orange', icon:'👨‍🔬',lbl:'Occupied Seats',  sub:'Current'},
+        {id:'facmgr-avail',        cls:'k-green',  icon:'✨', lbl:'Available Seats', sub:'Free now'},
+        {id:'facmgr-util',         cls:'k-red',    icon:'📈', lbl:'Utilization %',   sub:'Overall'},
+      ], [labExp[0], labExp[1], labExp[2], '', '', '']) +
+      _kpiSection('📦','Asset','facmgr-asset-kpi','assets',[
+        {id:'facmgr-ast-it',   cls:'k-blue',   icon:'💻', lbl:'IT Assets',    sub:'Devices & HW'},
+        {id:'facmgr-ast-nonit',cls:'k-orange', icon:'🏢', lbl:'Non-IT Assets',sub:'Furniture & HW'},
+      ], assetExpFac);
+
+    const container = document.createElement('div');
+    container.id = 'v39-facmgr-kpi-rows';
+    container.innerHTML = rowsHTML;
+    facSection.insertBefore(container, facSection.firstChild);
+
+    // Populate from LAB data
+    setTimeout(() => {
+      try {
+        const LAB = window.LAB||{};
+        const fl = (LAB.data?LAB.data.facultyLabs:LAB.facultyLabs)||[];
+        const fr = (LAB.data?LAB.data.facilityRooms:LAB.facilityRooms)||[];
+        const frooms = (LAB.data?LAB.data.facultyRooms:LAB.facultyRooms)||[];
+        const occ = fl.reduce((s,l)=>s+(l.occupiedSeats||0),0);
+        const cap = fl.reduce((s,l)=>s+(l.capacity||0),0);
+        const avl = Math.max(0,cap-occ);
+        const util = cap>0?Math.round(occ/cap*100):0;
+        const sv=(id,v)=>{const e=_id(id);if(e)e.textContent=v;};
+        sv('facmgr-lab-faculty', fl.length||'—'); sv('facmgr-lab-facility', fr.length||'—');
+        sv('facmgr-lab-frooms', frooms.length||'—'); sv('facmgr-occ', occ);
+        sv('facmgr-avail', avl); sv('facmgr-util', util+'%');
+        const ind = fl.map(l=>l.statusIndicator||'');
+        sv('facmgr-rib-over', ind.filter(i=>i==='OVER-CAPACITY').length);
+        sv('facmgr-rib-high', ind.filter(i=>i==='HIGH').length);
+        sv('facmgr-rib-med',  ind.filter(i=>i==='MEDIUM').length);
+        sv('facmgr-rib-low',  ind.filter(i=>i==='LOW'||i==='EMPTY').length);
+      } catch(e){}
+    }, 2500);
+    _log('Facility Manager KPI rows injected ✅');
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // §H — POPULATE FACULTY KPI VALUES FROM LIVE DB
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  function _populateFacultyKPIs() {
+    try {
+      const DB  = window.DB  ||{};
+      const EXP = window.EXP ||{};
+      const PUB = window.PUB ||{};
+      const LAB = window.LAB ||{};
+      const sv  = (id,v)=>{const e=_id(id);if(e)e.textContent=v;};
+
+      // Publications (filter by current user name if possible)
+      const pubAll = (PUB&&PUB.all)||[];
+      const journalKw  = ['journal','ieee','acm','nature','science','springer','elsevier'];
+      const confKw     = ['conference','conf.','workshop','symposium'];
+      const reportKw   = ['report','white paper','technical note'];
+      const preprintKw = ['arxiv','preprint','ssrn','biorxiv'];
+      sv('fac-pub-journal',  pubAll.filter(p=>journalKw.some(k=>(p.type||'').toLowerCase().includes(k))).length||pubAll.length||'—');
+      sv('fac-pub-conf',     pubAll.filter(p=>confKw.some(k=>(p.type||'').toLowerCase().includes(k))).length||'—');
+      sv('fac-pub-report',   pubAll.filter(p=>reportKw.some(k=>(p.type||'').toLowerCase().includes(k))).length||'—');
+      sv('fac-pub-preprint', pubAll.filter(p=>preprintKw.some(k=>(p.type||'').toLowerCase().includes(k))).length||'—');
+
+      // Researchers under faculty
+      sv('fac-res-all', (DB.researchers||[]).length||'—');
+
+      // Facility / Labs
+      const fl = (LAB.data?LAB.data.facultyLabs:LAB.facultyLabs)||[];
+      const fr = (LAB.data?LAB.data.facultyRooms:LAB.facultyRooms)||[];
+      const occ = fl.reduce((s,l)=>s+(l.occupiedSeats||0),0);
+      const cap = fl.reduce((s,l)=>s+(l.capacity||0),0);
+      sv('fac-lab-my',    fl.length||'—');
+      sv('fac-room-my',   fr.length||'—');
+      sv('fac-occ-seats', occ);
+      sv('fac-avail-seats', Math.max(0,cap-occ));
+
+      // Expenses
+      const expAll = (EXP&&EXP.all)||[];
+      sv('fac-exp-paid',    expAll.filter(e=>(e.status||'').toLowerCase()==='paid').length||'—');
+      sv('fac-exp-pending', expAll.filter(e=>(e.status||'').toLowerCase()==='pending').length||'—');
+      sv('fac-exp-process', expAll.filter(e=>(e.status||'').toLowerCase().includes('process')).length||'—');
+
+      _log('Faculty KPIs populated ✅');
+    } catch(e){ console.warn('[v39 Faculty KPI]',e); }
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // §I — MAIN HOOK: wrap applyAccessLevelUI
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  function _hookAccessLevel() {
+    const orig = window.applyAccessLevelUI;
+    if (typeof orig !== 'function') { setTimeout(_hookAccessLevel, 250); return; }
+    if (orig._v39patched) return;
+
+    window.applyAccessLevelUI = function(role) {
+      orig.apply(this, arguments);
+
+      // Greeting format (fires after v36 sets the text)
+      setTimeout(() => _patchBannerGreeting(role), 400);
+
+      // Build role-specific KPI rows
+      switch(role) {
+        case 'faculty':
+          setTimeout(_buildFacultyKPIs, 300);
+          setTimeout(_populateFacultyKPIs, 2000);
+          setTimeout(_populateFacultyKPIs, 4500);
+          break;
+        case 'hr_manager':
+          setTimeout(_buildHRKPIs, 300);
+          break;
+        case 'finance_mgr':
+          setTimeout(_buildFinanceKPIs, 300);
+          break;
+        case 'facility_mgr':
+          setTimeout(_buildFacilityKPIs, 300);
+          break;
+      }
+      _log('v39 hook fired for: ' + role);
+    };
+    window.applyAccessLevelUI._v39patched = true;
+    _log('applyAccessLevelUI hooked (v39)');
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // §J — Wire showTab refresh for My Dashboard
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  function _patchShowTab() {
+    const orig = window.showTab;
+    if (typeof orig !== 'function') { setTimeout(_patchShowTab, 300); return; }
+    if (orig._v39showPatched) return;
+    window.showTab = function(tabId) {
+      orig.apply(this, arguments);
+      if (tabId === 'role-dashboard') {
+        const role = window._currentRole || '';
+        setTimeout(() => _patchBannerGreeting(role), 300);
+        if (role === 'faculty') setTimeout(_populateFacultyKPIs, 600);
+      }
+    };
+    window.showTab._v39showPatched = true;
+    _log('showTab patched for v39');
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // §K — Wire v31FetchAll to refresh Faculty KPIs
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  function _patchV31ForFaculty() {
+    const orig = window.v31FetchAll;
+    if (typeof orig !== 'function') { setTimeout(_patchV31ForFaculty, 300); return; }
+    if (orig._v39facPatched) return;
+    window.v31FetchAll = function() {
+      const r = orig.apply(this, arguments);
+      const after = () => {
+        const role = window._currentRole||'';
+        if (role === 'faculty') setTimeout(_populateFacultyKPIs, 500);
+        if (role === 'facility_mgr') {
+          setTimeout(() => {
+            const LAB=window.LAB||{};
+            const fl=(LAB.data?LAB.data.facultyLabs:LAB.facultyLabs)||[];
+            const fr=(LAB.data?LAB.data.facilityRooms:LAB.facilityRooms)||[];
+            const frooms=(LAB.data?LAB.data.facultyRooms:LAB.facultyRooms)||[];
+            const occ=fl.reduce((s,l)=>s+(l.occupiedSeats||0),0);
+            const cap=fl.reduce((s,l)=>s+(l.capacity||0),0);
+            const sv=(id,v)=>{const e=_id(id);if(e)e.textContent=v;};
+            sv('facmgr-lab-faculty',fl.length||'—');
+            sv('facmgr-lab-facility',fr.length||'—');
+            sv('facmgr-lab-frooms',frooms.length||'—');
+            sv('facmgr-occ',occ);
+            sv('facmgr-avail',Math.max(0,cap-occ));
+            sv('facmgr-util',cap>0?Math.round(occ/cap*100)+'%':'—');
+          }, 400);
+        }
+      };
+      if (r && typeof r.then === 'function') r.then(after).catch(()=>{});
+      else after();
+      return r;
+    };
+    window.v31FetchAll._v39facPatched = true;
+    _log('v31FetchAll patched for Faculty/Facility KPI refresh');
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // §L — FORCE-BUILD helper: calls v36's _buildCOOKPIRows + _populateCOOKPIs
+  //       for admin-tier roles (coo / admin / creator / mis / sys_admin)
+  //       This handles the session-restore race where applyAccessLevelUI
+  //       fires before the v36 patch has wrapped it.
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  const ADMIN_TIER_ROLES = ['coo','admin','creator','mis','sys_admin'];
+
+  function _forceBuildAdminKPIs() {
+    // Call v36's builder directly (it has its own guard against double-run)
+    if (typeof window._buildCOOKPIRowsDirect === 'function') {
+      window._buildCOOKPIRowsDirect();
+    } else {
+      // v36 didn't expose it — locate it via the guard element
+      if (!_id('coo-enhanced-kpi-rows')) {
+        // Trigger via applyAccessLevelUI re-call (safe — v36 guard prevents duplication)
+        const role = window._currentRole || 'creator';
+        if (typeof window.applyAccessLevelUI === 'function') {
+          // Don't re-call full applyAccessLevelUI (side effects) — just fire the KPI builder
+          // by dispatching into v36's internal function via the showTab hook
+          if (typeof window.showTab === 'function') window.showTab('role-dashboard');
+        }
+      }
+    }
+    // Always retry _populateCOOKPIs regardless
+    setTimeout(() => {
+      if (typeof window._populateCOOKPIs === 'function') window._populateCOOKPIs();
+    }, 600);
+  }
+
+  // Expose v36's internal _buildCOOKPIRows so we can call it directly
+  // We do this by wrapping the v36 IIFE's internal reference after it runs
+  function _exposeV36Internals() {
+    // Check if the COO rows were already built
+    if (_id('coo-enhanced-kpi-rows')) { _log('COO rows already present ✅'); return; }
+
+    const role = window._currentRole || '';
+    if (!ADMIN_TIER_ROLES.includes(role)) return;
+
+    _log('Forcing COO KPI rows build for role: ' + role);
+
+    // Direct call via exposed reference (set in v36 boot)
+    if (typeof window._v36BuildCOOKPIRows === 'function') {
+      window._v36BuildCOOKPIRows();
+      _log('_v36BuildCOOKPIRows called directly ✅');
+    } else {
+      // Fallback: re-trigger applyAccessLevelUI (safe — v36 guards prevent duplication)
+      _log('_v36BuildCOOKPIRows not yet exposed — re-triggering applyAccessLevelUI');
+      const origApply = window.applyAccessLevelUI;
+      if (typeof origApply === 'function') origApply.call(window, role);
+    }
+
+    // Populate values after build
+    setTimeout(() => {
+      if (typeof window._populateCOOKPIs === 'function') window._populateCOOKPIs();
+    }, 600);
+    setTimeout(() => {
+      if (typeof window._populateCOOKPIs === 'function') window._populateCOOKPIs();
+    }, 2500);
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // §M — BOOT
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  _ready(() => {
+    _hookAccessLevel();
+    _patchRoleLanding();
+    _patchShowTab();
+    _patchV31ForFaculty();
+
+    // ── Catch-up for already-logged-in / session-restored sessions ──────
+    // Run at 1.5s, 3s, and 5s to handle slow sheet fetch timings
+    [1500, 3000, 5000].forEach(delay => {
+      setTimeout(() => {
+        const role = window._currentRole || '';
+        if (!role) return;
+
+        // Always fix greeting
+        _patchBannerGreeting(role);
+
+        // Admin-tier: ensure COO 7-row KPIs are built and populated
+        if (ADMIN_TIER_ROLES.includes(role)) {
+          _exposeV36Internals();
+        }
+
+        // Staff-tier role-specific builds
+        if (role === 'faculty')      { _buildFacultyKPIs();  _populateFacultyKPIs(); }
+        if (role === 'hr_manager')   _buildHRKPIs();
+        if (role === 'finance_mgr')  _buildFinanceKPIs();
+        if (role === 'facility_mgr') _buildFacilityKPIs();
+      }, delay);
+    });
+
+    _log('v39 patch boot complete ✅');
+  });
+
+})();
+</script>
