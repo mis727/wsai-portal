@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WSAI - PORTAL v40</title>
+<title>WSAI - PORTAL v41</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
@@ -14715,7 +14715,7 @@
       ${f('status','Status (Col K)',rec?.status,'',LAB.STATUSES.FACULTY)}`;
     if (type === 'facilityRoom') return `
       <div style="padding:0.5rem 0.75rem;background:rgba(6,182,212,0.06);border-radius:8px;font-size:0.72rem;font-family:var(--font-mono);color:var(--text3);margin-bottom:1rem;">
-        GAS FACILITY_ROOMS sheet: Col A=S.No · Col B=FACILITY_ROOM_NAME · Col C=FACILITY_ROOM_ALLOCATED · Col D=ROOM_CAPACITY · Col E=STATUS
+        GAS FACILITY_ROOMS sheet: Col A=S.No · Col B=FACILITY_ROOM_NAME · Col C=ROOM_TYPE · Col D=FACILITY_ROOM_ALLOCATED · Col E=ROOM_CAPACITY · Col F=STATUS
       </div>
       <div class="form-row">${f('roomName','Room Name (Col B)',rec?.roomName,'',LAB.FACILITY_ROOM_TYPES)}${f('allocated','Allocated To (Col C)',rec?.allocated)}</div>
       <div class="form-row">${f('capacity','Room Capacity (Col D)',rec?.capacity,'number')}${f('status','Status (Col E)',rec?.status,'',LAB.STATUSES.FACILITY_ROOM)}</div>`;
@@ -26546,27 +26546,43 @@ tbody td { vertical-align: middle; }
     return rooms.map(function(r) {
       var fixed = Object.assign({}, r);
 
-      // Handle all GAS column name variants
+      // ── Normalise all known GAS field-name variants → canonical names ────
+      // GAS LAB_MAP.facilityRooms produces: roomName, roomType, roomAllocated, capacity, status
+      // HTML everywhere reads: roomName, roomType, allocated, capacity, status
+      // Bridge: roomAllocated → allocated
+      if (!fixed.allocated) {
+        fixed.allocated = r.roomAllocated          // camelCase from readSheet(LAB_MAP)
+                       || r.FACILITY_ROOM_ALLOCATED // uppercase raw GAS key
+                       || r.facility_room_allocated // lowercase variant
+                       || r.allocated              // already correct
+                       || '';
+      }
       if (!fixed.roomName && (r.FACILITY_ROOM_NAME || r.facility_room_name))
-        fixed.roomName  = r.FACILITY_ROOM_NAME || r.facility_room_name;
-      if (!fixed.allocated && (r.FACILITY_ROOM_ALLOCATED || r.facility_room_allocated))
-        fixed.allocated = r.FACILITY_ROOM_ALLOCATED || r.facility_room_allocated;
+        fixed.roomName = r.FACILITY_ROOM_NAME || r.facility_room_name;
+      if (!fixed.roomType && (r.ROOM_TYPE || r.room_type))
+        fixed.roomType = r.ROOM_TYPE || r.room_type;
       if (fixed.capacity === undefined || fixed.capacity === null || fixed.capacity === '') {
         var rawCap = r.ROOM_CAPACITY || r.room_capacity || r.roomCapacity || r.capacity;
         fixed.capacity = parseInt(rawCap) || 0;
       }
-      if (!fixed.roomType && (r.ROOM_TYPE || r.room_type))
-        fixed.roomType = r.ROOM_TYPE || r.room_type;
 
-      // Detect column-shifted data
+      // ── Detect column-shifted data (old 5-col sheet without roomType column) ─
+      // In the old schema: col3=allocated, col4=capacity, col5=status
+      // readSheet() with the current 6-col LAB_MAP would put:
+      //   roomType=<allocated text>, roomAllocated=<numeric capacity>, capacity=<status word>
+      // Detect: capacity field contains a status word instead of a number
       var capVal = String(fixed.capacity || '');
       var isShifted = capVal.match(/^(Occupied|Unoccupied|Under Maintenance|Blocked)$/i) ||
                       (isNaN(parseInt(capVal)) && capVal !== '' && !capVal.match(/^\d/));
 
       if (isShifted) {
+        // Recover fields from shifted positions:
+        //   roomType slot held the allocated-to text
+        //   roomAllocated slot held the numeric capacity
+        //   capacity slot held the status word
         fixed.allocated = r.roomType  || r.allocated || '';
-        fixed.capacity  = parseInt(r.allocated || r.capacity || '0') || 0;
-        fixed.status    = r.capacity  || r.status    || '';
+        fixed.capacity  = parseInt(r.roomAllocated || r.allocated || r.capacity || '0') || 0;
+        fixed.status    = capVal      || r.status    || '';
         fixed.roomType  = _deriveFacilityRoomType(fixed.roomName);
       } else {
         if (!fixed.roomType) fixed.roomType = _deriveFacilityRoomType(fixed.roomName);
@@ -29567,14 +29583,32 @@ tbody td { vertical-align: middle; }
     }
   }
 
-  // If the v36 guard element exists but is empty (injected before DOM was ready),
-  // remove it so _buildCOOKPIRows can re-run cleanly.
+  // If the v36 guard elements exist but their inner content is stale/empty,
+  // remove ALL three copies so _buildCOOKPIRows can re-inject cleanly.
   function _resetCOOGuardIfEmpty() {
-    const existing = _id('coo-enhanced-kpi-rows');
-    if (existing && existing.innerHTML.trim() === '') {
-      existing.remove();
-      _log('Cleared empty coo-enhanced-kpi-rows guard — allowing rebuild');
+    const guards = [
+      'coo-enhanced-kpi-rows',
+      'coo-enhanced-kpi-rows-mis',
+      'coo-enhanced-kpi-rows-sys'
+    ];
+    let removed = 0;
+    guards.forEach(id => {
+      const el = _id(id);
+      if (el && el.innerHTML.trim() === '') { el.remove(); removed++; }
+    });
+    // Also remove if the primary guard exists but the mis/sys clones are absent
+    // (partial injection — happens when the role panel wasn't in DOM at build time)
+    const primary = _id('coo-enhanced-kpi-rows');
+    const misClone = _id('coo-enhanced-kpi-rows-mis');
+    const sysClone = _id('coo-enhanced-kpi-rows-sys');
+    if (primary && (!misClone || !sysClone)) {
+      primary.remove();
+      if (misClone) misClone.remove();
+      if (sysClone) sysClone.remove();
+      removed++;
+      _log('Cleared partial coo KPI injection — forcing full rebuild');
     }
+    if (removed) _log('Cleared ' + removed + ' stale coo-enhanced-kpi-rows guard(s)');
   }
 
   // Master catch-up: ensures KPIs are visible for any role, any timing
