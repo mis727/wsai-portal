@@ -17786,7 +17786,7 @@ async function moduleRefresh(mod) {
   try {
     if (mod === 'people')       { await sysFetchAll(); }
     else if (mod === 'biometric') { const u=_resolveUrl('biometric'); if(u){const d=await _jsonpFetch(u,{action:'GET_BIOMETRIC',t:Date.now()});if(d&&(d.allUsers||d.totalActive!==undefined)){BM.raw=d;bmOnData(d);toast('✅ Biometric refreshed');}} else toast('⚠️ No biometric URL saved'); }
-    else if (mod === 'labs')    { const u=_resolveUrl('labs'); if(u){const d=await _jsonpFetch(u,{action:'GET_LAB',t:Date.now()});if(d&&(d.facultyLabs||d.facilityRooms)){const s={facultyLabs:(d.facultyLabs||[]).map(l=>{const o=l.occupiedSeats||0,t=l.totalSeats||0;l.availableSeats=Math.max(0,t-o);l.utilizationRate=t>0?o/t:0;l.statusIndicator=typeof labGetIndicator==='function'?labGetIndicator(l):'';if(!l.id)l.id='FL'+Math.random().toString(36).slice(2,8);return l;}),facilityRooms:(d.facilityRooms||[]).map(r=>{if(!r.id)r.id='FR'+Math.random().toString(36).slice(2,8);return r;}),researchers:(d.researchers||[]).map(r=>{if(!r.id)r.id='RS'+Math.random().toString(36).slice(2,8);return r;}),facultyRooms:(d.facultyRooms||[]).map(r=>{if(!r.id)r.id='FRM'+Math.random().toString(36).slice(2,8);return r;})};LAB.data=s;LAB.facultyLabs=s.facultyLabs;LAB.facilityRooms=s.facilityRooms;LAB.researchers=s.researchers;LAB.loaded=true;if(document.getElementById('tab-labs')?.classList.contains('active')){try{labRefreshKPIs();labRenderFacultyLabs();}catch(e){}}toast('✅ Labs refreshed');}} else toast('⚠️ No labs URL saved'); }
+    else if (mod === 'labs')    { const u=_resolveUrl('labs'); if(u){const d=await _jsonpFetch(u,{action:'GET_LAB',t:Date.now()});if(d&&(d.facultyLabs||d.facilityRooms)){const s={facultyLabs:(d.facultyLabs||[]).map(l=>{const o=l.occupiedSeats||0,t=l.totalSeats||0;l.availableSeats=Math.max(0,t-o);l.utilizationRate=t>0?o/t:0;l.statusIndicator=typeof labGetIndicator==='function'?labGetIndicator(l):'';if(!l.id)l.id='FL'+Math.random().toString(36).slice(2,8);return l;}),facilityRooms:(d.facilityRooms||[]).map(r=>{if(!r.id)r.id='FR'+Math.random().toString(36).slice(2,8);return r;}),researchers:(d.researchers||[]).map(r=>{if(!r.id)r.id='RS'+Math.random().toString(36).slice(2,8);return r;}),facultyRooms:(d.facultyRooms||[]).map(r=>{if(!r.id)r.id='FRM'+Math.random().toString(36).slice(2,8);return r;})};LAB.data=s;LAB.facultyLabs=s.facultyLabs;LAB.facilityRooms=s.facilityRooms;LAB.researchers=s.researchers;LAB.facultyRooms=s.facultyRooms;LAB.loaded=true;if(document.getElementById('tab-labs')?.classList.contains('active')){try{labRefreshKPIs();}catch(e){}try{labRenderFacultyLabs();}catch(e){}try{labRenderFacilityRooms();}catch(e){}try{labRenderFacultyRooms();}catch(e){}try{labRenderUtilizationRibbons();}catch(e){}try{labRenderCategoryAnalysis();}catch(e){}}toast('✅ Labs refreshed');}} else toast('⚠️ No labs URL saved'); }
     else if (mod === 'assets')  { await assetLoadFromSheet(false); }
     else if (mod === 'expenses'){ await expLoadFromSheet(); try { if (typeof expApplyFilters === 'function') expApplyFilters(); } catch(e) {} }
     else if (mod === 'publications') { await pubLoadFromSheet(); }
@@ -29415,6 +29415,248 @@ tbody td { vertical-align: middle; }
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // §H2 — POPULATE HR MANAGER KPI VALUES FROM LIVE DB
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  function _populateHRKPIs() {
+    try {
+      const DB  = window.DB  || {};
+      const BM  = window.BM  || {};
+      const sv  = (id,v) => { const e = _id(id); if(e) e.textContent = v; };
+      const now = new Date();
+
+      // Total employees = staff + researchers (active)
+      const activeStaff = (DB.staff||[]).filter(r => r.status === 'Active').length;
+      const activeRes   = (DB.researchers||[]).filter(r => r.status === 'On-going').length;
+      sv('hr-kpi-emp',   activeStaff + activeRes);
+
+      // Tenure reviews due within 30 days
+      const tenureDue = [].concat(DB.staff||[], DB.researchers||[]).filter(r => {
+        if (!r.exitDate) return false;
+        const d = new Date(r.exitDate);
+        const days = Math.ceil((d - now) / 86400000);
+        return days >= 0 && days <= 30;
+      }).length;
+      sv('hr-kpi-ten', tenureDue || '0');
+
+      // Biometric pending
+      const bioPend = ((BM.raw && BM.raw.allUsers) || []).filter(r => r.authorizationStatus === 'Pending').length;
+      sv('hr-kpi-bio', bioPend || '0');
+
+      // Pending onboarding (status not yet Active)
+      const onboarding = (DB.staff||[]).filter(r => r.status === 'Pending' || r.status === 'Inactive').length;
+      sv('hr-kpi-onb', onboarding || '0');
+
+      // Placeholders (no live source yet)
+      sv('hr-kpi-leave', '—');
+      sv('hr-kpi-new',   '—');
+
+      // Enhanced card values (v39 _buildHRKPIs IDs)
+      sv('hr-staff-kpi',    activeStaff);
+      sv('hr-faculty-kpi',  (DB.faculty||[]).length);
+      sv('hr-res-kpi',      activeRes);
+      sv('hr-students-kpi', (DB.students||[]).filter(r => r.status === 'On-going').length);
+      sv('hr-tenure-kpi',   tenureDue);
+      sv('hr-bio-kpi',      bioPend);
+
+      _log('HR KPIs populated ✅');
+    } catch(e) { console.warn('[v42 HR KPI]', e); }
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // §H3 — POPULATE FINANCE MANAGER KPI VALUES FROM LIVE DB
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  function _populateFinanceKPIs() {
+    try {
+      const EXP = window.EXP || {};
+      const AST = window.AST || {};
+      const sv  = (id,v) => { const e = _id(id); if(e) e.textContent = v; };
+      const now = new Date();
+      const thisMonth = now.getMonth();
+      const thisYear  = now.getFullYear();
+
+      const expAll = (EXP && EXP.all) || [];
+      const pending    = expAll.filter(r => (r.status||'').toLowerCase() === 'pending').length;
+      const inProcess  = expAll.filter(r => (r.status||'').toLowerCase().includes('process')).length;
+      const approvedMo = expAll.filter(r => {
+        if ((r.status||'').toLowerCase() !== 'paid') return false;
+        const d = new Date(r.date || r.paidOn || '');
+        return !isNaN(d) && d.getMonth() === thisMonth && d.getFullYear() === thisYear;
+      }).length;
+
+      // Legacy grid
+      sv('fin-kpi-pend', pending);
+      sv('fin-kpi-appr', approvedMo);
+      sv('fin-kpi-proc', inProcess);
+      sv('fin-kpi-util', expAll.length > 0 ? Math.round((approvedMo / expAll.length) * 100) + '%' : '—%');
+      sv('fin-kpi-over', '—');
+
+      // Enhanced card values (v39 _buildFinanceKPIs IDs)
+      sv('fin-exp-paid-kpi', expAll.filter(r => (r.status||'').toLowerCase() === 'paid').length);
+      sv('fin-exp-pend-kpi', pending);
+      sv('fin-exp-proc-kpi', inProcess);
+
+      // Assets
+      const astAll = (typeof window.ASSET !== 'undefined' && window.ASSET.all) || (AST && AST.all) || [];
+      const itAssets    = astAll.filter(r => (r.category||'').toUpperCase().includes('IT') || (r.assetType||'').toUpperCase().includes('IT')).length;
+      const nonItAssets = astAll.filter(r => !(r.category||'').toUpperCase().includes('IT') && !(r.assetType||'').toUpperCase().includes('IT')).length;
+      sv('fin-ast-it',    itAssets    || '—');
+      sv('fin-ast-nonit', nonItAssets || '—');
+      sv('fin-vendor-kpi','—');
+
+      _log('Finance KPIs populated ✅');
+    } catch(e) { console.warn('[v42 Finance KPI]', e); }
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // §H4 — POPULATE FACILITY MANAGER KPI VALUES FROM LIVE DB
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  function _populateFacilityKPIs() {
+    try {
+      const LAB = window.LAB || {};
+      const sv  = (id,v) => { const e = _id(id); if(e) e.textContent = v; };
+
+      const fl     = (LAB.data ? LAB.data.facultyLabs    : LAB.facultyLabs)    || [];
+      const fr     = (LAB.data ? LAB.data.facilityRooms  : LAB.facilityRooms)  || [];
+      const frooms = (LAB.data ? LAB.data.facultyRooms   : LAB.facultyRooms)   || [];
+      const occ    = fl.reduce((s,l) => s + (l.occupiedSeats||0), 0);
+      const cap    = fl.reduce((s,l) => s + (l.totalSeats||l.capacity||0), 0);
+      const avail  = Math.max(0, cap - occ);
+      const util   = cap > 0 ? Math.round(occ / cap * 100) : 0;
+
+      // Legacy grid — re-purpose fields to show lab/room data
+      sv('fac-kpi-open',   fr.filter(r => (r.status||'').toLowerCase() === 'active').length || '—');
+      sv('fac-kpi-maint',  fr.filter(r => (r.status||'').toLowerCase().includes('maintenance')).length || '0');
+      sv('fac-kpi-done',   fl.filter(l => (l.statusIndicator||'') === 'LOW' || (l.utilizationRate||0) < 0.5).length || '—');
+      sv('fac-kpi-repair', fl.filter(l => (l.statusIndicator||'') === 'OVER-CAPACITY').length || '0');
+      sv('fac-kpi-insp',   frooms.length || '—');
+
+      // Enhanced card values (v39 _buildFacilityKPIs IDs)
+      sv('facmgr-lab-faculty',  fl.length     || '—');
+      sv('facmgr-lab-facility', fr.length     || '—');
+      sv('facmgr-lab-frooms',   frooms.length || '—');
+      sv('facmgr-occ',          occ);
+      sv('facmgr-avail',        avail);
+      sv('facmgr-util',         util + '%');
+
+      // Utilization ribbon counts
+      const ind = fl.map(l => l.statusIndicator || '');
+      sv('facmgr-rib-over', ind.filter(i => i === 'OVER-CAPACITY').length);
+      sv('facmgr-rib-high', ind.filter(i => i === 'HIGH').length);
+      sv('facmgr-rib-med',  ind.filter(i => i === 'MEDIUM').length);
+      sv('facmgr-rib-low',  ind.filter(i => i === 'LOW' || i === 'EMPTY').length);
+
+      // Facility Manager sidebar KPIs (facmgr dashboard)
+      sv('facmgr-lab-faculty',  fl.length);
+      sv('facmgr-lab-facility', fr.length);
+      sv('facmgr-lab-frooms',   frooms.length);
+
+      _log('Facility KPIs populated ✅');
+    } catch(e) { console.warn('[v42 Facility KPI]', e); }
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // §H5 — POPULATE EVENT MANAGER KPI VALUES
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  function _populateEventKPIs() {
+    try {
+      const sv  = (id,v) => { const e = _id(id); if(e) e.textContent = v; };
+      const now = new Date();
+      const thisMonth = now.getMonth();
+      const thisYear  = now.getFullYear();
+
+      // Try to pull from V31 cache or any event store
+      const evts = (window.V31 && window.V31.events) || (window.EVENTS && window.EVENTS.all) || [];
+
+      const upcoming = evts.filter(e => new Date(e.date||e.startDate||'') > now).length;
+      const thisMonthEvts = evts.filter(e => {
+        const d = new Date(e.date||e.startDate||'');
+        return !isNaN(d) && d.getMonth() === thisMonth && d.getFullYear() === thisYear;
+      }).length;
+      const pendingAppr = evts.filter(e => (e.status||'').toLowerCase() === 'pending').length;
+
+      sv('evt-kpi-up',     upcoming     || (evts.length ? '0' : '—'));
+      sv('evt-kpi-mo',     thisMonthEvts|| (evts.length ? '0' : '—'));
+      sv('evt-kpi-appr',   pendingAppr  || (evts.length ? '0' : '—'));
+      sv('evt-kpi-budget', evts.length  ? '₹—' : '—');
+      sv('evt-kpi-att',    '—%');
+
+      _log('Event KPIs populated ✅');
+    } catch(e) { console.warn('[v42 Event KPI]', e); }
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // §H6 — POPULATE EDUCATION PROGRAM MANAGER KPI VALUES
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  function _populateEduKPIs() {
+    try {
+      const DB = window.DB || {};
+      const sv = (id,v) => { const e = _id(id); if(e) e.textContent = v; };
+
+      // Students enrolled (on-going)
+      const students = (DB.students||[]).filter(r => r.status === 'On-going').length;
+      // Faculty assigned
+      const faculty  = (DB.faculty||[]).length + (DB.assocFaculty||[]).length;
+
+      // Programs = distinct designations in students
+      const programs = new Set((DB.students||[]).map(s => s.designation||'').filter(Boolean)).size;
+
+      sv('edu-kpi-prog', programs || '—');
+      sv('edu-kpi-stu',  students || '—');
+      sv('edu-kpi-fac',  faculty  || '—');
+      sv('edu-kpi-curr', '—');
+      sv('edu-kpi-rev',  '—');
+
+      _log('Edu Program KPIs populated ✅');
+    } catch(e) { console.warn('[v42 Edu KPI]', e); }
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // §H7 — POPULATE MIS KPI VALUES
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  function _populateMISKPIs() {
+    try {
+      const DB = window.DB || {};
+      const sv = (id,v) => { const e = _id(id); if(e) e.textContent = v; };
+
+      // Total records managed = sum of all people sheets
+      const totalRec =
+        (DB.staff||[]).length + (DB.faculty||[]).length +
+        (DB.assocFaculty||[]).length + (DB.affiFaculty||[]).length +
+        (DB.researchers||[]).length + (DB.students||[]).length +
+        (DB.fellows||[]).length + (DB.alumni||[]).length;
+
+      sv('mis-kpi-rec',  totalRec || '—');
+      sv('mis-kpi-qual', '—');
+      sv('mis-kpi-rpt',  '—');
+      sv('mis-kpi-req',  '—');
+      sv('mis-kpi-sync', new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true}));
+
+      _log('MIS KPIs populated ✅');
+    } catch(e) { console.warn('[v42 MIS KPI]', e); }
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // §H8 — POPULATE SYS ADMIN KPI VALUES
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  function _populateSysKPIs() {
+    try {
+      const BM = window.BM || {};
+      const sv = (id,v) => { const e = _id(id); if(e) e.textContent = v; };
+
+      const bioPend = ((BM.raw && BM.raw.allUsers) || []).filter(r => r.authorizationStatus === 'Pending').length;
+      const bioAll  = ((BM.raw && BM.raw.allUsers) || []).length;
+
+      sv('sys-kpi-open', '—');
+      sv('sys-kpi-res',  '—');
+      sv('sys-kpi-bio',  bioPend || '0');
+      sv('sys-kpi-up',   '99%');
+      sv('sys-kpi-sess', bioAll  || '—');
+
+      _log('Sys Admin KPIs populated ✅');
+    } catch(e) { console.warn('[v42 Sys KPI]', e); }
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // §I — MAIN HOOK: wrap applyAccessLevelUI
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   function _hookAccessLevel() {
@@ -29437,12 +29679,34 @@ tbody td { vertical-align: middle; }
           break;
         case 'hr_manager':
           setTimeout(_buildHRKPIs, 300);
+          setTimeout(_populateHRKPIs, 1500);
+          setTimeout(_populateHRKPIs, 4000);
           break;
         case 'finance_mgr':
           setTimeout(_buildFinanceKPIs, 300);
+          setTimeout(_populateFinanceKPIs, 1500);
+          setTimeout(_populateFinanceKPIs, 4000);
           break;
         case 'facility_mgr':
           setTimeout(_buildFacilityKPIs, 300);
+          setTimeout(_populateFacilityKPIs, 1500);
+          setTimeout(_populateFacilityKPIs, 4000);
+          break;
+        case 'event_mgr':
+          setTimeout(_populateEventKPIs, 1500);
+          setTimeout(_populateEventKPIs, 4000);
+          break;
+        case 'edu_pgm_mgr':
+          setTimeout(_populateEduKPIs, 1500);
+          setTimeout(_populateEduKPIs, 4000);
+          break;
+        case 'mis':
+          setTimeout(_populateMISKPIs, 1500);
+          setTimeout(_populateMISKPIs, 4000);
+          break;
+        case 'sys_admin':
+          setTimeout(_populateSysKPIs, 1500);
+          setTimeout(_populateSysKPIs, 4000);
           break;
       }
       _log('v39 hook fired for: ' + role);
@@ -29622,9 +29886,13 @@ tbody td { vertical-align: middle; }
       _exposeV36Internals();
     }
     if (role === 'faculty')      { _buildFacultyKPIs(); _populateFacultyKPIs(); }
-    if (role === 'hr_manager')   _buildHRKPIs();
-    if (role === 'finance_mgr')  _buildFinanceKPIs();
-    if (role === 'facility_mgr') _buildFacilityKPIs();
+    if (role === 'hr_manager')   { _buildHRKPIs();      _populateHRKPIs(); }
+    if (role === 'finance_mgr')  { _buildFinanceKPIs(); _populateFinanceKPIs(); }
+    if (role === 'facility_mgr') { _buildFacilityKPIs(); _populateFacilityKPIs(); }
+    if (role === 'event_mgr')    { _populateEventKPIs(); }
+    if (role === 'edu_pgm_mgr')  { _populateEduKPIs(); }
+    if (role === 'mis')          { _populateMISKPIs(); }
+    if (role === 'sys_admin')    { _populateSysKPIs(); }
   }
 
   _ready(() => {
