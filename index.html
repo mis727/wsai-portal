@@ -27598,8 +27598,17 @@ tbody td { vertical-align: middle; }
       setTimeout(_patchQuoteSystem, 200);
       return;
     }
+    // Guard: never double-wrap v31Init — prevents ghost second banner
+    if (origV31Init._v34quotePatchApplied) {
+      _log('Quote patch already applied — skipping');
+      return;
+    }
     window.v31Init = function () {
       origV31Init.apply(this, arguments);
+      // Build KPI rows on every login (internal guard prevents duplication)
+      setTimeout(_buildCOOKPIRows, 80);
+      // Populate KPIs after data loads
+      setTimeout(_populateCOOKPIs, 900);
       // Delay slightly so the banner is rendered first
       setTimeout(() => {
         const role = (typeof _currentRole !== 'undefined' ? _currentRole : '') || 'admin';
@@ -27628,6 +27637,7 @@ tbody td { vertical-align: middle; }
         _log('Injected role quote for: ' + role);
       }, 250);
     };
+    window.v31Init._v34quotePatchApplied = true;
     _log('Patched v31Init with role-specific quote system');
   }
 
@@ -27637,23 +27647,28 @@ tbody td { vertical-align: middle; }
   // complete 7-category KPI structure per the prompt.
   // ══════════════════════════════════════════════════════════════════════════
   function _buildCOOKPIRows() {
-    const cooSection = _qs('[data-show~="coo"]');
-    if (!cooSection) return;
-
-    // ── Guard: prevent duplicate injection ──────────────────────────────────
+    // Guard: prevent duplicate injection
     if (_id('coo-enhanced-kpi-rows')) {
       _log('COO KPI rows already injected — skipping');
       return;
     }
 
-    // Locate the existing v31-kpi-grid to insert our enhanced rows after it
-    const existingGrid = _qs('.v31-kpi-grid', cooSection);
-    if (!existingGrid) return;
+    // Primary section: coo / admin / creator all share [data-show~="coo"]
+    const cooSection = _qs('[data-show~="coo"]');
+    if (!cooSection) return;
 
-    // ── Hide the old base grid and its section header ──────────────────────
-    _hide(existingGrid);
-    const oldHdr = _qs('.v31-sec-hdr', cooSection);
-    _hide(oldHdr);
+    // MIS and sys_admin have their own [data-show] sections — also need full rows
+    const misSection = _qs('[data-show="mis"]');
+    const sysSection = _qs('[data-show="sys_admin"]');
+
+    // Hide legacy 9-card "Institution Overview" grid + header in ALL sections
+    [cooSection, misSection, sysSection].forEach(sec => {
+      if (!sec) return;
+      const g = _qs('.v31-kpi-grid', sec);
+      const h = _qs('.v31-sec-hdr',  sec);
+      if (g) g.style.display = 'none';
+      if (h) h.style.display = 'none';
+    });
 
     // Build the 7 new KPI row sections
     const rowsHTML = `
@@ -27838,12 +27853,24 @@ tbody td { vertical-align: middle; }
   <div class="v31-kpi-card k-green"><div class="v31-kpi-icon">🎁</div><div class="v31-kpi-val" id="coo-inv-gifts">—</div><div class="v31-kpi-lbl">Gifts / Mementos</div></div>
 </div>
 `;
+    // Inject into COO/admin/creator section
     const container = document.createElement('div');
     container.id = 'coo-enhanced-kpi-rows';
     container.innerHTML = rowsHTML;
-    // Insert before the (now hidden) old grid so rows appear at the top of the COO section
-    existingGrid.parentNode.insertBefore(container, existingGrid);
-    _log('COO enhanced KPI rows injected ✅');
+    cooSection.insertBefore(container, cooSection.firstChild);
+
+    // Inject clones into MIS and sys_admin sections (suffixed IDs to avoid clashes)
+    [misSection, sysSection].forEach((sec, idx) => {
+      if (!sec) return;
+      const prefix = idx === 0 ? 'mis' : 'sys';
+      const clone = document.createElement('div');
+      clone.id = 'coo-enhanced-kpi-rows-' + prefix;
+      // Rewrite all id="coo-* to id="mis-coo-* / id="sys-coo-* so populate can target them
+      clone.innerHTML = rowsHTML.replace(/id="coo-/g, 'id="' + prefix + '-coo-');
+      sec.insertBefore(clone, sec.firstChild);
+    });
+
+    _log('KPI rows injected for coo/mis/sys_admin ✅');
   }
 
   // ── Populate COO KPI rows from live DB ─────────────────────────────────────
@@ -27856,7 +27883,13 @@ tbody td { vertical-align: middle; }
       const BM  = window.BM   || {};
       const INV_DB = window.INV_DB || {};
 
-      const sv = (id, v) => { const e = _id(id); if (e) e.textContent = v; };
+      // sv() sets the primary COO copy AND the cloned MIS + sys_admin copies
+      const sv = (id, v) => {
+        ['', 'mis-', 'sys-'].forEach(pfx => {
+          const e = _id(pfx + id);
+          if (e) e.textContent = v;
+        });
+      };
 
       // HR & People
       const today = new Date();
