@@ -27640,12 +27640,20 @@ tbody td { vertical-align: middle; }
     const cooSection = _qs('[data-show~="coo"]');
     if (!cooSection) return;
 
+    // ── Guard: prevent duplicate injection ──────────────────────────────────
+    if (_id('coo-enhanced-kpi-rows')) {
+      _log('COO KPI rows already injected — skipping');
+      return;
+    }
+
     // Locate the existing v31-kpi-grid to insert our enhanced rows after it
     const existingGrid = _qs('.v31-kpi-grid', cooSection);
     if (!existingGrid) return;
 
-    // Remove old section header if it just says "Institution Overview"
+    // ── Hide the old base grid and its section header ──────────────────────
+    _hide(existingGrid);
     const oldHdr = _qs('.v31-sec-hdr', cooSection);
+    _hide(oldHdr);
 
     // Build the 7 new KPI row sections
     const rowsHTML = `
@@ -27833,9 +27841,9 @@ tbody td { vertical-align: middle; }
     const container = document.createElement('div');
     container.id = 'coo-enhanced-kpi-rows';
     container.innerHTML = rowsHTML;
-    // Insert after the first .v31-kpi-grid inside the COO section
-    existingGrid.parentNode.insertBefore(container, existingGrid.nextSibling);
-    _log('COO enhanced KPI rows injected');
+    // Insert before the (now hidden) old grid so rows appear at the top of the COO section
+    existingGrid.parentNode.insertBefore(container, existingGrid);
+    _log('COO enhanced KPI rows injected ✅');
   }
 
   // ── Populate COO KPI rows from live DB ─────────────────────────────────────
