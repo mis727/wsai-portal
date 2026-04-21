@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -3297,50 +3296,138 @@
       <!-- ══════════════════════════════════════════════════════
            v33: KPI DRILL-DOWN MODAL (HR & People, Tenure Risk)
       ══════════════════════════════════════════════════════ -->
-      <div id="kpi-drilldown-overlay" style="display:none;position:fixed;inset:0;z-index:8500;background:rgba(0,0,0,0.75);backdrop-filter:blur(5px);align-items:flex-start;justify-content:center;padding:1.5rem;overflow-y:auto;" onclick="if(event.target===this)closeKpiDrilldown()">
-        <div id="kpi-drilldown-box" style="background:var(--surface);border:1px solid var(--border);border-radius:18px;width:100%;max-width:900px;position:relative;animation:slideUp 0.3s cubic-bezier(.22,1,.36,1);margin:auto;">
-          <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent2),var(--purple));border-radius:18px 18px 0 0;"></div>
-          <!-- Header -->
-          <div style="padding:1.5rem 1.5rem 0.75rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);">
+      <!-- ══════════════════════════════════════════════════════════════
+           KPI DRILLDOWN — FULL-SCREEN INTERFACE (v45)
+           Replaces the old 900px modal with a proper full-page view
+      ══════════════════════════════════════════════════════════════ -->
+      <div id="kpi-drilldown-overlay" style="display:none;position:fixed;inset:0;z-index:8500;background:var(--bg);overflow-y:auto;animation:kpiPageIn 0.28s cubic-bezier(.22,1,.36,1) both;">
+        <style>
+          @keyframes kpiPageIn { from { opacity:0; transform:translateY(18px); } }
+          .kpi-dd-topbar { position:sticky;top:0;z-index:10;background:var(--surface);border-bottom:1px solid var(--border);padding:0 2rem;height:60px;display:flex;align-items:center;justify-content:space-between;backdrop-filter:blur(12px); }
+          [data-theme="light"] .kpi-dd-topbar { background:linear-gradient(135deg,#1E3A8A,#1E40AF);border-bottom:none;box-shadow:0 2px 12px rgba(30,58,138,0.25); }
+          [data-theme="light"] .kpi-dd-topbar * { color:rgba(255,255,255,0.92)!important; }
+          [data-theme="light"] .kpi-dd-topbar .kpi-dd-close-btn { border-color:rgba(255,255,255,0.35)!important; }
+          .kpi-dd-accentbar { height:3px;background:linear-gradient(90deg,var(--accent),var(--accent2),var(--purple));flex-shrink:0; }
+          .kpi-dd-body { padding:2rem; }
+          .kpi-dd-stat-kpi { background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1rem 1.2rem;display:flex;flex-direction:column;align-items:center;min-width:110px;flex:1; }
+          .kpi-dd-dist-card { background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:1.5rem; }
+          .kpi-dd-dist-bar-row { display:flex;align-items:center;gap:0.75rem;padding:0.55rem 1.25rem;border-bottom:1px solid rgba(99,179,237,0.06); }
+          .kpi-dd-dist-bar-row:last-child { border-bottom:none; }
+          .kpi-dd-dist-label { width:170px;flex-shrink:0;font-size:0.8rem;color:var(--text2); }
+          .kpi-dd-dist-track { flex:1;height:8px;background:var(--surface3);border-radius:4px;overflow:hidden; }
+          .kpi-dd-dist-fill  { height:100%;border-radius:4px;transition:width 0.5s cubic-bezier(.22,1,.36,1); }
+          .kpi-dd-dist-count { width:36px;text-align:right;font-family:var(--font-mono);font-size:0.78rem;font-weight:700; }
+          .kpi-dd-dist-pct   { width:38px;text-align:right;font-family:var(--font-mono);font-size:0.7rem;color:var(--text3); }
+          .kpi-dd-table-wrap { background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden; }
+          .kpi-dd-toolbar { display:flex;gap:0.6rem;flex-wrap:wrap;padding:0.85rem 1.25rem;border-bottom:1px solid var(--border);align-items:center;background:var(--surface2); }
+          .kpi-dd-search-inp { flex:1;min-width:180px;background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:0.5rem 0.9rem;color:var(--text);font-size:0.84rem;font-family:var(--font-body);outline:none;transition:border-color 0.2s; }
+          .kpi-dd-search-inp:focus { border-color:var(--accent); }
+          .kpi-dd-filter-sel { background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:0.5rem 0.9rem;color:var(--text);font-size:0.8rem;font-family:var(--font-body);outline:none; }
+          [data-theme="light"] .kpi-dd-search-inp { background:#F5F7FC; }
+          [data-theme="light"] .kpi-dd-filter-sel { background:#F5F7FC; }
+          .kpi-dd-alumni-toggle { display:flex;align-items:center;gap:0.5rem;background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:0.45rem 0.85rem;cursor:pointer;transition:all 0.2s; }
+          .kpi-dd-alumni-toggle:hover { border-color:var(--accent); }
+          .kpi-dd-add-btn { padding:0.48rem 1.1rem;border-radius:9px;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;color:white;font-size:0.8rem;font-weight:600;cursor:pointer;font-family:var(--font-body);transition:opacity 0.2s; }
+          .kpi-dd-add-btn:hover { opacity:0.88; }
+          .kpi-dd-export-btn { padding:0.48rem 1rem;border-radius:9px;background:var(--surface);border:1px solid var(--border);color:var(--text2);font-size:0.78rem;font-family:var(--font-mono);cursor:pointer;transition:all 0.2s; }
+          .kpi-dd-export-btn:hover { border-color:rgba(99,179,237,0.35);color:var(--text); }
+          .kpi-dd-close-btn { background:none;border:1px solid var(--border);border-radius:8px;color:var(--text2);padding:0.35rem 0.9rem;cursor:pointer;font-size:0.8rem;font-family:var(--font-mono);transition:all 0.2s; }
+          .kpi-dd-close-btn:hover { border-color:var(--red);color:var(--red); }
+          .kpi-dd-breadcrumb { display:flex;align-items:center;gap:6px;font-size:0.72rem;font-family:var(--font-mono);color:var(--text3); }
+          .kpi-dd-breadcrumb .bc-sep { opacity:0.4; }
+          .kpi-dd-breadcrumb .bc-cur { color:var(--text); }
+          .kpi-dd-section-hdr { display:flex;align-items:center;gap:10px;margin:0 0 0.75rem;font-size:0.65rem;font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.1em;color:var(--text3); }
+          .kpi-dd-section-hdr::after { content:'';flex:1;height:1px;background:var(--border); }
+          .kpi-dd-two-col { display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.5rem; }
+          @media(max-width:800px){ .kpi-dd-two-col{grid-template-columns:1fr;} }
+          .kpi-dd-chart-box { background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1rem 1.25rem; }
+          .kpi-dd-chart-title { font-size:0.72rem;font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);margin-bottom:0.6rem; }
+        </style>
+        <!-- Top sticky bar -->
+        <div class="kpi-dd-topbar">
+          <div style="display:flex;align-items:center;gap:1rem;">
+            <button class="kpi-dd-close-btn" onclick="closeKpiDrilldown()" title="Back to Dashboard">← Back</button>
+            <div class="tb-divider" style="height:22px;width:1px;background:var(--border);"></div>
             <div>
-              <div style="font-size:1.5rem;font-family:var(--font-display);" id="kpi-dd-title">—</div>
-              <div style="font-size:0.75rem;color:var(--text3);font-family:var(--font-mono);margin-top:2px;" id="kpi-dd-sub">—</div>
-            </div>
-            <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;">
-              <!-- Alumni toggle (hidden for Tenure Risk) -->
-              <div id="kpi-dd-alumni-toggle" style="display:flex;align-items:center;gap:0.5rem;background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:0.35rem 0.75rem;cursor:pointer;" onclick="toggleKpiDrilldownAlumni()">
-                <div id="kpi-dd-alumni-sw" style="width:28px;height:16px;border-radius:8px;background:var(--surface3);position:relative;transition:background 0.2s;">
-                  <div id="kpi-dd-alumni-knob" style="width:12px;height:12px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:left 0.2s;"></div>
-                </div>
-                <span style="font-size:0.72rem;font-family:var(--font-mono);color:var(--text2);">Show Alumni</span>
-              </div>
-              <!-- Add button (hidden for Tenure Risk) -->
-              <button id="kpi-dd-add-btn" onclick="kpiDrilldownAdd()" style="padding:0.4rem 1rem;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;color:white;font-size:0.78rem;font-weight:600;cursor:pointer;font-family:var(--font-body);">+ Add</button>
-              <button onclick="closeKpiDrilldown()" style="background:none;border:1px solid var(--border);border-radius:7px;color:var(--text2);padding:0.3rem 0.7rem;cursor:pointer;font-size:0.8rem;transition:all 0.2s;" onmouseover="this.style.borderColor='var(--red)';this.style.color='var(--red)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text2)'">✕ Close</button>
+              <div style="font-size:1.05rem;font-family:var(--font-display);" id="kpi-dd-title">—</div>
+              <div class="kpi-dd-breadcrumb"><span>My Dashboard</span><span class="bc-sep">›</span><span class="bc-cur" id="kpi-dd-breadcrumb-cur">—</span></div>
             </div>
           </div>
-          <!-- Summary stat bar -->
-          <div id="kpi-dd-stat-bar" style="display:flex;gap:0.75rem;padding:0.75rem 1.5rem;flex-wrap:wrap;border-bottom:1px solid var(--border);background:var(--surface2);"></div>
-          <!-- Distribution section (charts / category breakdown) -->
-          <div id="kpi-dd-dist" style="padding:1rem 1.5rem;border-bottom:1px solid var(--border);display:none;">
-            <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;font-family:var(--font-mono);color:var(--text3);margin-bottom:0.6rem;" id="kpi-dd-dist-title">Distribution</div>
-            <div id="kpi-dd-dist-grid" style="display:flex;flex-wrap:wrap;gap:0.5rem;"></div>
-          </div>
-          <!-- Search + Filter bar -->
-          <div style="padding:0.75rem 1.5rem;display:flex;gap:0.6rem;flex-wrap:wrap;border-bottom:1px solid var(--border);align-items:center;">
-            <input id="kpi-dd-search" type="text" placeholder="🔍 Search…" oninput="kpiDrilldownFilter()" style="flex:1;min-width:150px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0.45rem 0.75rem;color:var(--text);font-size:0.83rem;font-family:var(--font-body);outline:none;">
-            <select id="kpi-dd-filter1" onchange="kpiDrilldownFilter()" class="filter-select" style="font-size:0.78rem;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0.45rem 0.75rem;color:var(--text);outline:none;"></select>
-            <select id="kpi-dd-filter2" onchange="kpiDrilldownFilter()" class="filter-select" style="font-size:0.78rem;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0.45rem 0.75rem;color:var(--text);outline:none;"></select>
-          </div>
-          <!-- Table -->
-          <div style="padding:0.75rem 1.5rem 1.5rem;max-height:420px;overflow-y:auto;">
-            <table id="kpi-dd-table" style="font-size:0.82rem;">
-              <thead id="kpi-dd-thead"></thead>
-              <tbody id="kpi-dd-tbody"></tbody>
-            </table>
-            <div id="kpi-dd-empty" style="display:none;text-align:center;padding:2rem;color:var(--text3);font-size:0.85rem;">No records found.</div>
+          <div style="display:flex;align-items:center;gap:0.6rem;">
+            <div style="font-size:0.72rem;font-family:var(--font-mono);color:var(--text2);" id="kpi-dd-sub">—</div>
+            <button class="kpi-dd-close-btn" onclick="closeKpiDrilldown()" onmouseover="this.style.borderColor='var(--red)';this.style.color='var(--red)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text2)'">✕ Close</button>
           </div>
         </div>
+        <div class="kpi-dd-accentbar"></div>
+
+        <!-- Body -->
+        <div class="kpi-dd-body">
+
+          <!-- STAT BAR KPIs -->
+          <div id="kpi-dd-stat-bar" style="display:flex;gap:0.85rem;flex-wrap:wrap;margin-bottom:1.75rem;"></div>
+
+          <!-- DISTRIBUTION SECTION -->
+          <div id="kpi-dd-dist" style="display:none;margin-bottom:1.75rem;">
+            <div class="kpi-dd-section-hdr" id="kpi-dd-dist-title">Distribution</div>
+            <div class="kpi-dd-two-col">
+              <!-- Bar distribution -->
+              <div class="kpi-dd-dist-card">
+                <div style="padding:0.85rem 1.25rem;border-bottom:1px solid var(--border);font-size:0.8rem;font-weight:600;" id="kpi-dd-dist-card-title">Category Breakdown</div>
+                <div id="kpi-dd-dist-grid" style="padding:0.25rem 0;"></div>
+              </div>
+              <!-- Donut chart -->
+              <div class="kpi-dd-chart-box" style="display:flex;flex-direction:column;">
+                <div class="kpi-dd-chart-title" id="kpi-dd-dist-chart-lbl">Distribution Chart</div>
+                <div style="flex:1;display:flex;align-items:center;justify-content:center;min-height:220px;">
+                  <canvas id="kpi-dd-dist-chart" style="max-width:100%;max-height:240px;"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- REGISTRY TABLE -->
+          <div id="kpi-dd-dist-section-hdr-table" class="kpi-dd-section-hdr">Registry</div>
+          <div class="kpi-dd-table-wrap">
+            <!-- Toolbar -->
+            <div class="kpi-dd-toolbar">
+              <input id="kpi-dd-search" class="kpi-dd-search-inp" type="text" placeholder="🔍 Search name, ID, department…" oninput="kpiDrilldownFilter()">
+              <select id="kpi-dd-filter1" onchange="kpiDrilldownFilter()" class="kpi-dd-filter-sel"></select>
+              <select id="kpi-dd-filter2" onchange="kpiDrilldownFilter()" class="kpi-dd-filter-sel"></select>
+              <div class="kpi-dd-alumni-toggle" id="kpi-dd-alumni-toggle" onclick="toggleKpiDrilldownAlumni()" title="Toggle Alumni view">
+                <div id="kpi-dd-alumni-sw" style="width:30px;height:17px;border-radius:9px;background:var(--surface3);position:relative;transition:background 0.2s;">
+                  <div id="kpi-dd-alumni-knob" style="width:13px;height:13px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:left 0.2s;box-shadow:0 1px 3px rgba(0,0,0,0.3);"></div>
+                </div>
+                <span style="font-size:0.73rem;font-family:var(--font-mono);color:var(--text2);">Show Alumni</span>
+              </div>
+              <button class="kpi-dd-export-btn" onclick="kpiDrilldownExport()" title="Export CSV">⬇ Export</button>
+              <button id="kpi-dd-add-btn" class="kpi-dd-add-btn" onclick="kpiDrilldownAdd()">+ Add New</button>
+            </div>
+            <!-- Record count -->
+            <div style="padding:0.5rem 1.25rem;font-size:0.73rem;font-family:var(--font-mono);color:var(--text3);background:var(--surface);border-bottom:1px solid var(--border);">
+              Showing <span id="kpi-dd-count-shown" style="color:var(--accent);font-weight:700;">—</span> of <span id="kpi-dd-count-total" style="color:var(--text2);">—</span> records
+            </div>
+            <!-- Table -->
+            <div style="overflow-x:auto;">
+              <table id="kpi-dd-table" style="font-size:0.82rem;width:100%;">
+                <thead id="kpi-dd-thead"></thead>
+                <tbody id="kpi-dd-tbody"></tbody>
+              </table>
+              <div id="kpi-dd-empty" style="display:none;text-align:center;padding:3rem 2rem;color:var(--text3);">
+                <div style="font-size:2rem;margin-bottom:0.75rem;opacity:0.35;">🔍</div>
+                <div style="font-size:0.88rem;">No records match your search.</div>
+              </div>
+            </div>
+            <!-- Pagination -->
+            <div id="kpi-dd-pag" style="display:none;padding:0.75rem 1.25rem;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+              <span style="font-size:0.73rem;font-family:var(--font-mono);color:var(--text3);" id="kpi-dd-pag-info"></span>
+              <div style="display:flex;gap:4px;">
+                <button id="kpi-dd-prev" onclick="kpiDDPage(-1)" style="padding:0.3rem 0.75rem;border-radius:7px;background:var(--surface2);border:1px solid var(--border);color:var(--text2);font-size:0.75rem;cursor:pointer;">‹ Prev</button>
+                <button id="kpi-dd-next" onclick="kpiDDPage(1)"  style="padding:0.3rem 0.75rem;border-radius:7px;background:var(--surface2);border:1px solid var(--border);color:var(--text2);font-size:0.75rem;cursor:pointer;">Next ›</button>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /kpi-dd-body -->
       </div>
 
 
@@ -16251,13 +16338,16 @@
     _kpiDDAlumniSetSwitch(false);
     var ov = document.getElementById('kpi-drilldown-overlay');
     if (!ov) return;
-    ov.style.display = 'flex';
+    ov.style.display = 'block';
+    ov.scrollTop = 0;
+    document.body.style.overflow = 'hidden';
     _kpiDDRender();
   }
 
   function closeKpiDrilldown() {
     var ov = document.getElementById('kpi-drilldown-overlay');
     if (ov) ov.style.display = 'none';
+    document.body.style.overflow = '';
     _kpiDDState.key = null;
   }
 
@@ -16525,9 +16615,18 @@
       });
     }
 
-    // Title / sub
-    document.getElementById('kpi-dd-title').textContent = cfg.title;
-    document.getElementById('kpi-dd-sub').textContent = cfg.sub + ' · ' + data.length + ' record(s)';
+    // Title / sub / breadcrumb
+    var titleText = cfg.title || '—';
+    var titleClean = titleText.replace(/^[\u{1F300}-\u{1FFFF}\u{2600}-\u{26FF}\s]+/u, '').trim() || titleText;
+    var ddTitle = document.getElementById('kpi-dd-title');
+    var ddSub   = document.getElementById('kpi-dd-sub');
+    var ddBc    = document.getElementById('kpi-dd-breadcrumb-cur');
+    if (ddTitle) ddTitle.textContent = titleText;
+    if (ddSub)   ddSub.textContent   = cfg.sub + ' · ' + data.length + ' record(s)';
+    if (ddBc)    ddBc.textContent    = titleClean;
+    // Scroll overlay to top
+    var ov2 = document.getElementById('kpi-drilldown-overlay');
+    if (ov2) ov2.scrollTop = 0;
 
     // Alumni toggle visibility
     var toggleEl = document.getElementById('kpi-dd-alumni-toggle');
@@ -16581,9 +16680,10 @@
       if (_kpiDDState.showAlumni) stats.push({label:'Alumni', val:alumni, col:'#8B5CF6'});
     }
     bar.innerHTML = stats.map(function(s){
-      return '<div style="display:flex;flex-direction:column;align-items:center;padding:0.35rem 0.75rem;background:'+s.col+'15;border:1px solid '+s.col+'30;border-radius:8px;min-width:80px;">'
-        +'<div style="font-size:1.3rem;font-weight:700;color:'+s.col+';font-family:var(--font-display);">'+s.val+'</div>'
-        +'<div style="font-size:0.6rem;color:var(--text3);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.06em;">'+s.label+'</div>'
+      return '<div class="kpi-dd-stat-kpi" style="border-color:'+s.col+'30;">'
+        +'<div style="font-size:0.6rem;font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);margin-bottom:0.3rem;">'+s.label+'</div>'
+        +'<div style="font-size:1.8rem;font-weight:700;color:'+s.col+';font-family:var(--font-display);line-height:1;">'+s.val+'</div>'
+        +'<div style="height:3px;width:40px;border-radius:2px;background:'+s.col+';margin-top:0.45rem;opacity:0.6;"></div>'
         +'</div>';
     }).join('');
   }
@@ -16592,12 +16692,15 @@
     var distEl = document.getElementById('kpi-dd-dist');
     var grid = document.getElementById('kpi-dd-dist-grid');
     var titleEl = document.getElementById('kpi-dd-dist-title');
+    var cardTitleEl = document.getElementById('kpi-dd-dist-card-title');
+    var chartLbl = document.getElementById('kpi-dd-dist-chart-lbl');
     if (!distEl || !grid) return;
     var distKey = cfg.distKey;
     if (!distKey) { distEl.style.display = 'none'; return; }
     distEl.style.display = '';
     if (titleEl) titleEl.textContent = cfg.distTitle || 'Distribution';
-    // Count by distKey
+    if (cardTitleEl) cardTitleEl.textContent = cfg.distTitle || 'Category Breakdown';
+    if (chartLbl) chartLbl.textContent = (cfg.distTitle||'Distribution') + ' Chart';
     var counts = {};
     data.forEach(function(r) {
       var v = r[distKey] || '(Unknown)';
@@ -16609,20 +16712,38 @@
     grid.innerHTML = sorted.map(function(kv, i){
       var pct = Math.round(kv[1]/total*100);
       var col = colors[i % colors.length];
-      return '<div style="display:flex;flex-direction:column;gap:3px;min-width:120px;flex:1;">'
-        +'<div style="display:flex;justify-content:space-between;align-items:center;">'
-        +'<span style="font-size:0.72rem;color:var(--text2);">'+kv[0]+'</span>'
-        +'<span style="font-size:0.72rem;font-family:var(--font-mono);color:'+col+';font-weight:700;">'+kv[1]+'</span>'
-        +'</div>'
-        +'<div style="height:6px;background:var(--surface3);border-radius:3px;overflow:hidden;">'
-        +'<div style="height:100%;width:'+pct+'%;background:'+col+';border-radius:3px;transition:width 0.4s;"></div>'
-        +'</div>'
-        +'<div style="font-size:0.6rem;color:var(--text3);font-family:var(--font-mono);">'+pct+'%</div>'
+      return '<div class="kpi-dd-dist-bar-row">'
+        +'<div class="kpi-dd-dist-label">'+kv[0]+'</div>'
+        +'<div class="kpi-dd-dist-track"><div class="kpi-dd-dist-fill" style="width:'+pct+'%;background:'+col+';"></div></div>'
+        +'<div class="kpi-dd-dist-count" style="color:'+col+';">'+kv[1]+'</div>'
+        +'<div class="kpi-dd-dist-pct">'+pct+'%</div>'
         +'</div>';
     }).join('');
+    // Donut chart
+    var canvas = document.getElementById('kpi-dd-dist-chart');
+    if (canvas && typeof Chart !== 'undefined') {
+      if (canvas._chartInst) { canvas._chartInst.destroy(); }
+      var isDark = document.body.getAttribute('data-theme') !== 'light';
+      canvas._chartInst = new Chart(canvas, {
+        type: 'doughnut',
+        data: {
+          labels: sorted.map(function(kv){ return kv[0]; }),
+          datasets: [{ data: sorted.map(function(kv){ return kv[1]; }),
+            backgroundColor: sorted.map(function(_,i){ return colors[i%colors.length]; }),
+            borderWidth: 2, borderColor: isDark ? '#111827' : '#fff' }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: true, cutout: '62%',
+          plugins: {
+            legend: { position: 'right', labels: { color: isDark?'#94A3B8':'#334155', font:{size:11}, boxWidth:12, padding:10 } },
+            tooltip: { callbacks: { label: function(ctx){ return ' '+ctx.label+': '+ctx.parsed+' ('+Math.round(ctx.parsed/total*100)+'%)'; } } }
+          }
+        }
+      });
+    }
   }
 
-  function _kpiDDRenderFilters(data, cfg) {
+    function _kpiDDRenderFilters(data, cfg) {
     (cfg.filters||[]).forEach(function(f) {
       var sel = document.getElementById(f.id);
       if (!sel) return;
@@ -16635,6 +16756,56 @@
     });
   }
 
+  // ── v45: Paginated render with count display ─────────────────────────
+  var _kpiDDPage = 0;
+  var _kpiDDPageSize = 20;
+  var _kpiDDFiltered = [];
+
+  function kpiDDPage(dir) {
+    var maxPage = Math.max(0, Math.ceil(_kpiDDFiltered.length / _kpiDDPageSize) - 1);
+    _kpiDDPage = Math.max(0, Math.min(maxPage, _kpiDDPage + dir));
+    _kpiDDRenderTableRows();
+  }
+
+  function _kpiDDRenderTableRows() {
+    var cfg = window._kpiDDCfg;
+    var tbody = document.getElementById('kpi-dd-tbody');
+    var empty = document.getElementById('kpi-dd-empty');
+    var pagEl  = document.getElementById('kpi-dd-pag');
+    var pagInfo = document.getElementById('kpi-dd-pag-info');
+    var prevBtn = document.getElementById('kpi-dd-prev');
+    var nextBtn = document.getElementById('kpi-dd-next');
+    var shownEl = document.getElementById('kpi-dd-count-shown');
+    var totalEl = document.getElementById('kpi-dd-count-total');
+    if (!tbody || !cfg) return;
+    var filtered = _kpiDDFiltered;
+    if (totalEl) totalEl.textContent = filtered.length;
+    if (!filtered.length) {
+      tbody.innerHTML = '';
+      if (empty) empty.style.display = '';
+      if (pagEl) pagEl.style.display = 'none';
+      if (shownEl) shownEl.textContent = '0';
+      return;
+    }
+    if (empty) empty.style.display = 'none';
+    var maxPage = Math.max(0, Math.ceil(filtered.length / _kpiDDPageSize) - 1);
+    _kpiDDPage = Math.min(_kpiDDPage, maxPage);
+    var start = _kpiDDPage * _kpiDDPageSize;
+    var end   = Math.min(start + _kpiDDPageSize, filtered.length);
+    var slice = filtered.slice(start, end);
+    if (shownEl) shownEl.textContent = slice.length;
+    tbody.innerHTML = slice.map(function(r, i){ return '<tr>' + cfg.rowFn(r, start+i) + '</tr>'; }).join('');
+    // Pagination
+    if (filtered.length > _kpiDDPageSize) {
+      if (pagEl) pagEl.style.display = 'flex';
+      if (pagInfo) pagInfo.textContent = 'Page '+ (_kpiDDPage+1) +' of '+ (maxPage+1) +' · '+ filtered.length +' records';
+      if (prevBtn) prevBtn.disabled = _kpiDDPage === 0;
+      if (nextBtn) nextBtn.disabled = _kpiDDPage >= maxPage;
+    } else {
+      if (pagEl) pagEl.style.display = 'none';
+    }
+  }
+
   function _kpiDDRenderTable() {
     var data = window._kpiDDData || [];
     var cfg = window._kpiDDCfg;
@@ -16644,7 +16815,7 @@
     var f2Key = cfg.filters && cfg.filters[1] ? cfg.filters[1].key : '';
     var f1Val = f1Key ? ((document.getElementById('kpi-dd-filter1')||{}).value||'') : '';
     var f2Val = f2Key ? ((document.getElementById('kpi-dd-filter2')||{}).value||'') : '';
-    var filtered = data.filter(function(r) {
+    _kpiDDFiltered = data.filter(function(r) {
       if (f1Val && f1Key && r[f1Key] !== f1Val) return false;
       if (f2Val && f2Key && r[f2Key] !== f2Val) return false;
       if (search) {
@@ -16653,19 +16824,34 @@
       }
       return true;
     });
-    var tbody = document.getElementById('kpi-dd-tbody');
-    var empty = document.getElementById('kpi-dd-empty');
-    if (!tbody) return;
-    if (!filtered.length) {
-      tbody.innerHTML = '';
-      if (empty) empty.style.display = '';
-      return;
+    _kpiDDPage = 0;
+    // Render headers
+    var thead = document.getElementById('kpi-dd-thead');
+    if (thead && cfg.headers) {
+      thead.innerHTML = '<tr>' + cfg.headers.map(function(h){ return '<th>'+h+'</th>'; }).join('') + '</tr>';
     }
-    if (empty) empty.style.display = 'none';
-    tbody.innerHTML = filtered.map(function(r, i){ return '<tr>' + cfg.rowFn(r, i) + '</tr>'; }).join('');
+    _kpiDDRenderTableRows();
   }
 
-  // ── SECTION 2: CATEGORY TABLES (IT + Non-IT) ────────────────────────────
+  // ── v45: Export CSV ───────────────────────────────────────────────────
+  function kpiDrilldownExport() {
+    var data = _kpiDDFiltered || window._kpiDDData || [];
+    var cfg  = window._kpiDDCfg;
+    if (!data.length || !cfg) { if(typeof toast==='function') toast('No data to export'); return; }
+    var keys = cfg.headers || Object.keys(data[0]||{});
+    var csvRows = [keys.join(',')];
+    data.forEach(function(r) {
+      csvRows.push(Object.values(r).map(function(v){ return '"'+String(v||'').replace(/"/g,'""')+'"'; }).join(','));
+    });
+    var blob = new Blob([csvRows.join('\n')], {type:'text/csv'});
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = (cfg.title||'export').replace(/[^a-zA-Z0-9]/g,'_')+'.csv';
+    a.click();
+    if (typeof toast==='function') toast('✅ Exported '+data.length+' records');
+  }
+
+    // ── SECTION 2: CATEGORY TABLES (IT + Non-IT) ────────────────────────────
   // FIX (v24.2): GET_EXEC_DASHBOARD only returns aggregate numbers in data.assets
   // (itCount, itValue, nonitCount, nonitValue …) — it does NOT send full row arrays.
   // ASSET_DB.it / .nonit are only populated by assetLoadFromSheet() (Assets tab sync).
@@ -30949,5 +31135,15 @@ tbody td { vertical-align: middle; }
   setTimeout(_boot, 150);
 
 })();
+
+  // v45: ESC key closes KPI drilldown full-screen
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      var ov = document.getElementById('kpi-drilldown-overlay');
+      if (ov && ov.style.display !== 'none') {
+        closeKpiDrilldown();
+      }
+    }
+  });
 </script>
 </html>
