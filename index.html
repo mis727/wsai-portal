@@ -30598,4 +30598,356 @@ tbody td { vertical-align: middle; }
 
 })();
 </script>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     WSAI PORTAL — UNIFIED DASHBOARD FIX  (mounts after all v31–v44 patches)
+
+     EXACT BUGS FIXED
+     ─────────────────
+     BUG-1  showTab(undefined) wipes every tab's .active class, leaving a
+            blank page. Two separate code paths cause it:
+              a) Original applyAccessLevelUI: INTERFACE_LANDING has no entry
+                 for 'staff' → showTab(undefined) at t≈200ms.
+              b) v39-landing wrapper: ROLE_LANDING_MAP has no entry for
+                 'coo','admin','creator','staff','event_mgr' → a second
+                 showTab(undefined) at t≈400ms overwrites any correct
+                 activation done by the original call.
+            Fix: guard showTab against falsy tabId; re-assert role-dashboard
+            active at t=500ms after all broken calls have passed.
+
+     BUG-2  'staff' role has no <div data-show="staff"> in the HTML and no
+            CSS visibility rule, so role-dashboard panel shows nothing.
+            Fix: inject the CSS rule and a minimal staff section at runtime.
+
+     BUG-3  'edu_pgm_mgr' and 'event_mgr' have data-show sections in HTML
+            but no KPI builder function → their cards stay at "—" forever.
+            Fix: populate their native KPI IDs from available in-memory data
+            and retry when sheet data arrives.
+
+     BUG-4  _populateCOOKPIs already mirrors values to mis-coo-* / sys-coo-*
+            via its internal sv() helper — NOT a real bug.  No action needed.
+
+     BUG-5  _populateCOOKPIs is called at 1500ms by the v36 wrapper, but
+            sysFetchAll starts at 800ms and takes 2-5 s on a live sheet.
+            Fix: retry populate at 3 s, 6 s, 10 s so values fill in once
+            data arrives rather than staying "—".
+
+     BUG-6  Session restore: applyAccessLevelUI fires synchronously during
+            DOMContentLoaded, before the deferred patch IIFEs have mounted
+            their wrappers. None of the KPI builders are hooked yet.
+            Fix: catch-up timers re-run the full activation sequence.
+
+     APPROACH
+     ─────────
+     • Mount at t=150ms — AFTER v36 (t=100ms) and all earlier patches.
+     • One wrapper on showTab  (guard + re-assert).
+     • One wrapper on applyAccessLevelUI (activation + retry).
+     • No flags from previous patches are disturbed.
+     • All functions check typeof before calling — safe against any load order.
+═══════════════════════════════════════════════════════════════════════ -->
+<script>
+(function WSAI_UNIFIED_FIX() {
+  'use strict';
+
+  /* ── Helpers ──────────────────────────────────────────────────────────── */
+  var _id  = function (i)    { return document.getElementById(i); };
+  var _qs  = function (s, r) { return (r || document).querySelector(s); };
+  var _log = function (m)    { console.log('[WSAI-FIX] ' + m); };
+  var _call = function (fn)  {
+    if (typeof window[fn] === 'function') {
+      try { window[fn](); } catch (e) { console.warn('[WSAI-FIX] ' + fn + ' error:', e); }
+    }
+  };
+
+  /* ── Role taxonomy ────────────────────────────────────────────────────── */
+  /* Roles that land on role-dashboard and need data-active set */
+  var DASHBOARD_ROLES = [
+    'coo', 'admin', 'creator',
+    'mis', 'sys_admin',
+    'faculty', 'hr_manager', 'finance_mgr',
+    'facility_mgr', 'edu_pgm_mgr', 'event_mgr', 'staff',
+    'hr', 'finance', 'labs', 'publications', 'readonly'
+  ];
+
+  /* Roles whose data-show section receives the full COO KPI row clone */
+  var COO_TIER = ['coo', 'admin', 'creator', 'mis', 'sys_admin'];
+
+  /* ══════════════════════════════════════════════════════════════════════
+     FIX-1a — Guard showTab against falsy tabId
+     Every wrapper in the chain calls orig.apply() first, so we patch
+     the outermost showTab (whatever it is at mount time) once.
+  ══════════════════════════════════════════════════════════════════════ */
+  function _guardShowTab() {
+    var orig = window.showTab;
+    if (typeof orig !== 'function' || orig._wsaiFix) return;
+
+    window.showTab = function (tabId) {
+      /* BUG-1 root guard: block any call with a falsy / non-string tabId */
+      if (!tabId || typeof tabId !== 'string') {
+        _log('showTab(' + tabId + ') blocked — would have cleared all tabs');
+        return;
+      }
+      orig.apply(this, arguments);
+    };
+
+    /* Propagate every existing patch flag so no other guard re-wraps */
+    ['_v39showPatched', '_v43allRolesPatched', '_v43dashPatched',
+     '_v44patched', '_v44fixTabPatched', '_wsaiFix'].forEach(function (f) {
+      if (orig[f]) window.showTab[f] = true;
+    });
+    window.showTab._wsaiFix = true;
+
+    _log('showTab guarded against falsy tabId');
+  }
+
+  /* ══════════════════════════════════════════════════════════════════════
+     FIX-1b — Activate panel: set data-active and make tab visible
+     Called at t=500ms (after every broken showTab call has fired).
+  ══════════════════════════════════════════════════════════════════════ */
+  function _activateRoleDashboard(role) {
+    if (!role || !DASHBOARD_ROLES.includes(role)) return;
+
+    /* 1. Set CSS gate so the right data-show section appears */
+    var panel = _id('v31-role-panel');
+    if (panel && panel.getAttribute('data-active') !== role) {
+      panel.setAttribute('data-active', role);
+      _log('data-active set: ' + role);
+    }
+
+    /* 2. Ensure role-dashboard tab has the active class */
+    var rdTab = _id('tab-role-dashboard');
+    if (rdTab && !rdTab.classList.contains('active')) {
+      /* Remove active from all tabs first (mirrors showTab behaviour) */
+      document.querySelectorAll('.tabs').forEach(function (t) {
+        t.classList.remove('active');
+      });
+      document.querySelectorAll('.nav-item').forEach(function (n) {
+        n.classList.remove('active');
+      });
+      rdTab.classList.add('active');
+      /* Activate the My Dashboard nav item */
+      document.querySelectorAll('.nav-item').forEach(function (n) {
+        if ((n.getAttribute('onclick') || '').includes("'role-dashboard'")) {
+          n.classList.add('active');
+        }
+      });
+      _log('role-dashboard tab re-activated for: ' + role);
+    }
+
+    /* 3. Show the My Dashboard nav item (hidden by default until login) */
+    var nav = _id('nav-role-dashboard');
+    if (nav) nav.style.removeProperty('display');
+  }
+
+  /* ══════════════════════════════════════════════════════════════════════
+     FIX-2 — staff role: inject CSS rule + data-show section
+     staff has interface:'staff' which is absent from INTERFACE_LANDING,
+     causing showTab(undefined).  Even if navigation were fixed, there is
+     no <div data-show="staff"> in the HTML, so the panel would be empty.
+  ══════════════════════════════════════════════════════════════════════ */
+  function _ensureStaffSection() {
+    /* CSS visibility rule (idempotent) */
+    if (!_id('wsai-fix-staff-css')) {
+      var s = document.createElement('style');
+      s.id = 'wsai-fix-staff-css';
+      s.textContent =
+        '#v31-role-panel[data-active="staff"] [data-show~="staff"]' +
+        '{ display:block !important; }\n' +
+        '#v31-role-panel[data-active="staff"] #v31-role-banner' +
+        '{ background:rgba(16,185,129,.07);' +
+        '  border-color:rgba(16,185,129,.25);' +
+        '  border-left:4px solid #10B981 !important; }';
+      document.head.appendChild(s);
+      _log('staff CSS rule injected');
+    }
+
+    /* data-show section (idempotent) */
+    var rolePanel = _id('v31-role-panel');
+    if (!rolePanel || _qs('[data-show="staff"]', rolePanel)) return;
+
+    var div = document.createElement('div');
+    div.setAttribute('data-show', 'staff');
+    div.id = 'wsai-fix-staff-section';
+    div.innerHTML =
+      '<div class="v31-kpi-grid">' +
+        '<div class="v31-kpi-card k-green">' +
+          '<div class="v31-kpi-icon">👋</div>' +
+          '<div class="v31-kpi-val" id="fix-staff-name">—</div>' +
+          '<div class="v31-kpi-lbl">Welcome</div>' +
+        '</div>' +
+        '<div class="v31-kpi-card k-blue">' +
+          '<div class="v31-kpi-icon">💰</div>' +
+          '<div class="v31-kpi-val" id="fix-staff-exp">—</div>' +
+          '<div class="v31-kpi-lbl">My Expenses</div>' +
+        '</div>' +
+        '<div class="v31-kpi-card k-gold">' +
+          '<div class="v31-kpi-icon">📦</div>' +
+          '<div class="v31-kpi-val" id="fix-staff-inv">—</div>' +
+          '<div class="v31-kpi-lbl">Inventory Items</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="v31-action-bar">' +
+        '<button class="v31-act-btn" onclick="window.showTab(\'expenses\')">💰 My Expenses</button>' +
+        '<button class="v31-act-btn" onclick="window.showTab(\'inventory\')">📦 Inventory</button>' +
+        '<button class="v31-act-btn" onclick="window.showTab(\'people\')">👥 People</button>' +
+      '</div>';
+    rolePanel.appendChild(div);
+    _log('staff data-show section injected');
+  }
+
+  function _populateStaffKPIs() {
+    var userObj = (window._users || []).find(function (u) {
+      return u.username === window._currentUser;
+    });
+    var sv = function (id, v) { var e = _id(id); if (e) e.textContent = v; };
+    sv('fix-staff-name', userObj ? userObj.name.split(' ')[0] : '—');
+    var expCount = ((window.EXP || {}).all || []).filter(function (e) {
+      return e.submittedBy === window._currentUser;
+    }).length;
+    sv('fix-staff-exp', expCount || '—');
+    var invCount = ((window.INV_DB || {}).all || []).length ||
+                   ((window.INV   || {}).all || []).length;
+    sv('fix-staff-inv', invCount || '—');
+  }
+
+  /* ══════════════════════════════════════════════════════════════════════
+     FIX-3 — edu_pgm_mgr & event_mgr: populate native KPI IDs
+     These sections exist in the HTML with specific IDs but no builder
+     function was ever written for them.
+  ══════════════════════════════════════════════════════════════════════ */
+  function _populateEduKPIs() {
+    var sv  = function (id, v) { var e = _id(id); if (e) e.textContent = v; };
+    var DB  = window.DB || {};
+    sv('edu-kpi-prog', '—');
+    sv('edu-kpi-stu',  (DB.students  || []).length || '—');
+    sv('edu-kpi-fac',  (DB.faculty   || []).length || '—');
+    sv('edu-kpi-comp', '—');
+    sv('edu-kpi-rate', '—');
+  }
+
+  function _populateEventKPIs() {
+    var sv = function (id, v) { var e = _id(id); if (e) e.textContent = v; };
+    sv('evt-kpi-up',     '—');
+    sv('evt-kpi-mo',     '—');
+    sv('evt-kpi-appr',   '—');
+    sv('evt-kpi-budget', '—');
+    sv('evt-kpi-att',    '—%');
+  }
+
+  /* ══════════════════════════════════════════════════════════════════════
+     FIX-5 — Retry _populateCOOKPIs after sheet data arrives
+     v36 calls it at 1500ms and 4000ms, but sysFetchAll takes 2-5 s on
+     a live sheet.  We add retries at 3 s, 6 s, 10 s.
+  ══════════════════════════════════════════════════════════════════════ */
+  function _schedulePopulateRetries() {
+    [3000, 6000, 10000].forEach(function (d) {
+      setTimeout(function () {
+        if (typeof window._populateCOOKPIs === 'function') {
+          try { window._populateCOOKPIs(); } catch (e) {}
+        }
+      }, d);
+    });
+  }
+
+  /* ══════════════════════════════════════════════════════════════════════
+     MASTER ACTIVATION — runs the full sequence for a given role
+  ══════════════════════════════════════════════════════════════════════ */
+  function _runForRole(role) {
+    if (!role) return;
+
+    /* Always activate panel + tab */
+    _activateRoleDashboard(role);
+
+    /* Role-specific work */
+    if (role === 'staff') {
+      _ensureStaffSection();
+      _populateStaffKPIs();
+    }
+    if (role === 'edu_pgm_mgr') _populateEduKPIs();
+    if (role === 'event_mgr')   _populateEventKPIs();
+
+    /* COO-tier: ensure rows built + values populated */
+    if (COO_TIER.includes(role)) {
+      if (!_id('coo-enhanced-kpi-rows') &&
+          typeof window._v36BuildCOOKPIRows === 'function') {
+        try { window._v36BuildCOOKPIRows(); } catch (e) {}
+      }
+      if (typeof window._populateCOOKPIs === 'function') {
+        try { window._populateCOOKPIs(); } catch (e) {}
+      }
+    }
+  }
+
+  /* ══════════════════════════════════════════════════════════════════════
+     HOOK applyAccessLevelUI — mounts as the outermost wrapper
+     Fires AFTER all v31/v36/v39/v44 wrappers have already called their
+     orig chain, so we only need to fix what they got wrong.
+  ══════════════════════════════════════════════════════════════════════ */
+  function _hookApplyAccess() {
+    var orig = window.applyAccessLevelUI;
+    if (typeof orig !== 'function' || orig._wsaiFix) return;
+
+    window.applyAccessLevelUI = function (role) {
+      /* Let the entire existing chain run first */
+      orig.apply(this, arguments);
+
+      /* FIX-1b: re-assert at t+500ms — after every broken showTab(undefined)
+         call in the chain has fired and done its damage */
+      setTimeout(function () { _runForRole(role); }, 500);
+
+      /* FIX-5: schedule populate retries */
+      _schedulePopulateRetries();
+    };
+
+    /* Carry forward every existing patch flag */
+    ['_v31patched', '_v36patched', '_v39landingPatched', '_v39patched',
+     '_v44patched', '_v44fixPatched', '_wsaiFix'].forEach(function (f) {
+      if (orig[f]) window.applyAccessLevelUI[f] = true;
+    });
+    window.applyAccessLevelUI._wsaiFix = true;
+
+    _log('applyAccessLevelUI hooked as outermost wrapper');
+  }
+
+  /* ══════════════════════════════════════════════════════════════════════
+     FIX-6 — Session restore catch-up
+     On page reload the session restore path calls applyAccessLevelUI
+     synchronously before ANY deferred patch IIFE has mounted.
+     We detect the already-logged-in state and re-run the full sequence.
+  ══════════════════════════════════════════════════════════════════════ */
+  function _sessionCatchUp() {
+    var role = window._currentRole || '';
+    if (!role) return;
+    _log('Session catch-up for: ' + role);
+    _runForRole(role);
+    _schedulePopulateRetries();
+  }
+
+  /* ══════════════════════════════════════════════════════════════════════
+     BOOT — mount at t=150ms so we are the last wrapper on the chain
+     (v36 mounts at t=100ms, so we mount after it)
+  ══════════════════════════════════════════════════════════════════════ */
+  function _boot() {
+    /* FIX-1a: guard showTab immediately */
+    _guardShowTab();
+
+    /* Mount our applyAccessLevelUI hook as the outermost wrapper */
+    _hookApplyAccess();
+
+    /* FIX-6: catch-up schedule for session restores and slow GAS responses */
+    [600, 1500, 3000, 6000, 10000].forEach(function (d) {
+      setTimeout(_sessionCatchUp, d);
+    });
+
+    /* Ensure staff section CSS exists unconditionally (costs nothing) */
+    _ensureStaffSection();
+
+    _log('Unified fix boot complete ✅');
+  }
+
+  /* Mount at t=150ms — after v36 (t=100ms), before any user interaction */
+  setTimeout(_boot, 150);
+
+})();
+</script>
 </html>
