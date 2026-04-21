@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -2514,10 +2515,10 @@
         <!-- ── FILTER BAR ── -->
         <div class="table-card" style="padding:0.75rem 1.25rem;margin-bottom:1rem;display:flex;gap:0.75rem;flex-wrap:wrap;align-items:center;">
           <span style="font-size:0.68rem;font-family:var(--font-mono);color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;white-space:nowrap;">Filters</span>
-          <select id="bm-filter-cat" onchange="bmApplyFilters()" class="filter-select"><option value="">All Categories</option><option>Student</option><option>Staff</option><option>Researcher</option><option>Faculty</option><option>Intern</option></select>
-          <select id="bm-filter-auth" onchange="bmApplyFilters()" class="filter-select"><option value="">All Auth Status</option><option>Authorized</option><option>Pending</option><option>Revoked</option></select>
-          <select id="bm-filter-account" onchange="bmApplyFilters()" class="filter-select"><option value="">All Account Status</option><option>Active</option><option>Terminated</option></select>
-          <select id="bm-filter-area" onchange="bmApplyFilters()" class="filter-select" style="min-width:140px;"><option value="">All Areas</option></select>
+          <select id="bm-filter-cat" onchange="bmApplyFilters()" class="filter-select" data-vocab="bioCat"><option value="">All Categories</option><option>Student</option><option>Staff</option><option>Researcher</option><option>Faculty</option><option>Intern</option></select>
+          <select id="bm-filter-auth" onchange="bmApplyFilters()" class="filter-select" data-vocab="bioAuthStatus"><option value="">All Auth Status</option><option>Authorized</option><option>Pending</option><option>Revoked</option></select>
+          <select id="bm-filter-account" onchange="bmApplyFilters()" class="filter-select" data-vocab="bioAcctStatus"><option value="">All Account Status</option><option>Active</option><option>Terminated</option></select>
+          <select id="bm-filter-area" onchange="bmApplyFilters()" class="filter-select" style="min-width:140px;" data-vocab="bioAccessArea"><option value="">All Areas</option></select>
           <input type="text" id="bm-search" oninput="bmApplyFilters()" placeholder="🔍 Search name / ID / email…" style="flex:1;min-width:180px;padding:0.38rem 0.75rem;background:var(--surface2);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:0.8rem;font-family:var(--font-body);outline:none;">
           <span id="bm-result-count" style="font-size:0.7rem;font-family:var(--font-mono);color:var(--text3);white-space:nowrap;"></span>
         </div>
@@ -3013,9 +3014,9 @@
               <div class="tc-title">💻 IT Assets</div>
               <div class="tc-actions">
                 <input type="text" class="filter-select" id="it-search" placeholder="🔍 Search..." oninput="renderITTable()" style="width:180px;padding:0.4rem 0.7rem;border-radius:8px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:0.8rem;outline:none;">
-                <select class="filter-select" id="it-filter-unit" onchange="renderITTable()"><option value="">All Units</option></select>
-                <select class="filter-select" id="it-filter-cat"  onchange="renderITTable()"><option value="">All Categories</option></select>
-                <select class="filter-select" id="it-filter-status" onchange="renderITTable()"><option value="">All Status</option></select>
+                <select class="filter-select" id="it-filter-unit" onchange="renderITTable()" data-vocab="units"><option value="">All Units</option></select>
+                <select class="filter-select" id="it-filter-cat"  onchange="renderITTable()" data-vocab="itCategory"><option value="">All Categories</option></select>
+                <select class="filter-select" id="it-filter-status" onchange="renderITTable()" data-vocab="itStatus"><option value="">All Status</option></select>
                 <button class="tc-btn" onclick="exportAssetCSV('it')">📥 Export</button>
                 <button class="tc-btn" onclick="openAssetCatManagerFor('it')" title="Manage IT category lists">⚙ Edit Categories</button>
                 <button class="tc-btn primary" onclick="openAssetModal('it')">+ Add IT Asset</button>
@@ -3049,8 +3050,8 @@
               <div class="tc-title">🏢 Non-IT Assets</div>
               <div class="tc-actions">
                 <input type="text" class="filter-select" id="nonit-search" placeholder="🔍 Search..." oninput="renderNonITTable()" style="width:180px;padding:0.4rem 0.7rem;border-radius:8px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:0.8rem;outline:none;">
-                <select class="filter-select" id="nonit-filter-cat" onchange="renderNonITTable()"><option value="">All Categories</option></select>
-                <select class="filter-select" id="nonit-filter-status" onchange="renderNonITTable()"><option value="">All Status</option></select>
+                <select class="filter-select" id="nonit-filter-cat" onchange="renderNonITTable()" data-vocab="nonITCategories"><option value="">All Categories</option></select>
+                <select class="filter-select" id="nonit-filter-status" onchange="renderNonITTable()" data-vocab="nonITStatus"><option value="">All Status</option></select>
                 <button class="tc-btn" onclick="exportAssetCSV('nonit')">📥 Export</button>
                 <button class="tc-btn" onclick="openAssetCatManagerFor('nonit')" title="Manage Non-IT category lists">⚙ Edit Categories</button>
                 <button class="tc-btn primary" onclick="openAssetModal('nonit')">+ Add Non-IT Asset</button>
@@ -3204,7 +3205,7 @@
               <div class="tc-title">🛒 Consumables</div>
               <div class="tc-actions">
                 <input type="text" class="filter-select" id="cons-search" placeholder="🔍 Search..." oninput="renderConsumablesTable()" style="width:180px;padding:0.4rem 0.7rem;border-radius:8px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:0.8rem;outline:none;">
-                <select class="filter-select" id="cons-filter-cat" onchange="renderConsumablesTable()"><option value="">All Categories</option></select>
+                <select class="filter-select" id="cons-filter-cat" onchange="renderConsumablesTable()" data-vocab="nonITCategories"><option value="">All Categories</option></select>
                 <button class="tc-btn" onclick="exportAssetCSV('consumables')">📥 Export</button>
                 <button class="tc-btn primary" onclick="openAssetModal('consumables')">+ Add Consumable</button>
               </div>
@@ -5801,7 +5802,13 @@
     window.scrollTo(0, 0);
     if (tabId === 'people')    { setTimeout(initPeopleManagement, 50); }
     if (tabId === 'systems')   { setTimeout(sysInitViewer, 80); }
-    if (tabId === 'dropdown-manager') { setTimeout(ddmInit, 60); }
+    if (tabId === 'dropdown-manager') {
+      setTimeout(ddmInit, 60);
+      // v45: check vocab diff vs live sheet when DDM tab is opened
+      setTimeout(_ddmCheckVocabDiff, 400);
+    }
+    // v45: repopulate all data-vocab filter selects whenever any tab is shown
+    setTimeout(function(){ if(typeof _v244_populateDataVocabSelects==='function') _v244_populateDataVocabSelects(); }, 120);
     if (tabId === 'drive')     { setTimeout(() => {
       refreshLowStockAlerts();
       const driveInp = document.getElementById('drive-url-input');
@@ -17984,6 +17991,21 @@ async function moduleRefresh(mod) {
   } catch(e) { toast('⚠️ Refresh failed: ' + e.message); }
   finally {
     if (btn) { btn.style.opacity = '1'; btn.style.pointerEvents = 'auto'; }
+    // ── FIX: Re-populate role-dashboard KPI cards after any module refresh ──
+    try {
+      const role = window._currentRole || '';
+      if (['coo','admin','creator','mis','sys_admin'].includes(role)) {
+        if (typeof _populateCOOKPIs === 'function') setTimeout(_populateCOOKPIs, 400);
+      } else if (role === 'faculty') {
+        if (typeof _populateFacultyKPIs === 'function') setTimeout(_populateFacultyKPIs, 400);
+      } else if (role === 'hr_manager') {
+        if (typeof _populateHRKPIs === 'function') setTimeout(_populateHRKPIs, 400);
+      } else if (role === 'finance_mgr') {
+        if (typeof _populateFinanceKPIs === 'function') setTimeout(_populateFinanceKPIs, 400);
+      } else if (role === 'facility_mgr') {
+        if (typeof _populateFacilityKPIs === 'function') setTimeout(_populateFacilityKPIs, 400);
+      }
+    } catch(_e) {}
   }
 }
 
@@ -18175,6 +18197,13 @@ function ddmShowSection(sec) {
 
 // ── Reload all vocab from connected Google Sheet ─────────────────────────────
 function ddmReloadFromSheet() {
+  // v45: after reload, repopulate all data-vocab filter selects + check diff
+  setTimeout(function() {
+    if (typeof _v244_populateDataVocabSelects === 'function') _v244_populateDataVocabSelects();
+    if (typeof execBuildAll === 'function') try { execBuildAll(); } catch(e) {}
+    // Show vocab diff banner if GAS is connected
+    _ddmCheckVocabDiff();
+  }, 500);
   const url = WS_CONFIG && WS_CONFIG.webAppUrl;
   if (!url) { toast('⚠️ No Google Sheet connected — set a URL in the Google Drive tab first'); return; }
   toast('↻ Reloading vocab from Sheet…');
@@ -18191,6 +18220,54 @@ function ddmReloadFromSheet() {
 }
 
 // ── Init ────────────────────────────────────────────────────────────────────
+/** v45/v38: Check live sheet vocab vs portal in-memory and show diff banner */
+function _ddmCheckVocabDiff() {
+  var url = (typeof WS_CONFIG !== 'undefined' && WS_CONFIG.webAppUrl) ? WS_CONFIG.webAppUrl : '';
+  if (!url) return;
+  // Build snapshot from current WS_CONFIG + module stores
+  var snapshot = {};
+  var cfg = window.WS_CONFIG || {};
+  ['staffCenter','staffCategory','staffDesignation','facultyType','associateFacultyType',
+   'affiliateFacultyType','researcherCenter','researcherCategory','researcherDesignation',
+   'researcherStatuses','studentDesignation','studentYear','statuses','studentStatuses'
+  ].forEach(function(f){ if(cfg[f]) snapshot[f] = cfg[f]; });
+  var mirrorMap = {
+    expenseCategory:'_v241_expCategories', expenseStatus:'_v241_expStatuses',
+    pubJurisdiction:'_v241_pubJurisdiction', pubPublished:'_v241_pubPublished',
+    conferenceRankings:'_v241_conferenceRankings',
+    bioAuthStatus:'_v241_bioAuth', bioAcctStatus:'_v241_bioAcct',
+    bioAccessArea:'_v241_bioArea', bioCat:'_v241_bioCat',
+    invCategory:'_v241_invCat', invColor:'_v241_invColors',
+    invSize:'_v241_invSizes', invType:'_v241_invTypes',
+    labRoomCategory:'_v241_labRoomCategory', labStatus:'_v241_labStatus',
+    labRoomType:'_v241_labRoomType', labDesignation:'_v241_labDesignation'
+  };
+  Object.keys(mirrorMap).forEach(function(f){ var v=window[mirrorMap[f]]; if(v&&v.length) snapshot[f]=v; });
+
+  var payload = JSON.stringify({ action:'GET_VOCAB_DIFF', params:{ snapshot: JSON.stringify(snapshot) } });
+  fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body:payload })
+    .then(function(r){ return r.json(); })
+    .then(function(data) {
+      var bar = document.getElementById('ddm-status-bar');
+      if (!bar) return;
+      if (data && data.hasDiff && data.diffs) {
+        var fields = Object.keys(data.diffs);
+        var added   = fields.filter(function(f){ return data.diffs[f].added.length; }).length;
+        var removed = fields.filter(function(f){ return data.diffs[f].removed.length; }).length;
+        bar.style.cssText = 'display:block;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.3);color:#F59E0B;padding:0.65rem 1.1rem;border-radius:9px;font-size:0.82rem;font-family:var(--font-mono);margin-bottom:1.2rem;';
+        bar.innerHTML = '⚠️ Sheet has ' + fields.length + ' field(s) with differences from portal memory'
+          + (added   ? ' · <b>+' + added   + ' field(s)</b> have new values in sheet' : '')
+          + (removed ? ' · <b>' + removed + ' field(s)</b> have values removed in sheet' : '')
+          + ' &nbsp;<button onclick="ddmReloadFromSheet()" style="margin-left:0.75rem;padding:2px 10px;border-radius:6px;background:rgba(245,158,11,0.2);border:1px solid rgba(245,158,11,0.4);color:#F59E0B;font-size:0.75rem;cursor:pointer;font-family:var(--font-mono);">Pull from Sheet</button>';
+      } else if (bar.style.display !== 'none') {
+        bar.style.cssText = 'display:block;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);color:#10B981;padding:0.65rem 1.1rem;border-radius:9px;font-size:0.82rem;font-family:var(--font-mono);margin-bottom:1.2rem;';
+        bar.innerHTML = '✅ Portal vocab is in sync with Google Sheet';
+        setTimeout(function(){ bar.style.display='none'; }, 3000);
+      }
+    })
+    .catch(function() { /* silent fail — no GAS connection */ });
+}
+
 function ddmInit() {
   ddmRenderPeople();
   ddmRenderAssets();
@@ -18514,6 +18591,8 @@ async function peopleVocabFetch() {
           if (mk) window[mk] = list.slice();
         });
       });
+      // v45: Populate all data-vocab filter selects with fresh vocab
+      try { if(typeof _v244_populateDataVocabSelects === 'function') setTimeout(_v244_populateDataVocabSelects, 80); } catch(e) {}
       // Fire the event bus so _v244_broadcast hydrates all selects + visuals
       try {
         document.dispatchEvent(new CustomEvent('wsai:allVocabLoaded', { detail: allRes }));
@@ -21477,6 +21556,16 @@ window._v244_broadcast = function(field, list) {
   try {
     document.dispatchEvent(new CustomEvent('wsai:vocabChanged', { detail: { field, list } }));
   } catch(e) {}
+  // 5a — Immediately repopulate all data-vocab filter selects for this field
+  try {
+    document.querySelectorAll('select[data-vocab="' + field + '"]').forEach(function(sel) {
+      var cur = sel.value;
+      var firstOpt = sel.options[0];
+      var placeholder = firstOpt ? firstOpt.text : 'All';
+      sel.innerHTML = '<option value="">' + placeholder + '</option>' +
+        list.map(function(v){ return '<option value="' + v + '"' + (v === cur ? ' selected' : '') + '>' + v + '</option>'; }).join('');
+    });
+  } catch(e) {}
 
   // 6 — Refresh module visuals
   const mods = FIELD_MODULE_MAP[field] || [];
@@ -21484,12 +21573,33 @@ window._v244_broadcast = function(field, list) {
     setTimeout(function() { _v244_refreshModule(mod); }, 80);
   });
 
-  // 7 — Always refresh sidebar + DDM cards for the changed section
+  // 7 — Always refresh sidebar + DDM cards + exec/role dashboards
   setTimeout(function() {
     if (typeof refreshSidebarAnalytics === 'function') try { refreshSidebarAnalytics(); } catch(e) {}
     _v244_ddmRefreshSection(field);
     // Re-wire selects that lost their wired flag
     setTimeout(_v244_wireAllSelects, 50);
+    // 7a — Refresh exec dashboard if visible (vocab changes affect filter counts)
+    try {
+      var execTab = document.getElementById('tab-exec-dashboard');
+      if (execTab && execTab.classList.contains('active') && typeof execBuildAll === 'function') {
+        execBuildAll();
+      }
+    } catch(e) {}
+    // 7b — Refresh role dashboard KPIs if visible
+    try {
+      var rdTab = document.getElementById('tab-role-dashboard');
+      if (rdTab && rdTab.classList.contains('active') && typeof v31FetchAll === 'function') {
+        v31FetchAll();
+      }
+    } catch(e) {}
+    // 7c — Refresh KPI drilldown if open (filter dropdowns use vocab)
+    try {
+      var ddOv = document.getElementById('kpi-drilldown-overlay');
+      if (ddOv && ddOv.style.display !== 'none' && window._kpiDDCfg) {
+        _kpiDDRenderFilters(window._kpiDDData || [], window._kpiDDCfg);
+      }
+    } catch(e) {}
   }, 100);
 };
 
@@ -22163,7 +22273,61 @@ window._v244_wireAllSelects = function() {
     if (typeof _addListEditBtn === 'function') _addListEditBtn(el, cfg.field, cfg.label);
   });
   if (typeof _wireListEditBtns === 'function') _wireListEditBtns();
+
+  // v45: Also populate standalone data-vocab filter selects (biometric/asset table filters)
+  _v244_populateDataVocabSelects();
 };
+
+/** Populate all <select data-vocab="field"> elements from live vocab stores */
+function _v244_populateDataVocabSelects() {
+  const VOCAB_SRC = {
+    // Assets
+    units:           function(){ return (window.ASSET_CONFIG && ASSET_CONFIG.units) || ['Nos','Sets','Pairs','Boxes','Rolls','Metres','Litres','Kgs']; },
+    itCategory:      function(){ return (window.ASSET_CONFIG && ASSET_CONFIG.itCategory) || []; },
+    itStatus:        function(){ return (window.ASSET_CONFIG && ASSET_CONFIG.itStatus) || []; },
+    itConditions:    function(){ return (window.ASSET_CONFIG && ASSET_CONFIG.itConditions) || []; },
+    nonITCategories: function(){ return (window.ASSET_CONFIG && ASSET_CONFIG.nonITCategories) || []; },
+    nonITStatus:     function(){ return (window.ASSET_CONFIG && ASSET_CONFIG.nonITStatus) || []; },
+    // Biometric
+    bioCat:          function(){ return window._v241_bioCat || ['Student','Staff','Researcher','Faculty','Intern']; },
+    bioAuthStatus:   function(){ return window._v241_bioAuth || ['Authorized','Pending','Revoked']; },
+    bioAcctStatus:   function(){ return window._v241_bioAcct || ['Active','Terminated','Suspended']; },
+    bioAccessArea:   function(){ return window._v241_bioArea || ['Main Entrance','Server Room','Lab A','Lab B','Faculty Block','Admin Block','All Areas']; },
+    // Expenses
+    expenseCategory: function(){ return window._v241_expCategories || []; },
+    expenseStatus:   function(){ return window._v241_expStatuses || ['Pending','Under-process','Paid']; },
+    // Lab
+    labRoomCategory: function(){ return window._v241_labRoomCategory || []; },
+    labStatus:       function(){ return window._v241_labStatus || []; },
+    labRoomType:     function(){ return window._v241_labRoomType || []; },
+    // Inventory
+    invCategory:     function(){ return window._v241_invCat || []; },
+    // People (for KPI drilldown & table filters)
+    staffCenter:          function(){ return (window.WS_CONFIG && WS_CONFIG.staffCenter) || []; },
+    staffCategory:        function(){ return (window.WS_CONFIG && WS_CONFIG.staffCategory) || []; },
+    staffDesignation:     function(){ return (window.WS_CONFIG && WS_CONFIG.staffDesignation) || []; },
+    facultyType:          function(){ return (window.WS_CONFIG && WS_CONFIG.facultyType) || []; },
+    associateFacultyType: function(){ return (window.WS_CONFIG && WS_CONFIG.associateFacultyType) || []; },
+    affiliateFacultyType: function(){ return (window.WS_CONFIG && WS_CONFIG.affiliateFacultyType) || []; },
+    researcherCenter:     function(){ return (window.WS_CONFIG && WS_CONFIG.researcherCenter) || []; },
+    researcherDesignation:function(){ return (window.WS_CONFIG && WS_CONFIG.researcherDesignation) || []; },
+    studentDesignation:   function(){ return (window.WS_CONFIG && WS_CONFIG.studentDesignation) || []; },
+    statuses:             function(){ return (window.WS_CONFIG && WS_CONFIG.statuses) || []; },
+  };
+  document.querySelectorAll('select[data-vocab]').forEach(function(sel) {
+    var field = sel.getAttribute('data-vocab');
+    var src = VOCAB_SRC[field];
+    if (!src) return;
+    var list = src();
+    if (!list || !list.length) return;
+    var cur = sel.value;
+    // Rebuild options preserving the 'All X' first option
+    var firstOpt = sel.options[0];
+    var placeholder = firstOpt ? firstOpt.text : 'All';
+    sel.innerHTML = '<option value="">' + placeholder + '</option>' +
+      list.map(function(v){ return '<option value="' + v + '"' + (v === cur ? ' selected' : '') + '>' + v + '</option>'; }).join('');
+  });
+}
 // Also expose under the old name so other code that calls it still works
 window._v241_wireAllSelects = window._v244_wireAllSelects;
 
@@ -22243,6 +22407,9 @@ setTimeout(_v244_injectDDMSections, 0);
 // Initial wiring passes
 setTimeout(window._v244_wireAllSelects, 300);
 setTimeout(window._v244_wireAllSelects, 900);
+// v45: populate data-vocab filter selects at boot too
+setTimeout(function(){ if(typeof _v244_populateDataVocabSelects==='function') _v244_populateDataVocabSelects(); }, 600);
+setTimeout(function(){ if(typeof _v244_populateDataVocabSelects==='function') _v244_populateDataVocabSelects(); }, 1500);
 
 // Render all DDM grids once DDM tab is visible
 const _origShowTab44 = typeof showTab === 'function' ? showTab : null;
@@ -22649,6 +22816,34 @@ function _renderAllModules() {
 
 // Expose so _fetchBiometricLabInventory can call it too
 window._wsai_renderAllModules = _renderAllModules;
+
+// ── FIX: After every _renderAllModules, re-populate role-dashboard KPI cards ──
+// Root cause: refreshKPIs() only updates People module KPI row (kpi-staff etc.).
+// The role-dashboard KPI cards (hr-staff-kpi, fin-exp-paid-kpi, etc.) are
+// populated by separate _populate*KPIs() functions that were NEVER called on refresh.
+(function _fixRoleDashKPIRefresh() {
+  const _origRender = window._wsai_renderAllModules;
+  if (typeof _origRender !== 'function') return;
+  window._wsai_renderAllModules = function() {
+    _origRender.apply(this, arguments);
+    try {
+      const role = window._currentRole || '';
+      if (['coo','admin','creator','mis','sys_admin'].includes(role)) {
+        if (typeof _populateCOOKPIs === 'function') setTimeout(_populateCOOKPIs, 350);
+      } else if (role === 'faculty') {
+        if (typeof _populateFacultyKPIs === 'function') setTimeout(_populateFacultyKPIs, 350);
+      } else if (role === 'hr_manager') {
+        if (typeof _populateHRKPIs === 'function') setTimeout(_populateHRKPIs, 350);
+      } else if (role === 'finance_mgr') {
+        if (typeof _populateFinanceKPIs === 'function') setTimeout(_populateFinanceKPIs, 350);
+      } else if (role === 'facility_mgr') {
+        if (typeof _populateFacilityKPIs === 'function') setTimeout(_populateFacilityKPIs, 350);
+      }
+    } catch(e) { console.warn('[KPI role refresh]', e); }
+  };
+  // Keep internal alias in sync
+  window._renderAllModules = window._wsai_renderAllModules;
+})();
 
 // Also patch _fetchBiometricLabInventory to re-render after it completes
 (function _fixBioLabInv() {
@@ -29631,6 +29826,112 @@ tbody td { vertical-align: middle; }
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // §H2 — POPULATE HR MANAGER KPI VALUES FROM LIVE DB
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  function _populateHRKPIs() {
+    try {
+      const DB = window.DB || {};
+      const BM = window.BM || {};
+      const sv = (id,v)=>{ const e=document.getElementById(id); if(e) e.textContent=v; };
+
+      // HR & People cards
+      sv('hr-staff-kpi',    (DB.staff||[]).length      || '—');
+      sv('hr-faculty-kpi',  (DB.faculty||[]).length    || '—');
+      sv('hr-res-kpi',      (DB.researchers||[]).length|| '—');
+      sv('hr-students-kpi', (DB.students||[]).length   || '—');
+
+      // Tenure risk
+      const today = new Date();
+      const allPeople = [
+        ...(DB.staff||[]),...(DB.researchers||[]),...(DB.faculty||[]),
+        ...(DB.assocFaculty||[]),...(DB.affiFaculty||[]),
+        ...(DB.students||[]),...(DB.fellows||[])
+      ];
+      const tenureRisk = allPeople.filter(p => {
+        const d = p.exitDate||p.tenureEnd||'';
+        if (!d) return false;
+        const dt = new Date(d.replace(/(\d{2})\/(\d{2})\/(\d{4})/,'$3-$2-$1'));
+        const diff = (dt - today) / 86400000;
+        return diff >= 0 && diff <= 30;
+      }).length;
+      sv('hr-tenure-kpi', tenureRisk || '0');
+
+      // Biometric pending
+      const bmRaw = BM.raw || {};
+      const bioPending = bmRaw.pendingCount || (BM.all||[]).filter(u=>(u.authorizationStatus||'').toLowerCase()==='pending').length;
+      sv('hr-bio-kpi', bioPending || '0');
+
+      _log('HR Manager KPIs populated ✅');
+    } catch(e) { console.warn('[v39 HR KPI]', e); }
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // §H3 — POPULATE FINANCE MANAGER KPI VALUES FROM LIVE DB
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  function _populateFinanceKPIs() {
+    try {
+      const EXP      = window.EXP      || {};
+      const ASSET_DB = window.ASSET_DB || {};
+      const sv = (id,v)=>{ const e=document.getElementById(id); if(e) e.textContent=v; };
+
+      // Expenses
+      const expAll = (EXP && EXP.all) || [];
+      sv('fin-exp-paid-kpi',  expAll.filter(e=>(e.status||'').toLowerCase()==='paid').length      || '—');
+      sv('fin-exp-pend-kpi',  expAll.filter(e=>(e.status||'').toLowerCase()==='pending').length   || '—');
+      sv('fin-exp-proc-kpi',  expAll.filter(e=>(e.status||'').toLowerCase().includes('process')).length || '—');
+
+      // Assets
+      const rows = ASSET_DB.rows || {};
+      sv('fin-ast-it',     (rows.it||ASSET_DB.it||[]).length     || '—');
+      sv('fin-ast-nonit',  (rows.nonit||ASSET_DB.nonit||[]).length|| '—');
+      const vendors = (ASSET_DB.vendors||rows.vendors||[]).length || '—';
+      sv('fin-vendor-kpi', vendors);
+
+      _log('Finance Manager KPIs populated ✅');
+    } catch(e) { console.warn('[v39 Finance KPI]', e); }
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // §H4 — POPULATE FACILITY MANAGER KPI VALUES FROM LIVE DB
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  function _populateFacilityKPIs() {
+    try {
+      const LAB      = window.LAB      || {};
+      const ASSET_DB = window.ASSET_DB || {};
+      const sv = (id,v)=>{ const e=document.getElementById(id); if(e) e.textContent=v; };
+
+      const fl     = (LAB.data ? LAB.data.facultyLabs   : LAB.facultyLabs)   || [];
+      const fr     = (LAB.data ? LAB.data.facilityRooms : LAB.facilityRooms) || [];
+      const frooms = (LAB.data ? LAB.data.facultyRooms  : LAB.facultyRooms)  || [];
+      const occ    = fl.reduce((s,l)=>s+(l.occupiedSeats||0),0);
+      const cap    = fl.reduce((s,l)=>s+(l.capacity||0),0);
+      const avl    = Math.max(0, cap - occ);
+      const util   = cap > 0 ? Math.round(occ/cap*100) : 0;
+
+      sv('facmgr-lab-faculty',  fl.length     || '—');
+      sv('facmgr-lab-facility', fr.length     || '—');
+      sv('facmgr-lab-frooms',   frooms.length || '—');
+      sv('facmgr-occ',          occ);
+      sv('facmgr-avail',        avl);
+      sv('facmgr-util',         util + '%');
+
+      // Utilization ribbons
+      const ind = fl.map(l => l.statusIndicator || '');
+      sv('facmgr-rib-over', ind.filter(i=>i==='OVER-CAPACITY').length);
+      sv('facmgr-rib-high', ind.filter(i=>i==='HIGH').length);
+      sv('facmgr-rib-med',  ind.filter(i=>i==='MEDIUM').length);
+      sv('facmgr-rib-low',  ind.filter(i=>i==='LOW'||i==='EMPTY').length);
+
+      // Assets
+      const rows = ASSET_DB.rows || {};
+      sv('facmgr-ast-it',    (rows.it||ASSET_DB.it||[]).length     || '—');
+      sv('facmgr-ast-nonit', (rows.nonit||ASSET_DB.nonit||[]).length|| '—');
+
+      _log('Facility Manager KPIs populated ✅');
+    } catch(e) { console.warn('[v39 Facility KPI]', e); }
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // §I — MAIN HOOK: wrap applyAccessLevelUI
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   function _hookAccessLevel() {
@@ -29653,12 +29954,18 @@ tbody td { vertical-align: middle; }
           break;
         case 'hr_manager':
           setTimeout(_buildHRKPIs, 300);
+          setTimeout(_populateHRKPIs, 2000);
+          setTimeout(_populateHRKPIs, 4500);
           break;
         case 'finance_mgr':
           setTimeout(_buildFinanceKPIs, 300);
+          setTimeout(_populateFinanceKPIs, 2000);
+          setTimeout(_populateFinanceKPIs, 4500);
           break;
         case 'facility_mgr':
           setTimeout(_buildFacilityKPIs, 300);
+          setTimeout(_populateFacilityKPIs, 2000);
+          setTimeout(_populateFacilityKPIs, 4500);
           break;
       }
       _log('v39 hook fired for: ' + role);
@@ -29679,7 +29986,10 @@ tbody td { vertical-align: middle; }
       if (tabId === 'role-dashboard') {
         const role = window._currentRole || '';
         setTimeout(() => _patchBannerGreeting(role), 300);
-        if (role === 'faculty') setTimeout(_populateFacultyKPIs, 600);
+        if (role === 'faculty')      setTimeout(_populateFacultyKPIs,  600);
+        if (role === 'hr_manager')   setTimeout(_populateHRKPIs,       600);
+        if (role === 'finance_mgr')  setTimeout(_populateFinanceKPIs,  600);
+        if (role === 'facility_mgr') setTimeout(_populateFacilityKPIs, 600);
       }
     };
     window.showTab._v39showPatched = true;
@@ -29697,7 +30007,9 @@ tbody td { vertical-align: middle; }
       const r = orig.apply(this, arguments);
       const after = () => {
         const role = window._currentRole||'';
-        if (role === 'faculty') setTimeout(_populateFacultyKPIs, 500);
+        if (role === 'faculty')      setTimeout(_populateFacultyKPIs,  500);
+        if (role === 'hr_manager')   setTimeout(_populateHRKPIs,       500);
+        if (role === 'finance_mgr')  setTimeout(_populateFinanceKPIs,  500);
         if (role === 'facility_mgr') {
           setTimeout(() => {
             const LAB=window.LAB||{};
@@ -29853,10 +30165,10 @@ tbody td { vertical-align: middle; }
       setTimeout(_forceCOOPopulate, 200);
     }
 
-    if (role === 'faculty')      { _buildFacultyKPIs(); _populateFacultyKPIs(); }
-    if (role === 'hr_manager')   { _buildHRKPIs();      setTimeout(() => { if (typeof window._populateCOOKPIs === 'function') window._populateCOOKPIs(); }, 300); }
-    if (role === 'finance_mgr')  { _buildFinanceKPIs(); setTimeout(() => { if (typeof window._populateCOOKPIs === 'function') window._populateCOOKPIs(); }, 300); }
-    if (role === 'facility_mgr') { _buildFacilityKPIs();setTimeout(() => { if (typeof window._populateCOOKPIs === 'function') window._populateCOOKPIs(); }, 300); }
+    if (role === 'faculty')      { _buildFacultyKPIs();  _populateFacultyKPIs();  setTimeout(_populateFacultyKPIs,  600); }
+    if (role === 'hr_manager')   { _buildHRKPIs();       _populateHRKPIs();       setTimeout(_populateHRKPIs,       600); }
+    if (role === 'finance_mgr')  { _buildFinanceKPIs();  _populateFinanceKPIs();  setTimeout(_populateFinanceKPIs,  600); }
+    if (role === 'facility_mgr') { _buildFacilityKPIs(); _populateFacilityKPIs(); setTimeout(_populateFacilityKPIs, 600); }
   }
 
   // ── v43 FIX: also patch showTab to re-populate on every My Dashboard visit ─
@@ -29869,10 +30181,11 @@ tbody td { vertical-align: middle; }
       if (tabId === 'role-dashboard') {
         const role = window._currentRole || '';
         setTimeout(() => {
-          if (ADMIN_TIER_ROLES.includes(role)) _forceCOOPopulate();
-          if (role === 'hr_manager')   { if (typeof window._populateCOOKPIs === 'function') window._populateCOOKPIs(); }
-          if (role === 'finance_mgr')  { if (typeof window._populateCOOKPIs === 'function') window._populateCOOKPIs(); }
-          if (role === 'facility_mgr') { if (typeof window._populateCOOKPIs === 'function') window._populateCOOKPIs(); }
+          if (ADMIN_TIER_ROLES.includes(role))  _forceCOOPopulate();
+          if (role === 'faculty')      { if (typeof _populateFacultyKPIs  === 'function') _populateFacultyKPIs();  }
+          if (role === 'hr_manager')   { if (typeof _populateHRKPIs       === 'function') _populateHRKPIs();       }
+          if (role === 'finance_mgr')  { if (typeof _populateFinanceKPIs  === 'function') _populateFinanceKPIs();  }
+          if (role === 'facility_mgr') { if (typeof _populateFacilityKPIs === 'function') _populateFacilityKPIs(); }
         }, 400);
       }
     };
@@ -31145,5 +31458,157 @@ tbody td { vertical-align: middle; }
       }
     }
   });
+</script>
+
+<script>
+// ══════════════════════════════════════════════════════════════════════════════
+// WSAI PORTAL v46 — KPI CARD REFRESH FIX (Final Safety-Net Patch)
+// ─────────────────────────────────────────────────────────────────────────────
+// Root cause (all roles):
+//   moduleRefresh('people'|'assets'|'labs'|…) → sysFetchAll() → _renderAllModules()
+//   _renderAllModules() calls refreshKPIs() which updates only the People module
+//   tab's own KPI row (kpi-staff, kpi-faculty …). It NEVER called the role-dashboard
+//   KPI populate functions (_populateHRKPIs, _populateFinanceKPIs, etc.), so every
+//   role-dashboard KPI card stayed at "—" permanently after a module refresh.
+//
+// Additional bugs fixed here:
+//   • _catchUpKPIs() called _populateCOOKPIs() for hr_manager/finance_mgr/facility_mgr
+//     — those roles have their own populate functions, not COO's.
+//   • _patchShowTabForAllRoles() did the same wrong call.
+//   • No _populateHRKPIs / _populateFinanceKPIs / _populateFacilityKPIs functions
+//     existed at all — they are now defined in the v39 IIFE above.
+//
+// This block is the final safety net:
+//   1. Wraps moduleRefresh to always fire role populate after it completes.
+//   2. Provides window-level aliases so any future code can call them.
+//   3. Re-runs catch-up at t=1s / 3s / 7s to cover slow GAS fetches.
+// ══════════════════════════════════════════════════════════════════════════════
+(function _v46KpiRefreshFix() {
+  'use strict';
+
+  function _getPopulateFn(role) {
+    const ADMIN = ['coo','admin','creator','mis','sys_admin'];
+    if (ADMIN.includes(role))     return window._populateCOOKPIs;
+    if (role === 'faculty')       return window._populateFacultyKPIs;
+    if (role === 'hr_manager')    return window._populateHRKPIs;
+    if (role === 'finance_mgr')   return window._populateFinanceKPIs;
+    if (role === 'facility_mgr')  return window._populateFacilityKPIs;
+    return null;
+  }
+
+  function _fireRoleKPIs(delay) {
+    delay = delay || 0;
+    setTimeout(function() {
+      try {
+        var role = window._currentRole || '';
+        var fn = _getPopulateFn(role);
+        if (typeof fn === 'function') fn();
+      } catch(e) { console.warn('[v46 KPI fix]', e); }
+    }, delay);
+  }
+
+  // ── 1. Wrap moduleRefresh (runs in finally so it fires even on error) ──────
+  function _patchModuleRefresh() {
+    var orig = window.moduleRefresh;
+    if (typeof orig !== 'function') { setTimeout(_patchModuleRefresh, 400); return; }
+    if (orig._v46kpifixed) return;
+    window.moduleRefresh = async function(mod) {
+      try { await orig.apply(this, arguments); }
+      finally { _fireRoleKPIs(450); }
+    };
+    window.moduleRefresh._v46kpifixed = true;
+  }
+
+  // ── 2. Wrap _wsai_renderAllModules (called by sysFetchAll after every fetch) ─
+  function _patchRenderAll() {
+    var orig = window._wsai_renderAllModules;
+    if (typeof orig !== 'function') { setTimeout(_patchRenderAll, 400); return; }
+    if (orig._v46kpifixed) return;
+    window._wsai_renderAllModules = function() {
+      orig.apply(this, arguments);
+      _fireRoleKPIs(400);
+    };
+    window._wsai_renderAllModules._v46kpifixed = true;
+    window._renderAllModules = window._wsai_renderAllModules;
+  }
+
+  // ── 3. Expose populate functions globally so any inline onclick can use them ─
+  function _exposePopulateFns() {
+    // These are defined inside the v39 IIFE — expose them if not already global
+    if (typeof window._populateHRKPIs !== 'function') {
+      // Fallback minimal version (should not be needed after v39 IIFE runs)
+      window._populateHRKPIs = function() {
+        try {
+          var DB=window.DB||{}, sv=function(id,v){var e=document.getElementById(id);if(e)e.textContent=v;};
+          sv('hr-staff-kpi',    (DB.staff||[]).length     ||'—');
+          sv('hr-faculty-kpi',  (DB.faculty||[]).length   ||'—');
+          sv('hr-res-kpi',      (DB.researchers||[]).length||'—');
+          sv('hr-students-kpi', (DB.students||[]).length  ||'—');
+          var today=new Date(), allP=[].concat(DB.staff||[],DB.researchers||[],DB.faculty||[],DB.assocFaculty||[],DB.affiFaculty||[],DB.students||[],DB.fellows||[]);
+          var risk=allP.filter(function(p){var d=p.exitDate||p.tenureEnd||'';if(!d)return false;var dt=new Date(d.replace(/(\d{2})\/(\d{2})\/(\d{4})/,'$3-$2-$1'));var diff=(dt-today)/86400000;return diff>=0&&diff<=30;}).length;
+          sv('hr-tenure-kpi', risk||'0');
+          var BM=window.BM||{}, bmRaw=BM.raw||{};
+          var pend=bmRaw.pendingCount||(BM.all||[]).filter(function(u){return(u.authorizationStatus||'').toLowerCase()==='pending';}).length;
+          sv('hr-bio-kpi', pend||'0');
+        } catch(e) {}
+      };
+    }
+    if (typeof window._populateFinanceKPIs !== 'function') {
+      window._populateFinanceKPIs = function() {
+        try {
+          var EXP=window.EXP||{}, ASSET_DB=window.ASSET_DB||{}, sv=function(id,v){var e=document.getElementById(id);if(e)e.textContent=v;};
+          var expAll=(EXP&&EXP.all)||[];
+          sv('fin-exp-paid-kpi',  expAll.filter(function(e){return(e.status||'').toLowerCase()==='paid';}).length     ||'—');
+          sv('fin-exp-pend-kpi',  expAll.filter(function(e){return(e.status||'').toLowerCase()==='pending';}).length  ||'—');
+          sv('fin-exp-proc-kpi',  expAll.filter(function(e){return(e.status||'').toLowerCase().includes('process');}).length||'—');
+          var rows=ASSET_DB.rows||{};
+          sv('fin-ast-it',    (rows.it||ASSET_DB.it||[]).length    ||'—');
+          sv('fin-ast-nonit', (rows.nonit||ASSET_DB.nonit||[]).length||'—');
+          sv('fin-vendor-kpi',(ASSET_DB.vendors||rows.vendors||[]).length||'—');
+        } catch(e) {}
+      };
+    }
+    if (typeof window._populateFacilityKPIs !== 'function') {
+      window._populateFacilityKPIs = function() {
+        try {
+          var LAB=window.LAB||{}, ASSET_DB=window.ASSET_DB||{}, sv=function(id,v){var e=document.getElementById(id);if(e)e.textContent=v;};
+          var fl=(LAB.data?LAB.data.facultyLabs:LAB.facultyLabs)||[];
+          var fr=(LAB.data?LAB.data.facilityRooms:LAB.facilityRooms)||[];
+          var frooms=(LAB.data?LAB.data.facultyRooms:LAB.facultyRooms)||[];
+          var occ=fl.reduce(function(s,l){return s+(l.occupiedSeats||0);},0);
+          var cap=fl.reduce(function(s,l){return s+(l.capacity||0);},0);
+          sv('facmgr-lab-faculty', fl.length||'—'); sv('facmgr-lab-facility', fr.length||'—');
+          sv('facmgr-lab-frooms', frooms.length||'—'); sv('facmgr-occ', occ);
+          sv('facmgr-avail', Math.max(0,cap-occ)); sv('facmgr-util', cap>0?Math.round(occ/cap*100)+'%':'—');
+          var rows=ASSET_DB.rows||{};
+          sv('facmgr-ast-it',    (rows.it||ASSET_DB.it||[]).length    ||'—');
+          sv('facmgr-ast-nonit', (rows.nonit||ASSET_DB.nonit||[]).length||'—');
+        } catch(e) {}
+      };
+    }
+  }
+
+  // ── 4. Catch-up schedule for session-restore and slow GAS responses ─────────
+  function _scheduleCatchUp() {
+    [1000, 3000, 7000].forEach(function(d) {
+      setTimeout(_fireRoleKPIs, d);
+    });
+  }
+
+  // ── Boot ─────────────────────────────────────────────────────────────────────
+  function _boot() {
+    _exposePopulateFns();
+    _patchModuleRefresh();
+    _patchRenderAll();
+    _scheduleCatchUp();
+    console.log('[v46 KPI Fix] Loaded ✅');
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', _boot);
+  } else {
+    setTimeout(_boot, 50);
+  }
+})();
 </script>
 </html>
