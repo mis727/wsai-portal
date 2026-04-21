@@ -6083,7 +6083,7 @@
       'VISITING FACULTY','ADJUNCT FACULTY','PROFESSOR OF PRACTICE','GUEST FACULTY'
     ],
     affiliateFacultyType: [
-      'AFFILIATE FACULTY'
+      'AFFILIATE FACULTY','INDUSTRY PARTNER','EXTERNAL COLLABORATOR','HONORARY FACULTY'
     ],
 
     researcherCenter: [
@@ -6131,7 +6131,10 @@
       { sNo:2, facultyType:'VISITING FACULTY', name:'Dr. Lakshmi Rajan', joiningDate:'2024-06-01', exitDate:'2026-05-31', email:'lakshmi.r@iitm.ac.in', phone:'9865432102', office:'Room 402' }
     ],
     affiFaculty: [
-      { sNo:1, facultyType:'AFFILIATE FACULTY', name:'Prof. K. Balamurugan', department:'Electrical Engg', email:'k.bala@iitm.ac.in', phone:'9854321001', office:'Room 501', joiningDate:'2023-07-01', exitDate:'2026-06-30' }
+      { sNo:1, facultyType:'AFFILIATE FACULTY',      name:'Prof. K. Balamurugan',   department:'Electrical Engg',   email:'k.bala@iitm.ac.in',     phone:'9854321001', office:'Room 501', joiningDate:'2023-07-01', exitDate:'2026-06-30' },
+      { sNo:2, facultyType:'INDUSTRY PARTNER',       name:'Dr. Suresh Varadhan',    department:'Walmart Labs',       email:'s.varadhan@walmart.com', phone:'9845001002', office:'Room 502', joiningDate:'2024-01-15', exitDate:'2027-01-14' },
+      { sNo:3, facultyType:'EXTERNAL COLLABORATOR',  name:'Prof. Anita Krishnan',   department:'IISc Bangalore',     email:'anita.k@iisc.ac.in',     phone:'9867002003', office:'Room 503', joiningDate:'2023-09-01', exitDate:'2026-08-31' },
+      { sNo:4, facultyType:'HONORARY FACULTY',       name:'Dr. Ramesh Subramanian', department:'TCS Research',       email:'r.subramanian@tcs.com',  phone:'9878003004', office:'Room 504', joiningDate:'2022-06-01', exitDate:'2025-05-31' }
     ],
     researchers: [
       { sNo:1, name:'Rahul Menon', center:'CeRAI', category:'Student', designation:'Ph.D Scholar', status:'On-going', phone:'9843210001', joiningDate:'2022-07-01', exitDate:'2026-03-22', email:'rahul.menon@iitm.ac.in', facultyGuide:'Dr. S. Muthu', websitePresence:'' },
@@ -23401,7 +23404,8 @@ function _v31BuildFromLocalDB(role) {
     if (typeof DB !== 'undefined') {
       d.activeFaculty    = (DB.faculty||[]).filter(function(r){ return r.status==='Active'; }).length;
       d.associateFaculty = (DB.assocFaculty||[]).filter(function(r){ return r.status==='Active'; }).length;
-      d.affiliateFaculty = (DB.affiFaculty||[]).filter(function(r){ return r.status==='Active'; }).length;
+      // Affiliate faculty records have no status field — count all (treat absence of status as active)
+      d.affiliateFaculty = (DB.affiFaculty||[]).filter(function(r){ return !r.status || r.status==='Active'; }).length;
       d.totalResearchers = (DB.researchers||[]).filter(function(r){ return r.status==='On-going'; }).length;
       d.totalStudents    = (DB.students||[]).filter(function(r){ return r.status==='On-going'; }).length;
       // Tenure actions
@@ -23477,6 +23481,31 @@ function _v31BuildFromLocalDB(role) {
       d.approvedMonth   = approvedMo.length;
       d.budgetUtil      = total>0 ? Math.round(paid/total*100) : 0;
       d.expenses        = EXP.all;
+    }
+  }
+
+  // v43 FIX: populate MIS-specific KPI fields from live DB
+  if (role === 'mis') {
+    if (typeof DB !== 'undefined') {
+      var misAllPeople = [].concat(DB.staff||[],DB.faculty||[],DB.assocFaculty||[],DB.affiFaculty||[],DB.researchers||[],DB.students||[],DB.fellows||[]);
+      d.totalRecords    = misAllPeople.length;
+      d.qualityIssues   = misAllPeople.filter(function(r){ return !r.email || !r.name; }).length;
+      d.pendingRequests = 0; // no live sheet — show 0 rather than —
+      // Count publications if available
+      d.reportsMonth    = (typeof PUB !== 'undefined' && PUB.all) ? PUB.all.length : 0;
+      d.lastSync        = _v31TimeStr();
+      // Also fill COO-style affiliate count for the expandable rows
+      d.affiliateFaculty = (DB.affiFaculty||[]).filter(function(r){ return !r.status || r.status==='Active'; }).length;
+      d.associateFaculty = (DB.assocFaculty||[]).filter(function(r){ return r.status==='Active'; }).length;
+      d.activeFaculty    = (DB.faculty||[]).filter(function(r){ return r.status==='Active'; }).length;
+      d.tenureActionsDue = [].concat(DB.faculty||[],DB.assocFaculty||[],DB.affiFaculty||[]).filter(function(r){
+        if (!r.exitDate && !r.tenureEnd) return false;
+        var d2 = _v31ParseDate(r.exitDate||r.tenureEnd);
+        return d2 && Math.ceil((d2-now)/86400000) <= 90;
+      }).length;
+    }
+    if (typeof EXP !== 'undefined' && EXP.all) {
+      d.pendingExpenses = EXP.all.filter(function(r){ return r.status==='Pending'||r.status==='Under-process'; }).length;
     }
   }
 
@@ -29542,32 +29571,31 @@ tbody td { vertical-align: middle; }
   // Expose v36's internal _buildCOOKPIRows so we can call it directly
   // We do this by wrapping the v36 IIFE's internal reference after it runs
   function _exposeV36Internals() {
-    // Check if the COO rows were already built
-    if (_id('coo-enhanced-kpi-rows')) { _log('COO rows already present ✅'); return; }
-
     const role = window._currentRole || '';
     if (!ADMIN_TIER_ROLES.includes(role)) return;
 
+    // v43 FIX: if rows already exist, skip rebuild but ALWAYS re-populate
+    // (previously returned early here, leaving values as stale "—")
+    if (_id('coo-enhanced-kpi-rows')) {
+      _log('COO rows present — re-populating values (v43 fix)');
+      setTimeout(() => { if (typeof window._populateCOOKPIs === 'function') window._populateCOOKPIs(); }, 150);
+      setTimeout(() => { if (typeof window._populateCOOKPIs === 'function') window._populateCOOKPIs(); }, 1200);
+      return;
+    }
+
     _log('Forcing COO KPI rows build for role: ' + role);
 
-    // Direct call via exposed reference (set in v36 boot)
     if (typeof window._v36BuildCOOKPIRows === 'function') {
       window._v36BuildCOOKPIRows();
       _log('_v36BuildCOOKPIRows called directly ✅');
     } else {
-      // Fallback: re-trigger applyAccessLevelUI (safe — v36 guards prevent duplication)
       _log('_v36BuildCOOKPIRows not yet exposed — re-triggering applyAccessLevelUI');
       const origApply = window.applyAccessLevelUI;
       if (typeof origApply === 'function') origApply.call(window, role);
     }
 
-    // Populate values after build
-    setTimeout(() => {
-      if (typeof window._populateCOOKPIs === 'function') window._populateCOOKPIs();
-    }, 600);
-    setTimeout(() => {
-      if (typeof window._populateCOOKPIs === 'function') window._populateCOOKPIs();
-    }, 2500);
+    setTimeout(() => { if (typeof window._populateCOOKPIs === 'function') window._populateCOOKPIs(); }, 600);
+    setTimeout(() => { if (typeof window._populateCOOKPIs === 'function') window._populateCOOKPIs(); }, 2500);
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -29612,20 +29640,58 @@ tbody td { vertical-align: middle; }
     if (removed) _log('Cleared ' + removed + ' stale coo-enhanced-kpi-rows guard(s)');
   }
 
+  // ── v43 FIX: always populate COO KPIs regardless of guard state ──────────
+  // _exposeV36Internals() used to bail early if coo-enhanced-kpi-rows existed,
+  // meaning _populateCOOKPIs was never retried after data loaded.
+  function _forceCOOPopulate() {
+    if (typeof window._populateCOOKPIs === 'function') {
+      window._populateCOOKPIs();
+      _log('v43: _populateCOOKPIs force-called ✅');
+    }
+    // Also ensure the role panel is correctly activated (guards against stale data-active)
+    const role = window._currentRole || '';
+    if (role) _ensureRolePanelActive(role);
+  }
+
   // Master catch-up: ensures KPIs are visible for any role, any timing
   function _catchUpKPIs() {
     const role = window._currentRole || '';
     if (!role) return;
     _ensureRolePanelActive(role);
     _patchBannerGreeting(role);
+
     if (ADMIN_TIER_ROLES.includes(role)) {
       _resetCOOGuardIfEmpty();
       _exposeV36Internals();
+      // v43 FIX: always re-populate regardless of whether rows were already built
+      setTimeout(_forceCOOPopulate, 200);
     }
+
     if (role === 'faculty')      { _buildFacultyKPIs(); _populateFacultyKPIs(); }
-    if (role === 'hr_manager')   _buildHRKPIs();
-    if (role === 'finance_mgr')  _buildFinanceKPIs();
-    if (role === 'facility_mgr') _buildFacilityKPIs();
+    if (role === 'hr_manager')   { _buildHRKPIs();      setTimeout(() => { if (typeof window._populateCOOKPIs === 'function') window._populateCOOKPIs(); }, 300); }
+    if (role === 'finance_mgr')  { _buildFinanceKPIs(); setTimeout(() => { if (typeof window._populateCOOKPIs === 'function') window._populateCOOKPIs(); }, 300); }
+    if (role === 'facility_mgr') { _buildFacilityKPIs();setTimeout(() => { if (typeof window._populateCOOKPIs === 'function') window._populateCOOKPIs(); }, 300); }
+  }
+
+  // ── v43 FIX: also patch showTab to re-populate on every My Dashboard visit ─
+  function _patchShowTabForAllRoles() {
+    const orig = window.showTab;
+    if (typeof orig !== 'function') { setTimeout(_patchShowTabForAllRoles, 300); return; }
+    if (orig._v43allRolesPatched) return;
+    window.showTab = function(tabId) {
+      orig.apply(this, arguments);
+      if (tabId === 'role-dashboard') {
+        const role = window._currentRole || '';
+        setTimeout(() => {
+          if (ADMIN_TIER_ROLES.includes(role)) _forceCOOPopulate();
+          if (role === 'hr_manager')   { if (typeof window._populateCOOKPIs === 'function') window._populateCOOKPIs(); }
+          if (role === 'finance_mgr')  { if (typeof window._populateCOOKPIs === 'function') window._populateCOOKPIs(); }
+          if (role === 'facility_mgr') { if (typeof window._populateCOOKPIs === 'function') window._populateCOOKPIs(); }
+        }, 400);
+      }
+    };
+    window.showTab._v43allRolesPatched = true;
+    _log('v43: showTab patched for all-role KPI refresh ✅');
   }
 
   _ready(() => {
@@ -29633,6 +29699,7 @@ tbody td { vertical-align: middle; }
     _patchRoleLanding();
     _patchShowTab();
     _patchV31ForFaculty();
+    _patchShowTabForAllRoles();
 
     // Catch-up schedule:
     // 600ms  — catches fresh logins where applyAccessLevelUI already fired
@@ -29641,8 +29708,156 @@ tbody td { vertical-align: middle; }
     // 8000ms — final safety net for worst-case network latency
     [600, 2500, 5000, 8000].forEach(delay => setTimeout(_catchUpKPIs, delay));
 
-    _log('v40 patch boot complete ✅');
+    _log('v43 patch boot complete ✅');
   });
 
 })();
 </script>
+
+
+<script>
+// ══════════════════════════════════════════════════════════════════════════════
+// WSAI PORTAL v43 — TARGETED BUG FIX PATCH
+// Fixes:
+//   1. Affiliate Faculty = 0  in Faculty Category Distribution chart
+//      Root cause: filter used r.status==='Active' but affiliates have no status field
+//      Fix: updateDashboard now counts affiliates with no/Active status
+//
+//   2. My Dashboard KPIs blank after login (all roles: MIS, COO, admin, etc.)
+//      Root cause: _populateCOOKPIs ran before window.DB loaded; catch-up skipped
+//                  re-population when guard element (coo-enhanced-kpi-rows) existed
+//      Fix: force _populateCOOKPIs on every catch-up cycle + after each Sync Now
+//
+//   3. MIS role native KPI cards showed "—" permanently
+//      Root cause: _v31BuildFromLocalDB had no 'mis' branch
+//      Fix: mis branch added (also flows into COO expandable rows via clone)
+// ══════════════════════════════════════════════════════════════════════════════
+(function() {
+  'use strict';
+
+  var _log = function(m) { console.log('[v43]', m); };
+
+  // ── Patch updateDashboard: fix affiliate faculty count in Category Distribution ──
+  function _patchUpdateDashboard() {
+    var orig = window.updateDashboard;
+    if (typeof orig !== 'function') { setTimeout(_patchUpdateDashboard, 400); return; }
+    if (orig._v43patched) return;
+
+    window.updateDashboard = function() {
+      orig.apply(this, arguments);
+
+      // Re-render the Affiliate Faculty rows with corrected count
+      var tbody = document.getElementById('dash-faculty-dist');
+      if (!tbody) return;
+      var DB = window.DB || {};
+      var cfg = window.WS_CONFIG || {};
+      var types = cfg.affiliateFacultyType || ['AFFILIATE FACULTY','INDUSTRY PARTNER','EXTERNAL COLLABORATOR','HONORARY FACULTY'];
+      var affiAll = DB.affiFaculty || [];
+
+      // Find and update only the Affiliate Faculty section rows
+      // (they follow the purple header row; we re-render the whole tbody cleanly)
+      var rows = [];
+      // Core Faculty
+      rows.push('<tr style="background:rgba(40,167,69,0.08);"><td colspan="3" style="font-size:0.7rem;font-family:var(--font-mono);letter-spacing:0.08em;text-transform:uppercase;color:var(--green);font-weight:700;padding:0.4rem 1rem;">Core Faculty</td></tr>');
+      (cfg.facultyType||[]).forEach(function(t) {
+        var cnt = (DB.faculty||[]).filter(function(f){ return f.facultyType === t; }).length;
+        rows.push('<tr><td>'+t+'</td><td style="font-weight:700;text-align:center;">'+cnt+'</td><td style="text-align:center;color:'+(cnt>0?'var(--green)':'var(--text3)')+';">'+(cnt>0?'✓ Active':'-- Inactive')+'</td></tr>');
+      });
+
+      // Associate Faculty
+      rows.push('<tr style="background:rgba(6,182,212,0.08);"><td colspan="3" style="font-size:0.7rem;font-family:var(--font-mono);letter-spacing:0.08em;text-transform:uppercase;color:var(--accent2);font-weight:700;padding:0.4rem 1rem;">Associate Faculty</td></tr>');
+      (cfg.associateFacultyType||[]).forEach(function(t) {
+        var cnt = (DB.assocFaculty||[]).filter(function(f){ return f.facultyType === t; }).length;
+        rows.push('<tr><td>'+t+'</td><td style="font-weight:700;text-align:center;">'+cnt+'</td><td style="text-align:center;color:'+(cnt>0?'var(--accent2)':'var(--text3)')+';">'+(cnt>0?'✓ Active':'-- Inactive')+'</td></tr>');
+      });
+
+      // Affiliate Faculty — v43 fix: count records without status as active
+      rows.push('<tr style="background:rgba(139,92,246,0.08);"><td colspan="3" style="font-size:0.7rem;font-family:var(--font-mono);letter-spacing:0.08em;text-transform:uppercase;color:var(--purple);font-weight:700;padding:0.4rem 1rem;">Affiliate Faculty</td></tr>');
+      types.forEach(function(t) {
+        var cnt = affiAll.filter(function(f){ return f.facultyType === t; }).length;
+        rows.push('<tr><td>'+t+'</td><td style="font-weight:700;text-align:center;">'+cnt+'</td><td style="text-align:center;color:'+(cnt>0?'var(--purple)':'var(--text3)')+';">'+(cnt>0?'✓ Active':'-- Inactive')+'</td></tr>');
+      });
+
+      var coreN  = (DB.faculty||[]).length;
+      var assocN = (DB.assocFaculty||[]).length;
+      var affiN  = affiAll.length;
+      rows.push('<tr style="background:rgba(40,167,69,0.12);font-weight:700;"><td>🧮 Grand Total</td><td style="text-align:center;color:var(--green);">'+(coreN+assocN+affiN)+'</td><td style="text-align:center;font-size:0.72rem;font-family:var(--font-mono);">Core: '+coreN+' · Assoc: '+assocN+' · Affiliate: '+affiN+'</td></tr>');
+      tbody.innerHTML = rows.join('');
+
+      // Also fix the legacy affiliate KPI card count
+      var affiCard = document.getElementById('kpi-affifaculty');
+      if (affiCard) affiCard.textContent = affiN;
+      var affiCard2 = document.getElementById('c-kpi-affil');
+      if (affiCard2 && affiCard2.textContent === '0') affiCard2.textContent = affiN;
+
+      _log('Affiliate Faculty Category Distribution corrected: ' + affiN + ' total');
+    };
+    window.updateDashboard._v43patched = true;
+    _log('updateDashboard patched for affiliate fix ✅');
+  }
+
+  // ── Force _populateCOOKPIs after every Sync Now click ────────────────────
+  function _patchSyncNow() {
+    var orig = window.v31FetchAll;
+    if (typeof orig !== 'function') { setTimeout(_patchSyncNow, 400); return; }
+    if (orig._v43syncPatched) return;
+    window.v31FetchAll = function() {
+      var result = orig.apply(this, arguments);
+      function _afterSync() {
+        if (typeof window._populateCOOKPIs === 'function') {
+          setTimeout(function(){ window._populateCOOKPIs(); }, 600);
+          setTimeout(function(){ window._populateCOOKPIs(); }, 2000);
+        }
+        // Re-run updateDashboard so affiliate count reflects latest data
+        if (typeof window.updateDashboard === 'function') {
+          setTimeout(function(){ window.updateDashboard(); }, 700);
+        }
+      }
+      if (result && typeof result.then === 'function') { result.then(_afterSync).catch(function(){}); }
+      else { _afterSync(); }
+      return result;
+    };
+    window.v31FetchAll._v43syncPatched = true;
+    _log('v31FetchAll patched for post-sync KPI refresh ✅');
+  }
+
+  // ── Run updateDashboard on My Dashboard tab visit ────────────────────────
+  function _patchShowTabDash() {
+    var orig = window.showTab;
+    if (typeof orig !== 'function') { setTimeout(_patchShowTabDash, 300); return; }
+    if (orig._v43dashPatched) return;
+    window.showTab = function(tabId) {
+      orig.apply(this, arguments);
+      if (tabId === 'dashboard' || tabId === 'role-dashboard') {
+        setTimeout(function(){
+          if (typeof window.updateDashboard === 'function') window.updateDashboard();
+          if (typeof window._populateCOOKPIs === 'function') window._populateCOOKPIs();
+        }, 350);
+      }
+    };
+    window.showTab._v43dashPatched = true;
+    _log('showTab patched for dashboard re-render ✅');
+  }
+
+  // ── Boot ─────────────────────────────────────────────────────────────────
+  function _boot() {
+    _patchUpdateDashboard();
+    _patchSyncNow();
+    _patchShowTabDash();
+
+    // Catch-up: trigger a fresh updateDashboard pass after DB has loaded
+    [800, 2500, 5000].forEach(function(ms) {
+      setTimeout(function() {
+        if (typeof window.updateDashboard === 'function') window.updateDashboard();
+        if (typeof window._populateCOOKPIs === 'function') window._populateCOOKPIs();
+      }, ms);
+    });
+
+    _log('v43 patch booted ✅');
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', _boot);
+  else setTimeout(_boot, 50);
+})();
+</script>
+</html>
