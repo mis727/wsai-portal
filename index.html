@@ -31523,7 +31523,387 @@ tbody td { vertical-align: middle; }
 
 <script>
 // ══════════════════════════════════════════════════════════════════════════════
-// WSAI PORTAL v46c — COMPREHENSIVE VISUAL WIRING & AUTO-UPDATE
+// WSAI PORTAL v46d — DASHBOARD "NO DATA" FIX
+// ─────────────────────────────────────────────────────────────────────────────
+// Root causes found:
+//  1. refreshDashboard() never calls refreshOverviewKPIs() — so ov-bm-*, 
+//     ov-lab-*, ov-inv-* overview mini-cards ALWAYS show "—"
+//  2. dash-kpi-personnel element does NOT exist in HTML (the card is missing)
+//     — refreshDashboard tries to _sv('dash-kpi-personnel') → silent no-op
+//  3. The 5 KPI cards only show: Researchers, Lab Util, Expenses, Pubs, Assets
+//     but refreshDashboard writes to dash-kpi-personnel (non-existent) not to
+//     any actual visible card for total headcount
+//  4. refreshDashboard is called at load (t=500ms) BEFORE any data is fetched
+//     → all values show "—" and never update unless user manually refreshes
+//  5. After sysFetchAll() completes, refreshDashboard is called but the
+//     individual module data (EXP, PUB, LAB, BM, INV_DB) may not be ready yet
+//     because _fetchBiometricLabInventory runs async AFTER sysFetchAll returns
+//  6. refreshLowStockAlerts populates dash-low-stock / dash-inv-health but is
+//     never called from refreshDashboard directly
+// ══════════════════════════════════════════════════════════════════════════════
+(function _v46dDashboardFix() {
+  'use strict';
+
+  var _sv = function(id, v) { var e = document.getElementById(id); if (e) e.textContent = v; };
+  var _sc = function(fn) { try { if (typeof fn === 'function') fn(); } catch(e) {} };
+
+  // ── The complete dashboard population function ─────────────────────────
+  function _fillDashboard() {
+    try {
+      var DB       = window.DB       || {};
+      var EXP      = window.EXP      || {};
+      var PUB      = window.PUB      || {};
+      var ASSET_DB = window.ASSET_DB || {};
+      var LAB      = window.LAB      || {};
+      var BM       = window.BM       || {};
+      var INV_DB   = window.INV_DB   || {};
+
+      // ── KPI Cards ──────────────────────────────────────────────────────
+
+      // Researchers
+      var res = (DB.researchers || []).filter(function(r) {
+        return !r.status || r.status === 'On-going' || r.status === 'Active';
+      }).length;
+      if (res > 0) {
+        _sv('dash-kpi-researchers', res);
+        var centers = {};
+        (DB.researchers || []).forEach(function(r) { if (r.center) centers[r.center] = 1; });
+        var nc = Object.keys(centers).length;
+        _sv('dash-kpi-researchers-sub', nc > 0 ? 'Across ' + nc + ' centers' : 'Active researchers');
+      }
+
+      // Lab Utilization
+      var fl = (LAB.data ? LAB.data.facultyLabs : LAB.facultyLabs) || [];
+      if (fl.length) {
+        var tS = fl.reduce(function(s, l) { return s + (parseInt(l.totalSeats) || 0); }, 0);
+        var tO = fl.reduce(function(s, l) { return s + (parseInt(l.occupiedSeats) || 0); }, 0);
+        var pct = tS > 0 ? Math.round(tO / tS * 100) : 0;
+        _sv('dash-kpi-lab-util', pct + '%');
+        _sv('dash-kpi-lab-sub', fl.length + ' labs tracked');
+      }
+
+      // Pending Expenses
+      var expAll = (EXP && EXP.all) || [];
+      if (expAll.length) {
+        var pend = expAll.filter(function(r) {
+          return r.status === 'Pending' || r.status === 'Under-process';
+        });
+        var amt = pend.reduce(function(s, r) { return s + parseFloat(r.amount || 0); }, 0);
+        var fmt = function(n) {
+          if (n >= 10000000) return '₹' + (n / 10000000).toFixed(1) + 'Cr';
+          if (n >= 100000)   return '₹' + (n / 100000).toFixed(1) + 'L';
+          if (n >= 1000)     return '₹' + (n / 1000).toFixed(0) + 'K';
+          return '₹' + Math.round(n);
+        };
+        _sv('dash-kpi-expenses', fmt(amt));
+        _sv('dash-kpi-expenses-sub', pend.length + ' awaiting approval');
+      }
+
+      // Publications
+      var pubAll = (PUB && PUB.all) || [];
+      if (pubAll.length) {
+        _sv('dash-kpi-pubs', pubAll.length);
+        var cy = new Date().getFullYear();
+        var thisYear = pubAll.filter(function(r) {
+          var yr = r.year || (r.dateOfPublication || '').toString().slice(0, 4);
+          return parseInt(yr) === cy;
+        }).length;
+        _sv('dash-kpi-pubs-sub', thisYear + ' in ' + cy);
+      }
+
+      // Assets
+      var assetCount = (ASSET_DB.it || []).length + (ASSET_DB.nonit || []).length +
+        (ASSET_DB.gpu || []).length + (ASSET_DB.ilds || []).length +
+        (ASSET_DB.books || []).length + (ASSET_DB.spares || []).length;
+      if (assetCount > 0) {
+        _sv('dash-kpi-assets', assetCount.toLocaleString('en-IN'));
+      }
+
+      // ── Alert banner ───────────────────────────────────────────────────
+      var allPeople = [].concat(
+        (DB.staff || []).map(function(r) { return Object.assign({}, r, {_type:'Staff'}); }),
+        (DB.assocFaculty || []).map(function(r) { return Object.assign({}, r, {_type:'Assoc. Faculty'}); }),
+        (DB.affiFaculty || []).map(function(r) { return Object.assign({}, r, {_type:'Aff. Faculty'}); }),
+        (DB.researchers || []).map(function(r) { return Object.assign({}, r, {_type:'Researcher'}); }),
+        (DB.students || []).map(function(r) { return Object.assign({}, r, {_type:'Student'}); })
+      );
+      var tenureAt = allPeople.filter(function(r) {
+        if (!r.exitDate) return false;
+        var s = String(r.exitDate).trim();
+        var dmy = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+        var d = dmy ? new Date(+dmy[3], +dmy[2]-1, +dmy[1]) : new Date(s);
+        if (!d || isNaN(d)) return false;
+        var diff = d - new Date();
+        return diff > 0 && diff <= 30 * 86400000;
+      }).length;
+      _sv('dash-alert-tenure', '⏰ ' + tenureAt + ' tenure expiration' + (tenureAt === 1 ? '' : 's') + ' within 30 days');
+
+      var pendCount = expAll.filter(function(r) {
+        return r.status === 'Pending' || r.status === 'Under-process';
+      }).length;
+      _sv('dash-alert-expenses', pendCount + ' pending expense' + (pendCount === 1 ? '' : 's'));
+
+      var bmPend = (BM.raw && BM.raw.authStatus) ? (BM.raw.authStatus.pending || 0) : 0;
+      if (!bmPend && BM.all) {
+        bmPend = (BM.all || []).filter(function(u) {
+          return (u.authorizationStatus || '').toLowerCase() === 'pending';
+        }).length;
+      }
+      _sv('dash-alert-biometric', bmPend + ' biometric request' + (bmPend === 1 ? '' : 's'));
+
+      // ── Overview mini-cards (biometric / lab / inventory) ──────────────
+
+      // Biometric
+      if (BM.raw) {
+        _sv('ov-bm-active',  BM.raw.totalActive || (BM.all || []).filter(function(u){ return (u.status||'').toLowerCase()==='in'; }).length || 0);
+        _sv('ov-bm-pending', (BM.raw.authStatus && BM.raw.authStatus.pending) || bmPend || 0);
+        _sv('ov-bm-rooms',   Object.keys(BM.raw.byArea || BM.raw.zones || {}).length || 0);
+      } else if ((BM.all || []).length) {
+        var bmAll = BM.all || [];
+        _sv('ov-bm-active',  bmAll.filter(function(u){ return (u.status||'').toLowerCase()==='in'; }).length);
+        _sv('ov-bm-pending', bmPend);
+        _sv('ov-bm-rooms',   new Set(bmAll.map(function(u){ return u.zone||u.area||'General'; })).size);
+      }
+
+      // Lab
+      if (fl.length) {
+        var totSeats = fl.reduce(function(s, l) { return s + (parseInt(l.totalSeats) || 0); }, 0);
+        var occSeats = fl.reduce(function(s, l) { return s + (parseInt(l.occupiedSeats) || 0); }, 0);
+        _sv('ov-lab-labs',  fl.length);
+        _sv('ov-lab-avail', Math.max(0, totSeats - occSeats));
+        _sv('ov-lab-util',  totSeats > 0 ? Math.round(occSeats / totSeats * 100) + '%' : '—');
+      }
+
+      // Inventory
+      var invItems = (INV_DB && INV_DB.items) || [];
+      if (invItems.length) {
+        var invLow = 0, invCrit = 0;
+        invItems.forEach(function(i) {
+          var bal = parseFloat(i.currentBalance || i.balance || 0);
+          var min = parseFloat(i.minThreshold || i.reorderLevel || i.lowThreshold || 5);
+          if (bal === 0) invCrit++;
+          else if (bal <= min) invLow++;
+        });
+        _sv('ov-inv-items',    invItems.length);
+        _sv('ov-inv-low',      invLow);
+        _sv('ov-inv-critical', invCrit);
+        // Alert banner stock
+        var el = document.getElementById('dash-alert-stock');
+        if (el) el.textContent = '⚠ ' + (invLow + invCrit) + ' item' + (invLow + invCrit === 1 ? '' : 's') + ' low/critical stock';
+      }
+
+      // ── Tenure table ───────────────────────────────────────────────────
+      var tbody = document.getElementById('dash-tenure-tbody');
+      if (tbody && allPeople.length) {
+        var parseD = function(s) {
+          if (!s) return null;
+          s = String(s).trim();
+          var dmy = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+          if (dmy) return new Date(+dmy[3], +dmy[2]-1, +dmy[1]);
+          var d = new Date(s); return isNaN(d) ? null : d;
+        };
+        var warn = allPeople.filter(function(r) {
+          var d = parseD(r.exitDate); if (!d) return false;
+          var diff = Math.ceil((d - new Date()) / 86400000);
+          return diff >= 0 && diff <= 90;
+        }).sort(function(a, b) {
+          return (parseD(a.exitDate) || 0) - (parseD(b.exitDate) || 0);
+        }).slice(0, 5);
+        if (!warn.length) {
+          tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--green);padding:1rem;">✅ No upcoming expirations within 90 days</td></tr>';
+        } else {
+          tbody.innerHTML = warn.map(function(r) {
+            var d = parseD(r.exitDate);
+            var days = d ? Math.ceil((d - new Date()) / 86400000) : null;
+            var badge = days === null ? '<span>—</span>'
+              : days <= 7  ? '<span class="badge red">' + days + ' days</span>'
+              : days <= 30 ? '<span class="badge orange">' + days + ' days</span>'
+              : days <= 60 ? '<span class="badge gold">' + days + ' days</span>'
+              :               '<span class="badge active">' + days + ' days</span>';
+            var fmtExit = d ? d.toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'}) : (r.exitDate || '—');
+            return '<tr><td>' + (r.name || '—') + '</td><td>' + (r._type || '—') + '</td><td>' + fmtExit + '</td><td>' + badge + '</td></tr>';
+          }).join('');
+        }
+      } else if (tbody && !allPeople.length) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:1rem;">Connect a sheet to load people data</td></tr>';
+      }
+
+      // ── Pending expenses table ─────────────────────────────────────────
+      var expTbody = document.getElementById('dash-pending-exp');
+      if (expTbody) {
+        var pendRows = expAll.filter(function(r) {
+          return r.status === 'Pending' || r.status === 'Under-process';
+        }).slice(0, 4);
+        if (!pendRows.length) {
+          expTbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--green);padding:1rem;">✅ No pending expenses</td></tr>';
+        } else {
+          expTbody.innerHTML = pendRows.map(function(r) {
+            var badge = r.status === 'Under-process'
+              ? '<span class="badge process">Processing</span>'
+              : '<span class="badge pending">Pending</span>';
+            return '<tr><td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (r.description || '—') + '</td>'
+              + '<td>' + (r.category || '—') + '</td>'
+              + '<td style="font-family:var(--font-mono);white-space:nowrap;">₹' + parseFloat(r.amount || 0).toLocaleString('en-IN') + '</td>'
+              + '<td>' + badge + '</td></tr>';
+          }).join('');
+        }
+      }
+
+      // ── Low stock + inventory health tables ───────────────────────────
+      _sc(function() { if (typeof refreshLowStockAlerts === 'function') refreshLowStockAlerts(); });
+
+      // ── Lab capacity chart ─────────────────────────────────────────────
+      _sc(function() { if (typeof refreshDashboardLabChart === 'function') refreshDashboardLabChart(); });
+
+      // ── refreshOverviewKPIs (populates exec summary ov-* IDs) ─────────
+      _sc(function() { if (typeof refreshOverviewKPIs === 'function') refreshOverviewKPIs(); });
+
+    } catch(e) { console.warn('[v46d dashboard]', e); }
+  }
+
+  // ── Replace refreshDashboard with our complete version ─────────────────
+  var _origRefreshDashboard = window.refreshDashboard;
+  window.refreshDashboard = function() {
+    // Run original first (it has its own sub-functions)
+    if (typeof _origRefreshDashboard === 'function') {
+      try { _origRefreshDashboard(); } catch(e) {}
+    }
+    // Then fill everything our complete version covers
+    _fillDashboard();
+  };
+  window.refreshDashboard._v46dPatched = true;
+
+  // ── Ensure showTab('dashboard') always triggers a full refresh ──────────
+  var _origShowTab = window.showTab;
+  if (typeof _origShowTab === 'function' && !_origShowTab._v46dDashPatched) {
+    window.showTab = function(tabId) {
+      _origShowTab.apply(this, arguments);
+      if (tabId === 'dashboard') {
+        setTimeout(function() {
+          try { window.refreshDashboard(); } catch(e) {}
+        }, 120);
+      }
+    };
+    window.showTab._v46dDashPatched = true;
+  }
+
+  // ── Hook every data-load event to update dashboard immediately ──────────
+  function _hookAllDataEvents() {
+    // After initPeopleManagement
+    var origIPM = window.initPeopleManagement;
+    if (typeof origIPM === 'function' && !origIPM._v46dHooked) {
+      window.initPeopleManagement = function() {
+        try { origIPM.apply(this, arguments); } catch(e) {}
+        setTimeout(_fillDashboard, 200);
+      };
+      window.initPeopleManagement._v46dHooked = true;
+    }
+
+    // After bmOnData (biometric data arrives)
+    var origBm = window.bmOnData;
+    if (typeof origBm === 'function' && !origBm._v46dHooked) {
+      window.bmOnData = function(data) {
+        try { origBm.apply(this, arguments); } catch(e) {}
+        if (data && data.allUsers && typeof window.BM !== 'undefined') {
+          window.BM.all = data.allUsers;
+        }
+        setTimeout(_fillDashboard, 200);
+      };
+      window.bmOnData._v46dHooked = true;
+    }
+
+    // After expLoadFromSheet
+    var origExp = window.expLoadFromSheet;
+    if (typeof origExp === 'function' && !origExp._v46dHooked) {
+      window.expLoadFromSheet = async function() {
+        var r; try { r = await origExp.apply(this, arguments); } catch(e) {}
+        setTimeout(_fillDashboard, 200);
+        return r;
+      };
+      window.expLoadFromSheet._v46dHooked = true;
+    }
+
+    // After pubLoadFromSheet
+    var origPub = window.pubLoadFromSheet;
+    if (typeof origPub === 'function' && !origPub._v46dHooked) {
+      window.pubLoadFromSheet = async function() {
+        var r; try { r = await origPub.apply(this, arguments); } catch(e) {}
+        setTimeout(_fillDashboard, 200);
+        return r;
+      };
+      window.pubLoadFromSheet._v46dHooked = true;
+    }
+
+    // After assetLoadFromSheet
+    var origAsset = window.assetLoadFromSheet;
+    if (typeof origAsset === 'function' && !origAsset._v46dHooked) {
+      window.assetLoadFromSheet = async function() {
+        var r; try { r = await origAsset.apply(this, arguments); } catch(e) {}
+        setTimeout(_fillDashboard, 200);
+        return r;
+      };
+      window.assetLoadFromSheet._v46dHooked = true;
+    }
+
+    // After invSyncAll
+    var origInv = window.invSyncAll;
+    if (typeof origInv === 'function' && !origInv._v46dHooked) {
+      window.invSyncAll = async function() {
+        var r; try { r = await origInv.apply(this, arguments); } catch(e) {}
+        setTimeout(_fillDashboard, 200);
+        return r;
+      };
+      window.invSyncAll._v46dHooked = true;
+    }
+
+    // After labRefreshKPIs (lab data updated)
+    var origLabKPI = window.labRefreshKPIs;
+    if (typeof origLabKPI === 'function' && !origLabKPI._v46dHooked) {
+      window.labRefreshKPIs = function() {
+        try { origLabKPI.apply(this, arguments); } catch(e) {}
+        setTimeout(_fillDashboard, 200);
+      };
+      window.labRefreshKPIs._v46dHooked = true;
+    }
+  }
+
+  // ── Boot: retry hooking until all functions exist ───────────────────────
+  function _boot() {
+    // Initial render with whatever data exists right now
+    _fillDashboard();
+
+    // Hook data callbacks
+    var attempts = 0;
+    function _tryHook() {
+      _hookAllDataEvents();
+      attempts++;
+      if (attempts < 15) setTimeout(_tryHook, 600);
+    }
+    setTimeout(_tryHook, 300);
+
+    // Periodic dashboard refresh to catch any missed updates (every 30s)
+    setInterval(function() {
+      var dashTab = document.getElementById('tab-dashboard');
+      if (dashTab && dashTab.classList.contains('active')) {
+        _fillDashboard();
+      }
+    }, 30000);
+
+    // Re-run at t=1s, 3s, 8s to catch late-loading data
+    [1000, 3000, 8000, 15000].forEach(function(d) {
+      setTimeout(_fillDashboard, d);
+    });
+
+    console.log('[v46d Dashboard Fix] Loaded ✅');
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', _boot);
+  } else {
+    setTimeout(_boot, 50);
+  }
+
+})();
 // ─────────────────────────────────────────────────────────────────────────────
 // Audit findings wired here:
 //
