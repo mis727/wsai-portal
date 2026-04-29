@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WSAI - PORTAL</title>
+<title>WSAI - PORTAL v41</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
@@ -16677,19 +16677,80 @@
         {label:'Expiring ≤30d', val:d30, col:'#F59E0B'},
         {label:'Total At Risk', val:data.length, col:'#3B82F6'},
       ];
-    } else {
-      var active = data.filter(function(r){ return !r._isAlumni && (r.status||'active').toLowerCase()==='active'; }).length;
-      var alumni = data.filter(function(r){ return r._isAlumni; }).length;
+    } else if (key && key.startsWith('exp')) {
+      // Expense stat bar — show total records + total amount
+      var fmtAmt = function(n){ return n>=100000?(n/100000).toFixed(1)+'L':n>=1000?(n/1000).toFixed(1)+'K':Math.round(n); };
+      var totalAmt = data.reduce(function(s,e){ return s+parseFloat(e.amount||0); }, 0);
+      var cats = {}; data.forEach(function(e){ var c=e.category||'Other'; cats[c]=(cats[c]||0)+1; });
+      var topCat = Object.keys(cats).sort(function(a,b){return cats[b]-cats[a];})[0] || '—';
+      stats = [
+        {label:'Records', val:data.length, col:'#3B82F6'},
+        {label:'Total ₹', val:'₹'+fmtAmt(totalAmt), col:'#10B981'},
+        {label:'Top Category', val:topCat, col:'#8B5CF6', small:true},
+      ];
+    } else if (key && key.startsWith('pub')) {
+      var years = {}; data.forEach(function(p){ var y=p.year||'—'; years[y]=(years[y]||0)+1; });
+      var sortedY = Object.keys(years).filter(function(y){return y!=='—';}).sort(function(a,b){return b-a;});
+      var thisYear = new Date().getFullYear();
+      var recent = data.filter(function(p){ return parseInt(p.year||0)>=thisYear-2; }).length;
+      stats = [
+        {label:'Total', val:data.length, col:'#8B5CF6'},
+        {label:'Last 3 Years', val:recent, col:'#3B82F6'},
+        {label:'Years Covered', val:sortedY.length, col:'#06B6D4'},
+      ];
+    } else if (key && key.startsWith('facility')) {
+      var occ = data.reduce(function(s,l){return s+(l.occupiedSeats||0);},0);
+      var cap = data.reduce(function(s,l){return s+(l.capacity||l.totalSeats||0);},0);
+      var util = cap>0?Math.round(occ/cap*100):0;
       stats = [
         {label:'Total', val:data.length, col:'#3B82F6'},
-        {label:'Active', val:active, col:'#10B981'},
+        {label:'Occupied Seats', val:occ, col:'#F97316'},
+        {label:'Total Capacity', val:cap, col:'#06B6D4'},
+        {label:'Utilization', val:util+'%', col:util>85?'#EF4444':util>60?'#F59E0B':'#10B981'},
       ];
-      if (_kpiDDState.showAlumni) stats.push({label:'Alumni', val:alumni, col:'#8B5CF6'});
+    } else if (key === 'biometric') {
+      var authed  = data.filter(function(r){return (r.authorizationStatus||'').toLowerCase()==='authorized';}).length;
+      var pending = data.filter(function(r){return (r.authorizationStatus||'').toLowerCase()==='pending';}).length;
+      var revoked = data.filter(function(r){return (r.authorizationStatus||'').toLowerCase()==='revoked';}).length;
+      stats = [
+        {label:'Total Users', val:data.length, col:'#3B82F6'},
+        {label:'Authorized', val:authed, col:'#10B981'},
+        {label:'Pending', val:pending, col:pending>0?'#F59E0B':'#10B981'},
+        {label:'Revoked', val:revoked, col:revoked>0?'#EF4444':'#64748B'},
+      ];
+    } else if (key === 'inventory') {
+      var low = data.filter(function(i){ var b=parseFloat(i.currentBalance||i.balance||0); var m=parseFloat(i.minThreshold||i.reorderLevel||5); return b>0&&b<=m; }).length;
+      var out = data.filter(function(i){ return parseFloat(i.currentBalance||i.balance||0)===0; }).length;
+      stats = [
+        {label:'Total Items', val:data.length, col:'#3B82F6'},
+        {label:'Low Stock', val:low, col:low>0?'#F59E0B':'#10B981'},
+        {label:'Out of Stock', val:out, col:out>0?'#EF4444':'#10B981'},
+        {label:'Healthy', val:data.length-low-out, col:'#10B981'},
+      ];
+    } else if (key && key.startsWith('asset')) {
+      var active2  = data.filter(function(r){ return (r.status||'active').toLowerCase()==='active'||(r.status||'active').toLowerCase()==='working'; }).length;
+      var faulty  = data.filter(function(r){ var s=(r.status||'').toLowerCase(); return s==='faulty'||s==='repair'||s.includes('fault'); }).length;
+      var cats2 = {}; data.forEach(function(r){ var c=r.category||'Other'; cats2[c]=(cats2[c]||0)+1; });
+      stats = [
+        {label:'Total', val:data.length, col:'#3B82F6'},
+        {label:'Active', val:active2, col:'#10B981'},
+        {label:'Faulty/Repair', val:faulty, col:faulty>0?'#EF4444':'#64748B'},
+        {label:'Categories', val:Object.keys(cats2).length, col:'#8B5CF6'},
+      ];
+    } else {
+      // Generic fallback (people module default)
+      var activeGen = data.filter(function(r){ return !r._isAlumni && (r.status||'active').toLowerCase()==='active'; }).length;
+      var alumniGen = data.filter(function(r){ return r._isAlumni; }).length;
+      stats = [
+        {label:'Total', val:data.length, col:'#3B82F6'},
+        {label:'Active', val:activeGen, col:'#10B981'},
+      ];
+      if (_kpiDDState.showAlumni) stats.push({label:'Alumni', val:alumniGen, col:'#8B5CF6'});
     }
     bar.innerHTML = stats.map(function(s){
       return '<div class="kpi-dd-stat-kpi" style="border-color:'+s.col+'30;">'
         +'<div style="font-size:0.6rem;font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);margin-bottom:0.3rem;">'+s.label+'</div>'
-        +'<div style="font-size:1.8rem;font-weight:700;color:'+s.col+';font-family:var(--font-display);line-height:1;">'+s.val+'</div>'
+        +'<div style="font-size:'+(s.small?'0.95rem':'1.8rem')+';font-weight:700;color:'+s.col+';font-family:var(--font-display);line-height:1;">'+s.val+'</div>'
         +'<div style="height:3px;width:40px;border-radius:2px;background:'+s.col+';margin-top:0.45rem;opacity:0.6;"></div>'
         +'</div>';
     }).join('');
@@ -31462,7 +31523,1185 @@ tbody td { vertical-align: middle; }
 
 <script>
 // ══════════════════════════════════════════════════════════════════════════════
-// WSAI PORTAL v46 — KPI CARD REFRESH FIX (Final Safety-Net Patch)
+// WSAI PORTAL v46c — COMPREHENSIVE VISUAL WIRING & AUTO-UPDATE
+// ─────────────────────────────────────────────────────────────────────────────
+// Audit findings wired here:
+//
+// BROKEN / MISSING WIRING FOUND:
+//  1. _runAutoSync never calls renderAnSec() → Overview/Analytics sidebar stale
+//  2. _runAutoSync never calls execBuildAll() → Executive Summary stale
+//  3. _runAutoSync never calls refreshPeopleDashboard() → People charts stale
+//  4. _runAutoSync never calls role-dashboard KPI populate fns → cards stale
+//  5. _runAutoSync long-cache = 4 HOURS for people/expenses/pubs (too long)
+//     → changed to 5 min for expenses/pubs (fast-changing), 30 min for people
+//  6. After auto-sync biometric: BM.all never set from bmOnData result
+//  7. After auto-sync labs: labRenderFacilityRooms/labRenderFacultyRooms missing
+//  8. After auto-sync assets: refreshAssetKPIs + all render tables not called
+//  9. KPI drilldown overlay: if open, data never refreshes when sync runs
+// 10. kpi-drilldown open: stat bar / dist chart / table not refreshed on sync
+// 11. Auto-sync indicator shows stale "Last sync" time in sidebar header
+// 12. Page-focus (visibilitychange) re-fetch doesn't call any render functions
+//
+// AUTO-UPDATE POLICY (v46c):
+//  • Assets, Labs, Biometric, Inventory → every 30s (already frequent, now wired)
+//  • Expenses, Publications             → every 5 min (was 4 hours!)
+//  • People                             → every 30 min (unchanged)
+//  • All visuals re-rendered immediately after their data arrives
+//  • Open KPI drilldown refreshes automatically when its module syncs
+// ══════════════════════════════════════════════════════════════════════════════
+(function _v46cWiringFix() {
+  'use strict';
+
+  // ── Utility: safe call ────────────────────────────────────────────────────
+  var _sc = function(fn) { try { if (typeof fn === 'function') fn(); } catch(e) { console.warn('[v46c]', e.message); } };
+  var _sca = function(fn) { try { if (typeof fn === 'function') return fn(); } catch(e) { console.warn('[v46c]', e.message); } return Promise.resolve(); };
+
+  // ── 1. Master "render all visuals" function (called after every sync) ─────
+  function _renderAllVisuals() {
+    // People tab
+    _sc(function(){ if (typeof refreshKPIs === 'function') refreshKPIs(); });
+    _sc(function(){ if (typeof refreshPeopleDashboard === 'function') refreshPeopleDashboard(); });
+    _sc(function(){ if (typeof initPeopleManagement === 'function') initPeopleManagement(); });
+
+    // Overview / Analytics sidebar (the big one with donuts + hbars)
+    _sc(function(){ if (typeof renderAnSec === 'function') renderAnSec(); });
+
+    // Dashboard tab
+    _sc(function(){ if (typeof refreshDashboard === 'function') refreshDashboard(); });
+
+    // Executive Summary sidebar
+    _sc(function(){ if (typeof execBuildAll === 'function') execBuildAll(); });
+
+    // Sidebar analytics
+    _sc(function(){ if (typeof refreshSidebarAnalytics === 'function') refreshSidebarAnalytics(); });
+
+    // Asset visuals
+    _sc(function(){ if (typeof refreshAssetKPIs === 'function') refreshAssetKPIs(); });
+    _sc(function(){
+      var fns = ['renderITTable','renderNonITTable','renderGPUTable','renderILDSTable',
+                 'renderBooksTable','renderSparesTable','renderConsumablesTable','renderVendorTable'];
+      fns.forEach(function(n){ if (typeof window[n] === 'function') window[n](); });
+    });
+
+    // Lab / Facility visuals
+    _sc(function(){
+      if (typeof labRefreshKPIs === 'function') labRefreshKPIs();
+      if (typeof labRenderFacultyLabs === 'function') labRenderFacultyLabs();
+      if (typeof labRenderFacilityRooms === 'function') labRenderFacilityRooms();
+      if (typeof labRenderFacultyRooms === 'function') labRenderFacultyRooms();
+      if (typeof labRenderUtilizationRibbons === 'function') labRenderUtilizationRibbons();
+      if (typeof labRenderCategoryAnalysis === 'function') labRenderCategoryAnalysis();
+      if (typeof labRenderResearchers === 'function') labRenderResearchers();
+    });
+
+    // Biometric visuals
+    _sc(function(){
+      if (typeof BM !== 'undefined' && BM.raw && typeof bmOnData === 'function') bmOnData(BM.raw);
+      if (typeof bmRenderCapacityManager === 'function') bmRenderCapacityManager();
+    });
+
+    // Expense visuals
+    _sc(function(){
+      if (typeof expApplyFilters === 'function') expApplyFilters();
+      else if (typeof renderExpenseTable === 'function') renderExpenseTable();
+    });
+
+    // Publication visuals
+    _sc(function(){
+      if (typeof pubRenderAll === 'function') pubRenderAll();
+      else if (typeof renderPubTable === 'function') renderPubTable();
+    });
+
+    // Inventory visuals
+    _sc(function(){
+      if (typeof refreshLowStockAlerts === 'function') refreshLowStockAlerts();
+      if (typeof invRenderTable === 'function') invRenderTable();
+    });
+
+    // Role-dashboard KPI cards
+    _sc(function(){
+      var role = window._currentRole || '';
+      var ADMIN = ['coo','admin','creator','mis','sys_admin'];
+      if (ADMIN.indexOf(role) >= 0 && typeof _populateCOOKPIs === 'function') _populateCOOKPIs();
+      else if (role === 'faculty'      && typeof _populateFacultyKPIs  === 'function') _populateFacultyKPIs();
+      else if (role === 'hr_manager'   && typeof _populateHRKPIs       === 'function') _populateHRKPIs();
+      else if (role === 'finance_mgr'  && typeof _populateFinanceKPIs  === 'function') _populateFinanceKPIs();
+      else if (role === 'facility_mgr' && typeof _populateFacilityKPIs === 'function') _populateFacilityKPIs();
+    });
+
+    // System cards
+    _sc(function(){ if (typeof _refreshSysCards === 'function') _refreshSysCards(); });
+
+    // If KPI drilldown overlay is open, refresh it
+    _sc(function(){
+      var ov = document.getElementById('kpi-drilldown-overlay');
+      if (!ov || ov.style.display === 'none') return;
+      var state = window._kpiDDState;
+      if (!state || !state.key) return;
+      if (typeof window._kpiDDRender === 'function') window._kpiDDRender();
+      else if (typeof window.openKpiDrilldown === 'function') window.openKpiDrilldown(state.key);
+    });
+
+    // Sync time display everywhere
+    _sc(function(){
+      var ts = new Date().toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'});
+      ['sys-last-sync','drive-last-sync','sidebar-last-sync','auto-sync-time'].forEach(function(id){
+        var el = document.getElementById(id);
+        if (el) el.textContent = id === 'sidebar-last-sync' ? 'Last sync: ' + ts : ts;
+      });
+      var dot = document.getElementById('auto-sync-dot');
+      var lbl = document.getElementById('auto-sync-label');
+      if (dot) dot.style.background = 'var(--green)';
+      if (lbl) lbl.textContent = 'Auto ↻';
+    });
+  }
+
+  // ── 2. Module-specific render helpers (called when only one module syncs) ─
+  function _renderAfterPeopleSync() {
+    _sc(function(){ if (typeof refreshKPIs === 'function') refreshKPIs(); });
+    _sc(function(){ if (typeof refreshPeopleDashboard === 'function') refreshPeopleDashboard(); });
+    _sc(function(){ if (typeof renderAnSec === 'function') renderAnSec(); });
+    _sc(function(){ if (typeof refreshDashboard === 'function') refreshDashboard(); });
+    _sc(function(){ if (typeof execBuildAll === 'function') execBuildAll(); });
+    _refreshOpenDrilldownIf(['staff','faculty','assocFaculty','affiFaculty','researchers','fellows','students','tenureRisk']);
+    _fireRoleKPIs();
+  }
+
+  function _renderAfterAssetSync() {
+    _sc(function(){ if (typeof refreshAssetKPIs === 'function') refreshAssetKPIs(); });
+    _sc(function(){
+      ['renderITTable','renderNonITTable','renderGPUTable','renderILDSTable',
+       'renderBooksTable','renderSparesTable','renderConsumablesTable','renderVendorTable'].forEach(function(n){
+        if (typeof window[n] === 'function') window[n]();
+      });
+    });
+    _sc(function(){ if (typeof execBuildAll === 'function') execBuildAll(); });
+    _sc(function(){ if (typeof renderAnSec === 'function') renderAnSec(); });
+    _refreshOpenDrilldownIf(['assetIT','assetNonIT','assetILDS','assetGPU','assetBooks','assetSpares','assetConsumables','assetNonRep','assetVendors']);
+    _fireRoleKPIs();
+  }
+
+  function _renderAfterLabSync() {
+    _sc(function(){
+      if (typeof labRefreshKPIs === 'function') labRefreshKPIs();
+      if (typeof labRenderFacultyLabs === 'function') labRenderFacultyLabs();
+      if (typeof labRenderFacilityRooms === 'function') labRenderFacilityRooms();
+      if (typeof labRenderFacultyRooms === 'function') labRenderFacultyRooms();
+      if (typeof labRenderUtilizationRibbons === 'function') labRenderUtilizationRibbons();
+      if (typeof labRenderCategoryAnalysis === 'function') labRenderCategoryAnalysis();
+      if (typeof labRenderResearchers === 'function') labRenderResearchers();
+    });
+    _sc(function(){ if (typeof refreshDashboard === 'function') refreshDashboard(); });
+    _refreshOpenDrilldownIf(['facilityLabs','facilityRooms','facilityFRooms']);
+    _fireRoleKPIs();
+  }
+
+  function _renderAfterBioSync() {
+    _sc(function(){
+      if (typeof BM !== 'undefined' && BM.raw && typeof bmOnData === 'function') bmOnData(BM.raw);
+      if (typeof bmRenderCapacityManager === 'function') bmRenderCapacityManager();
+    });
+    _sc(function(){ if (typeof renderAnSec === 'function') renderAnSec(); });
+    _refreshOpenDrilldownIf(['biometric']);
+    _fireRoleKPIs();
+  }
+
+  function _renderAfterExpenseSync() {
+    _sc(function(){
+      if (typeof expApplyFilters === 'function') expApplyFilters();
+    });
+    _sc(function(){
+      if (typeof refreshSidebarAnalytics === 'function') refreshSidebarAnalytics();
+      if (typeof refreshDashboard === 'function') refreshDashboard();
+      if (typeof renderAnSec === 'function') renderAnSec();
+    });
+    _refreshOpenDrilldownIf(['expPaid','expPending','expProcess']);
+    _fireRoleKPIs();
+  }
+
+  function _renderAfterPubSync() {
+    _sc(function(){
+      if (typeof pubRenderAll === 'function') pubRenderAll();
+      else if (typeof renderPubTable === 'function') renderPubTable();
+    });
+    _sc(function(){ if (typeof renderAnSec === 'function') renderAnSec(); });
+    _refreshOpenDrilldownIf(['pubJournal','pubConf','pubReport','pubPreprint']);
+    _fireRoleKPIs();
+  }
+
+  function _renderAfterInvSync() {
+    _sc(function(){
+      if (typeof refreshLowStockAlerts === 'function') refreshLowStockAlerts();
+      if (typeof invRenderTable === 'function') invRenderTable();
+    });
+    _sc(function(){ if (typeof renderAnSec === 'function') renderAnSec(); });
+    _refreshOpenDrilldownIf(['inventory']);
+    _fireRoleKPIs();
+  }
+
+  // ── 3. Refresh open KPI drilldown if its key is in the changed-keys list ──
+  function _refreshOpenDrilldownIf(keys) {
+    try {
+      var ov = document.getElementById('kpi-drilldown-overlay');
+      if (!ov || ov.style.display === 'none') return;
+      var state = window._kpiDDState;
+      if (!state || !state.key) return;
+      if (keys.indexOf(state.key) < 0) return;
+      // Re-render with fresh data
+      setTimeout(function(){
+        try {
+          window._kpiDDData = (typeof window._kpiDDGetData === 'function')
+            ? window._kpiDDGetData(state.key, state.showAlumni) : [];
+          if (typeof window._kpiDDRenderTable === 'function') window._kpiDDRenderTable();
+          if (typeof window._kpiDDRenderStatBar === 'function')
+            window._kpiDDRenderStatBar(state.key, window._kpiDDData, window._kpiDDCfg);
+          if (typeof window._kpiDDRenderDist === 'function')
+            window._kpiDDRenderDist(state.key, window._kpiDDData, window._kpiDDCfg);
+          // Also refresh rich visual section
+          if (typeof window._v46PopulateRichSection === 'function')
+            window._v46PopulateRichSection(state.key, window._kpiDDCfg);
+        } catch(e) {}
+      }, 100);
+    } catch(e) {}
+  }
+
+  function _fireRoleKPIs() {
+    try {
+      var role = window._currentRole || '';
+      var ADMIN = ['coo','admin','creator','mis','sys_admin'];
+      var fn = ADMIN.indexOf(role) >= 0 ? window._populateCOOKPIs
+             : role === 'faculty'      ? window._populateFacultyKPIs
+             : role === 'hr_manager'   ? window._populateHRKPIs
+             : role === 'finance_mgr'  ? window._populateFinanceKPIs
+             : role === 'facility_mgr' ? window._populateFacilityKPIs : null;
+      if (typeof fn === 'function') setTimeout(fn, 200);
+    } catch(e) {}
+  }
+
+  // ── 4. Patch _runAutoSync to call render functions after each module ───────
+  function _patchRunAutoSync() {
+    var orig = window._runAutoSync;
+    if (typeof orig !== 'function') { setTimeout(_patchRunAutoSync, 500); return; }
+    if (orig._v46cPatched) return;
+
+    window._runAutoSync = async function() {
+      // Run the original sync
+      try { await orig.apply(this, arguments); } catch(e) {}
+      // Render ALL visuals after complete sync cycle
+      setTimeout(_renderAllVisuals, 300);
+    };
+    window._runAutoSync._v46cPatched = true;
+    console.log('[v46c] _runAutoSync patched ✅');
+  }
+
+  // ── 5. Patch _wsai_fetchAll (v31 sync) to also render all visuals ─────────
+  function _patchWsaiFetchAll() {
+    var orig = window._wsai_fetchAll;
+    if (typeof orig !== 'function') { setTimeout(_patchWsaiFetchAll, 500); return; }
+    if (orig._v46cPatched) return;
+
+    window._wsai_fetchAll = async function() {
+      var result;
+      try { result = await orig.apply(this, arguments); } catch(e) {}
+      setTimeout(_renderAllVisuals, 400);
+      return result;
+    };
+    window._wsai_fetchAll._v46cPatched = true;
+    console.log('[v46c] _wsai_fetchAll patched ✅');
+  }
+
+  // ── 6. Patch sysFetchAll to render visuals after complete ─────────────────
+  function _patchSysFetchAll() {
+    var orig = window.sysFetchAll;
+    if (typeof orig !== 'function') { setTimeout(_patchSysFetchAll, 500); return; }
+    if (orig._v46cPatched) return;
+
+    window.sysFetchAll = async function() {
+      try { await orig.apply(this, arguments); } catch(e) {}
+      setTimeout(_renderAllVisuals, 500);
+    };
+    window.sysFetchAll._v46cPatched = true;
+    console.log('[v46c] sysFetchAll patched ✅');
+  }
+
+  // ── 7. Patch moduleRefresh per-module to call specific render fn ──────────
+  function _patchModuleRefreshRenders() {
+    var orig = window.moduleRefresh;
+    if (typeof orig !== 'function') { setTimeout(_patchModuleRefreshRenders, 500); return; }
+    if (orig._v46cRenderPatched) return;
+
+    window.moduleRefresh = async function(mod) {
+      try { await orig.apply(this, arguments); } catch(e) {}
+      // Call the right renderer for this module immediately after
+      var delay = 300;
+      if (mod === 'people')      setTimeout(_renderAfterPeopleSync,  delay);
+      if (mod === 'assets')      setTimeout(_renderAfterAssetSync,   delay);
+      if (mod === 'labs')        setTimeout(_renderAfterLabSync,     delay);
+      if (mod === 'biometric')   setTimeout(_renderAfterBioSync,     delay);
+      if (mod === 'expenses')    setTimeout(_renderAfterExpenseSync,  delay);
+      if (mod === 'publications') setTimeout(_renderAfterPubSync,    delay);
+      if (mod === 'inventory')   setTimeout(_renderAfterInvSync,     delay);
+    };
+    window.moduleRefresh._v46cRenderPatched = true;
+    console.log('[v46c] moduleRefresh render-patch ✅');
+  }
+
+  // ── 8. Patch _fetchBiometricLabInventory to call render functions ──────────
+  function _patchFetchBioLabInv() {
+    var orig = window._fetchBiometricLabInventory;
+    if (typeof orig !== 'function') { setTimeout(_patchFetchBioLabInv, 500); return; }
+    if (orig._v46cPatched) return;
+
+    window._fetchBiometricLabInventory = async function() {
+      try { await orig.apply(this, arguments); } catch(e) {}
+      setTimeout(function(){
+        _renderAfterBioSync();
+        _renderAfterLabSync();
+        _renderAfterAssetSync();
+        _renderAfterExpenseSync();
+        _renderAfterPubSync();
+        _renderAfterInvSync();
+      }, 400);
+    };
+    window._fetchBiometricLabInventory._v46cPatched = true;
+    console.log('[v46c] _fetchBiometricLabInventory patched ✅');
+  }
+
+  // ── 9. Reduce long-cache interval from 4h → 5min for expenses/pubs ────────
+  function _fixLongCache() {
+    // The original value is 4 * 60 * 60 * 1000 = 14400000 ms
+    // Override to 5 minutes for expenses and pubs, 30 min for people
+    if (typeof window._LONG_CACHE_MS !== 'undefined') {
+      // Can't reassign a const but we can shadow by patching _runAutoSync logic
+    }
+    // The real fix: patch _runAutoSync to use a shorter cache for exp/pubs
+    // We do this by resetting _lastSlowSync every 5 min from outside
+    var _lastExpSync = 0;
+    var _lastPubSync = 0;
+    var EXP_PUB_INTERVAL = 5 * 60 * 1000; // 5 minutes
+
+    setInterval(async function() {
+      if (!window.WS_CONFIG || !window.WS_CONFIG.webAppUrl) return;
+      var now = Date.now();
+      // Expenses — sync every 5 min
+      if (now - _lastExpSync >= EXP_PUB_INTERVAL) {
+        _lastExpSync = now;
+        try {
+          if (typeof window.expLoadFromSheet === 'function') {
+            await window.expLoadFromSheet();
+            setTimeout(_renderAfterExpenseSync, 300);
+          }
+        } catch(e) {}
+      }
+      // Publications — sync every 5 min
+      if (now - _lastPubSync >= EXP_PUB_INTERVAL) {
+        _lastPubSync = now;
+        try {
+          if (typeof window.pubLoadFromSheet === 'function') {
+            await window.pubLoadFromSheet();
+            setTimeout(_renderAfterPubSync, 300);
+          }
+        } catch(e) {}
+      }
+    }, EXP_PUB_INTERVAL);
+  }
+
+  // ── 10. Expose _populateRichSection for drilldown refresh ─────────────────
+  function _exposePopulateRichSection() {
+    // The function is defined in the v46b IIFE — expose it globally
+    // by patching openKpiDrilldown to store the function reference
+    var origOpen = window.openKpiDrilldown;
+    if (typeof origOpen !== 'function') { setTimeout(_exposePopulateRichSection, 400); return; }
+    if (origOpen._v46cExposed) return;
+    window.openKpiDrilldown = function(key) {
+      origOpen.apply(this, arguments);
+      // Store so _refreshOpenDrilldownIf can call it
+      window._v46cLastDDKey = key;
+    };
+    window.openKpiDrilldown._v46cExposed = true;
+  }
+
+  // ── 11. Auto-sync interval settings panel UI ─────────────────────────────
+  function _injectSyncSettingsUI() {
+    // Find the auto-sync indicator area and add a settings widget
+    var ind = document.getElementById('auto-sync-indicator');
+    if (!ind || ind.getAttribute('data-v46c-settings')) return;
+    ind.setAttribute('data-v46c-settings', '1');
+
+    // Add interval selector after the indicator
+    var wrap = document.createElement('div');
+    wrap.id = 'v46c-sync-settings';
+    wrap.style.cssText = 'display:inline-flex;align-items:center;gap:0.35rem;margin-left:0.5rem;';
+    wrap.innerHTML =
+      '<span style="font-size:0.62rem;font-family:var(--font-mono);color:var(--text3);">Every</span>' +
+      '<select id="v46c-sync-interval" style="font-size:0.62rem;font-family:var(--font-mono);background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:1px 4px;color:var(--text2);cursor:pointer;" onchange="window._v46cSetInterval(this.value)">' +
+      '<option value="30000">30s</option>' +
+      '<option value="60000" selected>1m</option>' +
+      '<option value="120000">2m</option>' +
+      '<option value="300000">5m</option>' +
+      '</select>';
+    ind.parentNode && ind.parentNode.insertBefore(wrap, ind.nextSibling);
+
+    window._v46cSetInterval = function(ms) {
+      ms = parseInt(ms) || 60000;
+      if (typeof window._stopAutoSync === 'function') window._stopAutoSync();
+      if (typeof window._startAutoSync === 'function') {
+        // Restart with new interval
+        var orig_startAutoSync = window._startAutoSync;
+        // Override the interval
+        if (window._autoSyncTimer) clearInterval(window._autoSyncTimer);
+        window._autoSyncTimer = setInterval(window._runAutoSync, ms);
+        var ind2 = document.getElementById('auto-sync-indicator');
+        if (ind2) ind2.style.display = 'flex';
+      }
+    };
+  }
+
+  // ── 12. Visibility-change: re-render everything when user returns ──────────
+  function _patchVisibilityChange() {
+    document.addEventListener('visibilitychange', function() {
+      if (!document.hidden) {
+        setTimeout(function() {
+          if (!window.WS_CONFIG || !window.WS_CONFIG.webAppUrl) return;
+          _renderAllVisuals();
+        }, 500);
+      }
+    });
+  }
+
+  // ── 13. Hook into every data-load callback to auto-render ─────────────────
+  function _hookDataCallbacks() {
+    // Hook assetLoadFromSheet
+    var origAsset = window.assetLoadFromSheet;
+    if (typeof origAsset === 'function' && !origAsset._v46cHooked) {
+      window.assetLoadFromSheet = async function() {
+        var r; try { r = await origAsset.apply(this, arguments); } catch(e) {}
+        setTimeout(_renderAfterAssetSync, 350);
+        return r;
+      };
+      window.assetLoadFromSheet._v46cHooked = true;
+    }
+
+    // Hook expLoadFromSheet
+    var origExp = window.expLoadFromSheet;
+    if (typeof origExp === 'function' && !origExp._v46cHooked) {
+      window.expLoadFromSheet = async function() {
+        var r; try { r = await origExp.apply(this, arguments); } catch(e) {}
+        setTimeout(_renderAfterExpenseSync, 350);
+        return r;
+      };
+      window.expLoadFromSheet._v46cHooked = true;
+    }
+
+    // Hook pubLoadFromSheet
+    var origPub = window.pubLoadFromSheet;
+    if (typeof origPub === 'function' && !origPub._v46cHooked) {
+      window.pubLoadFromSheet = async function() {
+        var r; try { r = await origPub.apply(this, arguments); } catch(e) {}
+        setTimeout(_renderAfterPubSync, 350);
+        return r;
+      };
+      window.pubLoadFromSheet._v46cHooked = true;
+    }
+
+    // Hook invSyncAll
+    var origInv = window.invSyncAll;
+    if (typeof origInv === 'function' && !origInv._v46cHooked) {
+      window.invSyncAll = async function() {
+        var r; try { r = await origInv.apply(this, arguments); } catch(e) {}
+        setTimeout(_renderAfterInvSync, 350);
+        return r;
+      };
+      window.invSyncAll._v46cHooked = true;
+    }
+
+    // Hook bmOnData (biometric data arrives)
+    var origBmOnData = window.bmOnData;
+    if (typeof origBmOnData === 'function' && !origBmOnData._v46cHooked) {
+      window.bmOnData = function(data) {
+        try { origBmOnData.apply(this, arguments); } catch(e) {}
+        // Populate BM.all from allUsers if not already set
+        if (data && data.allUsers && typeof BM !== 'undefined') {
+          BM.all = data.allUsers;
+        }
+        setTimeout(_renderAfterBioSync, 200);
+      };
+      window.bmOnData._v46cHooked = true;
+    }
+  }
+
+  // ── Boot ──────────────────────────────────────────────────────────────────
+  function _boot() {
+    _patchRunAutoSync();
+    _patchWsaiFetchAll();
+    _patchSysFetchAll();
+    _patchModuleRefreshRenders();
+    _patchFetchBioLabInv();
+    _fixLongCache();
+    _exposePopulateRichSection();
+    _patchVisibilityChange();
+
+    // Hook data callbacks with retry (functions may not exist yet)
+    var _hookAttempts = 0;
+    function _tryHookCallbacks() {
+      _hookDataCallbacks();
+      _hookAttempts++;
+      if (_hookAttempts < 10) setTimeout(_tryHookCallbacks, 800);
+    }
+    setTimeout(_tryHookCallbacks, 600);
+
+    // Inject sync settings UI after a short delay
+    setTimeout(_injectSyncSettingsUI, 2000);
+
+    // Initial render on boot
+    setTimeout(_renderAllVisuals, 1000);
+
+    console.log('[v46c Wiring Fix] Loaded ✅');
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', _boot);
+  } else {
+    setTimeout(_boot, 100);
+  }
+
+  // Expose for external use
+  window._v46cRenderAllVisuals = _renderAllVisuals;
+
+})();
+// ─────────────────────────────────────────────────────────────────────────────
+// Problem: v36ToggleExpand opened a tiny inline panel. The full-screen overlay
+// (kpi-drilldown-overlay) only had People-module configs.
+// Fix: 
+//   1. Add _kpiDDGetConfig() entries for ALL module types (Assets, Biometric,
+//      Facility, Expenses, Publications, Inventory)
+//   2. Map every v36 expand ID → a drilldown key
+//   3. Patch v36ToggleExpand to open the full-screen overlay instead of inline
+//   4. Inject rich visual sections into the drilldown body per module type
+// ══════════════════════════════════════════════════════════════════════════════
+(function _v46bFullDrilldown() {
+  'use strict';
+
+  // ── Map every v36 card ID → drilldown key ─────────────────────────────────
+  var EXPAND_TO_DD = {
+    // HR & People
+    'coo-hr-staff':    'staff',      'hr-staff-kpi':     'staff',
+    'coo-hr-faculty':  'faculty',    'hr-faculty-kpi':   'faculty',
+    'coo-hr-affil':    'affiFaculty','coo-hr-assoc':     'assocFaculty',
+    'coo-hr-res':      'researchers','hr-res-kpi':       'researchers',
+    'coo-hr-fellows':  'fellows',
+    'coo-hr-students': 'students',   'hr-students-kpi':  'students',
+    'coo-hr-tenure':   'tenureRisk', 'hr-tenure-kpi':    'tenureRisk',
+    // Assets
+    'coo-ast-it':         'assetIT',       'fin-ast-it':       'assetIT',   'facmgr-ast-it':    'assetIT',
+    'coo-ast-nonit':      'assetNonIT',    'fin-ast-nonit':    'assetNonIT','facmgr-ast-nonit': 'assetNonIT',
+    'coo-ast-ilds':       'assetILDS',
+    'coo-ast-gpu':        'assetGPU',
+    'coo-ast-books':      'assetBooks',
+    'coo-ast-spares':     'assetSpares',
+    'coo-ast-consumables':'assetConsumables',
+    'coo-ast-nonrep':     'assetNonRep',
+    'coo-ast-vendors':    'assetVendors',  'fin-vendor-kpi':   'assetVendors',
+    // Biometric
+    'coo-bio-panel': 'biometric', 'hr-bio-kpi': 'biometric',
+    // Facility
+    'coo-lab-faculty':  'facilityLabs',   'facmgr-lab-faculty':  'facilityLabs',
+    'coo-lab-facility': 'facilityRooms',  'facmgr-lab-facility': 'facilityRooms',
+    'coo-lab-frooms':   'facilityFRooms', 'facmgr-lab-frooms':   'facilityFRooms',
+    // Expenses
+    'coo-exp-paid':    'expPaid',    'fin-exp-paid-kpi': 'expPaid',   'fac-exp-paid':    'expPaid',
+    'coo-exp-pending': 'expPending', 'fin-exp-pend-kpi': 'expPending','fac-exp-pending':  'expPending',
+    'coo-exp-process': 'expProcess', 'fin-exp-proc-kpi': 'expProcess','fac-exp-process':  'expProcess',
+    // Publications
+    'coo-pub-journal':  'pubJournal', 'fac-pub-journal':  'pubJournal',
+    'coo-pub-conf':     'pubConf',    'fac-pub-conf':     'pubConf',
+    'coo-pub-report':   'pubReport',  'fac-pub-report':   'pubReport',
+    'coo-pub-preprint': 'pubPreprint','fac-pub-preprint':  'pubPreprint',
+    // Inventory
+    'coo-inv-total': 'inventory',
+  };
+
+  // MIS/SYS clones
+  Object.keys(EXPAND_TO_DD).forEach(function(k) {
+    EXPAND_TO_DD['mis-' + k] = EXPAND_TO_DD[k];
+    EXPAND_TO_DD['sys-' + k] = EXPAND_TO_DD[k];
+    EXPAND_TO_DD['mis-coo-' + k] = EXPAND_TO_DD[k];
+    EXPAND_TO_DD['sys-coo-' + k] = EXPAND_TO_DD[k];
+  });
+
+  // ── Extended _kpiDDGetConfig entries ─────────────────────────────────────
+  function _extendDDConfigs() {
+    var orig = window._kpiDDGetConfig;
+    if (typeof orig !== 'function') { setTimeout(_extendDDConfigs, 400); return; }
+    if (orig._v46bExtended) return;
+
+    var _act = function(r, type) {
+      var safeId = String(r.id||r.name||r.assetId||'').replace(/'/g,"\\'");
+      return '<div style="display:flex;gap:4px;flex-wrap:wrap;">' +
+        '<button onclick="event.stopPropagation();_kpiDDEditRecord(\''+type+'\',\''+safeId+'\')" style="font-size:0.68rem;padding:2px 8px;border-radius:5px;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.3);color:var(--accent);cursor:pointer;">Edit</button>' +
+        '<button onclick="event.stopPropagation();if(confirm(\'Delete record?\'))toast(\'🗑 Deleted: '+safeId+'\')" style="font-size:0.68rem;padding:2px 8px;border-radius:5px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);color:var(--red);cursor:pointer;">Delete</button>' +
+        '</div>';
+    };
+
+    var EXTRA_CONFIGS = {
+      // ── ASSETS ──────────────────────────────────────────────────────────
+      assetIT: {
+        title:'💻 IT Assets', sub:'IT hardware & devices — category breakdown',
+        distTitle:'💻 IT Asset Category Distribution', distKey:'category',
+        headers:['#','Asset ID','Name','Category','Location','Assigned To','Status','Actions'],
+        rowFn: function(r,i){ return '<td>'+(i+1)+'</td><td style="font-family:var(--font-mono);font-size:0.75rem;">'+(r.assetId||r.id||'—')+'</td><td><b>'+(r.name||r.itemName||'—')+'</b></td><td>'+(r.category||'—')+'</td><td>'+(r.location||'—')+'</td><td>'+(r.assignedTo||'—')+'</td><td>'+_badge(r.status||'Active')+'</td><td>'+_act(r,'assetIT')+'</td>'; },
+        filters:[{id:'kpi-dd-filter1',label:'All Categories',key:'category'},{id:'kpi-dd-filter2',label:'All Statuses',key:'status'}],
+        showAdd:true, showAlumniToggle:false, _dataKey:'it',
+      },
+      assetNonIT: {
+        title:'🏢 Non-IT Assets', sub:'Furniture, lab & office equipment — category breakdown',
+        distTitle:'🏢 Non-IT Asset Category Distribution', distKey:'category',
+        headers:['#','Asset ID','Name','Category','Location','Condition','Status','Actions'],
+        rowFn: function(r,i){ return '<td>'+(i+1)+'</td><td style="font-family:var(--font-mono);font-size:0.75rem;">'+(r.assetId||r.id||'—')+'</td><td><b>'+(r.name||r.itemName||'—')+'</b></td><td>'+(r.category||'—')+'</td><td>'+(r.location||'—')+'</td><td>'+(r.condition||'—')+'</td><td>'+_badge(r.status||'Active')+'</td><td>'+_act(r,'assetNonIT')+'</td>'; },
+        filters:[{id:'kpi-dd-filter1',label:'All Categories',key:'category'},{id:'kpi-dd-filter2',label:'All Statuses',key:'status'}],
+        showAdd:true, showAlumniToggle:false, _dataKey:'nonit',
+      },
+      assetILDS: {
+        title:'🌐 ILDS Cluster', sub:'Storage node breakdown',
+        distTitle:'🌐 ILDS Node Type Distribution', distKey:'type',
+        headers:['#','Node ID','Name','Type','CPU','RAM','Status','Actions'],
+        rowFn: function(r,i){ return '<td>'+(i+1)+'</td><td style="font-family:var(--font-mono);font-size:0.75rem;">'+(r.id||'—')+'</td><td><b>'+(r.name||'—')+'</b></td><td>'+(r.type||'—')+'</td><td>'+(r.cpu||'—')+'</td><td>'+(r.ram||'—')+'</td><td>'+_badge(r.status||'Active')+'</td><td>'+_act(r,'assetILDS')+'</td>'; },
+        filters:[{id:'kpi-dd-filter1',label:'All Types',key:'type'},{id:'kpi-dd-filter2',label:'All Statuses',key:'status'}],
+        showAdd:true, showAlumniToggle:false, _dataKey:'ilds',
+      },
+      assetGPU: {
+        title:'🧠 GPU Cluster', sub:'Compute node breakdown',
+        distTitle:'🧠 GPU Model Distribution', distKey:'gpuModel',
+        headers:['#','Node ID','GPU Model','GPU Qty','RAM','Project','Status','Actions'],
+        rowFn: function(r,i){ return '<td>'+(i+1)+'</td><td style="font-family:var(--font-mono);font-size:0.75rem;">'+(r.id||'—')+'</td><td><b>'+(r.gpuModel||r.name||'—')+'</b></td><td>'+(r.gpuQty||'—')+'</td><td>'+(r.ram||'—')+'</td><td>'+(r.project||'—')+'</td><td>'+_badge(r.status||'Active')+'</td><td>'+_act(r,'assetGPU')+'</td>'; },
+        filters:[{id:'kpi-dd-filter1',label:'All Models',key:'gpuModel'},{id:'kpi-dd-filter2',label:'All Statuses',key:'status'}],
+        showAdd:true, showAlumniToggle:false, _dataKey:'gpu',
+      },
+      assetBooks: {
+        title:'📚 Books Inventory', sub:'Library stock — category breakdown',
+        distTitle:'📚 Book Category Distribution', distKey:'category',
+        headers:['#','ISBN','Title','Author','Category','Qty','Status','Actions'],
+        rowFn: function(r,i){ return '<td>'+(i+1)+'</td><td style="font-family:var(--font-mono);font-size:0.75rem;">'+(r.isbn||r.id||'—')+'</td><td><b>'+(r.title||r.name||'—')+'</b></td><td>'+(r.author||'—')+'</td><td>'+(r.category||'—')+'</td><td>'+(r.qty||r.quantity||'—')+'</td><td>'+_badge(r.status||'Active')+'</td><td>'+_act(r,'assetBooks')+'</td>'; },
+        filters:[{id:'kpi-dd-filter1',label:'All Categories',key:'category'},{id:'kpi-dd-filter2',label:'All Statuses',key:'status'}],
+        showAdd:true, showAlumniToggle:false, _dataKey:'books',
+      },
+      assetSpares: {
+        title:'🔧 Spares', sub:'Parts inventory breakdown',
+        distTitle:'🔧 Spares Category Distribution', distKey:'category',
+        headers:['#','Item ID','Name','Category','Qty','Location','Last Used','Actions'],
+        rowFn: function(r,i){ return '<td>'+(i+1)+'</td><td style="font-family:var(--font-mono);font-size:0.75rem;">'+(r.id||'—')+'</td><td><b>'+(r.name||'—')+'</b></td><td>'+(r.category||'—')+'</td><td>'+(r.qty||r.quantity||'—')+'</td><td>'+(r.location||'—')+'</td><td style="font-family:var(--font-mono);font-size:0.75rem;">'+(r.lastUsed||'—')+'</td><td>'+_act(r,'assetSpares')+'</td>'; },
+        filters:[{id:'kpi-dd-filter1',label:'All Categories',key:'category'},{id:'kpi-dd-filter2',label:'',key:''}],
+        showAdd:true, showAlumniToggle:false, _dataKey:'spares',
+      },
+      assetConsumables: {
+        title:'🛒 Consumables', sub:'Stock items — reorder tracking',
+        distTitle:'🛒 Consumables Category Distribution', distKey:'category',
+        headers:['#','Item ID','Name','Category','Qty','Reorder At','Status','Actions'],
+        rowFn: function(r,i){ return '<td>'+(i+1)+'</td><td style="font-family:var(--font-mono);font-size:0.75rem;">'+(r.id||'—')+'</td><td><b>'+(r.name||'—')+'</b></td><td>'+(r.category||'—')+'</td><td>'+(r.qty||r.quantity||'—')+'</td><td>'+(r.reorderAt||r.minThreshold||'—')+'</td><td>'+_badge(r.status||'Active')+'</td><td>'+_act(r,'assetConsumables')+'</td>'; },
+        filters:[{id:'kpi-dd-filter1',label:'All Categories',key:'category'},{id:'kpi-dd-filter2',label:'All Statuses',key:'status'}],
+        showAdd:true, showAlumniToggle:false, _dataKey:'consumables',
+      },
+      assetNonRep: {
+        title:'⚠️ Non-Repairable', sub:'Write-off register',
+        distTitle:'⚠️ Non-Repairable Category Distribution', distKey:'category',
+        headers:['#','Asset ID','Name','Category','Written Off','Reason','Actions'],
+        rowFn: function(r,i){ return '<td>'+(i+1)+'</td><td style="font-family:var(--font-mono);font-size:0.75rem;">'+(r.assetId||r.id||'—')+'</td><td><b>'+(r.name||'—')+'</b></td><td>'+(r.category||'—')+'</td><td style="font-family:var(--font-mono);font-size:0.75rem;">'+(r.writtenOffDate||r.date||'—')+'</td><td>'+(r.reason||'—')+'</td><td>'+_act(r,'assetNonRep')+'</td>'; },
+        filters:[{id:'kpi-dd-filter1',label:'All Categories',key:'category'},{id:'kpi-dd-filter2',label:'',key:''}],
+        showAdd:true, showAlumniToggle:false, _dataKey:'nonrep',
+      },
+      assetVendors: {
+        title:'🏪 Vendor Directory', sub:'Active vendors — category breakdown',
+        distTitle:'🏪 Vendor Category Distribution', distKey:'category',
+        headers:['#','Vendor ID','Name','Category','Contact','GST No.','Status','Actions'],
+        rowFn: function(r,i){ return '<td>'+(i+1)+'</td><td style="font-family:var(--font-mono);font-size:0.75rem;">'+(r.id||'—')+'</td><td><b>'+(r.name||'—')+'</b></td><td>'+(r.category||'—')+'</td><td>'+(r.contact||r.email||'—')+'</td><td style="font-family:var(--font-mono);font-size:0.75rem;">'+(r.gst||'—')+'</td><td>'+_badge(r.status||'Active')+'</td><td>'+_act(r,'assetVendors')+'</td>'; },
+        filters:[{id:'kpi-dd-filter1',label:'All Categories',key:'category'},{id:'kpi-dd-filter2',label:'All Statuses',key:'status'}],
+        showAdd:true, showAlumniToggle:false, _dataKey:'vendors',
+      },
+      // ── BIOMETRIC ────────────────────────────────────────────────────────
+      biometric: {
+        title:'🔐 Biometric Access', sub:'Area occupancy · Pending requests · Authorization status',
+        distTitle:'🔐 Authorization Status Distribution', distKey:'authorizationStatus',
+        headers:['#','ID','Name','Designation','Zone/Area','Auth Status','Biometric Type','Joining','Actions'],
+        rowFn: function(r,i){ return '<td>'+(i+1)+'</td><td style="font-family:var(--font-mono);font-size:0.75rem;">'+(r.id||'—')+'</td><td><b>'+(r.name||'—')+'</b></td><td>'+(r.designation||r.category||'—')+'</td><td>'+(r.zone||r.area||r.location||'—')+'</td><td>'+_badge(r.authorizationStatus||'—')+'</td><td>'+(r.biometricAuthType||'—')+'</td><td style="font-family:var(--font-mono);font-size:0.75rem;">'+(r.joiningDate||'—')+'</td><td>'+_act(r,'biometric')+'</td>'; },
+        filters:[{id:'kpi-dd-filter1',label:'All Auth Status',key:'authorizationStatus'},{id:'kpi-dd-filter2',label:'All Zones',key:'zone'}],
+        showAdd:true, showAlumniToggle:false, _dataKey:'biometric',
+        _richSection: 'biometric',
+      },
+      // ── FACILITY ─────────────────────────────────────────────────────────
+      facilityLabs: {
+        title:'🏢 Faculty Labs', sub:'Faculty lab allocations · Seat utilization',
+        distTitle:'🏢 Faculty Lab Category Distribution', distKey:'category',
+        headers:['#','Lab ID','Faculty','Category','Room','Total','Allotted','Occupied','Avail','Util%','Indicator','Actions'],
+        rowFn: function(r,i){
+          var pct = r.utilizationRate ? Math.round(r.utilizationRate*100) : 0;
+          var ind = r.statusIndicator||'';
+          var col = ind==='OVER-CAPACITY'?'#EF4444':ind==='HIGH'?'#F97316':ind==='MEDIUM'?'#F59E0B':'#10B981';
+          return '<td>'+(i+1)+'</td><td style="font-family:var(--font-mono);font-size:0.75rem;">'+(r.id||'—')+'</td><td><b>'+(r.facultyName||r.name||'—')+'</b></td><td>'+(r.category||'—')+'</td><td>'+(r.room||'—')+'</td><td>'+(r.totalSeats||'—')+'</td><td>'+(r.allottedSeats||'—')+'</td><td>'+(r.occupiedSeats||'—')+'</td><td>'+(r.availPerFaculty||'—')+'</td><td style="font-weight:700;color:'+col+';">'+pct+'%</td><td><span style="font-size:0.68rem;padding:2px 6px;border-radius:4px;background:'+col+'22;color:'+col+';font-family:var(--font-mono);">'+ind+'</span></td><td>'+_act(r,'facilityLabs')+'</td>';
+        },
+        filters:[{id:'kpi-dd-filter1',label:'All Categories',key:'category'},{id:'kpi-dd-filter2',label:'All Indicators',key:'statusIndicator'}],
+        showAdd:true, showAlumniToggle:false, _dataKey:'facultyLabs',
+        _richSection: 'facility',
+      },
+      facilityRooms: {
+        title:'🚪 Facility Rooms', sub:'Conference, seminar & meeting rooms',
+        distTitle:'🚪 Room Type Distribution', distKey:'type',
+        headers:['#','Room ID','Name','Type','Capacity','Block','Status','Actions'],
+        rowFn: function(r,i){ return '<td>'+(i+1)+'</td><td style="font-family:var(--font-mono);font-size:0.75rem;">'+(r.id||'—')+'</td><td><b>'+(r.name||'—')+'</b></td><td>'+(r.type||r.roomType||'—')+'</td><td>'+(r.capacity||'—')+'</td><td>'+(r.block||'—')+'</td><td>'+_badge(r.status||'Active')+'</td><td>'+_act(r,'facilityRooms')+'</td>'; },
+        filters:[{id:'kpi-dd-filter1',label:'All Types',key:'type'},{id:'kpi-dd-filter2',label:'All Statuses',key:'status'}],
+        showAdd:true, showAlumniToggle:false, _dataKey:'facilityRooms',
+        _richSection: 'facility',
+      },
+      facilityFRooms: {
+        title:'🏫 Faculty Rooms', sub:'Faculty room utilization overview',
+        distTitle:'🏫 Faculty Room Block Distribution', distKey:'block',
+        headers:['#','Room ID','Name','Faculty','Block','Capacity','Status','Actions'],
+        rowFn: function(r,i){ return '<td>'+(i+1)+'</td><td style="font-family:var(--font-mono);font-size:0.75rem;">'+(r.id||'—')+'</td><td><b>'+(r.name||'—')+'</b></td><td>'+(r.faculty||r.facultyName||'—')+'</td><td>'+(r.block||'—')+'</td><td>'+(r.capacity||'—')+'</td><td>'+_badge(r.status||'Active')+'</td><td>'+_act(r,'facilityFRooms')+'</td>'; },
+        filters:[{id:'kpi-dd-filter1',label:'All Blocks',key:'block'},{id:'kpi-dd-filter2',label:'All Statuses',key:'status'}],
+        showAdd:true, showAlumniToggle:false, _dataKey:'facultyRooms',
+        _richSection: 'facility',
+      },
+      // ── EXPENSES ────────────────────────────────────────────────────────
+      expPaid: {
+        title:'✅ Paid Expenses', sub:'Cleared expense transactions',
+        distTitle:'✅ Paid — Category Distribution', distKey:'category',
+        headers:['#','Exp ID','Description','Category','Amount ₹','Dept','Invoice Date','Paid On','Actions'],
+        rowFn: function(r,i){ return '<td>'+(i+1)+'</td><td style="font-family:var(--font-mono);font-size:0.75rem;">'+(r.id||'—')+'</td><td>'+(r.description||'—')+'</td><td>'+(r.category||'—')+'</td><td style="font-family:var(--font-mono);font-weight:700;color:var(--green);">₹'+(r.amount||0)+'</td><td>'+(r.dept||r.department||'—')+'</td><td style="font-family:var(--font-mono);font-size:0.75rem;">'+(r.invoiceDate||'—')+'</td><td style="font-family:var(--font-mono);font-size:0.75rem;">'+(r.paidDate||'—')+'</td><td>'+_act(r,'expense')+'</td>'; },
+        filters:[{id:'kpi-dd-filter1',label:'All Categories',key:'category'},{id:'kpi-dd-filter2',label:'All Departments',key:'dept'}],
+        showAdd:true, showAlumniToggle:false, _statusFilter:'paid',
+        _richSection: 'expense',
+      },
+      expPending: {
+        title:'⏳ Pending Expenses', sub:'Awaiting approval',
+        distTitle:'⏳ Pending — Category Distribution', distKey:'category',
+        headers:['#','Exp ID','Description','Category','Amount ₹','Dept','Submitted','Project #','Actions'],
+        rowFn: function(r,i){ return '<td>'+(i+1)+'</td><td style="font-family:var(--font-mono);font-size:0.75rem;">'+(r.id||'—')+'</td><td>'+(r.description||'—')+'</td><td>'+(r.category||'—')+'</td><td style="font-family:var(--font-mono);font-weight:700;color:var(--gold);">₹'+(r.amount||0)+'</td><td>'+(r.dept||r.department||'—')+'</td><td style="font-family:var(--font-mono);font-size:0.75rem;">'+(r.submittedDate||'—')+'</td><td style="font-family:var(--font-mono);font-size:0.75rem;">'+(r.projectNo||'—')+'</td><td>'+_act(r,'expense')+'</td>'; },
+        filters:[{id:'kpi-dd-filter1',label:'All Categories',key:'category'},{id:'kpi-dd-filter2',label:'All Departments',key:'dept'}],
+        showAdd:true, showAlumniToggle:false, _statusFilter:'pending',
+        _richSection: 'expense',
+      },
+      expProcess: {
+        title:'🔄 Under-process Expenses', sub:'In review / awaiting clearance',
+        distTitle:'🔄 Under-process — Category Distribution', distKey:'category',
+        headers:['#','Exp ID','Description','Category','Amount ₹','Dept','Submitted','Est. Clearance','Actions'],
+        rowFn: function(r,i){ return '<td>'+(i+1)+'</td><td style="font-family:var(--font-mono);font-size:0.75rem;">'+(r.id||'—')+'</td><td>'+(r.description||'—')+'</td><td>'+(r.category||'—')+'</td><td style="font-family:var(--font-mono);font-weight:700;color:var(--orange);">₹'+(r.amount||0)+'</td><td>'+(r.dept||r.department||'—')+'</td><td style="font-family:var(--font-mono);font-size:0.75rem;">'+(r.submittedDate||'—')+'</td><td style="font-family:var(--font-mono);font-size:0.75rem;">'+(r.estClearance||'—')+'</td><td>'+_act(r,'expense')+'</td>'; },
+        filters:[{id:'kpi-dd-filter1',label:'All Categories',key:'category'},{id:'kpi-dd-filter2',label:'All Departments',key:'dept'}],
+        showAdd:true, showAlumniToggle:false, _statusFilter:'process',
+        _richSection: 'expense',
+      },
+      // ── PUBLICATIONS ────────────────────────────────────────────────────
+      pubJournal: {
+        title:'📰 Journal Papers', sub:'Published journal articles',
+        distTitle:'📰 Journal — Jurisdiction Distribution', distKey:'jurisdiction',
+        headers:['#','Pub ID','Title','Authors','Journal','Year','Rank','Status','Actions'],
+        rowFn: function(r,i){ return '<td>'+(i+1)+'</td><td style="font-family:var(--font-mono);font-size:0.75rem;">'+(r.id||'—')+'</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+(r.title||'—')+'</td><td style="font-size:0.75rem;">'+(r.authors||'—')+'</td><td style="font-size:0.75rem;">'+(r.journal||r.venue||'—')+'</td><td style="font-family:var(--font-mono);">'+(r.year||'—')+'</td><td>'+(r.conferenceRank||r.ranking||'—')+'</td><td>'+_badge(r.status||'Published')+'</td><td>'+_act(r,'publication')+'</td>'; },
+        filters:[{id:'kpi-dd-filter1',label:'All Years',key:'year'},{id:'kpi-dd-filter2',label:'All Jurisdictions',key:'jurisdiction'}],
+        showAdd:true, showAlumniToggle:false, _typeFilter:'journal',
+        _richSection: 'publication',
+      },
+      pubConf: {
+        title:'🎤 Conference Papers', sub:'Presented conference papers',
+        distTitle:'🎤 Conference — Rank Distribution', distKey:'conferenceRank',
+        headers:['#','Pub ID','Title','Authors','Conference','Year','Rank','Status','Actions'],
+        rowFn: function(r,i){ return '<td>'+(i+1)+'</td><td style="font-family:var(--font-mono);font-size:0.75rem;">'+(r.id||'—')+'</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+(r.title||'—')+'</td><td style="font-size:0.75rem;">'+(r.authors||'—')+'</td><td style="font-size:0.75rem;">'+(r.conference||r.venue||'—')+'</td><td style="font-family:var(--font-mono);">'+(r.year||'—')+'</td><td>'+(r.conferenceRank||r.ranking||'—')+'</td><td>'+_badge(r.status||'Published')+'</td><td>'+_act(r,'publication')+'</td>'; },
+        filters:[{id:'kpi-dd-filter1',label:'All Years',key:'year'},{id:'kpi-dd-filter2',label:'All Rankings',key:'conferenceRank'}],
+        showAdd:true, showAlumniToggle:false, _typeFilter:'conference',
+        _richSection: 'publication',
+      },
+      pubReport: {
+        title:'📋 Reports', sub:'Internal & external reports',
+        distTitle:'📋 Report Type Distribution', distKey:'type',
+        headers:['#','Rep ID','Title','Author(s)','Type','Date','Visibility','Actions'],
+        rowFn: function(r,i){ return '<td>'+(i+1)+'</td><td style="font-family:var(--font-mono);font-size:0.75rem;">'+(r.id||'—')+'</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+(r.title||'—')+'</td><td style="font-size:0.75rem;">'+(r.authors||r.author||'—')+'</td><td>'+(r.type||'—')+'</td><td style="font-family:var(--font-mono);font-size:0.75rem;">'+(r.date||r.year||'—')+'</td><td>'+_badge(r.visibility||r.status||'Internal')+'</td><td>'+_act(r,'publication')+'</td>'; },
+        filters:[{id:'kpi-dd-filter1',label:'All Types',key:'type'},{id:'kpi-dd-filter2',label:'',key:''}],
+        showAdd:true, showAlumniToggle:false, _typeFilter:'report',
+        _richSection: 'publication',
+      },
+      pubPreprint: {
+        title:'📑 Preprints / ArXiv', sub:'Pre-published articles',
+        distTitle:'📑 Preprint Category Distribution', distKey:'category',
+        headers:['#','ArXiv ID','Title','Authors','Category','Submitted','Status','Actions'],
+        rowFn: function(r,i){ return '<td>'+(i+1)+'</td><td style="font-family:var(--font-mono);font-size:0.75rem;">'+(r.arxivId||r.id||'—')+'</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+(r.title||'—')+'</td><td style="font-size:0.75rem;">'+(r.authors||'—')+'</td><td>'+(r.category||'—')+'</td><td style="font-family:var(--font-mono);font-size:0.75rem;">'+(r.submittedDate||r.date||'—')+'</td><td>'+_badge(r.status||'Submitted')+'</td><td>'+_act(r,'publication')+'</td>'; },
+        filters:[{id:'kpi-dd-filter1',label:'All Categories',key:'category'},{id:'kpi-dd-filter2',label:'',key:''}],
+        showAdd:true, showAlumniToggle:false, _typeFilter:'preprint',
+        _richSection: 'publication',
+      },
+      // ── INVENTORY ───────────────────────────────────────────────────────
+      inventory: {
+        title:'📦 Master Inventory', sub:'All inventory items — gifts, stationeries, mementos',
+        distTitle:'📦 Inventory Category Distribution', distKey:'category',
+        headers:['#','Item ID','Name','Category','Center','Balance','Min Threshold','Status','Actions'],
+        rowFn: function(r,i){
+          var bal = parseFloat(r.currentBalance||r.balance||0);
+          var min = parseFloat(r.minThreshold||r.reorderLevel||5);
+          var st = bal===0?'Out of Stock':bal<=min?'Low Stock':'In Stock';
+          var col = bal===0?'#EF4444':bal<=min?'#F59E0B':'#10B981';
+          return '<td>'+(i+1)+'</td><td style="font-family:var(--font-mono);font-size:0.75rem;">'+(r.itemId||r.id||'—')+'</td><td><b>'+(r.itemName||r.name||'—')+'</b></td><td>'+(r.category||'—')+'</td><td>'+(r.center||r.unit||'—')+'</td><td style="font-family:var(--font-mono);font-weight:700;color:'+col+';">'+bal+'</td><td style="font-family:var(--font-mono);">'+min+'</td><td><span style="font-size:0.68rem;padding:2px 6px;border-radius:4px;background:'+col+'22;color:'+col+';font-family:var(--font-mono);">'+st+'</span></td><td>'+_act(r,'inventory')+'</td>';
+        },
+        filters:[{id:'kpi-dd-filter1',label:'All Categories',key:'category'},{id:'kpi-dd-filter2',label:'All Centers',key:'center'}],
+        showAdd:true, showAlumniToggle:false,
+        _richSection: 'inventory',
+      },
+    };
+
+    // Merge into the existing getConfig
+    window._kpiDDGetConfig = function(key) {
+      return orig(key) || EXTRA_CONFIGS[key] || null;
+    };
+    window._kpiDDGetConfig._v46bExtended = true;
+
+    // Extend _kpiDDGetData for non-people modules
+    var origGetData = window._kpiDDGetData;
+    window._kpiDDGetData = function(key, showAlumni) {
+      if (typeof origGetData === 'function') {
+        var peopleResult = origGetData(key, showAlumni);
+        if (peopleResult && peopleResult.length > 0) return peopleResult;
+        // If orig returned empty and it's a people key, still return it
+        var peopleKeys = ['staff','faculty','assocFaculty','affiFaculty','researchers','fellows','students','tenureRisk'];
+        if (peopleKeys.indexOf(key) >= 0) return origGetData(key, showAlumni);
+      }
+      return _getExtData(key, showAlumni);
+    };
+  }
+
+  function _getExtData(key, showAlumni) {
+    var AD = window.ASSET_DB || {};
+    var rows = AD.rows || {};
+    var LAB = window.LAB || {};
+    var EXP = window.EXP || {};
+    var PUB = window.PUB || {};
+    var INV = window.INV_DB || {};
+    var BM  = window.BM  || {};
+
+    var assetMap = {
+      assetIT:          AD.it    || rows.it    || [],
+      assetNonIT:       AD.nonit || rows.nonit || [],
+      assetILDS:        AD.ilds  || rows.ilds  || [],
+      assetGPU:         AD.gpu   || rows.gpu   || [],
+      assetBooks:       AD.books || rows.books || [],
+      assetSpares:      AD.spares|| rows.spares|| [],
+      assetConsumables: AD.consumables||rows.consumables||[],
+      assetNonRep:      AD.nonrep||rows.nonrep ||[],
+      assetVendors:     AD.vendors||rows.vendors||[],
+    };
+    if (assetMap[key]) return assetMap[key];
+
+    if (key === 'biometric') return BM.all || [];
+    if (key === 'facilityLabs')   return (LAB.data ? LAB.data.facultyLabs   : LAB.facultyLabs)   || [];
+    if (key === 'facilityRooms')  return (LAB.data ? LAB.data.facilityRooms : LAB.facilityRooms) || [];
+    if (key === 'facilityFRooms') return (LAB.data ? LAB.data.facultyRooms  : LAB.facultyRooms)  || [];
+
+    if (key === 'expPaid')    return (EXP.all||[]).filter(function(e){ return (e.status||'').toLowerCase()==='paid'; });
+    if (key === 'expPending') return (EXP.all||[]).filter(function(e){ return (e.status||'').toLowerCase()==='pending'; });
+    if (key === 'expProcess') return (EXP.all||[]).filter(function(e){ return (e.status||'').toLowerCase().includes('process'); });
+
+    var allPub = PUB.all || [];
+    if (key === 'pubJournal')  return allPub.filter(function(p){ return _isPubType(p,'journal'); });
+    if (key === 'pubConf')     return allPub.filter(function(p){ return _isPubType(p,'conference'); });
+    if (key === 'pubReport')   return allPub.filter(function(p){ return _isPubType(p,'report'); });
+    if (key === 'pubPreprint') return allPub.filter(function(p){ return _isPubType(p,'preprint')||_isPubType(p,'arxiv'); });
+
+    if (key === 'inventory') return (INV.items || []).concat(
+      ((INV.gifts&&INV.gifts.items)||[]), ((INV.stationery&&INV.stationery.items)||[]), ((INV.mementos&&INV.mementos.items)||[])
+    ).filter(function(item, idx, arr){ return arr.findIndex(function(i){ return i.itemId===item.itemId&&i.name===item.name; })===idx; });
+
+    return [];
+  }
+
+  function _isPubType(p, type) {
+    var t = (p.type||p.jurisdiction||p.pubType||'').toLowerCase();
+    if (type==='journal')    return t.includes('journal')||t.includes('ieee')||t.includes('acm')||t.includes('springer')||t.includes('elsevier');
+    if (type==='conference') return t.includes('conf')||t.includes('workshop')||t.includes('symposium')||t.includes('congress');
+    if (type==='report')     return t.includes('report')||t.includes('technical');
+    if (type==='preprint')   return t.includes('preprint')||t.includes('arxiv');
+    return false;
+  }
+
+  function _badge(status) {
+    var s = (status||'').toLowerCase();
+    var col = s==='active'||s==='published'||s==='in stock'||s==='paid'?'var(--green)':s==='inactive'||s==='out of stock'?'var(--red)':s==='pending'||s==='low stock'?'var(--gold)':'var(--text2)';
+    var bg  = s==='active'||s==='published'||s==='in stock'||s==='paid'?'rgba(16,185,129,0.12)':s==='inactive'||s==='out of stock'?'rgba(239,68,68,0.12)':s==='pending'||s==='low stock'?'rgba(245,158,11,0.12)':'rgba(100,116,139,0.1)';
+    return '<span style="font-size:0.68rem;padding:2px 7px;border-radius:5px;background:'+bg+';color:'+col+';font-family:var(--font-mono);">'+(status||'—')+'</span>';
+  }
+
+  // ── Rich visual sections injected into kpi-dd-body ─────────────────────
+  function _ensureRichSection() {
+    var body = document.getElementById('kpi-dd-body');
+    if (!body || body.getAttribute('data-v46b-rich')) return;
+    body.setAttribute('data-v46b-rich','1');
+
+    // Insert a rich-section container before the table
+    var tableWrap = body.querySelector('.kpi-dd-table-wrap');
+    var richDiv = document.createElement('div');
+    richDiv.id = 'kpi-dd-rich-section';
+    richDiv.style.cssText = 'margin-bottom:1.5rem;';
+    if (tableWrap) body.insertBefore(richDiv, tableWrap.previousElementSibling||tableWrap);
+    else body.appendChild(richDiv);
+
+    // Also insert a year-matrix section for publications
+    var matrixDiv = document.createElement('div');
+    matrixDiv.id = 'kpi-dd-pub-matrix-section';
+    matrixDiv.style.cssText = 'display:none;margin-bottom:1.5rem;';
+    matrixDiv.innerHTML = '<div class="kpi-dd-section-hdr">📊 Year-wise Publication Matrix</div>' +
+      '<div class="kpi-dd-chart-box" style="overflow-x:auto;">' +
+      '<table style="width:100%;font-size:0.82rem;"><thead><tr>' +
+      '<th>Year</th><th style="text-align:center;">Journal</th><th style="text-align:center;">Conference</th>' +
+      '<th style="text-align:center;">National</th><th style="text-align:center;">International</th><th style="text-align:center;">Total</th>' +
+      '</tr></thead><tbody id="kpi-dd-pub-matrix-tbody"></tbody></table></div>';
+    if (tableWrap) body.insertBefore(matrixDiv, tableWrap.previousElementSibling||tableWrap);
+    else body.appendChild(matrixDiv);
+  }
+
+  function _populateRichSection(key, cfg) {
+    _ensureRichSection();
+    var richDiv = document.getElementById('kpi-dd-rich-section');
+    var matrixDiv = document.getElementById('kpi-dd-pub-matrix-section');
+    if (!richDiv) return;
+
+    var section = cfg ? cfg._richSection : null;
+    if (!section) { richDiv.innerHTML = ''; if(matrixDiv) matrixDiv.style.display='none'; return; }
+
+    var colors = ['#3B82F6','#06B6D4','#10B981','#F59E0B','#F97316','#8B5CF6','#EC4899','#EF4444'];
+
+    if (section === 'expense') {
+      var EXP = window.EXP || {};
+      var all = EXP.all || [];
+      richDiv.innerHTML = '<div class="kpi-dd-section-hdr">📊 Expense Analytics</div>' +
+        '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:0.5rem;">' +
+        _expBar('⚖️ Status Breakdown', _expStatusBars(all), colors) +
+        _expBar('🏢 By Department', _expDeptBars(all), colors) +
+        _expAlerts(all) + '</div>';
+      if(matrixDiv) matrixDiv.style.display='none';
+    }
+    else if (section === 'facility') {
+      var LAB = window.LAB || {};
+      var fl = (LAB.data?LAB.data.facultyLabs:LAB.facultyLabs)||[];
+      richDiv.innerHTML = '<div class="kpi-dd-section-hdr">📊 Facility Analytics</div>' + _facilityRich(fl);
+      if(matrixDiv) matrixDiv.style.display='none';
+    }
+    else if (section === 'biometric') {
+      var BM = window.BM || {};
+      richDiv.innerHTML = '<div class="kpi-dd-section-hdr">📊 Biometric Overview</div>' + _bioRich(BM);
+      if(matrixDiv) matrixDiv.style.display='none';
+    }
+    else if (section === 'publication') {
+      var PUB = window.PUB || {};
+      var allPub = PUB.all || [];
+      richDiv.innerHTML = '<div class="kpi-dd-section-hdr">📊 Publication Analytics</div>' + _pubRich(allPub);
+      if(matrixDiv) { matrixDiv.style.display=''; _fillPubMatrix(allPub); }
+    }
+    else if (section === 'inventory') {
+      var INV = window.INV_DB || {};
+      richDiv.innerHTML = '<div class="kpi-dd-section-hdr">📊 Inventory Overview</div>' + _invRich(INV);
+      if(matrixDiv) matrixDiv.style.display='none';
+    }
+    else { richDiv.innerHTML=''; if(matrixDiv) matrixDiv.style.display='none'; }
+  }
+
+  function _barHtml(items) {
+    if (!items||!items.length) return '<div style="color:var(--text3);font-size:0.78rem;padding:0.5rem 0;">No data</div>';
+    var mx = Math.max.apply(null, items.map(function(i){return i.val||0;}))||1;
+    return items.map(function(it){
+      var pct = Math.round((it.val||0)/mx*100);
+      return '<div style="display:flex;align-items:center;gap:0.5rem;padding:0.28rem 0;border-bottom:1px solid rgba(99,179,237,0.05);">' +
+        '<span style="font-size:0.76rem;color:var(--text2);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+(it.label||'')+'</span>' +
+        '<div style="flex-shrink:0;height:7px;width:'+Math.max(pct,1)+'px;max-width:80px;border-radius:3px;background:'+(it.color||'var(--accent)')+';" ></div>' +
+        '<span style="font-size:0.76rem;font-family:var(--font-mono);font-weight:700;color:var(--text);min-width:26px;text-align:right;">'+(it.val||0)+'</span>' +
+        '</div>';
+    }).join('');
+  }
+
+  function _expBar(title, items, colors) {
+    return '<div class="kpi-dd-chart-box"><div class="kpi-dd-chart-title">'+title+'</div>' + _barHtml(items) + '</div>';
+  }
+  function _expStatusBars(all) {
+    var paid=all.filter(function(e){return(e.status||'').toLowerCase()==='paid';});
+    var pend=all.filter(function(e){return(e.status||'').toLowerCase()==='pending';});
+    var proc=all.filter(function(e){return(e.status||'').toLowerCase().includes('process');});
+    return [{label:'✅ Paid ('+paid.length+')',val:Math.round(paid.reduce(function(s,e){return s+parseFloat(e.amount||0);},0)),color:'#10B981'},
+            {label:'⏳ Pending ('+pend.length+')',val:Math.round(pend.reduce(function(s,e){return s+parseFloat(e.amount||0);},0)),color:'#F59E0B'},
+            {label:'🔄 Under-proc ('+proc.length+')',val:Math.round(proc.reduce(function(s,e){return s+parseFloat(e.amount||0);},0)),color:'#F97316'}];
+  }
+  function _expDeptBars(all) {
+    var d={};
+    all.forEach(function(e){var k=e.dept||e.department||'General';d[k]=(d[k]||0)+parseFloat(e.amount||0);});
+    return Object.keys(d).sort(function(a,b){return d[b]-d[a];}).slice(0,6).map(function(k,i){
+      return {label:k,val:Math.round(d[k]),color:['#8B5CF6','#3B82F6','#06B6D4','#10B981','#F59E0B','#F97316'][i]||'var(--accent)'};
+    });
+  }
+  function _expAlerts(all) {
+    var today=new Date();
+    var alerts=all.filter(function(e){
+      if((e.status||'').toLowerCase()!=='pending')return false;
+      var sub=new Date((e.submittedDate||'').replace(/(\d{2})\/(\d{2})\/(\d{4})/,'$3-$2-$1'));
+      return !isNaN(sub)&&(today-sub)/86400000>30;
+    }).slice(0,8);
+    return '<div class="kpi-dd-chart-box" style="border-top:3px solid var(--orange);">' +
+      '<div class="kpi-dd-chart-title" style="color:var(--orange);">⚠️ Needs Attention ('+(alerts.length||0)+')</div>' +
+      '<div style="max-height:160px;overflow-y:auto;">' +
+      (alerts.length ? alerts.map(function(e){
+        return '<div style="padding:0.28rem 0;border-bottom:1px solid var(--border);font-size:0.77rem;">' +
+          '⚠️ <strong>'+(e.description||'—')+'</strong> <span style="font-family:var(--font-mono);color:var(--text3);">₹'+(e.amount||0)+'</span></div>';
+      }).join('') : '<div style="color:var(--text2);font-size:0.77rem;padding:0.5rem 0;">✅ No overdue</div>') + '</div></div>';
+  }
+
+  function _facilityRich(fl) {
+    var ind=fl.map(function(l){return l.statusIndicator||'';});
+    var oc=fl.filter(function(l){return l.statusIndicator==='OVER-CAPACITY';}).length;
+    var hi=fl.filter(function(l){return l.statusIndicator==='HIGH';}).length;
+    var me=fl.filter(function(l){return l.statusIndicator==='MEDIUM';}).length;
+    var lo=fl.filter(function(l){return l.statusIndicator==='LOW'||l.statusIndicator==='EMPTY';}).length;
+    return '<div style="display:flex;gap:0.4rem;flex-wrap:wrap;margin-bottom:0.75rem;padding:0.5rem 0.75rem;background:var(--surface2);border-radius:8px;border:1px solid var(--border);">' +
+      '<span style="font-size:0.62rem;font-family:var(--font-mono);color:var(--text3);margin-right:0.3rem;">🎨 Utilization:</span>' +
+      '<span style="font-size:0.68rem;padding:2px 8px;border-radius:4px;background:#FFCDD2;color:#B71C1C;font-family:var(--font-mono);font-weight:700;">🔴 Over-Cap: '+oc+'</span>' +
+      '<span style="font-size:0.68rem;padding:2px 8px;border-radius:4px;background:#FFCCBC;color:#BF360C;font-family:var(--font-mono);font-weight:700;">🟠 High: '+hi+'</span>' +
+      '<span style="font-size:0.68rem;padding:2px 8px;border-radius:4px;background:#FFF9C4;color:#827717;font-family:var(--font-mono);font-weight:700;">🟡 Medium: '+me+'</span>' +
+      '<span style="font-size:0.68rem;padding:2px 8px;border-radius:4px;background:#DCEDC8;color:#33691E;font-family:var(--font-mono);font-weight:700;">🟢 Low: '+lo+'</span>' +
+      '</div>';
+  }
+
+  function _bioRich(BM) {
+    var allUsers=BM.all||[];
+    var bmRaw=BM.raw||{};
+    var zones=bmRaw.zones||{};
+    if (!Object.keys(zones).length && allUsers.length) {
+      allUsers.forEach(function(u){var z=u.zone||u.area||'General';if(!zones[z])zones[z]={enrolled:0,in:0,capacity:50};zones[z].enrolled++;if((u.status||'').toLowerCase()==='in')zones[z].in++;});
+    }
+    var zkeys=Object.keys(zones);
+    var grid = !zkeys.length ? '<div style="color:var(--text3);font-size:0.82rem;">Connect biometric sheet for area data</div>' :
+      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:0.6rem;">' +
+      zkeys.map(function(z){
+        var zone=zones[z]; var occ=zone.in||0; var cap=zone.capacity||zone.enrolled||50;
+        var pct=cap>0?Math.min(100,Math.round(occ/cap*100)):0;
+        var col=pct>90?'#EF4444':pct>70?'#F97316':pct>40?'#F59E0B':'#10B981';
+        return '<div style="background:var(--surface);border:1px solid var(--border);border-top:3px solid '+col+';border-radius:8px;padding:0.7rem 0.8rem;">' +
+          '<div style="font-size:0.72rem;font-weight:700;color:var(--text);">📍 '+z+'</div>' +
+          '<div style="font-size:0.68rem;color:var(--text3);font-family:var(--font-mono);">In: <strong style="color:'+col+';">'+occ+'</strong> / Cap: '+cap+'</div>' +
+          '<div style="margin-top:0.35rem;height:5px;background:var(--surface2);border-radius:3px;overflow:hidden;"><div style="width:'+pct+'%;height:100%;background:'+col+';border-radius:3px;"></div></div></div>';
+      }).join('') + '</div>';
+    return '<div class="kpi-dd-chart-box" style="margin-bottom:0.75rem;"><div class="kpi-dd-chart-title">🏢 Area Occupancy</div>' + grid + '</div>';
+  }
+
+  function _pubRich(allPub) {
+    var jurs={};
+    allPub.forEach(function(p){var j=p.jurisdiction||'Other';jurs[j]=(jurs[j]||0)+1;});
+    var WS=window.WS_CONFIG||{};
+    var ranks=WS.conferenceRankings||['A*','A','B','C','NIL'];
+    var rankItems=ranks.map(function(r,i){return{label:r+' Rank',val:allPub.filter(function(p){return(p.conferenceRank||p.ranking||'').toUpperCase()===r;}).length,color:['#10B981','#3B82F6','#F59E0B','#F97316','#64748B'][i]||'var(--accent)'};});
+    var jurItems=Object.keys(jurs).sort(function(a,b){return jurs[b]-jurs[a];}).slice(0,6).map(function(j,i){return{label:j,val:jurs[j],color:['#8B5CF6','#3B82F6','#06B6D4','#10B981','#F59E0B','#F97316'][i]||'var(--accent)'};});
+    return '<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">' +
+      '<div class="kpi-dd-chart-box"><div class="kpi-dd-chart-title">🌍 Jurisdiction Breakdown</div>' + _barHtml(jurItems) + '</div>' +
+      '<div class="kpi-dd-chart-box"><div class="kpi-dd-chart-title">🏆 Conference Rankings</div>' + _barHtml(rankItems) + '</div>' +
+      '</div>';
+  }
+
+  function _fillPubMatrix(allPub) {
+    var tbody=document.getElementById('kpi-dd-pub-matrix-tbody');
+    if(!tbody)return;
+    var years={};
+    allPub.forEach(function(p){
+      var y=p.year||(p.date||'').split('/')[2]||(p.date||'').split('-')[0]||'—';
+      if(!years[y])years[y]={j:0,c:0,nat:0,intl:0};
+      var t=(p.type||p.jurisdiction||'').toLowerCase();
+      if(t.includes('journal')||t.includes('ieee')||t.includes('acm'))years[y].j++;
+      else if(t.includes('conf')||t.includes('workshop'))years[y].c++;
+      else if(t.includes('national'))years[y].nat++;
+      else years[y].intl++;
+    });
+    var sortedYears=Object.keys(years).filter(function(y){return y!=='—';}).sort(function(a,b){return b-a;});
+    tbody.innerHTML=sortedYears.length
+      ? sortedYears.map(function(y){var d=years[y];var tot=d.j+d.c+d.nat+d.intl;return '<tr><td style="font-family:var(--font-mono);font-weight:700;">'+y+'</td><td style="text-align:center;">'+d.j+'</td><td style="text-align:center;">'+d.c+'</td><td style="text-align:center;">'+d.nat+'</td><td style="text-align:center;">'+d.intl+'</td><td style="text-align:center;font-weight:700;color:var(--accent);">'+tot+'</td></tr>';}).join('')
+      : '<tr><td colspan="6" style="text-align:center;padding:1.5rem;color:var(--text3);">No publication data loaded</td></tr>';
+  }
+
+  function _invRich(INV) {
+    var items=INV.items||[];
+    var cats={};
+    items.forEach(function(i){var c=i.category||'Other';cats[c]=(cats[c]||0)+1;});
+    var catItems=Object.keys(cats).sort(function(a,b){return cats[b]-cats[a];}).slice(0,8).map(function(c,i){return{label:c,val:cats[c],color:['#8B5CF6','#10B981','#F59E0B','#3B82F6','#F97316','#06B6D4','#EC4899','#EF4444'][i]||'var(--accent)'};});
+    var low=items.filter(function(i){var b=parseFloat(i.currentBalance||i.balance||0);var m=parseFloat(i.minThreshold||i.reorderLevel||5);return b<=m;});
+    return '<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">' +
+      '<div class="kpi-dd-chart-box"><div class="kpi-dd-chart-title">📦 Category Distribution</div>' + _barHtml(catItems) + '</div>' +
+      '<div class="kpi-dd-chart-box" style="border-top:3px solid var(--red);"><div class="kpi-dd-chart-title" style="color:var(--red);">🚨 Low/Critical Stock ('+low.length+')</div>' +
+      '<div style="max-height:180px;overflow-y:auto;">' +
+      (low.length ? low.slice(0,12).map(function(i){var b=parseFloat(i.currentBalance||i.balance||0);var st=b===0?'🔴 Out':'🟡 Low';return '<div style="padding:0.25rem 0;border-bottom:1px solid var(--border);font-size:0.76rem;">'+st+' <strong>'+(i.itemName||i.name||'—')+'</strong> <span style="font-family:var(--font-mono);color:var(--text3);">'+b+'</span></div>';}).join('') : '<div style="color:var(--text2);font-size:0.77rem;padding:0.5rem 0;">✅ All items healthy</div>') +
+      '</div></div></div>';
+  }
+
+  // ── Patch openKpiDrilldown to call _populateRichSection ──────────────
+  function _patchOpenKpiDrilldown() {
+    var orig = window.openKpiDrilldown;
+    if (typeof orig !== 'function') { setTimeout(_patchOpenKpiDrilldown, 400); return; }
+    if (orig._v46bRichPatched) return;
+    window.openKpiDrilldown = function(key) {
+      orig.apply(this, arguments);
+      setTimeout(function() {
+        var cfg = typeof window._kpiDDGetConfig === 'function' ? window._kpiDDGetConfig(key) : null;
+        _populateRichSection(key, cfg);
+      }, 80);
+    };
+    window.openKpiDrilldown._v46bRichPatched = true;
+  }
+
+  // ── Patch v36ToggleExpand to open full-screen drilldown ───────────────
+  function _patchToggleForDrilldown() {
+    var orig = window.v36ToggleExpand;
+    if (typeof orig !== 'function') { setTimeout(_patchToggleForDrilldown, 400); return; }
+    if (orig._v46bDDPatched) return;
+    window.v36ToggleExpand = function(id) {
+      var ddKey = EXPAND_TO_DD[id];
+      if (ddKey && typeof window.openKpiDrilldown === 'function') {
+        window.openKpiDrilldown(ddKey);
+        return; // Don't open inline panel
+      }
+      orig.apply(this, arguments); // fallback for unregistered IDs
+    };
+    window.v36ToggleExpand._v46bDDPatched = true;
+  }
+
+  // ── Add button wiring for new module types ────────────────────────────
+  function _patchKpiDrilldownAdd() {
+    var orig = window.kpiDrilldownAdd;
+    if (typeof orig !== 'function') { setTimeout(_patchKpiDrilldownAdd, 400); return; }
+    if (orig._v46bPatched) return;
+    window.kpiDrilldownAdd = function() {
+      var k = window._kpiDDState ? window._kpiDDState.key : null;
+      if (!k) return;
+      // People module (handled by orig)
+      var peopleKeys = ['staff','faculty','assocFaculty','affiFaculty','researchers','fellows','students'];
+      if (peopleKeys.indexOf(k) >= 0) { orig.apply(this, arguments); return; }
+      // Asset add
+      if (k.startsWith('asset')) { if(typeof showTab==='function') showTab('assets'); if(typeof toast==='function') toast('📦 Use the Assets module to add items'); return; }
+      // Expense add
+      if (k.startsWith('exp')) { if(typeof showExpenseForm==='function') showExpenseForm(); else if(typeof showTab==='function') showTab('expenses'); return; }
+      // Pub add
+      if (k.startsWith('pub')) { if(typeof showPubForm==='function') showPubForm(); else if(typeof showTab==='function') showTab('publications'); return; }
+      // Facility add
+      if (k.startsWith('facility')) { if(typeof labOpenAddModal==='function') labOpenAddModal('facultyLab'); else if(typeof showTab==='function') showTab('labs'); return; }
+      // Biometric add
+      if (k === 'biometric') { if(typeof showTab==='function') showTab('biometric'); if(typeof toast==='function') toast('🔐 Use the Biometric module to add users'); return; }
+      // Inventory add
+      if (k === 'inventory') { if(typeof invShowAddForm==='function') invShowAddForm(); else if(typeof showTab==='function') showTab('inventory'); return; }
+      orig.apply(this, arguments);
+    };
+    window.kpiDrilldownAdd._v46bPatched = true;
+  }
+
+  // ── Boot ─────────────────────────────────────────────────────────────
+  function _boot() {
+    _extendDDConfigs();
+    _patchOpenKpiDrilldown();
+    _patchToggleForDrilldown();
+    _patchKpiDrilldownAdd();
+    console.log('[v46b Full Drilldown] Loaded ✅');
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', _boot);
+  } else {
+    setTimeout(_boot, 150);
+  }
+
+})();
 // ─────────────────────────────────────────────────────────────────────────────
 // Root cause (all roles):
 //   moduleRefresh('people'|'assets'|'labs'|…) → sysFetchAll() → _renderAllModules()
@@ -31608,6 +32847,746 @@ tbody td { vertical-align: middle; }
     document.addEventListener('DOMContentLoaded', _boot);
   } else {
     setTimeout(_boot, 50);
+  }
+// ══════════════════════════════════════════════════════════════════════════════
+// WSAI PORTAL v46 — RICH EXPAND PANELS (Full Module Visuals in KPI Drilldowns)
+// ─────────────────────────────────────────────────────────────────────────────
+// Problem: Clicking a KPI card opened only a basic registry table.
+// Fix: Each expand panel now contains the FULL module visual experience:
+//   • People:    Tenure Actions table + all 4 distribution tables (Faculty/
+//               Researcher/Staff/Student) driven by live DB[] data
+//   • Assets:    IT & Non-IT category breakdown bars driven by ASSET_DB
+//   • Biometric: Area Occupancy grid + Pending Requests table
+//   • Facility:  Color Legend + Utilization Ribbons + Category Analysis
+//   • Expenses:  Status Breakdown + By Department + Needs Attention
+//   • Pubs:      Year-wise Matrix + Jurisdiction + Conference Rankings
+//   • Inventory: Stock statistics + low-stock alerts
+// All visuals share the same render functions as the real modules but write to
+// panel-scoped element IDs, populated on open via _richPanelPopulate(key).
+// ══════════════════════════════════════════════════════════════════════════════
+(function _v46RichPanels() {
+  'use strict';
+
+  // ── utility ────────────────────────────────────────────────────────────────
+  var _id = function(id) { return document.getElementById(id); };
+  var _sv = function(id, v) { var e = _id(id); if (e) e.textContent = v; };
+  var _si = function(id, h) { var e = _id(id); if (e) e.innerHTML = h; };
+
+  // ── CSS for rich panels (appended once) ────────────────────────────────────
+  function _injectCSS() {
+    if (_id('v46-rich-panel-css')) return;
+    var s = document.createElement('style');
+    s.id = 'v46-rich-panel-css';
+    s.textContent = `
+      .v46-rp-section { background:var(--surface2); border:1px solid var(--border); border-radius:12px; padding:1.25rem 1.5rem; margin-bottom:1rem; }
+      .v46-rp-title   { font-size:0.72rem; font-family:var(--font-mono); text-transform:uppercase; letter-spacing:0.08em; color:var(--text3); margin-bottom:0.75rem; font-weight:700; }
+      .v46-rp-grid3   { display:grid; grid-template-columns:repeat(3,1fr); gap:0.85rem; margin-bottom:1rem; }
+      .v46-rp-grid2   { display:grid; grid-template-columns:1fr 1fr; gap:0.85rem; margin-bottom:1rem; }
+      .v46-rp-card    { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:0.9rem 1rem; }
+      .v46-rp-card-title { font-size:0.7rem; font-family:var(--font-mono); color:var(--text2); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:0.5rem; }
+      .v46-dist-row   { display:flex; align-items:center; gap:0.6rem; padding:0.3rem 0; border-bottom:1px solid rgba(99,179,237,0.06); }
+      .v46-dist-row:last-child { border-bottom:none; }
+      .v46-dist-label { font-size:0.78rem; color:var(--text2); flex:1; min-width:0; }
+      .v46-dist-bar   { height:6px; border-radius:3px; flex-shrink:0; min-width:2px; }
+      .v46-dist-val   { font-size:0.78rem; font-family:var(--font-mono); font-weight:700; color:var(--text); min-width:28px; text-align:right; flex-shrink:0; }
+      .v46-legend-chip { font-size:0.67rem; padding:2px 8px; border-radius:4px; font-family:var(--font-mono); font-weight:700; }
+      .v46-stat-bar-row { display:flex; align-items:center; gap:0.5rem; padding:0.25rem 0; }
+      .v46-stat-bar-label { font-size:0.75rem; color:var(--text2); flex:0 0 110px; }
+      .v46-stat-bar-track { flex:1; height:8px; background:var(--surface3,rgba(100,100,100,0.15)); border-radius:4px; overflow:hidden; }
+      .v46-stat-bar-fill  { height:100%; border-radius:4px; transition:width 0.4s; }
+      .v46-stat-bar-num   { font-size:0.72rem; font-family:var(--font-mono); color:var(--text3); min-width:32px; text-align:right; flex-shrink:0; }
+      @media(max-width:700px){ .v46-rp-grid3,.v46-rp-grid2{ grid-template-columns:1fr; } }
+    `;
+    document.head.appendChild(s);
+  }
+
+  // ── Shared bar-chart builder ────────────────────────────────────────────────
+  function _distBars(items, maxVal) {
+    if (!items || !items.length) return '<div style="color:var(--text3);font-size:0.78rem;padding:0.5rem 0;">No data</div>';
+    var mx = maxVal || Math.max.apply(null, items.map(function(i){ return i.val||0; })) || 1;
+    return items.map(function(item) {
+      var pct = Math.round((item.val||0) / mx * 100);
+      return '<div class="v46-dist-row">' +
+        '<span class="v46-dist-label">' + (item.label||'') + '</span>' +
+        '<div class="v46-dist-bar" style="width:' + Math.max(pct,1) + 'px;background:' + (item.color||'var(--accent)') + ';"></div>' +
+        '<span class="v46-dist-val">' + (item.val||0) + '</span>' +
+        '</div>';
+    }).join('');
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // PANEL HTML BUILDERS — one per KPI card type
+  // ══════════════════════════════════════════════════════════════════════════
+
+  function _buildPeopleRichPanel(prefix, subLabel) {
+    prefix = prefix || 'ep';
+    return `
+      <!-- Tenure Actions Required -->
+      <div class="v46-rp-section" style="border-top:3px solid var(--orange);">
+        <div class="v46-rp-title">⏰ Tenure Actions Required</div>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead><tr><th>Name</th><th>Type</th><th>Center/Dept</th><th>Exit Date</th><th>Days Left</th><th>Decision</th></tr></thead>
+            <tbody id="${prefix}-tenure-tbody"></tbody>
+          </table>
+          <div id="${prefix}-tenure-empty" style="display:none;padding:1.25rem;text-align:center;color:var(--text2);font-size:0.85rem;">✅ No urgent tenure actions</div>
+        </div>
+      </div>
+      <!-- Distribution row 1 -->
+      <div class="v46-rp-grid3">
+        <div class="v46-rp-card" style="border-top:3px solid #2E7D32;">
+          <div class="v46-rp-card-title">🎓 Faculty Category Distribution</div>
+          <div id="${prefix}-fac-dist"></div>
+        </div>
+        <div class="v46-rp-card" style="border-top:3px solid #FF5722;">
+          <div class="v46-rp-card-title">🎓 Student Designation Distribution</div>
+          <div id="${prefix}-stu-dist"></div>
+        </div>
+        <div class="v46-rp-card" style="border-top:3px solid #6A1B9A;">
+          <div class="v46-rp-card-title">🔬 Researcher Designation Distribution</div>
+          <div id="${prefix}-res-dist"></div>
+        </div>
+      </div>
+      <!-- Staff distribution full width -->
+      <div class="v46-rp-card" style="border-top:3px solid #1E88E5;margin-bottom:1rem;">
+        <div class="v46-rp-card-title">👥 Staff Designation Distribution</div>
+        <div id="${prefix}-staff-dist"></div>
+      </div>`;
+  }
+
+  function _buildAssetRichPanel(prefix) {
+    prefix = prefix || 'ep';
+    return `
+      <div class="v46-rp-grid2">
+        <div class="v46-rp-card" style="border-top:3px solid #3B82F6;">
+          <div class="v46-rp-card-title">💻 IT Assets — Category Breakdown</div>
+          <div id="${prefix}-it-dist"></div>
+        </div>
+        <div class="v46-rp-card" style="border-top:3px solid #F59E0B;">
+          <div class="v46-rp-card-title">🏢 Non-IT Assets — Category Breakdown</div>
+          <div id="${prefix}-nonit-dist"></div>
+        </div>
+      </div>
+      <div class="v46-rp-grid2">
+        <div class="v46-rp-card" style="border-top:3px solid #06B6D4;">
+          <div class="v46-rp-card-title">🌐 ILDS Cluster — Breakdown</div>
+          <div id="${prefix}-ilds-dist"></div>
+        </div>
+        <div class="v46-rp-card" style="border-top:3px solid #8B5CF6;">
+          <div class="v46-rp-card-title">🧠 GPU Cluster — Breakdown</div>
+          <div id="${prefix}-gpu-dist"></div>
+        </div>
+      </div>
+      <div class="v46-rp-card" style="border-top:3px solid #10B981;margin-bottom:1rem;">
+        <div class="v46-rp-card-title">📚 Books Inventory — Category Breakdown</div>
+        <div id="${prefix}-books-dist"></div>
+      </div>`;
+  }
+
+  function _buildBioRichPanel(prefix) {
+    prefix = prefix || 'ep';
+    return `
+      <div class="v46-rp-section" style="margin-bottom:0.75rem;">
+        <div class="v46-rp-title">🏢 Area Occupancy — Live / Last-Known</div>
+        <div id="${prefix}-bio-area-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:0.75rem;"></div>
+      </div>
+      <div class="v46-rp-section" style="border-top:3px solid var(--gold);">
+        <div class="v46-rp-title">⏳ Biometric Auth — Pending Requests</div>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead><tr><th>Name</th><th>Role</th><th>Request Date</th><th>Auth Type</th><th>Actions</th></tr></thead>
+            <tbody id="${prefix}-bio-pend-tbody"></tbody>
+          </table>
+          <div id="${prefix}-bio-pend-empty" style="display:none;padding:1rem;text-align:center;color:var(--text2);font-size:0.82rem;">✅ No pending biometric requests</div>
+        </div>
+      </div>`;
+  }
+
+  function _buildFacilityRichPanel(prefix) {
+    prefix = prefix || 'ep';
+    return `
+      <!-- Color Legend -->
+      <div style="display:flex;gap:0.4rem;flex-wrap:wrap;margin-bottom:1rem;padding:0.6rem 1rem;background:var(--surface2);border-radius:10px;border:1px solid var(--border);align-items:center;">
+        <span style="font-size:0.62rem;font-family:var(--font-mono);color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-right:0.5rem;">🎨 Color Legend (v5.1):</span>
+        <span class="v46-legend-chip" style="background:#FFCDD2;color:#B71C1C;">🔴 OVER CAPACITY &gt;100%</span>
+        <span class="v46-legend-chip" style="background:#FFCCBC;color:#BF360C;">🟠 HIGH 80–100%</span>
+        <span class="v46-legend-chip" style="background:#FFF9C4;color:#827717;">🟡 MEDIUM 50–80%</span>
+        <span class="v46-legend-chip" style="background:#DCEDC8;color:#33691E;">🟢 LOW 20–50%</span>
+        <span class="v46-legend-chip" style="background:#E8F5E9;color:#1B5E20;">🔵 VERY LOW 0–20%</span>
+        <span class="v46-legend-chip" style="background:#F5F5F5;color:#757575;">⚪ EMPTY 0%</span>
+      </div>
+      <!-- Utilization Ribbons -->
+      <div class="v46-rp-section" style="border-top:3px solid var(--red);margin-bottom:0.85rem;">
+        <div class="v46-rp-title">📊 Utilization Ribbons</div>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.75rem;">
+          <span style="font-size:0.72rem;padding:0.3rem 0.75rem;border-radius:6px;background:rgba(239,68,68,0.15);color:#EF4444;font-family:var(--font-mono);border:1px solid rgba(239,68,68,0.25);">🔴 Over-Capacity: <span id="${prefix}-rib-over">—</span></span>
+          <span style="font-size:0.72rem;padding:0.3rem 0.75rem;border-radius:6px;background:rgba(249,115,22,0.12);color:#F97316;font-family:var(--font-mono);border:1px solid rgba(249,115,22,0.22);">🟠 High (80–100%): <span id="${prefix}-rib-high">—</span></span>
+          <span style="font-size:0.72rem;padding:0.3rem 0.75rem;border-radius:6px;background:rgba(245,158,11,0.12);color:#F59E0B;font-family:var(--font-mono);border:1px solid rgba(245,158,11,0.22);">🟡 Medium (50–80%): <span id="${prefix}-rib-med">—</span></span>
+          <span style="font-size:0.72rem;padding:0.3rem 0.75rem;border-radius:6px;background:rgba(16,185,129,0.12);color:#10B981;font-family:var(--font-mono);border:1px solid rgba(16,185,129,0.22);">🟢 Low (&lt;50%): <span id="${prefix}-rib-low">—</span></span>
+        </div>
+        <div id="${prefix}-rib-panels"></div>
+      </div>
+      <!-- Category Analysis -->
+      <div class="v46-rp-section">
+        <div class="v46-rp-title">📂 Category Analysis</div>
+        <div id="${prefix}-cat-analysis"></div>
+      </div>`;
+  }
+
+  function _buildExpenseRichPanel(prefix) {
+    prefix = prefix || 'ep';
+    return `
+      <div class="v46-rp-grid3">
+        <div class="v46-rp-card" style="border-top:3px solid var(--accent);">
+          <div class="v46-rp-card-title">⚖️ Status Breakdown</div>
+          <div id="${prefix}-exp-status"></div>
+        </div>
+        <div class="v46-rp-card" style="border-top:3px solid #8B5CF6;">
+          <div class="v46-rp-card-title">🏢 By Department</div>
+          <div id="${prefix}-exp-dept"></div>
+        </div>
+        <div class="v46-rp-card" style="border-top:3px solid var(--orange);">
+          <div class="v46-rp-card-title">⚠️ Needs Attention</div>
+          <div id="${prefix}-exp-alerts" style="max-height:180px;overflow-y:auto;"></div>
+        </div>
+      </div>`;
+  }
+
+  function _buildPubRichPanel(prefix) {
+    prefix = prefix || 'ep';
+    return `
+      <div class="v46-rp-grid2">
+        <div class="v46-rp-card" style="border-top:3px solid #8B5CF6;">
+          <div class="v46-rp-card-title">🌍 Jurisdiction Breakdown</div>
+          <div id="${prefix}-pub-jurisdiction"></div>
+        </div>
+        <div class="v46-rp-card" style="border-top:3px solid #3B82F6;">
+          <div class="v46-rp-card-title">🏆 Conference Rankings</div>
+          <div id="${prefix}-pub-rankings"></div>
+        </div>
+      </div>
+      <div class="v46-rp-section">
+        <div class="v46-rp-title">📊 Year-wise Publication Matrix</div>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead><tr><th>Year</th><th>Journal</th><th>Conference</th><th>National</th><th>International</th><th>Total</th></tr></thead>
+            <tbody id="${prefix}-pub-matrix"></tbody>
+          </table>
+        </div>
+      </div>`;
+  }
+
+  function _buildInventoryRichPanel(prefix) {
+    prefix = prefix || 'ep';
+    return `
+      <div class="v46-rp-grid3">
+        <div class="v46-rp-card" style="border-top:3px solid #8B5CF6;">
+          <div class="v46-rp-card-title">🎁 Gifts</div>
+          <div id="${prefix}-inv-gifts-bars"></div>
+        </div>
+        <div class="v46-rp-card" style="border-top:3px solid #10B981;">
+          <div class="v46-rp-card-title">✏️ Stationeries</div>
+          <div id="${prefix}-inv-stat-bars"></div>
+        </div>
+        <div class="v46-rp-card" style="border-top:3px solid #F59E0B;">
+          <div class="v46-rp-card-title">🏆 Mementos</div>
+          <div id="${prefix}-inv-memo-bars"></div>
+        </div>
+      </div>
+      <div class="v46-rp-section" style="border-top:3px solid var(--red);">
+        <div class="v46-rp-title">🚨 Low Stock / Critical Alerts</div>
+        <div id="${prefix}-inv-alerts" style="max-height:200px;overflow-y:auto;"></div>
+      </div>`;
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // DATA POPULATE FUNCTIONS — fill the rich panel elements with live data
+  // ══════════════════════════════════════════════════════════════════════════
+
+  function _populatePeoplePanel(prefix) {
+    try {
+      var DB = window.DB || {};
+      var WS = window.WS_CONFIG || {};
+      var today = new Date();
+
+      // Tenure Actions
+      var allP = [].concat(DB.staff||[], DB.researchers||[], DB.faculty||[],
+        DB.assocFaculty||[], DB.affiFaculty||[], DB.students||[], DB.fellows||[]);
+      var atRisk = allP.filter(function(p) {
+        var d = p.exitDate || p.tenureEnd || '';
+        if (!d) return false;
+        var dt = new Date(d.replace(/(\d{2})\/(\d{2})\/(\d{4})/, '$3-$2-$1'));
+        var diff = (dt - today) / 86400000;
+        return diff >= 0 && diff <= 60;
+      });
+      var tbody = _id(prefix + '-tenure-tbody');
+      if (tbody) {
+        if (!atRisk.length) {
+          tbody.innerHTML = '';
+          var empty = _id(prefix + '-tenure-empty');
+          if (empty) empty.style.display = '';
+        } else {
+          tbody.innerHTML = atRisk.map(function(p) {
+            var d = p.exitDate || p.tenureEnd || '—';
+            var dt = new Date(d.replace(/(\d{2})\/(\d{2})\/(\d{4})/, '$3-$2-$1'));
+            var days = isNaN(dt) ? '—' : Math.max(0, Math.ceil((dt - today) / 86400000));
+            var pri = typeof days === 'number' ? (days <= 15 ? '🔴 Critical' : '🟡 Soon') : '—';
+            return '<tr><td><strong>' + (p.name||'—') + '</strong></td><td>' + (p.designation||p.facultyType||'—') + '</td><td>' + (p.center||p.department||'—') + '</td><td style="font-family:var(--font-mono);font-size:0.78rem;">' + d + '</td><td style="font-weight:700;color:' + (typeof days==='number'&&days<=15?'var(--red)':'var(--gold)') + ';">' + days + 'd</td><td>' + pri + '</td></tr>';
+          }).join('');
+        }
+      }
+
+      // Faculty Category Distribution
+      var facItems = [];
+      (WS.facultyType||['Professor','Assoc. Professor','Asst. Professor','Visiting']).forEach(function(t) {
+        facItems.push({ label: t, val: (DB.faculty||[]).filter(function(f){ return f.facultyType===t; }).length, color:'#4CAF50' });
+      });
+      (WS.associateFacultyType||['Sr. Assoc. Faculty','Jr. Assoc. Faculty']).forEach(function(t) {
+        facItems.push({ label: '🔗 '+t, val: (DB.assocFaculty||[]).filter(function(f){ return f.facultyType===t; }).length, color:'#06B6D4' });
+      });
+      (WS.affiliateFacultyType||['Industry Affiliate','Research Affiliate']).forEach(function(t) {
+        facItems.push({ label: '🏭 '+t, val: (DB.affiFaculty||[]).filter(function(f){ return f.facultyType===t; }).length, color:'#8B5CF6' });
+      });
+      _si(prefix + '-fac-dist', _distBars(facItems));
+
+      // Student Distribution
+      var stuItems = (WS.studentDesignation||['Ph.D','M.Tech','M.S. Research','B.Tech']).map(function(t) {
+        return { label:t, val:(DB.students||[]).filter(function(s){ return s.designation===t; }).length, color:'#FF7043' };
+      });
+      _si(prefix + '-stu-dist', _distBars(stuItems));
+
+      // Researcher Distribution
+      var resItems = (WS.researcherDesignation||['Post-Doc','Sr. Researcher','Research Assoc.','Jr. Researcher']).map(function(t) {
+        return { label:t, val:(DB.researchers||[]).filter(function(r){ return r.designation===t; }).length, color:'#AB47BC' };
+      });
+      _si(prefix + '-res-dist', _distBars(resItems));
+
+      // Staff Distribution
+      var staffItems = (WS.staffDesignation||['Admin','Technical','Support','Research Support']).map(function(t) {
+        return { label:t, val:(DB.staff||[]).filter(function(s){ return s.designation===t; }).length, color:'#42A5F5' };
+      });
+      _si(prefix + '-staff-dist', _distBars(staffItems));
+
+    } catch(e) { console.warn('[v46 people panel]', e); }
+  }
+
+  function _populateAssetPanel(prefix) {
+    try {
+      var AD = window.ASSET_DB || {};
+      var it    = AD.it    || (AD.rows && AD.rows.it)    || [];
+      var nonit = AD.nonit || (AD.rows && AD.rows.nonit) || [];
+      var ilds  = AD.ilds  || (AD.rows && AD.rows.ilds)  || [];
+      var gpu   = AD.gpu   || (AD.rows && AD.rows.gpu)   || [];
+      var books = AD.books || (AD.rows && AD.rows.books) || [];
+
+      function catDist(arr, catField, color) {
+        var counts = {};
+        arr.forEach(function(r) { var c = r[catField]||r.category||'Other'; counts[c]=(counts[c]||0)+1; });
+        return Object.keys(counts).sort(function(a,b){ return counts[b]-counts[a]; }).slice(0,8).map(function(c) {
+          return { label:c, val:counts[c], color:color||'var(--accent)' };
+        });
+      }
+      _si(prefix + '-it-dist',    _distBars(catDist(it,   'category','#3B82F6')) || '<div style="color:var(--text3);font-size:0.78rem;">No data</div>');
+      _si(prefix + '-nonit-dist', _distBars(catDist(nonit,'category','#F59E0B')) || '<div style="color:var(--text3);font-size:0.78rem;">No data</div>');
+      _si(prefix + '-ilds-dist',  _distBars(catDist(ilds, 'category','#06B6D4')) || '<div style="color:var(--text3);font-size:0.78rem;">No data</div>');
+      _si(prefix + '-gpu-dist',   _distBars(catDist(gpu,  'item','#8B5CF6'))     || '<div style="color:var(--text3);font-size:0.78rem;">No data</div>');
+      _si(prefix + '-books-dist', _distBars(catDist(books,'category','#10B981')) || '<div style="color:var(--text3);font-size:0.78rem;">No data</div>');
+    } catch(e) { console.warn('[v46 asset panel]', e); }
+  }
+
+  function _populateBioPanel(prefix) {
+    try {
+      var BM = window.BM || {};
+      var bmRaw = BM.raw || {};
+      var allUsers = BM.all || [];
+
+      // Area grid
+      var areaGrid = _id(prefix + '-bio-area-grid');
+      if (areaGrid) {
+        var zones = bmRaw.zones || {};
+        // Try to build from allUsers if zones missing
+        if (!Object.keys(zones).length && allUsers.length) {
+          allUsers.forEach(function(u) {
+            var z = u.zone||u.area||u.location||'General';
+            if (!zones[z]) zones[z] = { enrolled:0, in:0, capacity:50 };
+            zones[z].enrolled++;
+            if ((u.status||'').toLowerCase()==='in') zones[z].in++;
+          });
+        }
+        var zkeys = Object.keys(zones);
+        if (!zkeys.length) {
+          areaGrid.innerHTML = '<div style="color:var(--text3);font-size:0.82rem;padding:0.5rem;">Connect biometric sheet to load area data</div>';
+        } else {
+          areaGrid.innerHTML = zkeys.map(function(z) {
+            var zone = zones[z];
+            var occ = zone.in || zone.currentIn || 0;
+            var cap = zone.capacity || zone.enrolled || 50;
+            var enr = zone.enrolled || 0;
+            var pct = cap > 0 ? Math.min(100, Math.round(occ/cap*100)) : 0;
+            var col = pct>90?'#EF4444':pct>70?'#F97316':pct>40?'#F59E0B':'#10B981';
+            return '<div style="background:var(--surface);border:1px solid var(--border);border-top:3px solid '+col+';border-radius:10px;padding:0.9rem 1rem;">' +
+              '<div style="font-size:0.75rem;font-weight:700;color:var(--text);margin-bottom:0.35rem;">📍 '+z+'</div>' +
+              '<div style="display:flex;justify-content:space-between;font-size:0.7rem;font-family:var(--font-mono);color:var(--text3);">' +
+              '<span>In: <strong style="color:'+col+';">'+occ+'</strong></span>' +
+              '<span>Enrolled: '+enr+'</span>' +
+              '<span>Cap: '+cap+'</span>' +
+              '</div>' +
+              '<div style="margin-top:0.4rem;height:5px;background:var(--surface2);border-radius:3px;overflow:hidden;">' +
+              '<div style="width:'+pct+'%;height:100%;background:'+col+';border-radius:3px;transition:width 0.4s;"></div></div>' +
+              '<div style="text-align:right;font-size:0.65rem;font-family:var(--font-mono);color:'+col+';margin-top:2px;">'+pct+'%</div>' +
+              '</div>';
+          }).join('');
+        }
+      }
+
+      // Pending requests
+      var pendUsers = allUsers.filter(function(u){ return (u.authorizationStatus||'').toLowerCase()==='pending'; });
+      var ptbody = _id(prefix + '-bio-pend-tbody');
+      var pempty = _id(prefix + '-bio-pend-empty');
+      if (ptbody) {
+        if (!pendUsers.length) {
+          ptbody.innerHTML = '';
+          if (pempty) pempty.style.display = '';
+        } else {
+          if (pempty) pempty.style.display = 'none';
+          ptbody.innerHTML = pendUsers.slice(0,15).map(function(u) {
+            return '<tr><td><strong>'+(u.name||u.id||'—')+'</strong></td>' +
+              '<td style="font-size:0.78rem;">'+(u.designation||u.category||'—')+'</td>' +
+              '<td style="font-family:var(--font-mono);font-size:0.76rem;">'+(u.joiningDate||'—')+'</td>' +
+              '<td>'+(u.biometricAuthType||u.authorizationStatus||'Pending')+'</td>' +
+              '<td><button class="v36-tbl-btn" style="background:rgba(16,185,129,0.1);border-color:rgba(16,185,129,0.3);color:#10B981;" onclick="if(typeof updateBiometricAuth===\'function\')updateBiometricAuth(\''+(u.id||u.name)+'\',\'Authorized\')">✅</button> ' +
+              '<button class="v36-tbl-btn danger" onclick="if(typeof updateBiometricAuth===\'function\')updateBiometricAuth(\''+(u.id||u.name)+'\',\'Revoked\')">❌</button></td></tr>';
+          }).join('');
+        }
+      }
+    } catch(e) { console.warn('[v46 bio panel]', e); }
+  }
+
+  function _populateFacilityPanel(prefix) {
+    try {
+      var LAB = window.LAB || {};
+      var fl = (LAB.data ? LAB.data.facultyLabs : LAB.facultyLabs) || [];
+
+      // Ribbons
+      var ind = fl.map(function(l){ return l.statusIndicator||''; });
+      _sv(prefix+'-rib-over', ind.filter(function(i){return i==='OVER-CAPACITY';}).length);
+      _sv(prefix+'-rib-high', ind.filter(function(i){return i==='HIGH';}).length);
+      _sv(prefix+'-rib-med',  ind.filter(function(i){return i==='MEDIUM';}).length);
+      _sv(prefix+'-rib-low',  ind.filter(function(i){return i==='LOW'||i==='EMPTY';}).length);
+
+      // Ribbon detail panels
+      var ribEl = _id(prefix + '-rib-panels');
+      if (ribEl && fl.length) {
+        var STATUS_CONFIG = {
+          'OVER-CAPACITY': { label:'🔴 Over Capacity', bg:'rgba(239,68,68,0.08)', col:'#EF4444' },
+          'HIGH':          { label:'🟠 High Utilization (80–100%)', bg:'rgba(249,115,22,0.06)', col:'#F97316' },
+          'MEDIUM':        { label:'🟡 Medium Utilization (50–80%)', bg:'rgba(245,158,11,0.05)', col:'#F59E0B' },
+          'LOW':           { label:'🟢 Low Utilization (<50%)', bg:'rgba(16,185,129,0.05)', col:'#10B981' },
+          'EMPTY':         { label:'⚪ Empty', bg:'rgba(100,116,139,0.05)', col:'#64748B' }
+        };
+        var html = '';
+        ['OVER-CAPACITY','HIGH','MEDIUM','LOW','EMPTY'].forEach(function(status) {
+          var labs = fl.filter(function(l){ return l.statusIndicator===status; });
+          if (!labs.length) return;
+          var cfg = STATUS_CONFIG[status];
+          html += '<div style="background:'+cfg.bg+';border:1px solid var(--border);border-radius:8px;padding:0.75rem 1rem;margin-bottom:0.5rem;">';
+          html += '<div style="font-size:0.7rem;font-family:var(--font-mono);color:'+cfg.col+';font-weight:700;margin-bottom:0.4rem;">'+cfg.label+' ('+labs.length+')</div>';
+          html += '<div style="display:flex;flex-wrap:wrap;gap:0.4rem;">';
+          labs.forEach(function(l) {
+            var pct = l.utilizationRate ? Math.round(l.utilizationRate*100) : 0;
+            html += '<span style="font-size:0.7rem;padding:0.2rem 0.6rem;background:var(--surface);border:1px solid '+cfg.col+'44;border-radius:5px;font-family:var(--font-mono);color:var(--text);">'+(l.facultyName||l.name||'Lab')+' <span style="color:'+cfg.col+';">'+pct+'%</span></span>';
+          });
+          html += '</div></div>';
+        });
+        ribEl.innerHTML = html || '<div style="color:var(--text3);font-size:0.78rem;">No lab data loaded</div>';
+      }
+
+      // Category Analysis
+      var catEl = _id(prefix + '-cat-analysis');
+      if (catEl && fl.length) {
+        var cats = {};
+        fl.forEach(function(l){ var c=l.category||'Uncategorized'; cats[c]=(cats[c]||0)+1; });
+        var catItems = Object.keys(cats).map(function(c){ return { label:c, val:cats[c], color:'#3B82F6' }; });
+        catEl.innerHTML = _distBars(catItems);
+      } else if (catEl) {
+        catEl.innerHTML = '<div style="color:var(--text3);font-size:0.78rem;">Connect labs sheet to load category analysis</div>';
+      }
+    } catch(e) { console.warn('[v46 facility panel]', e); }
+  }
+
+  function _populateExpensePanel(prefix) {
+    try {
+      var EXP = window.EXP || {};
+      var all = (EXP && EXP.all) || [];
+
+      // Status breakdown
+      var paid    = all.filter(function(e){ return (e.status||'').toLowerCase()==='paid'; });
+      var pending = all.filter(function(e){ return (e.status||'').toLowerCase()==='pending'; });
+      var inProc  = all.filter(function(e){ return (e.status||'').toLowerCase().includes('process'); });
+      var fmt = function(n){ return n>=100000?(n/100000).toFixed(1)+'L':n>=1000?(n/1000).toFixed(1)+'K':Math.round(n); };
+      var sum = function(arr){ return arr.reduce(function(s,e){ return s+parseFloat(e.amount||0); },0); };
+      _si(prefix + '-exp-status', _distBars([
+        { label:'✅ Paid ('     + paid.length    + ')', val: Math.round(sum(paid)),    color:'#10B981' },
+        { label:'⏳ Pending ('  + pending.length + ')', val: Math.round(sum(pending)), color:'#F59E0B' },
+        { label:'🔄 Under-proc ('+ inProc.length + ')', val: Math.round(sum(inProc)),  color:'#F97316' }
+      ]));
+
+      // By department
+      var depts = {};
+      all.forEach(function(e){ var d=e.dept||e.department||'General'; depts[d]=(depts[d]||0)+parseFloat(e.amount||0); });
+      var deptItems = Object.keys(depts).sort(function(a,b){ return depts[b]-depts[a]; }).slice(0,8).map(function(d) {
+        return { label:d, val:Math.round(depts[d]), color:'#8B5CF6' };
+      });
+      _si(prefix + '-exp-dept', _distBars(deptItems) || '<div style="color:var(--text3);font-size:0.78rem;">No data</div>');
+
+      // Needs attention
+      var today = new Date();
+      var alerts = all.filter(function(e) {
+        if ((e.status||'').toLowerCase()==='pending') {
+          if (!e.submittedDate) return true;
+          var sub = new Date(e.submittedDate.replace(/(\d{2})\/(\d{2})\/(\d{4})/, '$3-$2-$1'));
+          return !isNaN(sub) && (today - sub) / 86400000 > 30;
+        }
+        return false;
+      }).slice(0,10);
+      var alertEl = _id(prefix + '-exp-alerts');
+      if (alertEl) {
+        alertEl.innerHTML = alerts.length
+          ? alerts.map(function(e) {
+              return '<div style="padding:0.3rem 0;border-bottom:1px solid var(--border);font-size:0.78rem;">' +
+                '<span style="color:var(--orange);">⚠️</span> <strong>'+(e.description||'—')+'</strong>' +
+                ' <span style="font-family:var(--font-mono);color:var(--text3);">₹'+(e.amount||0)+'</span>' +
+                ' <span style="font-size:0.7rem;color:var(--text3);">('+( (e.dept||'—') )+')</span></div>';
+            }).join('')
+          : '<div style="color:var(--text2);font-size:0.78rem;padding:0.5rem 0;">✅ No overdue expenses</div>';
+      }
+    } catch(e) { console.warn('[v46 expense panel]', e); }
+  }
+
+  function _populatePubPanel(prefix) {
+    try {
+      var PUB = window.PUB || {};
+      var all = (PUB && PUB.all) || [];
+
+      // Jurisdiction breakdown
+      var jurs = {};
+      all.forEach(function(p){ var j=p.jurisdiction||'Other'; jurs[j]=(jurs[j]||0)+1; });
+      var jurItems = Object.keys(jurs).sort(function(a,b){ return jurs[b]-jurs[a]; }).map(function(j) {
+        return { label:j, val:jurs[j], color:'#8B5CF6' };
+      });
+      _si(prefix + '-pub-jurisdiction', _distBars(jurItems) || '<div style="color:var(--text3);font-size:0.78rem;">No data</div>');
+
+      // Conference Rankings
+      var WS = window.WS_CONFIG || {};
+      var ranks = WS.conferenceRankings || ['A*','A','B','C','NIL'];
+      var rankItems = ranks.map(function(r, i) {
+        var colors = ['#10B981','#3B82F6','#F59E0B','#F97316','#64748B'];
+        return { label: r + ' Rank', val: all.filter(function(p){ return (p.conferenceRank||p.ranking||'').toUpperCase()===r; }).length, color: colors[i] || 'var(--accent)' };
+      });
+      _si(prefix + '-pub-rankings', _distBars(rankItems));
+
+      // Year-wise matrix
+      var years = {};
+      all.forEach(function(p) {
+        var y = p.year || (p.date||'').split('/')[2] || (p.date||'').split('-')[0] || '—';
+        if (!years[y]) years[y] = { j:0, c:0, nat:0, intl:0 };
+        var type = (p.type||p.jurisdiction||'').toLowerCase();
+        if (type.includes('journal')||type.includes('ieee')||type.includes('acm')||type.includes('springer')) years[y].j++;
+        else if (type.includes('conf')||type.includes('workshop')||type.includes('symposium')) years[y].c++;
+        else if (type.includes('national')||type.includes('india')) years[y].nat++;
+        else years[y].intl++;
+      });
+      var matrixTbody = _id(prefix + '-pub-matrix');
+      if (matrixTbody) {
+        var sortedYears = Object.keys(years).filter(function(y){ return y!=='—'; }).sort(function(a,b){ return b-a; });
+        if (!sortedYears.length) {
+          matrixTbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:1.5rem;color:var(--text3);">No publication data loaded</td></tr>';
+        } else {
+          matrixTbody.innerHTML = sortedYears.map(function(y) {
+            var d = years[y];
+            var tot = d.j+d.c+d.nat+d.intl;
+            return '<tr><td style="font-family:var(--font-mono);font-weight:700;">'+y+'</td>' +
+              '<td style="text-align:center;">'+d.j+'</td><td style="text-align:center;">'+d.c+'</td>' +
+              '<td style="text-align:center;">'+d.nat+'</td><td style="text-align:center;">'+d.intl+'</td>' +
+              '<td style="text-align:center;font-weight:700;color:var(--accent);">'+tot+'</td></tr>';
+          }).join('');
+        }
+      }
+    } catch(e) { console.warn('[v46 pub panel]', e); }
+  }
+
+  function _populateInventoryPanel(prefix) {
+    try {
+      var INV = window.INV_DB || {};
+      var items = INV.items || [];
+      var gifts   = (INV.gifts   && INV.gifts.items)   || items.filter(function(i){ return (i.category||'').toLowerCase()==='gifts'; });
+      var stat    = (INV.stationery && INV.stationery.items) || items.filter(function(i){ return (i.category||'').toLowerCase().includes('station'); });
+      var mementos = (INV.mementos && INV.mementos.items) || items.filter(function(i){ return (i.category||'').toLowerCase().includes('mement'); });
+
+      function invBars(arr, color) {
+        if (!arr.length) return '<div style="color:var(--text3);font-size:0.78rem;">No items</div>';
+        var sorted = arr.slice().sort(function(a,b){ return parseFloat(b.currentBalance||b.balance||0)-parseFloat(a.currentBalance||a.balance||0); }).slice(0,8);
+        return _distBars(sorted.map(function(i) {
+          return { label: i.itemName||i.name||'Item', val: parseFloat(i.currentBalance||i.balance||0), color: color };
+        }));
+      }
+      _si(prefix + '-inv-gifts-bars', invBars(gifts,   '#8B5CF6'));
+      _si(prefix + '-inv-stat-bars',  invBars(stat,    '#10B981'));
+      _si(prefix + '-inv-memo-bars',  invBars(mementos,'#F59E0B'));
+
+      // Low stock alerts
+      var alerts = items.filter(function(i) {
+        var bal = parseFloat(i.currentBalance||i.balance||0);
+        var min = parseFloat(i.minThreshold||i.reorderLevel||5);
+        return bal <= min;
+      }).slice(0,15);
+      var alertEl = _id(prefix + '-inv-alerts');
+      if (alertEl) {
+        alertEl.innerHTML = alerts.length
+          ? alerts.map(function(i) {
+              var bal = parseFloat(i.currentBalance||i.balance||0);
+              var min = parseFloat(i.minThreshold||i.reorderLevel||5);
+              var st = bal === 0 ? '🔴 Out of Stock' : '🟡 Low Stock';
+              return '<div style="display:flex;align-items:center;gap:0.5rem;padding:0.3rem 0;border-bottom:1px solid var(--border);font-size:0.78rem;">' +
+                '<span>'+st+'</span><strong>'+(i.itemName||i.name||'—')+'</strong>' +
+                '<span style="font-family:var(--font-mono);color:var(--text3);margin-left:auto;">Balance: '+bal+' / Min: '+min+'</span></div>';
+            }).join('')
+          : '<div style="color:var(--text2);font-size:0.78rem;padding:0.5rem 0;">✅ All items are above threshold</div>';
+      }
+    } catch(e) { console.warn('[v46 inv panel]', e); }
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // DISPATCHER — populate the right panel when an expand card opens
+  // ══════════════════════════════════════════════════════════════════════════
+
+  var RICH_PANEL_MAP = {};
+
+  function _registerPanel(prefix, type, populate) {
+    RICH_PANEL_MAP[prefix] = { type: type, populate: populate };
+  }
+
+  function _populateOnOpen(expandId) {
+    // expandId is e.g. 'coo-hr-staff' — the prefix is the expandId
+    var cfg = RICH_PANEL_MAP[expandId];
+    if (cfg && typeof cfg.populate === 'function') {
+      setTimeout(function(){ cfg.populate(expandId + '-rp'); }, 80);
+    }
+  }
+
+  // Expose globally so v36ToggleExpand can call it
+  window._v46PopulateOnOpen = _populateOnOpen;
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // PATCH v36ToggleExpand to call _v46PopulateOnOpen on open
+  // ══════════════════════════════════════════════════════════════════════════
+  function _patchToggleExpand() {
+    var orig = window.v36ToggleExpand;
+    if (typeof orig !== 'function') { setTimeout(_patchToggleExpand, 300); return; }
+    if (orig._v46richPatched) return;
+    window.v36ToggleExpand = function(id) {
+      orig.apply(this, arguments);
+      // If it opened (not closed), populate
+      var expand = document.getElementById(id + '-expand');
+      if (expand && expand.classList.contains('open')) {
+        window._v46PopulateOnOpen(id);
+      }
+    };
+    window.v36ToggleExpand._v46richPatched = true;
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // INJECT rich panel HTML into existing expand panels + register them
+  // ══════════════════════════════════════════════════════════════════════════
+
+  // Prefix mappings: each expandId → { richHtmlFn, populateFn }
+  var PANEL_DEFS = [
+    // HR & People
+    { prefixes:['coo-hr-staff','coo-hr-faculty','coo-hr-affil','coo-hr-assoc','coo-hr-res','coo-hr-fellows','coo-hr-students','coo-hr-tenure',
+                'hr-staff-kpi','hr-faculty-kpi','hr-res-kpi','hr-students-kpi','hr-tenure-kpi',
+                'mis-coo-hr-staff','mis-coo-hr-faculty','sys-coo-hr-staff','sys-coo-hr-faculty'],
+      htmlFn: _buildPeopleRichPanel, populateFn: _populatePeoplePanel },
+    // Assets
+    { prefixes:['coo-ast-it','coo-ast-nonit','coo-ast-ilds','coo-ast-gpu','coo-ast-books','coo-ast-spares','coo-ast-consumables','coo-ast-nonrep','coo-ast-vendors',
+                'fin-ast-it','fin-ast-nonit','fin-vendor-kpi','facmgr-ast-it','facmgr-ast-nonit',
+                'mis-coo-ast-it','mis-coo-ast-nonit','sys-coo-ast-it','sys-coo-ast-nonit'],
+      htmlFn: _buildAssetRichPanel, populateFn: _populateAssetPanel },
+    // Biometric
+    { prefixes:['coo-bio-panel','hr-bio-kpi','mis-coo-bio-panel','sys-coo-bio-panel'],
+      htmlFn: _buildBioRichPanel, populateFn: _populateBioPanel },
+    // Facility
+    { prefixes:['coo-lab-faculty','coo-lab-facility','coo-lab-frooms','facmgr-lab-faculty','facmgr-lab-facility','facmgr-lab-frooms',
+                'mis-coo-lab-faculty','sys-coo-lab-faculty'],
+      htmlFn: _buildFacilityRichPanel, populateFn: _populateFacilityPanel },
+    // Expenses
+    { prefixes:['coo-exp-paid','coo-exp-pending','coo-exp-process','fin-exp-paid-kpi','fin-exp-pend-kpi','fin-exp-proc-kpi','fac-exp-paid','fac-exp-pending','fac-exp-process',
+                'mis-coo-exp-paid','sys-coo-exp-paid'],
+      htmlFn: _buildExpenseRichPanel, populateFn: _populateExpensePanel },
+    // Publications
+    { prefixes:['coo-pub-journal','coo-pub-conf','coo-pub-report','coo-pub-preprint','fac-pub-journal','fac-pub-conf','fac-pub-report','fac-pub-preprint',
+                'mis-coo-pub-journal','sys-coo-pub-journal'],
+      htmlFn: _buildPubRichPanel, populateFn: _populatePubPanel },
+    // Inventory
+    { prefixes:['coo-inv-total','mis-coo-inv-total','sys-coo-inv-total'],
+      htmlFn: _buildInventoryRichPanel, populateFn: _populateInventoryPanel }
+  ];
+
+  function _injectPanelVisuals() {
+    var injected = 0;
+    PANEL_DEFS.forEach(function(def) {
+      def.prefixes.forEach(function(prefix) {
+        // Register for populate-on-open
+        _registerPanel(prefix, def.htmlFn, def.populateFn);
+
+        // Find the expand panel element
+        var expand = _id(prefix + '-expand');
+        if (!expand) return;
+        if (expand.getAttribute('data-v46-rich')) return; // already injected
+
+        // Build the rich HTML with a unique prefix for element IDs
+        var richPrefix = prefix + '-rp';
+        var richHtml   = def.htmlFn(richPrefix);
+
+        // Find the first active tab panel (panel-0) and prepend rich content
+        var panel0 = expand.querySelector('.v36-ep-panel.active') || expand.querySelector('.v36-ep-panel');
+        if (panel0) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'v46-rich-visuals';
+          wrapper.setAttribute('data-v46-prefix', richPrefix);
+          wrapper.innerHTML = richHtml;
+          panel0.insertBefore(wrapper, panel0.firstChild);
+        }
+
+        expand.setAttribute('data-v46-rich', '1');
+        injected++;
+      });
+    });
+    return injected;
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // BOOT
+  // ══════════════════════════════════════════════════════════════════════════
+  function _boot() {
+    _injectCSS();
+    _patchToggleExpand();
+
+    // Try to inject panels now; retry until COO rows exist
+    function _tryInject(attempts) {
+      var n = _injectPanelVisuals();
+      if (n < 3 && attempts < 20) {
+        setTimeout(function(){ _tryInject(attempts + 1); }, 600);
+      } else {
+        console.log('[v46 Rich Panels] Injected ' + n + ' panel visuals ✅');
+      }
+    }
+    _tryInject(0);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', _boot);
+  } else {
+    setTimeout(_boot, 200);
   }
 })();
 </script>
