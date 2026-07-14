@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -12581,6 +12580,15 @@
       return;
     }
 
+    // FIX: getPublications() now reports exactly which tab names it
+    // couldn't find in the spreadsheet (previously this returned silently
+    // as "0 rows" for the affected type(s), indistinguishable from a tab
+    // that genuinely just has no data yet).
+    if (data.missingSheets && data.missingSheets.length) {
+      toast('⚠️ Publications tab(s) not found in the sheet: ' + data.missingSheets.join(', ') + ' — check exact spelling/capitalization.');
+      logAction('Sync Publications', _currentUser||'Admin', 'Publications', 'Missing tabs: ' + data.missingSheets.join(', '));
+    }
+
     pubOnData(data);
     try { pubRenderMatrix(); } catch(e) {}
     try { pubPopulateRankingYears(); } catch(e) {}
@@ -19849,7 +19857,22 @@
       _lsSet('wsai_webAppUrl', url);
       _lsSet('wsai_connMeta', JSON.stringify(meta));
     }
-    if (!ok1 || !ok2) _warnStorageBlocked();
+
+    // FIX: `_lsSet` previously only reported failure if `setItem()` itself
+    // threw. But some browsers (Safari private mode historically, storage
+    // quota eviction, certain "clear on exit" configurations) let setItem()
+    // succeed silently without the value actually surviving a reload. That
+    // meant "Connected ✓" could show even though the URL would be gone the
+    // next time the browser opened — exactly the "asks again and again"
+    // symptom, with no warning at the time it actually failed. Now this
+    // reads the value straight back out of the same storage it just wrote
+    // to and confirms it round-trips before trusting the save.
+    const verified = (_lsGet(_lsKey(mod)) === url);
+    if (!ok1 || !ok2 || !verified) {
+      _warnStorageBlocked();
+    } else {
+      toast('✅ Sheet link saved permanently for this browser — it will auto-connect every time you reopen it, with no need to paste again.');
+    }
 
     _showSavedBadge(meta.savedAt);
     _refreshModuleUrlTable();
@@ -34887,4 +34910,3 @@ tbody td { vertical-align: middle; }
 })();
 </script>
 </html>
-
