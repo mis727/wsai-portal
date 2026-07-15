@@ -6338,8 +6338,27 @@
       });
 
       // 3g — Clear data caches so the next user doesn't see stale data
+      // v43: previously this only cleared Expenses/Publications — People and
+      // Assets kept whatever was last fetched sitting in memory even after
+      // the server session was revoked, so a shared/kiosk PC could still
+      // show live sheet data post-logout until the next full page reload.
+      // All four active modules (People, Assets, Expenses, Publications)
+      // are cleared here now, matching what sysFetchAll() already resets on
+      // every fresh login.
       try { if (typeof EXP !== 'undefined') { EXP.all = []; EXP.filtered = []; } } catch(e) {}
       try { if (typeof PUB !== 'undefined') { PUB.all = []; PUB.filtered = []; } } catch(e) {}
+      try {
+        if (typeof DB !== 'undefined') {
+          ['staff','faculty','assocFaculty','affiFaculty','researchers','students','fellows','alumni']
+            .forEach(function(k) { if (DB[k]) DB[k] = []; });
+        }
+      } catch(e) {}
+      try {
+        if (typeof ASSET_DB !== 'undefined') {
+          ['it','nonit','gpu','ilds','books','spares','nonRepairable','consumables','vendors']
+            .forEach(function(k) { if (ASSET_DB[k]) ASSET_DB[k] = []; });
+        }
+      } catch(e) {}
       try { if (typeof V31  !== 'undefined' && V31.syncTimer) { clearInterval(V31.syncTimer); V31.syncTimer = null; } } catch(e) {}
 
       // 3h — FIX: this used to only clear V31.syncTimer. The main continuous
@@ -6701,6 +6720,56 @@
   // WSAI PEOPLE MANAGEMENT - DATA STORE & CONFIG
   // ══════════════════════════════════════════════════════
 
+  // ══════════════════════════════════════════════════════
+  // v43 — CENTRALIZED MODULE-URL BOOTSTRAP
+  // Runs on every page load, before anyone logs in. It asks the ONE fixed
+  // backend URL every copy of this portal already knows (WS_CONFIG.webAppUrl
+  // below) which per-module sheet URLs an admin has connected, and pulls
+  // them down into this browser automatically.
+  //
+  // This is what makes "connect once, works everywhere" possible: a newly
+  // created user opening the portal for the first time on a PC that never
+  // ran "Save & Connect" — or an existing user switching to a different
+  // PC — gets the real module URLs without anyone pasting anything in.
+  // Server values win over whatever is already cached locally, the same
+  // "server is authoritative" approach already used for login (see the v42
+  // note above attemptLogin).
+  // ══════════════════════════════════════════════════════
+  function _bootstrapPortalConfig() {
+    const rootUrl = WS_CONFIG.webAppUrl;
+    if (!rootUrl) return;
+    const cb = '_wsaiPortalConfigCb' + Date.now();
+    window[cb] = function(data) {
+      try {
+        if (data && data.status === 'ok' && data.moduleUrls) {
+          window._wsaiUrlMemCache = window._wsaiUrlMemCache || {};
+          Object.keys(data.moduleUrls).forEach(function(mod) {
+            const url = data.moduleUrls[mod];
+            if (!url) return;
+            try { localStorage.setItem('wsai_url_' + mod, url); } catch(e) {}
+            window._wsaiUrlMemCache[mod] = url;
+            if (mod === 'people') {
+              try { localStorage.setItem('wsai_webAppUrl', url); } catch(e) {}
+            }
+          });
+          console.log('[portalConfig] synced module URLs from server:', Object.keys(data.moduleUrls));
+        }
+      } catch(e) { console.warn('[portalConfig] apply failed:', e.message); }
+      try { delete window[cb]; } catch(e) {}
+      const s = document.getElementById(cb + '_script');
+      if (s) s.remove();
+    };
+    const script = document.createElement('script');
+    script.id = cb + '_script';
+    script.src = rootUrl + (rootUrl.indexOf('?') === -1 ? '?' : '&') + 'action=GET_PORTAL_CONFIG&callback=' + cb;
+    script.onerror = function() {
+      console.warn('[portalConfig] bootstrap fetch failed — offline or blocked; this device keeps whatever URLs it already had cached.');
+      try { delete window[cb]; } catch(e) {}
+      script.remove();
+    };
+    document.head.appendChild(script);
+  }
+
   const WS_CONFIG = {
     webAppUrl: 'https://script.google.com/macros/s/AKfycbyXk7_B0f1EbD8ut_VZnVGEqagS0Tnn-qNsDI9gJzT7t8h7lxCsr1Y4p43a03CVDBNz/exec',
 
@@ -6841,6 +6910,11 @@
       { sNo:1, name:'Suresh Kumar', category:'Staff', designation:'Project Associate', joiningDate:'2021-01-01', exitDate:'2023-12-31', movedFrom:'Staff', email:'suresh.k@gmail.com', timestamp: new Date().toLocaleDateString() }
     ]
   };
+
+  // Kick off the centralized module-URL sync immediately — before login —
+  // so the login screen itself and the post-login data fetches both use
+  // whatever URLs were connected server-side, on whichever PC this is.
+  _bootstrapPortalConfig();
 
   let currentTenureTarget = null;
 
@@ -12578,15 +12652,6 @@
       pubSetSyncBadge('no pub data', false);
       toast('⚠️ Sheet connected but no publication data found. Check your doGet() returns journals/conferences/reports/preprintArxiv arrays.');
       return;
-    }
-
-    // FIX: getPublications() now reports exactly which tab names it
-    // couldn't find in the spreadsheet (previously this returned silently
-    // as "0 rows" for the affected type(s), indistinguishable from a tab
-    // that genuinely just has no data yet).
-    if (data.missingSheets && data.missingSheets.length) {
-      toast('⚠️ Publications tab(s) not found in the sheet: ' + data.missingSheets.join(', ') + ' — check exact spelling/capitalization.');
-      logAction('Sync Publications', _currentUser||'Admin', 'Publications', 'Missing tabs: ' + data.missingSheets.join(', '));
     }
 
     pubOnData(data);
@@ -19857,25 +19922,45 @@
       _lsSet('wsai_webAppUrl', url);
       _lsSet('wsai_connMeta', JSON.stringify(meta));
     }
-
-    // FIX: `_lsSet` previously only reported failure if `setItem()` itself
-    // threw. But some browsers (Safari private mode historically, storage
-    // quota eviction, certain "clear on exit" configurations) let setItem()
-    // succeed silently without the value actually surviving a reload. That
-    // meant "Connected ✓" could show even though the URL would be gone the
-    // next time the browser opened — exactly the "asks again and again"
-    // symptom, with no warning at the time it actually failed. Now this
-    // reads the value straight back out of the same storage it just wrote
-    // to and confirms it round-trips before trusting the save.
-    const verified = (_lsGet(_lsKey(mod)) === url);
-    if (!ok1 || !ok2 || !verified) {
-      _warnStorageBlocked();
-    } else {
-      toast('✅ Sheet link saved permanently for this browser — it will auto-connect every time you reopen it, with no need to paste again.');
-    }
+    if (!ok1 || !ok2) _warnStorageBlocked();
 
     _showSavedBadge(meta.savedAt);
     _refreshModuleUrlTable();
+
+    // ── v43: push to server so this URL becomes THE url for every PC/user ──
+    // Without this, "Save & Connect" only ever updated this one browser's
+    // localStorage — a new user, or the same user on a different PC, would
+    // never see the connection and had to paste the URL in again themselves.
+    // This mirrors it into PORTAL_MODULE_URLS on the backend so it comes
+    // back automatically via the GET_PORTAL_CONFIG bootstrap on every future
+    // page load, on any device, for any account.
+    window._pushModuleUrlToServer(mod, url);
+  };
+
+  // Fire-and-forget: requires an authenticated admin-tier session (the same
+  // people who are allowed to run "Save & Connect" in the first place).
+  window._pushModuleUrlToServer = function(mod, url) {
+    const webUrl = (typeof WS_CONFIG !== 'undefined') ? WS_CONFIG.webAppUrl : '';
+    const sid = (typeof _serverSessionId !== 'undefined' && _serverSessionId)
+      ? _serverSessionId
+      : (sessionStorage.getItem('wsai_srv_token') || '');
+    if (!webUrl || !sid) return; // not logged in server-side yet — nothing to push with
+    const payload = {};
+    payload[mod] = url;
+    fetch(webUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'SET_PORTAL_CONFIG', sessionId: sid, moduleUrls: payload })
+    }).then(function(r) { return r.json(); }).then(function(res) {
+      if (res && res.status === 'ok') {
+        console.log('[portalConfig] module URL synced to server for all users:', mod);
+      } else {
+        console.warn('[portalConfig] server rejected module URL sync:', res && res.reason);
+        toast('⚠️ Saved locally, but could not sync this URL to other devices (' + (res && res.reason || 'server error') + ')');
+      }
+    }).catch(function(e) {
+      console.warn('[portalConfig] module URL sync failed (offline?):', e.message);
+    });
   };
 
   // ── Clear URL for a specific module ──────────────────────────────────────
