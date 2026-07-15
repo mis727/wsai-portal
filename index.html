@@ -943,6 +943,21 @@
     font-family:var(--font-body); font-size:0.9rem; outline:none; transition:border-color 0.2s;
   }
   .modal-field input:focus, .modal-field select:focus, .modal-field textarea:focus { border-color: var(--accent); }
+
+  /* ── Attendance: People-roster match autocomplete (Employee ID modal) ── */
+  .att-suggest-box {
+    display:none; position:absolute; left:0; right:0; top:calc(100% + 2px); z-index:200;
+    background:var(--surface); border:1px solid var(--border); border-radius:8px;
+    box-shadow:var(--shadow-md); max-height:220px; overflow-y:auto;
+  }
+  .att-suggest-item { padding:0.4rem 0.6rem; cursor:pointer; font-size:0.76rem; color:var(--text); border-bottom:1px solid var(--border); }
+  .att-suggest-item:last-child { border-bottom:none; }
+  .att-suggest-item:hover { background:var(--surface2); }
+  .att-suggest-cat { font-size:0.65rem; color:var(--accent2); font-family:var(--font-mono); margin-left:4px; }
+  .att-suggest-id { font-size:0.65rem; color:var(--green); font-family:var(--font-mono); margin-left:4px; }
+  .att-suggest-noid { font-size:0.65rem; color:var(--text3); font-family:var(--font-mono); margin-left:4px; font-style:italic; }
+  .att-suggest-empty { padding:0.5rem 0.6rem; font-size:0.72rem; color:var(--text3); font-style:italic; }
+  .att-match-matched { border-color:var(--green) !important; }
   .modal-field select option { background: var(--surface2); color: var(--text); }
   .modal-row { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
   .modal-actions { display:flex; gap:0.75rem; justify-content:flex-end; margin-top:1.5rem; }
@@ -1537,6 +1552,108 @@
     .tbl-action-btn.danger {
       display: none !important;
     }
+    /* People Management redesign (v50): the dedicated category workspace is the
+       only place record management happens, so Delete is intentionally restored
+       there (Registry = Edit + Delete only per spec), while every other module
+       keeps Delete hidden as configured above. */
+    .people-cat-panel .tbl-action-btn.danger {
+      display: inline-block !important;
+    }
+
+    /* ══════════════════════════════════════════════════════════════
+       PEOPLE MANAGEMENT — EXECUTIVE SUMMARY DASHBOARD (v50 redesign)
+       ══════════════════════════════════════════════════════════════ */
+
+    /* Compact KPI strip with trend indicators */
+    .exec-kpi-strip { display:grid; grid-template-columns:repeat(6,1fr); gap:0.65rem; margin-bottom:1rem; }
+    @media (max-width:1100px) { .exec-kpi-strip { grid-template-columns:repeat(3,1fr); } }
+    @media (max-width:640px)  { .exec-kpi-strip { grid-template-columns:repeat(2,1fr); } }
+    .exec-kpi {
+      background:var(--surface); border:1px solid var(--border); border-radius:12px;
+      padding:0.75rem 0.9rem; position:relative; overflow:hidden;
+    }
+    .exec-kpi .ek-label { font-size:0.62rem; font-family:var(--font-mono); text-transform:uppercase; letter-spacing:0.06em; color:var(--text3); margin-bottom:0.3rem; }
+    .exec-kpi .ek-val { font-size:1.35rem; font-weight:700; font-family:var(--font-mono); color:var(--text); line-height:1; }
+    .exec-kpi .ek-trend { font-size:0.68rem; margin-top:0.3rem; display:flex; align-items:center; gap:3px; }
+    .exec-kpi .ek-trend.up { color:var(--green); }
+    .exec-kpi .ek-trend.down { color:var(--red); }
+    .exec-kpi .ek-trend.flat { color:var(--text3); }
+    .exec-kpi::after { content:''; position:absolute; left:0; bottom:0; right:0; height:3px; background:linear-gradient(90deg,var(--accent),var(--accent2)); opacity:0.7; }
+
+    /* Compact analytics grid — 2/3 column responsive */
+    .analytics-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:0.85rem; margin-bottom:0.85rem; }
+    @media (max-width:1150px) { .analytics-grid { grid-template-columns:repeat(2,1fr); } }
+    @media (max-width:700px)  { .analytics-grid { grid-template-columns:1fr; } }
+    .analytics-grid.wide-2 { grid-template-columns:repeat(2,1fr); }
+    @media (max-width:700px) { .analytics-grid.wide-2 { grid-template-columns:1fr; } }
+
+    .aw-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:0.7rem 0.8rem 0.55rem; display:flex; flex-direction:column; min-width:0; }
+    .aw-head { display:flex; align-items:center; gap:0.4rem; margin-bottom:0.4rem; flex-wrap:wrap; }
+    .aw-title { font-size:0.68rem; font-weight:600; color:var(--text2); flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .aw-filter {
+      background:var(--surface2); border:1px solid var(--border); border-radius:6px;
+      padding:0.18rem 0.4rem; color:var(--text); font-size:0.66rem; outline:none;
+      max-width:108px; font-family:var(--font-body);
+    }
+    .aw-canvas-wrap { height:150px; position:relative; }
+    .aw-canvas-wrap.short { height:118px; }
+
+    /* Matrix / table widget with conditional formatting */
+    .matrix-table { width:100%; border-collapse:collapse; font-size:0.74rem; }
+    .matrix-table th { text-align:left; font-size:0.62rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--text3); font-family:var(--font-mono); padding:0.3rem 0.4rem; border-bottom:1px solid var(--border); }
+    .matrix-table td { padding:0.32rem 0.4rem; border-bottom:1px solid var(--border); }
+    .matrix-table tr:last-child td { border-bottom:none; }
+    .mx-pill { display:inline-block; min-width:28px; text-align:center; padding:0.08rem 0.4rem; border-radius:5px; font-weight:700; font-family:var(--font-mono); }
+    .mx-hi   { background:rgba(16,185,129,0.16); color:#10B981; }
+    .mx-mid  { background:rgba(245,158,11,0.16); color:#F59E0B; }
+    .mx-lo   { background:rgba(239,68,68,0.14);  color:#EF4444; }
+    .mx-zero { background:rgba(100,116,139,0.14); color:var(--text3); }
+
+    /* ── CATEGORY INTERFACE (full-screen workspace opened from a count card) ── */
+    .people-cat-overlay {
+      position: fixed; inset: 0; z-index: 7500; background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(3px); display:none; align-items:stretch; justify-content:center;
+      animation: fadeIn 0.18s ease; padding: 1.25rem;
+    }
+    .people-cat-overlay.show { display:flex; }
+    .people-cat-panel {
+      background:var(--surface); border:1px solid var(--border); border-radius:16px;
+      width:100%; max-width:1400px; margin:auto; max-height:96vh; display:flex; flex-direction:column;
+      overflow:hidden; box-shadow:var(--shadow-lg); animation: slideUp 0.25s cubic-bezier(.22,1,.36,1);
+    }
+    .pcp-header {
+      display:flex; align-items:center; gap:0.9rem; padding:1rem 1.35rem; border-bottom:1px solid var(--border);
+      background:linear-gradient(135deg, rgba(59,130,246,0.06), transparent); flex-wrap:wrap;
+    }
+    .pcp-icon { font-size:1.7rem; }
+    .pcp-title-wrap { flex:1; min-width:180px; }
+    .pcp-title { font-family:var(--font-display); font-size:1.15rem; margin:0; color:var(--text); }
+    .pcp-sub { font-size:0.74rem; color:var(--text3); font-family:var(--font-mono); margin-top:0.15rem; }
+    .pcp-stats { display:flex; gap:0.5rem; flex-wrap:wrap; }
+    .pcp-stat { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:0.35rem 0.65rem; text-align:center; }
+    .pcp-stat .ps-val { font-weight:700; font-family:var(--font-mono); font-size:0.9rem; color:var(--accent); }
+    .pcp-stat .ps-lbl { font-size:0.6rem; color:var(--text3); text-transform:uppercase; letter-spacing:0.04em; }
+    .pcp-close { background:none; border:1px solid var(--border); border-radius:8px; color:var(--text2); padding:0.45rem 0.8rem; cursor:pointer; font-size:0.85rem; transition:all 0.2s; }
+    .pcp-close:hover { border-color:var(--red); color:var(--red); }
+
+    .pcp-nav { display:flex; gap:0.4rem; padding:0.6rem 1.35rem; border-bottom:1px solid var(--border); overflow-x:auto; flex-wrap:wrap; align-items:center; }
+    .pcp-body { padding:1.1rem 1.35rem 1.5rem; overflow-y:auto; flex:1; }
+
+    .pcp-section-label { font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--text3); font-family:var(--font-mono); margin:0 0 0.55rem; display:flex; align-items:center; gap:0.4rem; }
+    .pcp-toolbar { display:flex; gap:0.6rem; flex-wrap:wrap; align-items:center; margin-bottom:1rem; }
+
+    /* Row overflow "more actions" menu */
+    .row-more-wrap { position:relative; display:inline-block; }
+    .row-more-menu { display:none; position:absolute; right:0; top:110%; z-index:50; background:var(--surface); border:1px solid var(--border); border-radius:8px; box-shadow:var(--shadow-md); min-width:170px; overflow:hidden; }
+    .row-more-menu.show { display:block; }
+    .row-more-menu button { display:block; width:100%; text-align:left; padding:0.5rem 0.8rem; background:none; border:none; color:var(--text2); font-size:0.78rem; cursor:pointer; font-family:var(--font-body); }
+    .row-more-menu button:hover { background:var(--surface2); color:var(--text); }
+
+    @media (max-width:780px) {
+      .people-cat-overlay { padding:0; }
+      .people-cat-panel { max-width:100%; max-height:100vh; border-radius:0; }
+      .pcp-stats { width:100%; }
+    }
     </style>
 </head>
 <body>
@@ -1794,244 +1911,172 @@
           <div class="kpi-card orange" onclick="openPeopleSheet('alumni')" style="cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='var(--shadow-lg)'" onmouseout="this.style.transform='';this.style.boxShadow=''" title="Open Alumni registry"><div class="kpi-icon">🎓</div><div class="kpi-val" id="kpi-alumni">0</div><div class="kpi-label">Alumni</div></div>
         </div>
 
-        <!-- PEOPLE MANAGEMENT DASHBOARD ANALYTICS -->
-        <div id="people-dashboard-analytics" style="margin-bottom:1.5rem;">
+        <!-- PEOPLE MANAGEMENT — EXECUTIVE ANALYTICS (summary-only; all operational
+             work — Add / Registry / per-category Distribution — lives in the
+             Category Interface opened from the count cards above) -->
+        <div id="people-dashboard-analytics" style="margin-bottom:1rem;">
 
-          <!-- ═══ POWER BI STYLE VISUAL OVERVIEW ═══ -->
-          <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.75rem;flex-wrap:wrap;">
-            <h3 style="font-size:0.95rem;margin:0;color:var(--text);">📊 People Analytics — Visual Overview</h3>
+          <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.65rem;flex-wrap:wrap;">
+            <h3 style="font-size:0.95rem;margin:0;color:var(--text);">📊 People Analytics</h3>
             <span style="font-size:0.62rem;font-family:var(--font-mono);color:var(--accent);background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.25);border-radius:5px;padding:0.15rem 0.45rem;">Live · Auto-refreshed</span>
-            <div style="display:flex;align-items:center;gap:0.5rem;margin-left:auto;flex-wrap:wrap;">
-              <label style="font-size:0.7rem;color:var(--text3);font-family:var(--font-mono);">Category</label>
-              <select id="ppl-filter-category" onchange="renderPeopleOverviewCharts()" style="background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:0.35rem 0.6rem;color:var(--text);font-size:0.78rem;outline:none;">
-                <option value="all">All Categories</option>
-                <option value="Staff">Staff</option>
-                <option value="Faculty">Faculty</option>
-                <option value="Assoc. Faculty">Assoc. Faculty</option>
-                <option value="Affiliate Faculty">Affiliate Faculty</option>
-                <option value="Researchers">Researchers</option>
-                <option value="Students">Students</option>
-                <option value="Assoc. Fellows">Assoc. Fellows</option>
-                <option value="Alumni">Alumni</option>
-              </select>
-              <label style="font-size:0.7rem;color:var(--text3);font-family:var(--font-mono);">Center</label>
-              <select id="ppl-filter-center" onchange="renderPeopleOverviewCharts()" style="background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:0.35rem 0.6rem;color:var(--text);font-size:0.78rem;outline:none;">
-                <option value="all">All Centers</option>
-              </select>
-              <button class="tc-btn" onclick="document.getElementById('ppl-filter-category').value='all';document.getElementById('ppl-filter-center').value='all';renderPeopleOverviewCharts();" style="font-size:0.72rem;">Reset</button>
-            </div>
-          </div>
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1rem;">
-            <div class="v31-chart-box">
-              <div class="v31-chart-label">👥 Headcount by Category</div>
-              <div class="v31-chart-canvas" style="height:200px;"><canvas id="ppl-cat-bar"></canvas></div>
-            </div>
-            <div class="v31-chart-box">
-              <div class="v31-chart-label">🎓 Faculty Type Split (Core/Assoc/Affiliate)</div>
-              <div class="v31-chart-canvas" style="height:200px;"><canvas id="ppl-faculty-donut"></canvas></div>
-            </div>
-            <div class="v31-chart-box">
-              <div class="v31-chart-label">📊 Active vs Alumni</div>
-              <div class="v31-chart-canvas" style="height:200px;"><canvas id="ppl-status-donut"></canvas></div>
-            </div>
-          </div>
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1rem;">
-            <div class="v31-chart-box">
-              <div class="v31-chart-label">👔 Staff Designation Mix</div>
-              <div class="v31-chart-canvas" style="height:200px;"><canvas id="ppl-staffdesig-bar"></canvas></div>
-            </div>
-            <div class="v31-chart-box">
-              <div class="v31-chart-label">🎓 Student Designation Mix</div>
-              <div class="v31-chart-canvas" style="height:200px;"><canvas id="ppl-student-donut"></canvas></div>
-            </div>
-            <div class="v31-chart-box">
-              <div class="v31-chart-label">🔬 Researcher Status</div>
-              <div class="v31-chart-canvas" style="height:200px;"><canvas id="ppl-researcher-donut"></canvas></div>
-            </div>
-          </div>
-          <div style="display:grid;grid-template-columns:2fr 1fr;gap:1rem;margin-bottom:1rem;">
-            <div class="v31-chart-box">
-              <div class="v31-chart-label">📈 Joining Trend — Last 12 Months (All Categories)</div>
-              <div class="v31-chart-canvas" style="height:220px;"><canvas id="ppl-joining-line"></canvas></div>
-            </div>
-            <div class="v31-chart-box">
-              <div class="v31-chart-label">🏢 Center-wise Staff Distribution</div>
-              <div class="v31-chart-canvas" style="height:220px;"><canvas id="ppl-center-bar"></canvas></div>
-            </div>
+            <span style="font-size:0.68rem;color:var(--text3);margin-left:auto;">Each visual below filters independently — use the small selector on a card to slice just that chart.</span>
           </div>
 
-          <!-- Row 1: Faculty + Student + Researcher Distribution -->
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;align-items:start;margin-bottom:1rem;">
-            <div class="table-card" style="padding:0;border-top:3px solid #2E7D32;">
-              <div class="tc-header" style="background:rgba(46,125,50,0.08);">
-                <div class="tc-title" style="color:#4CAF50;">🎓 Faculty Category Distribution</div>
-                <span style="font-size:0.62rem;font-family:var(--font-mono);color:var(--green);background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.25);border-radius:5px;padding:0.15rem 0.45rem;">⟳ Live from Sheet</span>
-              </div>
-              <table><thead><tr><th>Faculty Type</th><th>Count</th><th>Status</th></tr></thead>
-              <tbody id="dash-faculty-dist"></tbody></table>
-            </div>
-            <div class="table-card" style="padding:0;border-top:3px solid #FF5722;">
-              <div class="tc-header" style="background:rgba(255,87,34,0.08);">
-                <div class="tc-title" style="color:#FF7043;">🎓 Student Designation Distribution</div>
-                <span style="font-size:0.62rem;font-family:var(--font-mono);color:#FF7043;background:rgba(255,87,34,0.1);border:1px solid rgba(255,87,34,0.25);border-radius:5px;padding:0.15rem 0.45rem;">⟳ Live from Sheet</span>
-              </div>
-              <table><thead><tr><th>Designation</th><th>Count</th><th>Status</th></tr></thead>
-              <tbody id="dash-student-dist"></tbody></table>
-            </div>
-            <div class="table-card" style="padding:0;border-top:3px solid #6A1B9A;">
-              <div class="tc-header" style="background:rgba(106,27,154,0.08);">
-                <div class="tc-title" style="color:#AB47BC;">🔬 Researcher Designation Distribution</div>
-                <span style="font-size:0.62rem;font-family:var(--font-mono);color:#AB47BC;background:rgba(139,92,246,0.1);border:1px solid rgba(139,92,246,0.25);border-radius:5px;padding:0.15rem 0.45rem;">⟳ Live from Sheet</span>
-              </div>
-              <table><thead><tr><th>Designation</th><th>Count</th><th>Status</th></tr></thead>
-              <tbody id="dash-researcher-dist"></tbody></table>
-            </div>
+          <!-- Executive KPI strip with trend indicators -->
+          <div class="exec-kpi-strip" id="ppl-exec-kpis">
+            <div class="exec-kpi"><div class="ek-label">Total People</div><div class="ek-val" id="ek-total">—</div><div class="ek-trend flat" id="ek-total-trend">—</div></div>
+            <div class="exec-kpi"><div class="ek-label">Active</div><div class="ek-val" id="ek-active">—</div><div class="ek-trend up" id="ek-active-trend">—</div></div>
+            <div class="exec-kpi"><div class="ek-label">Alumni</div><div class="ek-val" id="ek-alumni">—</div><div class="ek-trend flat" id="ek-alumni-trend">—</div></div>
+            <div class="exec-kpi"><div class="ek-label">Recent Joins (30d)</div><div class="ek-val" id="ek-recent">—</div><div class="ek-trend up" id="ek-recent-trend">—</div></div>
+            <div class="exec-kpi"><div class="ek-label">Avg Staff Tenure</div><div class="ek-val" id="ek-tenure">—</div><div class="ek-trend flat" id="ek-tenure-trend">days</div></div>
+            <div class="exec-kpi"><div class="ek-label">High Tenure Risk</div><div class="ek-val" id="ek-risk">—</div><div class="ek-trend down" id="ek-risk-trend">—</div></div>
           </div>
 
-          <!-- Row 2: Staff Designation Distribution (full width) -->
-          <div style="margin-bottom:1rem;">
-            <div class="table-card" style="padding:0;border-top:3px solid #1E88E5;">
-              <div class="tc-header" style="background:rgba(30,136,229,0.08);">
-                <div class="tc-title" style="color:#42A5F5;">👥 Staff Designation Distribution</div>
-                <span style="font-size:0.62rem;font-family:var(--font-mono);color:#42A5F5;background:rgba(30,136,229,0.1);border:1px solid rgba(30,136,229,0.25);border-radius:5px;padding:0.15rem 0.45rem;">⟳ Live from Sheet</span>
-              </div>
-              <div style="display:grid;grid-template-columns:1fr 1fr;"><div style="overflow-x:auto;">
-                <table style="min-width:300px;"><thead><tr><th>Designation</th><th>Count</th><th>Status</th></tr></thead>
-                <tbody id="dash-staff-desig-dist"></tbody></table>
-              </div></div>
-            </div>
-          </div>
+          <!-- Compact 3-column visual grid — each card owns an independent filter -->
+          <div class="analytics-grid">
 
-          <!-- Row 3: Executive Summary + Total Counts Active+Alumni -->
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;align-items:start;margin-bottom:1rem;">
-            <div class="table-card" style="padding:0;border-top:3px solid #1976D2;">
-              <div class="tc-header" style="background:rgba(25,118,210,0.08);">
-                <div class="tc-title" style="color:#64B5F6;">📊 Executive Summary — Active &amp; Alumni</div>
+            <div class="aw-card">
+              <div class="aw-head">
+                <span class="aw-title">👥 Headcount by Category</span>
+                <select class="aw-filter" id="aw-catbar-center" onchange="renderAW_catBar()" title="Filter Staff segment by Center">
+                  <option value="all">All Centers</option>
+                </select>
               </div>
-              <table>
-                <thead><tr><th>Category</th><th>Active</th><th>Alumni</th></tr></thead>
-                <tbody>
-                  <tr><td>👥 Staff</td><td id="dash-exec-staff-active" style="font-weight:700;text-align:center;">—</td><td id="dash-exec-staff-alumni" style="text-align:center;">—</td></tr>
-                  <tr><td>🏫 Associate Faculty</td><td id="dash-exec-assocfac-active" style="font-weight:700;text-align:center;">—</td><td id="dash-exec-assocfac-alumni" style="text-align:center;">—</td></tr>
-                  <tr><td>🔬 Researchers (On-Going)</td><td id="dash-exec-res-active" style="font-weight:700;text-align:center;">—</td><td id="dash-exec-res-alumni" style="text-align:center;">—</td></tr>
-                  <tr><td>🟢 Faculty</td><td id="dash-exec-fac-active" style="font-weight:700;text-align:center;">—</td><td style="text-align:center;color:var(--text3);">—</td></tr>
-                  <tr style="background:rgba(25,118,210,0.12);font-weight:700;"><td>🧮 Grand Total</td><td id="dash-exec-total-active" style="text-align:center;color:var(--accent);">—</td><td id="dash-exec-total-alumni" style="text-align:center;color:var(--accent);">—</td></tr>
-                </tbody>
-              </table>
+              <div class="aw-canvas-wrap"><canvas id="ppl-cat-bar"></canvas></div>
             </div>
-            <div class="table-card" style="padding:0;border-top:3px solid #1f4788;">
-              <div class="tc-header" style="background:rgba(31,71,136,0.08);">
-                <div class="tc-title" style="color:#90CAF9;">📈 Total Counts (Active + Alumni)</div>
-              </div>
-              <table>
-                <thead><tr><th>Category</th><th>Total</th><th>Status</th></tr></thead>
-                <tbody>
-                  <tr><td>👥 Staff</td><td id="dash-total-staff" style="font-weight:700;text-align:center;">—</td><td id="dash-total-staff-status" style="text-align:center;">—</td></tr>
-                  <tr><td>🏫 Associate Faculty</td><td id="dash-total-assocfac" style="font-weight:700;text-align:center;">—</td><td id="dash-total-assocfac-status" style="text-align:center;">—</td></tr>
-                  <tr><td>🔬 Researchers</td><td id="dash-total-res" style="font-weight:700;text-align:center;">—</td><td id="dash-total-res-status" style="text-align:center;">—</td></tr>
-                  <tr><td>🟢 Faculty</td><td id="dash-total-fac" style="font-weight:700;text-align:center;">—</td><td style="text-align:center;color:var(--text3);">—</td></tr>
-                  <tr style="background:rgba(31,71,136,0.15);font-weight:700;"><td>🧮 Grand Total (All)</td><td id="dash-grand-total" style="text-align:center;color:var(--accent);">—</td><td id="dash-grand-status" style="text-align:center;">—</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
 
-          <!-- Row 4: Center Utilization + Staff Category + Researcher Analytics -->
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;align-items:start;margin-bottom:1rem;">
-            <div class="table-card" style="padding:0;border-top:3px solid #388e3c;">
-              <div class="tc-header" style="background:rgba(56,142,60,0.08);">
-                <div class="tc-title" style="color:#66BB6A;">📍 Capacity Utilization — Centers</div>
+            <div class="aw-card">
+              <div class="aw-head">
+                <span class="aw-title">📊 Active vs Alumni</span>
+                <select class="aw-filter" id="aw-status-cat" onchange="renderAW_statusDonut()" title="Slice by category">
+                  <option value="all">All Categories</option>
+                  <option value="Staff">Staff</option>
+                  <option value="AssocFaculty">Assoc. Faculty</option>
+                  <option value="Researcher">Researchers</option>
+                </select>
               </div>
-              <table><thead><tr><th>Center</th><th>Active</th><th>% of Total</th></tr></thead>
-              <tbody id="dash-center-dist"></tbody></table>
+              <div class="aw-canvas-wrap"><canvas id="ppl-status-donut"></canvas></div>
             </div>
-            <div class="table-card" style="padding:0;border-top:3px solid #1E88E5;">
-              <div class="tc-header" style="background:rgba(30,136,229,0.08);">
-                <div class="tc-title" style="color:#42A5F5;">👥 Staff — Category Distribution</div>
-              </div>
-              <table>
-                <thead><tr><th>Category</th><th>Count</th></tr></thead>
-                <tbody>
-                  <tr><td>👥 Staff</td><td id="dash-cat-staff" style="font-weight:700;text-align:center;">—</td></tr>
-                  <tr><td>🔬 Researchers (via Staff)</td><td id="dash-cat-researcher" style="font-weight:700;text-align:center;">—</td></tr>
-                  <tr style="background:rgba(25,118,210,0.12);font-weight:700;"><td>🧮 Grand Total</td><td id="dash-cat-total" style="text-align:center;color:var(--accent);">—</td></tr>
-                </tbody>
-              </table>
-            </div>
-            <div class="table-card" style="padding:0;border-top:3px solid #34a853;">
-              <div class="tc-header" style="background:rgba(52,168,83,0.08);">
-                <div class="tc-title" style="color:#66BB6A;">🔬 Researcher Analytics</div>
-              </div>
-              <table>
-                <thead><tr><th>Status</th><th>Count</th><th>Trend</th></tr></thead>
-                <tbody>
-                  <tr><td>🟢 On-Going (Active)</td><td id="dash-res-ongoing" style="font-weight:700;text-align:center;">—</td><td style="text-align:center;font-size:0.75rem;color:var(--green);">Growing</td></tr>
-                  <tr><td>🔴 Completed (Alumni)</td><td id="dash-res-alumni" style="font-weight:700;text-align:center;">—</td><td style="text-align:center;font-size:0.75rem;color:var(--text3);">Archive</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
 
-          <!-- Row 5: Tenure Intelligence + System Health -->
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;align-items:start;">
-            <div class="table-card" style="padding:0;border-top:3px solid #f57c00;">
-              <div class="tc-header" style="background:rgba(245,124,0,0.08);">
-                <div class="tc-title" style="color:#FFA726;">⏳ Tenure &amp; Retention Intelligence</div>
+            <div class="aw-card">
+              <div class="aw-head">
+                <span class="aw-title">🎓 Faculty Type Split</span>
+                <select class="aw-filter" id="aw-facdonut-mode" onchange="renderAW_facultyDonut()" title="Display mode">
+                  <option value="count">Count</option>
+                  <option value="pct">Percent</option>
+                </select>
               </div>
-              <table>
-                <thead><tr><th>Metric</th><th>Value</th><th>Status</th></tr></thead>
-                <tbody>
-                  <tr><td>Avg Staff Tenure (Days)</td><td id="dash-tenure-avg" style="font-weight:700;text-align:center;font-family:var(--font-mono);">—</td><td style="text-align:center;font-size:0.75rem;color:var(--text2);">Monitor</td></tr>
-                  <tr><td>High Risk (&gt;90 days remaining)</td><td id="dash-tenure-risk" style="font-weight:700;text-align:center;font-family:var(--font-mono);">—</td><td id="dash-tenure-risk-status" style="text-align:center;font-size:0.8rem;">—</td></tr>
-                  <tr><td>Recent Joins (last 30 days)</td><td id="dash-recent-joins" style="font-weight:700;text-align:center;font-family:var(--font-mono);">—</td><td style="text-align:center;font-size:0.75rem;color:var(--green);">Growth</td></tr>
-                </tbody>
-              </table>
+              <div class="aw-canvas-wrap"><canvas id="ppl-faculty-donut"></canvas></div>
             </div>
-            <div class="table-card" style="padding:0;border-top:3px solid #424242;">
-              <div class="tc-header" style="background:rgba(66,66,66,0.15);">
-                <div class="tc-title">🔧 System Health &amp; Audit Trail</div>
-              </div>
-              <table>
-                <thead><tr><th>Metric</th><th>Value</th><th>Status</th></tr></thead>
-                <tbody>
-                  <tr><td>Last Refresh</td><td id="dash-last-refresh" style="font-family:var(--font-mono);font-size:0.78rem;text-align:center;">—</td><td style="text-align:center;color:var(--green);">✓ Current</td></tr>
-                  <tr><td>Total Records</td><td id="dash-total-records" style="font-weight:700;text-align:center;color:var(--accent);">—</td><td style="text-align:center;color:var(--green);">✓ Tracked</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
 
+            <div class="aw-card">
+              <div class="aw-head">
+                <span class="aw-title">👔 Staff Designation Mix</span>
+                <select class="aw-filter" id="aw-staffdesig-center" onchange="renderAW_staffDesig()" title="Filter by Center">
+                  <option value="all">All Centers</option>
+                </select>
+              </div>
+              <div class="aw-canvas-wrap"><canvas id="ppl-staffdesig-bar"></canvas></div>
+            </div>
+
+            <div class="aw-card">
+              <div class="aw-head">
+                <span class="aw-title">🏢 Center-wise Staff Load</span>
+                <select class="aw-filter" id="aw-centerbar-status" onchange="renderAW_centerBar()" title="Filter by Staff category">
+                  <option value="all">All Staff</option>
+                </select>
+              </div>
+              <div class="aw-canvas-wrap"><canvas id="ppl-center-bar"></canvas></div>
+            </div>
+
+            <div class="aw-card">
+              <div class="aw-head">
+                <span class="aw-title">📈 Joining Trend (12mo)</span>
+                <select class="aw-filter" id="aw-joining-cat" onchange="renderAW_joiningTrend()" title="Filter population">
+                  <option value="all">All</option>
+                  <option value="staff">Staff</option>
+                  <option value="faculty">Faculty</option>
+                  <option value="researchers">Researchers</option>
+                  <option value="students">Students</option>
+                </select>
+              </div>
+              <div class="aw-canvas-wrap short"><canvas id="ppl-joining-line"></canvas></div>
+            </div>
+
+            <div class="aw-card">
+              <div class="aw-head">
+                <span class="aw-title">🎓 Student Designation Mix</span>
+                <select class="aw-filter" id="aw-student-year" onchange="renderAW_studentDonut()" title="Filter by Year">
+                  <option value="all">All Years</option>
+                </select>
+              </div>
+              <div class="aw-canvas-wrap short"><canvas id="ppl-student-donut"></canvas></div>
+            </div>
+
+            <div class="aw-card">
+              <div class="aw-head">
+                <span class="aw-title">🔬 Researcher Status</span>
+                <select class="aw-filter" id="aw-researcher-guide" onchange="renderAW_researcherDonut()" title="Filter by Faculty Guide">
+                  <option value="all">All Guides</option>
+                </select>
+              </div>
+              <div class="aw-canvas-wrap short"><canvas id="ppl-researcher-donut"></canvas></div>
+            </div>
+
+            <div class="aw-card">
+              <div class="aw-head">
+                <span class="aw-title">🧮 Category Matrix</span>
+                <select class="aw-filter" id="aw-matrix-view" onchange="renderAW_matrix()" title="View">
+                  <option value="all">Active + Alumni</option>
+                  <option value="active">Active only</option>
+                </select>
+              </div>
+              <div style="max-height:150px;overflow-y:auto;">
+                <table class="matrix-table" id="ppl-matrix-table">
+                  <thead><tr><th>Category</th><th>Active</th><th>Alumni</th><th>Total</th></tr></thead>
+                  <tbody id="ppl-matrix-body"></tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
         </div>
 
-        <!-- PEOPLE SUB-NAV -->
-        <div id="people-registry-anchor" style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1.5rem;">
-          <button class="people-tab-btn active" onclick="switchPeopleTab('staff')">👔 Staff</button>
-          <button class="people-tab-btn" onclick="switchPeopleTab('faculty')">👨‍🏫 Faculty</button>
-          <button class="people-tab-btn" onclick="switchPeopleTab('assocfaculty')">👩‍🏫 Assoc. Faculty</button>
-          <button class="people-tab-btn" onclick="switchPeopleTab('affifaculty')">🔗 Affiliate Faculty</button>
-          <button class="people-tab-btn" onclick="switchPeopleTab('researchers')">🔬 Researchers</button>
-          <button class="people-tab-btn" onclick="switchPeopleTab('students')">🎓 Students</button>
-          <button class="people-tab-btn" onclick="switchPeopleTab('fellows')">👥 Assoc. Fellows</button>
-          <button class="people-tab-btn" onclick="switchPeopleTab('alumni')">🏛️ Alumni</button>
-          <button class="people-tab-btn" onclick="switchPeopleTab('actions')" style="margin-left:auto;border-color:rgba(139,92,246,0.4);color:var(--purple);">⚡ Actions</button>
-        </div>
+        <!-- ══════════════════════════════════════════════════════════
+             CATEGORY INTERFACE — dedicated workspace opened from a count
+             card above. Holds Header / Distribution / Add / Registry for
+             exactly one People Management category at a time.
+             ══════════════════════════════════════════════════════════ -->
+        <div class="people-cat-overlay" id="people-category-overlay" onclick="if(event.target===this) closePeopleCategory();">
+          <div class="people-cat-panel">
 
-        <!-- ADD BUTTONS ROW -->
-        <div style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-bottom:1.5rem;align-items:center;">
-          <span style="font-size:0.8rem;color:var(--text2);font-family:var(--font-mono);">ADD NEW →</span>
-          <button class="tc-btn primary" onclick="openAddModal('staff')">+ Staff</button>
-          <button class="tc-btn primary" onclick="openAddModal('faculty')">+ Faculty</button>
-          <button class="tc-btn primary" onclick="openAddModal('assocfaculty')">+ Assoc. Faculty</button>
-          <button class="tc-btn primary" onclick="openAddModal('affifaculty')">+ Affiliate Faculty</button>
-          <button class="tc-btn primary" onclick="openAddModal('researcher')">+ Researcher</button>
-          <button class="tc-btn primary" onclick="openAddModal('student')">+ Student</button>
-          <button class="tc-btn primary" onclick="openAddModal('fellow')">+ Assoc. Fellow</button>
-          <div style="display:flex;align-items:center;gap:0.5rem;margin-left:auto;flex-wrap:wrap;">
-            <button class="tc-btn" onclick="fetchFromSheet()" style="border-color:rgba(16,185,129,0.4);color:var(--green);">&#x2193; Fetch Sheet</button>
-            <button class="tc-btn" onclick="pushAllToSheet()" style="border-color:rgba(59,130,246,0.4);color:var(--accent);">&#x2191; Push All</button>
-            <input type="text" id="people-search" placeholder="&#x1F50D; Search people..." oninput="filterPeopleTable()" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0.5rem 1rem;color:var(--text);font-size:0.85rem;outline:none;">
-          </div>
-        </div>
+            <div class="pcp-header">
+              <div class="pcp-icon" id="pcp-icon">👔</div>
+              <div class="pcp-title-wrap">
+                <h3 class="pcp-title" id="pcp-title">Staff</h3>
+                <div class="pcp-sub" id="pcp-sub">Category workspace · analytics, add, edit &amp; delete records</div>
+              </div>
+              <div class="pcp-stats" id="pcp-stats">
+                <div class="pcp-stat"><div class="ps-val" id="pcp-stat-total">0</div><div class="ps-lbl">Records</div></div>
+              </div>
+              <button class="tc-btn" onclick="fetchFromSheet()" title="Fetch latest from sheet" style="border-color:rgba(16,185,129,0.4);color:var(--green);">↓ Fetch</button>
+              <button class="tc-btn" onclick="pushAllToSheet()" title="Push all changes to sheet" style="border-color:rgba(59,130,246,0.4);color:var(--accent);">↑ Push</button>
+              <button class="pcp-close" onclick="closePeopleCategory()">✕ Close</button>
+            </div>
+
+            <div class="pcp-nav" id="pcp-nav">
+              <button class="people-tab-btn active" onclick="switchPeopleTab('staff')">👔 Staff</button>
+              <button class="people-tab-btn" onclick="switchPeopleTab('faculty')">👨‍🏫 Faculty</button>
+              <button class="people-tab-btn" onclick="switchPeopleTab('assocfaculty')">👩‍🏫 Assoc. Faculty</button>
+              <button class="people-tab-btn" onclick="switchPeopleTab('affifaculty')">🔗 Affiliate Faculty</button>
+              <button class="people-tab-btn" onclick="switchPeopleTab('researchers')">🔬 Researchers</button>
+              <button class="people-tab-btn" onclick="switchPeopleTab('students')">🎓 Students</button>
+              <button class="people-tab-btn" onclick="switchPeopleTab('fellows')">👥 Assoc. Fellows</button>
+              <button class="people-tab-btn" onclick="switchPeopleTab('alumni')">🏛️ Alumni</button>
+              <input type="text" id="people-search" placeholder="&#x1F50D; Search this category..." oninput="filterPeopleTable()" style="margin-left:auto;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0.4rem 0.8rem;color:var(--text);font-size:0.8rem;outline:none;">
+            </div>
+
+            <div class="pcp-body">
 
         <!-- STAFF TABLE -->
         <div class="people-section active" id="psec-staff">
@@ -2048,7 +2093,7 @@
           <div class="table-card">
             <div class="tc-header">
               <div class="tc-title">👔 Staff Registry</div>
-              <div class="tc-actions"><button class="tc-btn" onclick="exportSection('staff')">Export</button></div>
+              <div class="tc-actions"><button class="tc-btn primary" onclick="openAddModal('staff')">+ Add New</button><button class="tc-btn" onclick="exportSection('staff')">Export</button></div>
             </div>
             <table id="tbl-staff">
               <thead><tr><th>#</th><th class="sortable" onclick="sortTable('staff','id')">ID</th><th class="sortable" onclick="sortTable('staff','name')">Name</th><th class="sortable" onclick="sortTable('staff','center')">Center</th><th class="sortable" onclick="sortTable('staff','category')">Category</th><th class="sortable" onclick="sortTable('staff','designation')">Designation</th><th class="sortable" onclick="sortTable('staff','status')">Status</th><th class="sortable" onclick="sortTable('staff','joiningDate')">Joining</th><th class="sortable" onclick="sortTable('staff','exitDate')">Exit Date</th><th>Email</th><th>Actions</th></tr></thead>
@@ -2072,7 +2117,7 @@
           <div class="table-card">
             <div class="tc-header">
               <div class="tc-title">👨‍🏫 Faculty Registry</div>
-              <div class="tc-actions"><button class="tc-btn" onclick="exportSection('faculty')">Export</button></div>
+              <div class="tc-actions"><button class="tc-btn primary" onclick="openAddModal('faculty')">+ Add New</button><button class="tc-btn" onclick="exportSection('faculty')">Export</button></div>
             </div>
             <table id="tbl-faculty">
               <thead><tr><th>#</th><th class="sortable" onclick="sortTable('faculty','facultyType')">Faculty Type</th><th class="sortable" onclick="sortTable('faculty','name')">Name</th><th class="sortable" onclick="sortTable('faculty','department')">Department</th><th>Email</th><th>Phone</th><th>Office</th><th>Actions</th></tr></thead>
@@ -2096,7 +2141,7 @@
           <div class="table-card">
             <div class="tc-header">
               <div class="tc-title">👩‍🏫 Associate Faculty Registry</div>
-              <div class="tc-actions"><button class="tc-btn" onclick="exportSection('assocfaculty')">Export</button></div>
+              <div class="tc-actions"><button class="tc-btn primary" onclick="openAddModal('assocfaculty')">+ Add New</button><button class="tc-btn" onclick="exportSection('assocfaculty')">Export</button></div>
             </div>
             <table id="tbl-assocfaculty">
               <thead><tr><th class="sortable" onclick="sortTable('assocFaculty','facultyType')">Faculty Type</th><th>#</th><th class="sortable" onclick="sortTable('assocFaculty','name')">Name</th><th class="sortable" onclick="sortTable('assocFaculty','joiningDate')">Joining</th><th class="sortable" onclick="sortTable('assocFaculty','exitDate')">Exit Date</th><th>Email</th><th>Phone</th><th>Office</th><th class="sortable" onclick="sortTable('assocFaculty','exitDate')">Days Left</th><th>Actions</th></tr></thead>
@@ -2120,7 +2165,7 @@
           <div class="table-card">
             <div class="tc-header">
               <div class="tc-title">🔗 Affiliate Faculty Registry</div>
-              <div class="tc-actions"><button class="tc-btn" onclick="exportSection('affifaculty')">Export</button></div>
+              <div class="tc-actions"><button class="tc-btn primary" onclick="openAddModal('affifaculty')">+ Add New</button><button class="tc-btn" onclick="exportSection('affifaculty')">Export</button></div>
             </div>
             <table id="tbl-affifaculty">
               <thead><tr><th>#</th><th class="sortable" onclick="sortTable('affiFaculty','facultyType')">Faculty Type</th><th class="sortable" onclick="sortTable('affiFaculty','name')">Name</th><th class="sortable" onclick="sortTable('affiFaculty','department')">Department</th><th>Email</th><th>Phone</th><th>Office</th><th>Comments</th><th>Actions</th></tr></thead>
@@ -2144,7 +2189,7 @@
           <div class="table-card">
             <div class="tc-header">
               <div class="tc-title">🔬 Active Researchers Registry</div>
-              <div class="tc-actions"><button class="tc-btn" onclick="exportSection('researchers')">Export</button></div>
+              <div class="tc-actions"><button class="tc-btn primary" onclick="openAddModal('researcher')">+ Add New</button><button class="tc-btn" onclick="exportSection('researchers')">Export</button></div>
             </div>
             <table id="tbl-researchers">
               <thead><tr><th>#</th><th class="sortable" onclick="sortTable('researchers','name')">Name</th><th class="sortable" onclick="sortTable('researchers','center')">Center</th><th class="sortable" onclick="sortTable('researchers','category')">Category</th><th class="sortable" onclick="sortTable('researchers','designation')">Designation</th><th class="sortable" onclick="sortTable('researchers','status')">Status</th><th class="sortable" onclick="sortTable('researchers','joiningDate')">Joining</th><th class="sortable" onclick="sortTable('researchers','exitDate')">Exit Date</th><th class="sortable" onclick="sortTable('researchers','facultyGuide')">Faculty Guide</th><th class="sortable" onclick="sortTable('researchers','exitDate')">Days Left</th><th>Actions</th></tr></thead>
@@ -2168,7 +2213,7 @@
           <div class="table-card">
             <div class="tc-header">
               <div class="tc-title">🎓 Students Registry</div>
-              <div class="tc-actions"><button class="tc-btn" onclick="exportSection('students')">Export</button></div>
+              <div class="tc-actions"><button class="tc-btn primary" onclick="openAddModal('student')">+ Add New</button><button class="tc-btn" onclick="exportSection('students')">Export</button></div>
             </div>
             <table id="tbl-students">
               <thead><tr><th>#</th><th class="sortable" onclick="sortTable('students','rollNo')">Roll No</th><th class="sortable" onclick="sortTable('students','name')">Name</th><th class="sortable" onclick="sortTable('students','designation')">Designation</th><th class="sortable" onclick="sortTable('students','year')">Year</th><th class="sortable" onclick="sortTable('students','facultyGuide')">Faculty Guide</th><th class="sortable" onclick="sortTable('students','status')">Status</th><th class="sortable" onclick="sortTable('students','joiningDate')">Joining</th><th class="sortable" onclick="sortTable('students','exitDate')">Exit Date</th><th>Email</th><th class="sortable" onclick="sortTable('students','exitDate')">Days Left</th><th>Actions</th></tr></thead>
@@ -2188,7 +2233,7 @@
           <div class="table-card">
             <div class="tc-header">
               <div class="tc-title">👥 Associate Fellows Registry</div>
-              <div class="tc-actions"><button class="tc-btn" onclick="exportSection('fellows')">Export</button></div>
+              <div class="tc-actions"><button class="tc-btn primary" onclick="openAddModal('fellow')">+ Add New</button><button class="tc-btn" onclick="exportSection('fellows')">Export</button></div>
             </div>
             <table id="tbl-fellows">
               <thead><tr><th>#</th><th class="sortable" onclick="sortTable('fellows','name')">Name</th><th class="sortable" onclick="sortTable('fellows','affiliation')">Affiliation</th><th>Mobile</th><th>Email</th><th>Actions</th></tr></thead>
@@ -2247,30 +2292,13 @@
           </div>
         </div>
 
-        <!-- PEOPLE ACTIONS SECTION -->
-        <div class="people-section" id="psec-actions">
-          <div class="table-card" style="margin-bottom:1.5rem;">
-            <div class="tc-header"><div class="tc-title">⚡ People — Quick Actions</div></div>
-            <div style="padding:1.25rem;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:0.75rem;">
-              <button class="submit-btn" onclick="openAddModal('staff')" style="background:linear-gradient(135deg,#3B82F6,#1D4ED8);">➕ Add Staff Member</button>
-              <button class="submit-btn" onclick="openAddModal('faculty')" style="background:linear-gradient(135deg,#8B5CF6,#6D28D9);">➕ Add Faculty</button>
-              <button class="submit-btn" onclick="openAddModal('assocfaculty')" style="background:linear-gradient(135deg,#06B6D4,#0891B2);">➕ Add Assoc. Faculty</button>
-              <button class="submit-btn" onclick="openAddModal('affifaculty')" style="background:linear-gradient(135deg,#10B981,#059669);">➕ Add Affiliate Faculty</button>
-              <button class="submit-btn" onclick="openAddModal('researcher')" style="background:linear-gradient(135deg,#F59E0B,#D97706);">➕ Add Researcher</button>
-              <button class="submit-btn" onclick="openAddModal('student')" style="background:linear-gradient(135deg,#EF4444,#DC2626);">➕ Add Student</button>
-              <button class="submit-btn" onclick="openAddModal('fellow')" style="background:linear-gradient(135deg,#64748B,#475569);">➕ Add Assoc. Fellow</button>
-              <button class="submit-btn" onclick="fetchFromSheet()" style="background:linear-gradient(135deg,var(--green),#059669);">⬇ Fetch All from Sheet</button>
-              <button class="submit-btn" onclick="pushAllToSheet()" style="background:linear-gradient(135deg,var(--accent),#1D4ED8);">⬆ Push All to Sheet</button>
-              <button class="submit-btn" onclick="runTenureCheck()" style="background:linear-gradient(135deg,var(--orange),#C2410C);">⏰ Run Tenure Check</button>
-            </div>
-          </div>
-          <div class="table-card">
-            <div class="tc-header"><div class="tc-title">📋 Recent Activity</div></div>
-            <div style="padding:1rem 1.5rem;" id="people-actions-log">
-              <div style="color:var(--text3);font-size:0.8rem;font-family:var(--font-mono);text-align:center;padding:1rem 0;">Actions will appear here after operations are performed.</div>
-            </div>
-          </div>
-        </div>
+            </div><!-- /.pcp-body -->
+          </div><!-- /.people-cat-panel -->
+        </div><!-- /.people-cat-overlay -->
+
+        <!-- Hidden log target kept for backward-compatibility with existing
+             logging calls elsewhere in the app; no longer shown on-dashboard. -->
+        <div id="people-actions-log" style="display:none;"></div>
 
       </div>
 
@@ -5062,6 +5090,21 @@
     return `<span class="badge-days-ok">${days}d</span>`;
   }
 
+  // ── ROW "MORE ACTIONS" OVERFLOW MENU (Registry = Edit + Delete visible;
+  //    secondary actions like Extend Tenure / Move to Alumni live behind ⋮) ──
+  function closeAllRowMenus() {
+    document.querySelectorAll('.row-more-menu.show').forEach(m => m.classList.remove('show'));
+  }
+  function toggleRowMenu(btn) {
+    const menu = btn.nextElementSibling;
+    const wasOpen = menu.classList.contains('show');
+    closeAllRowMenus();
+    if (!wasOpen) menu.classList.add('show');
+  }
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('.row-more-wrap')) closeAllRowMenus();
+  });
+
   // ── KPI REFRESH ──
   function refreshKPIs() {
     document.getElementById('kpi-staff').textContent = DB.staff.length;
@@ -5076,12 +5119,30 @@
     document.getElementById('kpi-alumni').textContent = DB.alumni.length;
   }
 
-  // ── TAB SWITCHING ──
-  // Count-card click-through: switch to the sheet's dedicated view and scroll it into frame.
+  // ── CATEGORY INTERFACE (modal workspace) ──
+  const PPL_CATEGORY_META = {
+    staff:        { icon:'👔', label:'Staff',                key:'staff' },
+    faculty:      { icon:'👨‍🏫', label:'Faculty',             key:'faculty' },
+    assocfaculty: { icon:'👩‍🏫', label:'Associate Faculty',   key:'assocFaculty' },
+    affifaculty:  { icon:'🔗', label:'Affiliate Faculty',    key:'affiFaculty' },
+    researchers:  { icon:'🔬', label:'Researchers',          key:'researchers' },
+    students:     { icon:'🎓', label:'Students',             key:'students' },
+    fellows:      { icon:'🤝', label:'Associate Fellows',    key:'fellows' },
+    alumni:       { icon:'🏛️', label:'Alumni',               key:'alumni' }
+  };
+
+  // Count-card click-through: open the dedicated Category Interface for this sheet.
   function openPeopleSheet(tab) {
+    const overlay = document.getElementById('people-category-overlay');
+    if (overlay) overlay.classList.add('show');
     switchPeopleTab(tab);
-    const anchor = document.getElementById('people-registry-anchor');
-    if (anchor) anchor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function closePeopleCategory() {
+    const overlay = document.getElementById('people-category-overlay');
+    if (overlay) overlay.classList.remove('show');
+    const search = document.getElementById('people-search');
+    if (search) { search.value = ''; }
   }
 
   function switchPeopleTab(tab) {
@@ -5089,10 +5150,24 @@
     document.querySelectorAll('.people-section').forEach(s => s.classList.remove('active'));
     document.querySelectorAll('.people-tab-btn').forEach(b => b.classList.remove('active'));
     document.getElementById('psec-' + tab)?.classList.add('active');
-    document.querySelectorAll('.people-tab-btn').forEach(b => {
+    document.querySelectorAll('#pcp-nav .people-tab-btn').forEach(b => {
       if (b.getAttribute('onclick')?.includes("'" + tab + "'")) b.classList.add('active');
     });
+    updatePeopleCategoryHeader(tab);
     renderCurrentTab(tab);
+  }
+
+  // Refresh the modal header (icon / title / record count chip) for the active category
+  function updatePeopleCategoryHeader(tab) {
+    const meta = PPL_CATEGORY_META[tab];
+    if (!meta) return;
+    const iconEl = document.getElementById('pcp-icon');
+    const titleEl = document.getElementById('pcp-title');
+    const totalEl = document.getElementById('pcp-stat-total');
+    if (iconEl) iconEl.textContent = meta.icon;
+    if (titleEl) titleEl.textContent = meta.label;
+    const arr = (DB[meta.key] || []);
+    if (totalEl) totalEl.textContent = arr.length;
   }
 
   function renderCurrentTab(tab) {
@@ -5128,11 +5203,9 @@
         <td>${fmtDate(r.joiningDate)}</td>
         <td>${fmtDate(r.exitDate)} ${r.exitDate ? daysBadge(daysLeft(r.exitDate)) : ''}</td>
         <td style="font-size:0.78rem;">${r.email||'—'}</td>
-        <td>
-          <button class="tbl-action-btn" onclick="openEditModal('staff',${i})" title="Edit">✏️</button>
-          <button class="tbl-action-btn success" onclick="openTenureExtend('staff',${i})">✅ Extend</button>
-          <button class="tbl-action-btn" onclick="moveToAlumni('staff',${i})">👥 Alumni</button>
-          <button class="tbl-action-btn danger" onclick="deleteRecord('staff',${i})">🗑</button>
+        <td style="white-space:nowrap;">
+          <button class="tbl-action-btn" onclick="openEditModal('staff',${i})" title="Edit">✏️ Edit</button>
+          <button class="tbl-action-btn danger" onclick="deleteRecord('staff',${i})" title="Delete">🗑 Delete</button>
         </td>
       </tr>`).join('');
   }
@@ -5145,8 +5218,8 @@
         <td>${r.department||'—'}</td><td style="font-size:0.78rem;">${r.email||'—'}</td>
         <td>${r.phone||'—'}</td><td>${r.office||'—'}</td>
         <td>
-          <button class="tbl-action-btn" onclick="openEditModal('faculty',${i})" title="Edit">✏️</button>
-          <button class="tbl-action-btn danger" onclick="deleteRecord('faculty',${i})">🗑</button>
+          <button class="tbl-action-btn" onclick="openEditModal('faculty',${i})" title="Edit">✏️ Edit</button>
+          <button class="tbl-action-btn danger" onclick="deleteRecord('faculty',${i})" title="Delete">🗑 Delete</button>
         </td>
       </tr>`).join('');
   }
@@ -5160,11 +5233,9 @@
         <td>${fmtDate(r.joiningDate)}</td><td>${fmtDate(r.exitDate)}</td>
         <td style="font-size:0.78rem;">${r.email||'—'}</td><td>${r.phone||'—'}</td><td>${r.office||'—'}</td>
         <td>${daysBadge(dl)}</td>
-        <td>
-          <button class="tbl-action-btn" onclick="openEditModal('assocFaculty',${i})" title="Edit">✏️</button>
-          <button class="tbl-action-btn success" onclick="openTenureExtend('assocFaculty',${i})">✅ Extend</button>
-          <button class="tbl-action-btn" onclick="moveToAlumni('assocFaculty',${i})">👥 Alumni</button>
-          <button class="tbl-action-btn danger" onclick="deleteRecord('assocFaculty',${i})">🗑</button>
+        <td style="white-space:nowrap;">
+          <button class="tbl-action-btn" onclick="openEditModal('assocFaculty',${i})" title="Edit">✏️ Edit</button>
+          <button class="tbl-action-btn danger" onclick="deleteRecord('assocFaculty',${i})" title="Delete">🗑 Delete</button>
         </td>
       </tr>`;
     }).join('');
@@ -5187,8 +5258,8 @@
         <td style="font-size:0.82rem;">${r.office||'—'}</td>
         <td style="font-size:0.78rem;color:var(--text2);">${r.comments||'—'}</td>
         <td style="white-space:nowrap;">
-          <button class="tbl-action-btn" onclick="openEditModal('affiFaculty',${i})" title="Edit">✏️</button>
-          <button class="tbl-action-btn danger" onclick="deleteRecord('affiFaculty',${i})">🗑</button>
+          <button class="tbl-action-btn" onclick="openEditModal('affiFaculty',${i})" title="Edit">✏️ Edit</button>
+          <button class="tbl-action-btn danger" onclick="deleteRecord('affiFaculty',${i})" title="Delete">🗑 Delete</button>
         </td>
       </tr>`).join('');
   }
@@ -5204,11 +5275,9 @@
         <td>${fmtDate(r.joiningDate)}</td><td>${fmtDate(r.exitDate)}</td>
         <td style="font-size:0.78rem;">${r.facultyGuide||'—'}</td>
         <td>${daysBadge(dl)}</td>
-        <td>
-          <button class="tbl-action-btn" onclick="openEditModal('researchers',${i})" title="Edit">✏️</button>
-          <button class="tbl-action-btn success" onclick="openTenureExtend('researchers',${i})">✅ Extend</button>
-          <button class="tbl-action-btn" onclick="moveToAlumni('researchers',${i})">👥 Alumni</button>
-          <button class="tbl-action-btn danger" onclick="deleteRecord('researchers',${i})">🗑</button>
+        <td style="white-space:nowrap;">
+          <button class="tbl-action-btn" onclick="openEditModal('researchers',${i})" title="Edit">✏️ Edit</button>
+          <button class="tbl-action-btn danger" onclick="deleteRecord('researchers',${i})" title="Delete">🗑 Delete</button>
         </td>
       </tr>`;
     }).join('');
@@ -5227,11 +5296,9 @@
         <td>${fmtDate(r.joiningDate)}</td><td>${fmtDate(r.exitDate)}</td>
         <td style="font-size:0.78rem;">${r.email||'—'}</td>
         <td>${daysBadge(dl)}</td>
-        <td>
-          <button class="tbl-action-btn" onclick="openEditModal('students',${i})" title="Edit">✏️</button>
-          <button class="tbl-action-btn success" onclick="openTenureExtend('students',${i})">✅ Extend</button>
-          <button class="tbl-action-btn" onclick="moveToAlumni('students',${i})">👥 Alumni</button>
-          <button class="tbl-action-btn danger" onclick="deleteRecord('students',${i})">🗑</button>
+        <td style="white-space:nowrap;">
+          <button class="tbl-action-btn" onclick="openEditModal('students',${i})" title="Edit">✏️ Edit</button>
+          <button class="tbl-action-btn danger" onclick="deleteRecord('students',${i})" title="Delete">🗑 Delete</button>
         </td>
       </tr>`;
     }).join('');
@@ -5245,8 +5312,8 @@
         <td>${r.affiliation||'—'}</td><td>${r.mobile||'—'}</td>
         <td style="font-size:0.78rem;">${r.email||'—'}</td>
         <td>
-          <button class="tbl-action-btn" onclick="openEditModal('fellows',${i})" title="Edit">✏️</button>
-          <button class="tbl-action-btn danger" onclick="deleteRecord('fellows',${i})">🗑</button>
+          <button class="tbl-action-btn" onclick="openEditModal('fellows',${i})" title="Edit">✏️ Edit</button>
+          <button class="tbl-action-btn danger" onclick="deleteRecord('fellows',${i})" title="Delete">🗑 Delete</button>
         </td>
       </tr>`).join('');
   }
@@ -6269,203 +6336,241 @@
   function refreshPeopleDashboard() {
     const el = (id, val) => { const e = document.getElementById(id); if(e) e.textContent = val; };
 
-    // Also keep KPI cards in sync for the two new cards (always true totals — not filtered)
+    // Keep KPI cards in sync for the two newer cards (always true totals)
     const affiEl = document.getElementById('kpi-affifaculty');
     if (affiEl) affiEl.textContent = (DB.affiFaculty || []).length;
     const fellowsEl = document.getElementById('kpi-fellows');
     if (fellowsEl) fellowsEl.textContent = (DB.fellows || []).length;
 
-    // ── Category / Center filters (from the Visual Overview filter bar) ──
-    // Apply to every stat table below, not just the headline charts.
-    const _catFilter    = (document.getElementById('ppl-filter-category') || {}).value || 'all';
-    const _centerFilter = (document.getElementById('ppl-filter-center') || {}).value || 'all';
-    const _catActive = (label) => _catFilter === 'all' || _catFilter === label;
-    const staffData        = (_catActive('Staff')             ? (DB.staff||[])        : []).filter(r => _centerFilter === 'all' || r.center === _centerFilter);
-    const facultyData      =  _catActive('Faculty')            ? (DB.faculty||[])      : [];
-    const assocFacultyData =  _catActive('Assoc. Faculty')     ? (DB.assocFaculty||[]) : [];
-    const affiFacultyData  =  _catActive('Affiliate Faculty')  ? (DB.affiFaculty||[])  : [];
-    const researchersData  =  _catActive('Researchers')        ? (DB.researchers||[])  : [];
-    const studentsData     =  _catActive('Students')           ? (DB.students||[])     : [];
-    const alumniData       =  _catActive('Alumni')             ? (DB.alumni||[])       : [];
-
-    // ── Helper: merge WS_CONFIG static list with any live values found in DB,
-    //   so new designations/types added directly in the Google Sheet are always shown.
-    function _liveUnion(staticList, liveArr, field) {
-      const liveVals = [...new Set((liveArr||[]).map(r => (r[field]||'').trim()).filter(Boolean))];
-      const merged   = [...staticList];
-      liveVals.forEach(v => { if (!merged.includes(v)) merged.push(v); });
-      return merged;
+    // Keep the open category workspace header (record count chip) in sync too
+    if (typeof currentPeopleTab !== 'undefined' && typeof updatePeopleCategoryHeader === 'function') {
+      updatePeopleCategoryHeader(currentPeopleTab);
     }
 
-    // Faculty Category Distribution — three grouped sections (auto-updated from sheet, filter-aware)
-    const tbody = document.getElementById('dash-faculty-dist');
-    if (tbody) {
-      const rows = [];
-      // Core Faculty — union of WS_CONFIG + live facultyType values in DB.faculty
-      const coreFacTypes  = _liveUnion(WS_CONFIG.facultyType,           DB.faculty,          'facultyType');
-      const assocFacTypes = _liveUnion(WS_CONFIG.associateFacultyType,   DB.assocFaculty||[], 'facultyType');
-      const affiFacTypes  = _liveUnion(WS_CONFIG.affiliateFacultyType,   DB.affiFaculty||[],  'facultyType');
+    // ── One-time population of the independent per-widget filter dropdowns ──
+    _pplPopulateFilterOnce('aw-catbar-center',      [...new Set((DB.staff||[]).map(r=>(r.center||'').trim()).filter(Boolean))].sort());
+    _pplPopulateFilterOnce('aw-staffdesig-center',  [...new Set((DB.staff||[]).map(r=>(r.center||'').trim()).filter(Boolean))].sort());
+    _pplPopulateFilterOnce('aw-centerbar-status',   ['Staff','Researcher','Student'], { value:'category:', label:v=>v });
+    _pplPopulateFilterOnce('aw-student-year',       [...new Set((DB.students||[]).map(r=>(r.year||'').toString().trim()).filter(Boolean))].sort());
+    _pplPopulateFilterOnce('aw-researcher-guide',   [...new Set((DB.researchers||[]).map(r=>(r.facultyGuide||'').trim()).filter(Boolean))].sort());
 
-      rows.push(`<tr style="background:rgba(40,167,69,0.08);"><td colspan="3" style="font-size:0.7rem;font-family:var(--font-mono);letter-spacing:0.08em;text-transform:uppercase;color:var(--green);font-weight:700;padding:0.4rem 1rem;">Core Faculty</td></tr>`);
-      coreFacTypes.forEach(t => {
-        const cnt = facultyData.filter(f => f.facultyType === t).length;
-        rows.push(`<tr><td>${t}</td><td style="font-weight:700;text-align:center;">${cnt}</td><td style="text-align:center;color:${cnt>0?'var(--green)':'var(--text3)'};">${cnt>0?'✓ Active':'-- Inactive'}</td></tr>`);
-      });
-      rows.push(`<tr style="background:rgba(6,182,212,0.08);"><td colspan="3" style="font-size:0.7rem;font-family:var(--font-mono);letter-spacing:0.08em;text-transform:uppercase;color:var(--accent2);font-weight:700;padding:0.4rem 1rem;">Associate Faculty</td></tr>`);
-      assocFacTypes.forEach(t => {
-        const cnt = assocFacultyData.filter(f => f.facultyType === t).length;
-        rows.push(`<tr><td>${t}</td><td style="font-weight:700;text-align:center;">${cnt}</td><td style="text-align:center;color:${cnt>0?'var(--accent2)':'var(--text3)'};">${cnt>0?'✓ Active':'-- Inactive'}</td></tr>`);
-      });
-      rows.push(`<tr style="background:rgba(139,92,246,0.08);"><td colspan="3" style="font-size:0.7rem;font-family:var(--font-mono);letter-spacing:0.08em;text-transform:uppercase;color:var(--purple);font-weight:700;padding:0.4rem 1rem;">Affiliate Faculty</td></tr>`);
-      affiFacTypes.forEach(t => {
-        const cnt = affiFacultyData.filter(f => f.facultyType === t).length;
-        rows.push(`<tr><td>${t}</td><td style="font-weight:700;text-align:center;">${cnt}</td><td style="text-align:center;color:${cnt>0?'var(--purple)':'var(--text3)'};">${cnt>0?'✓ Active':'-- Inactive'}</td></tr>`);
-      });
-      const coreN  = facultyData.length;
-      const assocN = assocFacultyData.length;
-      const affiN  = affiFacultyData.length;
-      rows.push(`<tr style="background:rgba(40,167,69,0.12);font-weight:700;"><td>🧮 Grand Total</td><td style="text-align:center;color:var(--green);">${coreN + assocN + affiN}</td><td style="text-align:center;font-size:0.72rem;font-family:var(--font-mono);">Core: ${coreN} · Assoc: ${assocN} · Affiliate: ${affiN}</td></tr>`);
-      tbody.innerHTML = rows.join('');
-    }
-
-    // Student Designation Distribution (auto-updated from sheet, filter-aware)
-    const studentTbody = document.getElementById('dash-student-dist');
-    if (studentTbody) {
-      const stuDesigs = _liveUnion(WS_CONFIG.studentDesignation, DB.students, 'designation');
-      const studentRows = [];
-      stuDesigs.forEach(t => {
-        const cnt = studentsData.filter(s => s.designation === t).length;
-        studentRows.push(`<tr><td>${t}</td><td style="font-weight:700;text-align:center;">${cnt}</td><td style="text-align:center;color:${cnt>0?'var(--green)':'var(--text3)'};">${cnt>0?'✓ Active':'—'}</td></tr>`);
-      });
-      const studentTotal = studentsData.length;
-      studentRows.push(`<tr style="background:rgba(239,68,68,0.1);font-weight:700;"><td>🧮 Student Total</td><td style="text-align:center;color:var(--orange);">${studentTotal}</td><td style="text-align:center;">✓</td></tr>`);
-      studentTbody.innerHTML = studentRows.join('');
-    }
-
-    // Researcher Designation Distribution (auto-updated from sheet, filter-aware)
-    const resTbody = document.getElementById('dash-researcher-dist');
-    if (resTbody) {
-      const resDesigs = _liveUnion(WS_CONFIG.researcherDesignation, DB.researchers, 'designation');
-      const resRows = [];
-      resDesigs.forEach(t => {
-        const cnt = researchersData.filter(r => r.designation === t).length;
-        resRows.push(`<tr><td>${t}</td><td style="font-weight:700;text-align:center;">${cnt}</td><td style="text-align:center;color:${cnt>0?'var(--purple)':'var(--text3)'};">${cnt>0?'✓':'—'}</td></tr>`);
-      });
-      const resTotal = researchersData.length;
-      resRows.push(`<tr style="background:rgba(139,92,246,0.12);font-weight:700;"><td>🧮 Grand Total</td><td style="text-align:center;color:var(--purple);">${resTotal}</td><td style="text-align:center;">✓</td></tr>`);
-      resTbody.innerHTML = resRows.join('');
-    }
-
-    // Staff Designation Distribution (auto-updated from sheet, filter-aware)
-    const staffDesigTbody = document.getElementById('dash-staff-desig-dist');
-    if (staffDesigTbody) {
-      const staffDesigs = _liveUnion(WS_CONFIG.staffDesignation, DB.staff, 'designation');
-      const sdRows = [];
-      staffDesigs.forEach(des => {
-        const cnt = staffData.filter(s => s.designation === des).length;
-        sdRows.push(`<tr><td>${des}</td><td style="font-weight:700;text-align:center;">${cnt}</td><td style="text-align:center;color:${cnt>0?'var(--accent)':'var(--text3)'};">${cnt>0?'✓':'—'}</td></tr>`);
-      });
-      const sdTotal = staffData.length;
-      sdRows.push(`<tr style="background:rgba(30,136,229,0.12);font-weight:700;"><td>🧮 Grand Total</td><td style="text-align:center;color:var(--accent);">${sdTotal}</td><td style="text-align:center;">✓</td></tr>`);
-      staffDesigTbody.innerHTML = sdRows.join('');
-    }
-
-    // Executive Summary - Active & Alumni counts (filter-aware)
-    const staffActive = staffData.length;
-    const staffAlumni = alumniData.length ? alumniData.filter(a => a.category === 'Staff' || !a.category).length : 0;
-    const assocFacActive = assocFacultyData.length;
-    const assocFacAlumni = alumniData.length ? alumniData.filter(a => a.category === 'AssocFaculty').length : 0;
-    const resActive = researchersData.filter(r => r.status === 'On-going' || !r.status).length;
-    const resAlumni = alumniData.length ? alumniData.filter(a => a.category === 'Researcher').length : 0;
-    const facActive = facultyData.length;
-    el('dash-exec-staff-active', staffActive);
-    el('dash-exec-staff-alumni', staffAlumni);
-    el('dash-exec-assocfac-active', assocFacActive);
-    el('dash-exec-assocfac-alumni', assocFacAlumni);
-    el('dash-exec-res-active', resActive);
-    el('dash-exec-res-alumni', resAlumni);
-    el('dash-exec-fac-active', facActive);
-    el('dash-exec-total-active', staffActive + assocFacActive + resActive + facActive);
-    el('dash-exec-total-alumni', staffAlumni + assocFacAlumni + resAlumni);
-
-    // Total Counts Active + Alumni (filter-aware)
-    const tStaff = staffActive + staffAlumni;
-    const tAssocFac = assocFacActive + assocFacAlumni;
-    const tRes = researchersData.length + resAlumni;
-    const tFac = facActive;
-    const tGrand = tStaff + tAssocFac + tRes + tFac;
-    el('dash-total-staff', tStaff);
-    el('dash-total-staff-status', tStaff > 20 ? '🟢 Optimal' : '🟡 Monitor');
-    el('dash-total-assocfac', tAssocFac);
-    el('dash-total-assocfac-status', tAssocFac > 10 ? '🟢 Optimal' : '🟡 Monitor');
-    el('dash-total-res', tRes);
-    el('dash-total-res-status', tRes > 50 ? '🟢 Optimal' : '🟡 Monitor');
-    el('dash-total-fac', tFac);
-    el('dash-grand-total', tGrand);
-    el('dash-grand-status', tGrand > 80 ? '🟢 Strong' : '🟡 Review');
-
-    // Capacity Utilization - Center Distribution (filter-aware; Category filter zeroes this
-    // out entirely when a non-Staff category is selected, since centers only apply to Staff)
-    const centerTbody = document.getElementById('dash-center-dist');
-    if (centerTbody) {
-      const centerRows = [];
-      const totalStaff = staffData.length || 1;
-      WS_CONFIG.staffCenter.forEach(c => {
-        const cnt = staffData.filter(s => s.center === c).length;
-        const pct = ((cnt / totalStaff) * 100).toFixed(1) + '%';
-        centerRows.push(`<tr><td>${c}</td><td style="font-weight:700;text-align:center;">${cnt}</td><td style="text-align:center;color:${cnt>0?'var(--green)':'var(--text3)'};">${pct}</td></tr>`);
-      });
-      centerRows.push(`<tr style="background:rgba(16,185,129,0.12);font-weight:700;"><td>TOTAL CAPACITY</td><td style="text-align:center;color:var(--green);">${staffData.length}</td><td style="text-align:center;">100.0%</td></tr>`);
-      centerTbody.innerHTML = centerRows.join('');
-    }
-
-    // Staff Category Distribution (filter-aware)
-    const catStaff = staffData.filter(r => r.category === 'Staff').length;
-    const catResearcher = staffData.filter(r => r.category === 'Researcher' || r.category === 'Student').length;
-    el('dash-cat-staff', catStaff);
-    el('dash-cat-researcher', catResearcher);
-    el('dash-cat-total', catStaff + catResearcher);
-
-    // Researcher Analytics (filter-aware)
-    const resOngoing = researchersData.filter(r => r.status === 'On-going' || !r.status).length;
-    const resCompleted = alumniData.length ? alumniData.filter(a => a.category === 'Researcher').length : 0;
-    el('dash-res-ongoing', resOngoing);
-    el('dash-res-alumni', resCompleted);
-
-    // Tenure & Retention Intelligence (filter-aware — Staff-based, so respects Center filter too)
+    // ── Executive KPI strip (always reflects the TRUE full dataset — an audit-style summary, not filtered) ──
     const today = new Date();
-    const staffWithTenure = staffData.filter(s => s.joiningDate);
+    const allActivePeople = [].concat(DB.staff||[], DB.faculty||[], DB.assocFaculty||[], DB.affiFaculty||[], DB.researchers||[], DB.students||[], DB.fellows||[]);
+    const alumniCount = (DB.alumni||[]).length;
+    const totalPeople = allActivePeople.length + alumniCount;
+    el('ek-total', totalPeople);
+    el('ek-active', allActivePeople.length);
+    el('ek-alumni', alumniCount);
+
+    const recentJoins = allActivePeople.filter(r => r.joiningDate && Math.floor((today - new Date(r.joiningDate)) / 86400000) <= 30).length;
+    el('ek-recent', recentJoins);
+    document.getElementById('ek-recent-trend').innerHTML = recentJoins > 0 ? `▲ last 30 days` : `— none this month`;
+
+    const staffWithTenure = (DB.staff||[]).filter(s => s.joiningDate);
     let avgTenure = 0;
-    if (staffWithTenure.length > 0) {
-      const totalDays = staffWithTenure.reduce((sum, s) => {
-        const joined = new Date(s.joiningDate);
-        return sum + Math.max(0, Math.floor((today - joined) / 86400000));
-      }, 0);
+    if (staffWithTenure.length) {
+      const totalDays = staffWithTenure.reduce((sum,s)=> sum + Math.max(0, Math.floor((today - new Date(s.joiningDate))/86400000)), 0);
       avgTenure = Math.round(totalDays / staffWithTenure.length);
     }
-    el('dash-tenure-avg', avgTenure);
-    const highRisk = staffData.filter(s => {
+    el('ek-tenure', avgTenure);
+
+    const highRisk = (DB.staff||[]).filter(s => {
       if (!s.exitDate) return false;
-      const exit = new Date(s.exitDate);
-      const daysLeft = Math.floor((exit - today) / 86400000);
-      return daysLeft > 0 && daysLeft <= 90;
+      const dl = Math.floor((new Date(s.exitDate) - today) / 86400000);
+      return dl > 0 && dl <= 90;
     }).length;
-    el('dash-tenure-risk', highRisk);
-    const riskEl = document.getElementById('dash-tenure-risk-status');
-    if (riskEl) riskEl.innerHTML = highRisk > 5 ? '<span style="color:var(--red);">🔴 CRITICAL</span>' : '<span style="color:var(--green);">🟢 OK</span>';
-    const recentJoins = staffData.filter(s => {
-      if (!s.joiningDate) return false;
-      return Math.floor((today - new Date(s.joiningDate)) / 86400000) <= 30;
-    }).length;
-    el('dash-recent-joins', recentJoins);
+    el('ek-risk', highRisk);
+    const riskTrendEl = document.getElementById('ek-risk-trend');
+    if (riskTrendEl) riskTrendEl.innerHTML = highRisk > 5 ? '🔴 review needed' : '🟢 under control';
 
-    // System Health — always reflects the TRUE full dataset (audit metric, not filtered)
-    const ts = new Date().toLocaleString('en-IN', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
-    el('dash-last-refresh', ts);
-    const totalRecs = DB.staff.length + DB.faculty.length + DB.assocFaculty.length + DB.affiFaculty.length + DB.researchers.length + DB.students.length + DB.fellows.length;
-    el('dash-total-records', totalRecs.toLocaleString());
+    const totalTrendEl = document.getElementById('ek-total-trend');
+    if (totalTrendEl) totalTrendEl.innerHTML = `Updated ${today.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}`;
+    const activeTrendEl = document.getElementById('ek-active-trend');
+    if (activeTrendEl) activeTrendEl.innerHTML = totalPeople ? `${Math.round(allActivePeople.length/totalPeople*100)}% of total` : '—';
+    const alumniTrendEl = document.getElementById('ek-alumni-trend');
+    if (alumniTrendEl) alumniTrendEl.innerHTML = totalPeople ? `${Math.round(alumniCount/totalPeople*100)}% of total` : '—';
 
-    renderPeopleOverviewCharts();
+    // ── Render each compact visual with its own independent filter state ──
+    renderAW_catBar();
+    renderAW_statusDonut();
+    renderAW_facultyDonut();
+    renderAW_staffDesig();
+    renderAW_centerBar();
+    renderAW_joiningTrend();
+    renderAW_studentDonut();
+    renderAW_researcherDonut();
+    renderAW_matrix();
+  }
+
+  // Helper: populate a <select> filter's options exactly once (keeps each
+  // widget's filter independent of the others — no shared global state).
+  function _pplPopulateFilterOnce(id, values, opts) {
+    const sel = document.getElementById(id);
+    if (!sel || sel.dataset.filled === '1') return;
+    (values||[]).forEach(v => {
+      const o = document.createElement('option');
+      o.value = (opts && opts.value === 'category:') ? v : v;
+      o.textContent = v;
+      sel.appendChild(o);
+    });
+    sel.dataset.filled = '1';
+  }
+
+  function _selVal(id) { const e = document.getElementById(id); return e ? e.value : 'all'; }
+
+  // 1. Headcount by Category — filtered by its own Center selector (Staff segment only)
+  function renderAW_catBar() {
+    const center = _selVal('aw-catbar-center');
+    const staffFiltered = center === 'all' ? (DB.staff||[]) : (DB.staff||[]).filter(r => r.center === center);
+    const catMap = {
+      Staff: staffFiltered.length,
+      Faculty: (DB.faculty||[]).length,
+      'Assoc. Faculty': (DB.assocFaculty||[]).length,
+      'Affiliate Faculty': (DB.affiFaculty||[]).length,
+      Researchers: (DB.researchers||[]).length,
+      Students: (DB.students||[]).length,
+      'Assoc. Fellows': (DB.fellows||[]).length
+    };
+    _pplChart('ppl-cat-bar', 'bar', Object.keys(catMap), [{
+      data: Object.values(catMap), backgroundColor: PPL_PALETTE, borderRadius: 4
+    }], { indexAxis: 'y', plugins: { legend: { display: false } } });
+  }
+
+  // 2. Active vs Alumni — filtered by its own Category selector
+  function renderAW_statusDonut() {
+    const cat = _selVal('aw-status-cat');
+    let activeN, alumniN;
+    if (cat === 'all') {
+      activeN = (DB.staff||[]).length + (DB.faculty||[]).length + (DB.assocFaculty||[]).length +
+                (DB.affiFaculty||[]).length + (DB.researchers||[]).length + (DB.students||[]).length + (DB.fellows||[]).length;
+      alumniN = (DB.alumni||[]).length;
+    } else if (cat === 'Staff') {
+      activeN = (DB.staff||[]).length;
+      alumniN = (DB.alumni||[]).filter(a => a.category === 'Staff' || !a.category).length;
+    } else if (cat === 'AssocFaculty') {
+      activeN = (DB.assocFaculty||[]).length;
+      alumniN = (DB.alumni||[]).filter(a => a.category === 'AssocFaculty').length;
+    } else if (cat === 'Researcher') {
+      activeN = (DB.researchers||[]).filter(r => r.status === 'On-going' || !r.status).length;
+      alumniN = (DB.alumni||[]).filter(a => a.category === 'Researcher').length;
+    }
+    _pplChart('ppl-status-donut', 'doughnut', ['Active','Alumni'], [{
+      data: [activeN, alumniN], backgroundColor: ['#3B82F6','#F59E0B'], borderWidth: 0
+    }]);
+  }
+
+  // 3. Faculty Type Split — its own filter toggles Count vs Percent display
+  function renderAW_facultyDonut() {
+    const mode = _selVal('aw-facdonut-mode');
+    const core = (DB.faculty||[]).length, assoc = (DB.assocFaculty||[]).length, affi = (DB.affiFaculty||[]).length;
+    const total = core + assoc + affi || 1;
+    const data = mode === 'pct'
+      ? [Math.round(core/total*100), Math.round(assoc/total*100), Math.round(affi/total*100)]
+      : [core, assoc, affi];
+    _pplChart('ppl-faculty-donut', 'doughnut', ['Core Faculty','Assoc. Faculty','Affiliate Faculty'], [{
+      data, backgroundColor: ['#10B981','#06B6D4','#8B5CF6'], borderWidth: 0
+    }]);
+  }
+
+  // 4. Staff Designation Mix — filtered by its own Center selector
+  function renderAW_staffDesig() {
+    const center = _selVal('aw-staffdesig-center');
+    const staffFiltered = center === 'all' ? (DB.staff||[]) : (DB.staff||[]).filter(r => r.center === center);
+    const sd = _pplCountBy(staffFiltered, 'designation');
+    _pplChart('ppl-staffdesig-bar', 'bar', Object.keys(sd), [{
+      data: Object.values(sd), backgroundColor: 'rgba(59,130,246,0.65)', borderRadius: 4
+    }], { indexAxis: 'y', plugins: { legend: { display: false } } });
+  }
+
+  // 5. Center-wise Staff Load — filtered by its own Staff-category selector
+  function renderAW_centerBar() {
+    const cat = _selVal('aw-centerbar-status');
+    const staffFiltered = cat === 'all' ? (DB.staff||[]) : (DB.staff||[]).filter(r => r.category === cat);
+    const cd = _pplCountBy(staffFiltered, 'center');
+    _pplChart('ppl-center-bar', 'bar', Object.keys(cd), [{
+      data: Object.values(cd), backgroundColor: 'rgba(16,185,129,0.65)', borderRadius: 4
+    }], { indexAxis: 'y', plugins: { legend: { display: false } } });
+  }
+
+  // 6. Joining Trend (12mo) — filtered by its own population selector
+  function renderAW_joiningTrend() {
+    const scope = _selVal('aw-joining-cat');
+    const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const now = new Date();
+    const bucket = [];
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      bucket.push({ key: d.getFullYear() + '-' + d.getMonth(), label: MONTHS[d.getMonth()] + " '" + String(d.getFullYear()).slice(2) });
+    }
+    const counts = {};
+    bucket.forEach(b => counts[b.key] = 0);
+    const pool = scope === 'all'
+      ? [].concat(DB.staff||[], DB.faculty||[], DB.assocFaculty||[], DB.affiFaculty||[], DB.researchers||[], DB.students||[])
+      : scope === 'staff' ? (DB.staff||[])
+      : scope === 'faculty' ? [].concat(DB.faculty||[], DB.assocFaculty||[], DB.affiFaculty||[])
+      : scope === 'researchers' ? (DB.researchers||[])
+      : (DB.students||[]);
+    pool.forEach(r => {
+      if (!r.joiningDate) return;
+      const jd = new Date(r.joiningDate);
+      if (isNaN(jd)) return;
+      const key = jd.getFullYear() + '-' + jd.getMonth();
+      if (counts[key] !== undefined) counts[key]++;
+    });
+    _pplChart('ppl-joining-line', 'line', bucket.map(b => b.label), [{
+      label: 'New Joins', data: bucket.map(b => counts[b.key]),
+      borderColor: '#06B6D4', backgroundColor: 'rgba(6,182,212,0.08)', tension: 0.4, fill: true, pointRadius: 2
+    }], { plugins: { legend: { display: false } } });
+  }
+
+  // 7. Student Designation Mix — filtered by its own Year selector
+  function renderAW_studentDonut() {
+    const year = _selVal('aw-student-year');
+    const filtered = year === 'all' ? (DB.students||[]) : (DB.students||[]).filter(r => String(r.year||'') === year);
+    const std = _pplCountBy(filtered, 'designation');
+    _pplChart('ppl-student-donut', 'doughnut', Object.keys(std), [{
+      data: Object.values(std), backgroundColor: PPL_PALETTE, borderWidth: 0
+    }]);
+  }
+
+  // 8. Researcher Status — filtered by its own Faculty Guide selector
+  function renderAW_researcherDonut() {
+    const guide = _selVal('aw-researcher-guide');
+    const filtered = guide === 'all' ? (DB.researchers||[]) : (DB.researchers||[]).filter(r => r.facultyGuide === guide);
+    const rst = _pplCountBy(filtered, 'status', 'On-going');
+    _pplChart('ppl-researcher-donut', 'doughnut', Object.keys(rst), [{
+      data: Object.values(rst), backgroundColor: ['#10B981','#EF4444','#F59E0B','#8B5CF6'], borderWidth: 0
+    }]);
+  }
+
+  // 9. Category Matrix — compact table with conditional-formatting pills; its own
+  //    filter toggles between "Active + Alumni" and "Active only"
+  function renderAW_matrix() {
+    const body = document.getElementById('ppl-matrix-body');
+    if (!body) return;
+    const view = _selVal('aw-matrix-view');
+    const rows = [
+      { label: '👔 Staff', active: (DB.staff||[]).length, alumni: (DB.alumni||[]).filter(a=>a.category==='Staff'||!a.category).length },
+      { label: '👨‍🏫 Faculty', active: (DB.faculty||[]).length, alumni: 0 },
+      { label: '🏫 Assoc. Faculty', active: (DB.assocFaculty||[]).length, alumni: (DB.alumni||[]).filter(a=>a.category==='AssocFaculty').length },
+      { label: '🔗 Affiliate Faculty', active: (DB.affiFaculty||[]).length, alumni: 0 },
+      { label: '🔬 Researchers', active: (DB.researchers||[]).filter(r=>r.status==='On-going'||!r.status).length, alumni: (DB.alumni||[]).filter(a=>a.category==='Researcher').length },
+      { label: '🎓 Students', active: (DB.students||[]).length, alumni: 0 },
+      { label: '🤝 Assoc. Fellows', active: (DB.fellows||[]).length, alumni: 0 }
+    ];
+    const pill = (n, kind) => {
+      const cls = n === 0 ? 'mx-zero' : (kind === 'active' ? 'mx-hi' : 'mx-mid');
+      return `<span class="mx-pill ${cls}">${n}</span>`;
+    };
+    let grandActive = 0, grandAlumni = 0;
+    const trs = rows.map(r => {
+      grandActive += r.active; grandAlumni += r.alumni;
+      const total = r.active + r.alumni;
+      return `<tr><td>${r.label}</td><td>${pill(r.active,'active')}</td><td>${view==='active' ? '<span class="mx-pill mx-zero">—</span>' : pill(r.alumni,'alumni')}</td><td style="font-weight:700;">${view==='active' ? r.active : total}</td></tr>`;
+    });
+    trs.push(`<tr style="font-weight:700;background:rgba(59,130,246,0.08);"><td>🧮 Grand Total</td><td>${pill(grandActive,'active')}</td><td>${view==='active' ? '—' : pill(grandAlumni,'alumni')}</td><td style="color:var(--accent);">${view==='active' ? grandActive : (grandActive+grandAlumni)}</td></tr>`);
+    body.innerHTML = trs.join('');
   }
 
   // ══════════════════════════════════════════════════════════════════
@@ -20383,30 +20488,10 @@ if (_origShowTab) {
   };
 }
 
-// ─── PEOPLE ACTIONS TAB: wire switchPeopleTab for 'actions' ───
-var _origSwitchPeopleTab = typeof switchPeopleTab === 'function' ? switchPeopleTab : null;
-if (_origSwitchPeopleTab) {
-  window.switchPeopleTab = function(tab) {
-    if (tab === 'actions') {
-      document.querySelectorAll('.people-section').forEach(s => s.classList.remove('active'));
-      document.querySelectorAll('.people-tab-btn').forEach(b => b.classList.remove('active'));
-      document.getElementById('psec-actions')?.classList.add('active');
-      document.querySelectorAll('.people-tab-btn').forEach(b => {
-        if (b.getAttribute('onclick')?.includes("'actions'")) b.classList.add('active');
-      });
-      // Populate recent log
-      const logEl = document.getElementById('people-actions-log');
-      if (logEl && typeof _activityLog !== 'undefined' && _activityLog.length) {
-        const peopleEntries = _activityLog.filter(e => e.module === 'People' || e.section === 'People').slice(0, 10);
-        logEl.innerHTML = peopleEntries.length
-          ? peopleEntries.map(e => `<div style="padding:0.5rem 0;border-bottom:1px solid var(--border);font-size:0.78rem;display:flex;justify-content:space-between;gap:0.5rem;"><span>${e.action} — <strong>${e.detail||''}</strong></span><span style="font-size:0.68rem;color:var(--text3);font-family:var(--font-mono);white-space:nowrap;">${e.time||''}</span></div>`).join('')
-          : '<div style="color:var(--text3);font-size:0.78rem;font-family:var(--font-mono);text-align:center;padding:1rem 0;">No recent People activity.</div>';
-      }
-      return;
-    }
-    _origSwitchPeopleTab(tab);
-  };
-}
+// ─── PEOPLE 'actions' sub-tab retired in v50 — the Quick Actions panel was
+// removed from People Management (Fetch/Push moved to the category workspace
+// header, Add moved into each category's Registry toolbar, Tenure Check has
+// its own dedicated tab). switchPeopleTab() no longer needs an override.
 
 // ─── LABS ACTIONS TAB: wire switchLabTab for 'actions' ────────
 // ─── Lab switchLabTab actions-tab patch removed (v33: tab no longer exists) ───
@@ -33401,6 +33486,7 @@ tbody td { vertical-align: middle; }
         earlyOutH: EARLY_OUT_HOUR_DEFAULT, earlyOutM: EARLY_OUT_MIN_DEFAULT
       },
       empIds: {},               // { "john doe": "E001" }
+      empMatches: {},            // { "john doe": { id:"ST001", personName:"John Doe", category:"Staff" } }
       currentMonth: null
     };
   }
@@ -33411,6 +33497,7 @@ tbody td { vertical-align: middle; }
       ATT = raw ? JSON.parse(raw) : attDefaultState();
     } catch (e) { ATT = attDefaultState(); }
     if (!ATT.months) ATT = attDefaultState();
+    if (!ATT.empMatches) ATT.empMatches = {}; // backward-compat for state saved before this field existed
   }
 
   function attSave() {
@@ -33564,6 +33651,50 @@ tbody td { vertical-align: middle; }
   function getEmpId(name) { return ATT.empIds[String(name).trim().toLowerCase()] || ''; }
   function saveEmpId(name, id) { ATT.empIds[String(name).trim().toLowerCase()] = id; attSave(); }
 
+  // ─── PEOPLE ROSTER MATCH ────────────────────────────────────
+  // Builds a flat, searchable roster from every People Management category
+  // currently loaded in DB, so attendance import can be matched to a real
+  // person record instead of a free-typed ID. Falls back to email prefix
+  // for categories with no formal ID field (only Staff.id / Student.rollNo
+  // are true IDs today).
+  function attPeopleRoster() {
+    const D = window.DB || {};
+    const roster = [];
+    function add(list, category, idField) {
+      (list || []).forEach(r => {
+        if (!r || !r.name) return;
+        let id = idField && r[idField] ? String(r[idField]).trim() : '';
+        if (!id && r.email) id = String(r.email).split('@')[0].toUpperCase();
+        roster.push({ name: r.name, category, id, email: r.email || '' });
+      });
+    }
+    add(D.staff,        'Staff',              'id');
+    add(D.faculty,       'Faculty',            null);
+    add(D.assocFaculty,  'Assoc. Faculty',     null);
+    add(D.affiFaculty,   'Affiliate Faculty',  null);
+    add(D.researchers,   'Researcher',         null);
+    add(D.students,      'Student',            'rollNo');
+    add(D.fellows,       'Assoc. Fellow',      null);
+    roster.sort((a, b) => a.name.localeCompare(b.name));
+    return roster;
+  }
+
+  // Saves a full People-record match (not just a bare ID string) for an
+  // attendance name, so re-imports and the modal pre-fill can recall which
+  // exact person/category was matched, not only the ID.
+  function saveEmpMatch(attName, match) {
+    const key = String(attName).trim().toLowerCase();
+    ATT.empMatches[key] = { id: match.id || '', personName: match.name || '', category: match.category || '' };
+    if (match.id) ATT.empIds[key] = match.id; // keep legacy ID store in sync
+    attSave();
+  }
+  function getEmpMatch(attName) {
+    return ATT.empMatches[String(attName).trim().toLowerCase()] || null;
+  }
+  function attEsc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+  }
+
   // ─── XLSX READING ────────────────────────────────────────────
   function readWorkbookRows(file) {
     return new Promise((resolve, reject) => {
@@ -33572,6 +33703,21 @@ tbody td { vertical-align: middle; }
         try {
           const wb = XLSX.read(e.target.result, { type: 'array', cellDates: true });
           const ws = wb.Sheets[wb.SheetNames[0]];
+          // Some biometric exports (e.g. rptDAttendanceReg) leave column A
+          // entirely blank, so Excel saves the used range starting at column
+          // B (e.g. "B1:AH24"). SheetJS's header:1 mode indexes arrays from
+          // the range's FIRST column, not always column A — so every value
+          // silently shifts one column left and the row/column assumptions
+          // below (ported from the original Apps Script) break. Force the
+          // range to start at column A so blank leading columns are padded
+          // back in and indices line up correctly regardless of source.
+          if (ws['!ref']) {
+            const range = XLSX.utils.decode_range(ws['!ref']);
+            if (range.s.c > 0) {
+              range.s.c = 0;
+              ws['!ref'] = XLSX.utils.encode_range(range);
+            }
+          }
           const rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: '' });
           resolve(rows);
         } catch (err) { reject(err); }
@@ -34073,13 +34219,19 @@ tbody td { vertical-align: middle; }
   }
 
   // ─── EMP ID ──────────────────────────────────────────────────
-  function attSetEmpId(monthName, empIndex, newId) {
+  function attSetEmpId(monthName, empIndex, newId, match) {
     const mo = ATT.months[monthName];
     if (!mo) return;
     const emp = mo.employees[empIndex];
     if (!emp) return;
     emp.empId = newId;
-    saveEmpId(emp.name, newId);
+    if (match && (match.name || match.category)) {
+      emp.matchedPerson = match.name || '';
+      emp.matchedCategory = match.category || '';
+      saveEmpMatch(emp.name, { id: newId, name: match.name, category: match.category });
+    } else {
+      saveEmpId(emp.name, newId);
+    }
   }
   function attApplyEmpIdStoreToMonth(monthName) {
     const mo = ATT.months[monthName];
@@ -34088,6 +34240,8 @@ tbody td { vertical-align: middle; }
     mo.employees.forEach(emp => {
       const id = getEmpId(emp.name);
       if (id && id !== emp.empId) { emp.empId = id; count++; }
+      const m = getEmpMatch(emp.name);
+      if (m) { emp.matchedPerson = m.personName || ''; emp.matchedCategory = m.category || ''; }
     });
     attSave();
     return count;
@@ -34555,41 +34709,115 @@ tbody td { vertical-align: middle; }
     const mn = ATT.currentMonth;
     if (!mn) return;
     const mo = ATT.months[mn];
-    const rows = mo.employees.map((e, i) => `
+    window._attRoster = attPeopleRoster(); // fresh snapshot of People module each time modal opens
+    const rows = mo.employees.map((e, i) => {
+      const saved = getEmpMatch(e.name);
+      const matchLabel = saved && saved.personName ? `${saved.personName} — ${saved.category}` : (e.matchedPerson ? `${e.matchedPerson} — ${e.matchedCategory}` : '');
+      return `
       <tr>
         <td style="padding:5px 8px;">${i + 1}</td>
-        <td style="padding:5px 8px;"><input id="att-id-${i}" value="${e.empId || ''}" style="width:110px;padding:4px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text);"></td>
-        <td style="padding:5px 8px;">${e.name}</td>
-      </tr>`).join('');
+        <td style="padding:5px 8px;">${attEsc(e.name)}</td>
+        <td style="padding:5px 8px;position:relative;min-width:220px;">
+          <input type="text" id="att-match-${i}" value="${attEsc(matchLabel)}" placeholder="🔍 Search People roster by name…"
+            class="${matchLabel ? 'att-match-matched' : ''}"
+            oninput="attFilterRoster(${i})" onfocus="attFilterRoster(${i})" autocomplete="off"
+            style="width:100%;padding:4px 6px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text);font-size:0.78rem;">
+          <div id="att-suggest-${i}" class="att-suggest-box"></div>
+        </td>
+        <td style="padding:5px 8px;">
+          <input id="att-id-${i}" value="${attEsc(e.empId || '')}" placeholder="ID"
+            style="width:100px;padding:4px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text);">
+        </td>
+      </tr>`;
+    }).join('');
     attModal(`
       <button class="modal-close" onclick="attCloseModal()">✕ Close</button>
-      <div class="modal-title">🪪 Set / Change Employee IDs — ${mn}</div>
-      <div style="max-height:340px;overflow-y:auto;">
-        <table style="width:100%;font-size:0.8rem;"><thead><tr><th>#</th><th>Employee ID</th><th>Name</th></tr></thead><tbody>${rows}</tbody></table>
+      <div class="modal-title">🪪 Match Attendance to People Records — ${mn}</div>
+      <p style="font-size:0.76rem;color:var(--text2);margin:-0.3rem 0 0.8rem;">Search and select the real Staff / Faculty / Researcher / Student record for each attendance name — the Employee ID auto-fills from that record. If someone isn't in the People module yet, just type an ID manually on the right.</p>
+      <div style="max-height:360px;overflow-y:auto;">
+        <table style="width:100%;font-size:0.8rem;"><thead><tr><th>#</th><th>Name (from file)</th><th>Match to People record</th><th>Employee ID</th></tr></thead><tbody>${rows}</tbody></table>
       </div>
       <div class="modal-row" style="margin-top:1rem;">
         <button class="modal-btn cancel" onclick="attCloseModal()">Cancel</button>
-        <button class="modal-btn" onclick="attRunApplyEmpIdStore()">🔄 Apply Saved IDs</button>
+        <button class="modal-btn" onclick="attRunApplyEmpIdStore()">🔄 Apply Saved Matches</button>
         <button class="modal-btn primary" onclick="attRunSaveAllEmpIds()">💾 Save All</button>
       </div>
     `, true);
   }
+
+  // Live-filters the People roster as the user types a name, and renders
+  // clickable suggestions (name + category + ID, or "no ID on file").
+  function attFilterRoster(i) {
+    const input = document.getElementById('att-match-' + i);
+    const box = document.getElementById('att-suggest-' + i);
+    if (!input || !box) return;
+    input.classList.remove('att-match-matched');
+    delete input.dataset.matchedName;
+    delete input.dataset.matchedCategory;
+    const q = input.value.trim().toLowerCase();
+    if (!q) { box.style.display = 'none'; box.innerHTML = ''; return; }
+    const roster = window._attRoster || (window._attRoster = attPeopleRoster());
+    const matches = roster.filter(r => r.name.toLowerCase().includes(q)).slice(0, 8);
+    if (!matches.length) {
+      box.innerHTML = '<div class="att-suggest-empty">No People match — type the ID manually on the right →</div>';
+      box.style.display = 'block';
+      return;
+    }
+    box.innerHTML = matches.map((m, idx) => `
+      <div class="att-suggest-item" data-idx="${idx}">
+        <strong>${attEsc(m.name)}</strong><span class="att-suggest-cat">${attEsc(m.category)}</span>${m.id ? `<span class="att-suggest-id">${attEsc(m.id)}</span>` : '<span class="att-suggest-noid">no ID on file</span>'}
+      </div>`).join('');
+    box._matches = matches; // stash objects directly — no attribute-escaping needed
+    box.onmousedown = (ev) => {
+      const item = ev.target.closest('.att-suggest-item');
+      if (!item) return;
+      ev.preventDefault();
+      attPickRosterMatch(i, box._matches[parseInt(item.dataset.idx, 10)]);
+    };
+    box.style.display = 'block';
+  }
+
+  function attPickRosterMatch(i, m) {
+    const input = document.getElementById('att-match-' + i);
+    const idField = document.getElementById('att-id-' + i);
+    const box = document.getElementById('att-suggest-' + i);
+    if (input) {
+      input.value = m.name + ' — ' + m.category;
+      input.classList.add('att-match-matched');
+      input.dataset.matchedName = m.name;
+      input.dataset.matchedCategory = m.category;
+    }
+    if (idField && m.id) idField.value = m.id;
+    if (box) { box.style.display = 'none'; box.innerHTML = ''; }
+  }
+
+  // Hide any open suggestion dropdown when clicking outside it.
+  document.addEventListener('click', (ev) => {
+    if (ev.target.closest && (ev.target.closest('.att-suggest-box') || (ev.target.id || '').startsWith('att-match-'))) return;
+    document.querySelectorAll('.att-suggest-box').forEach(b => { b.style.display = 'none'; });
+  });
+
   function attRunSaveAllEmpIds() {
     const mo = ATT.months[ATT.currentMonth];
     mo.employees.forEach((e, i) => {
-      const v = document.getElementById('att-id-' + i).value.trim();
-      if (v) attSetEmpId(ATT.currentMonth, i, v);
+      const idField = document.getElementById('att-id-' + i);
+      const matchInput = document.getElementById('att-match-' + i);
+      const v = idField ? idField.value.trim() : '';
+      if (!v) return;
+      const matchedName = matchInput ? matchInput.dataset.matchedName : '';
+      const matchedCategory = matchInput ? matchInput.dataset.matchedCategory : '';
+      attSetEmpId(ATT.currentMonth, i, v, matchedName ? { name: matchedName, category: matchedCategory } : null);
     });
     attSave();
     attCloseModal();
     attRenderShell();
-    attToast('✅ Employee IDs saved');
+    attToast('✅ Employee IDs & People matches saved');
   }
   function attRunApplyEmpIdStore() {
     const count = attApplyEmpIdStoreToMonth(ATT.currentMonth);
     attCloseModal();
     attRenderShell();
-    attToast(`✅ Applied ${count} saved ID(s) to this month`);
+    attToast(`✅ Applied ${count} saved match(es) to this month`);
   }
 
   // ─── SORT / RECALC ───────────────────────────────────────────
@@ -34664,6 +34892,9 @@ tbody td { vertical-align: middle; }
   window.attOpenEmpIdModal = attOpenEmpIdModal;
   window.attRunSaveAllEmpIds = attRunSaveAllEmpIds;
   window.attRunApplyEmpIdStore = attRunApplyEmpIdStore;
+  window.attFilterRoster = attFilterRoster;
+  window.attPickRosterMatch = attPickRosterMatch;
+  window.attPeopleRoster = attPeopleRoster;
   window.attDoSort = attDoSort;
   window.attDoRecalc = attDoRecalc;
   window.attDownloadExcel = attDownloadExcel;
