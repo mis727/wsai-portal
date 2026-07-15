@@ -2422,6 +2422,50 @@
         <!-- PEOPLE MANAGEMENT DASHBOARD ANALYTICS -->
         <div id="people-dashboard-analytics" style="margin-bottom:1.5rem;">
 
+          <!-- ═══ POWER BI STYLE VISUAL OVERVIEW ═══ -->
+          <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.75rem;">
+            <h3 style="font-size:0.95rem;margin:0;color:var(--text);">📊 People Analytics — Visual Overview</h3>
+            <span style="font-size:0.62rem;font-family:var(--font-mono);color:var(--accent);background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.25);border-radius:5px;padding:0.15rem 0.45rem;">Live · Auto-refreshed</span>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1rem;">
+            <div class="v31-chart-box">
+              <div class="v31-chart-label">👥 Headcount by Category</div>
+              <div class="v31-chart-canvas" style="height:200px;"><canvas id="ppl-cat-bar"></canvas></div>
+            </div>
+            <div class="v31-chart-box">
+              <div class="v31-chart-label">🎓 Faculty Type Split (Core/Assoc/Affiliate)</div>
+              <div class="v31-chart-canvas" style="height:200px;"><canvas id="ppl-faculty-donut"></canvas></div>
+            </div>
+            <div class="v31-chart-box">
+              <div class="v31-chart-label">📊 Active vs Alumni</div>
+              <div class="v31-chart-canvas" style="height:200px;"><canvas id="ppl-status-donut"></canvas></div>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1rem;">
+            <div class="v31-chart-box">
+              <div class="v31-chart-label">👔 Staff Designation Mix</div>
+              <div class="v31-chart-canvas" style="height:200px;"><canvas id="ppl-staffdesig-bar"></canvas></div>
+            </div>
+            <div class="v31-chart-box">
+              <div class="v31-chart-label">🎓 Student Designation Mix</div>
+              <div class="v31-chart-canvas" style="height:200px;"><canvas id="ppl-student-donut"></canvas></div>
+            </div>
+            <div class="v31-chart-box">
+              <div class="v31-chart-label">🔬 Researcher Status</div>
+              <div class="v31-chart-canvas" style="height:200px;"><canvas id="ppl-researcher-donut"></canvas></div>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:2fr 1fr;gap:1rem;margin-bottom:1rem;">
+            <div class="v31-chart-box">
+              <div class="v31-chart-label">📈 Joining Trend — Last 12 Months (All Categories)</div>
+              <div class="v31-chart-canvas" style="height:220px;"><canvas id="ppl-joining-line"></canvas></div>
+            </div>
+            <div class="v31-chart-box">
+              <div class="v31-chart-label">🏢 Center-wise Staff Distribution</div>
+              <div class="v31-chart-canvas" style="height:220px;"><canvas id="ppl-center-bar"></canvas></div>
+            </div>
+          </div>
+
           <!-- Row 1: Faculty + Student + Researcher Distribution -->
           <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;align-items:start;margin-bottom:1rem;">
             <div class="table-card" style="padding:0;border-top:3px solid #2E7D32;">
@@ -2597,6 +2641,16 @@
 
         <!-- STAFF TABLE -->
         <div class="people-section active" id="psec-staff">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+            <div class="v31-chart-box">
+              <div class="v31-chart-label">👔 Staff by Center</div>
+              <div class="v31-chart-canvas" style="height:170px;"><canvas id="cat-staff-center"></canvas></div>
+            </div>
+            <div class="v31-chart-box">
+              <div class="v31-chart-label">📁 Staff by Category (Staff/Student/Researcher)</div>
+              <div class="v31-chart-canvas" style="height:170px;"><canvas id="cat-staff-category"></canvas></div>
+            </div>
+          </div>
           <div class="table-card">
             <div class="tc-header">
               <div class="tc-title">👔 Staff Registry</div>
@@ -2611,6 +2665,16 @@
 
         <!-- FACULTY TABLE -->
         <div class="people-section" id="psec-faculty">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+            <div class="v31-chart-box">
+              <div class="v31-chart-label">👨‍🏫 Faculty by Type</div>
+              <div class="v31-chart-canvas" style="height:170px;"><canvas id="cat-faculty-type"></canvas></div>
+            </div>
+            <div class="v31-chart-box">
+              <div class="v31-chart-label">🏫 Faculty by Department</div>
+              <div class="v31-chart-canvas" style="height:170px;"><canvas id="cat-faculty-dept"></canvas></div>
+            </div>
+          </div>
           <div class="table-card">
             <div class="tc-header">
               <div class="tc-title">👨‍🏫 Faculty Registry</div>
@@ -2625,6 +2689,16 @@
 
         <!-- ASSOCIATE FACULTY TABLE -->
         <div class="people-section" id="psec-assocfaculty">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+            <div class="v31-chart-box">
+              <div class="v31-chart-label">👩‍🏫 Associate Faculty by Type</div>
+              <div class="v31-chart-canvas" style="height:170px;"><canvas id="cat-assocfac-type"></canvas></div>
+            </div>
+            <div class="v31-chart-box">
+              <div class="v31-chart-label">⏳ Tenure Window (Days Left)</div>
+              <div class="v31-chart-canvas" style="height:170px;"><canvas id="cat-assocfac-tenure"></canvas></div>
+            </div>
+          </div>
           <div class="table-card">
             <div class="tc-header">
               <div class="tc-title">👩‍🏫 Associate Faculty Registry</div>
@@ -2639,6 +2713,16 @@
 
         <!-- AFFILIATE FACULTY TABLE -->
         <div class="people-section" id="psec-affifaculty">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+            <div class="v31-chart-box">
+              <div class="v31-chart-label">🔗 Affiliate Faculty by Type</div>
+              <div class="v31-chart-canvas" style="height:170px;"><canvas id="cat-affifac-type"></canvas></div>
+            </div>
+            <div class="v31-chart-box">
+              <div class="v31-chart-label">🏢 Affiliate Faculty by Department/Org</div>
+              <div class="v31-chart-canvas" style="height:170px;"><canvas id="cat-affifac-dept"></canvas></div>
+            </div>
+          </div>
           <div class="table-card">
             <div class="tc-header">
               <div class="tc-title">🔗 Affiliate Faculty Registry</div>
@@ -2653,6 +2737,16 @@
 
         <!-- RESEARCHERS TABLE -->
         <div class="people-section" id="psec-researchers">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+            <div class="v31-chart-box">
+              <div class="v31-chart-label">🔬 Researchers by Designation</div>
+              <div class="v31-chart-canvas" style="height:170px;"><canvas id="cat-researcher-desig"></canvas></div>
+            </div>
+            <div class="v31-chart-box">
+              <div class="v31-chart-label">🧑‍🏫 Researchers by Faculty Guide</div>
+              <div class="v31-chart-canvas" style="height:170px;"><canvas id="cat-researcher-guide"></canvas></div>
+            </div>
+          </div>
           <div class="table-card">
             <div class="tc-header">
               <div class="tc-title">🔬 Active Researchers Registry</div>
@@ -2667,6 +2761,16 @@
 
         <!-- STUDENTS TABLE -->
         <div class="people-section" id="psec-students">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+            <div class="v31-chart-box">
+              <div class="v31-chart-label">🎓 Students by Designation</div>
+              <div class="v31-chart-canvas" style="height:170px;"><canvas id="cat-student-desig"></canvas></div>
+            </div>
+            <div class="v31-chart-box">
+              <div class="v31-chart-label">📅 Students by Year</div>
+              <div class="v31-chart-canvas" style="height:170px;"><canvas id="cat-student-year"></canvas></div>
+            </div>
+          </div>
           <div class="table-card">
             <div class="tc-header">
               <div class="tc-title">🎓 Students Registry</div>
@@ -2681,6 +2785,12 @@
 
         <!-- ASSOCIATE FELLOWS TABLE -->
         <div class="people-section" id="psec-fellows">
+          <div style="display:grid;grid-template-columns:1fr;gap:1rem;margin-bottom:1rem;">
+            <div class="v31-chart-box">
+              <div class="v31-chart-label">🤝 Associate Fellows by Affiliation</div>
+              <div class="v31-chart-canvas" style="height:170px;"><canvas id="cat-fellow-affil"></canvas></div>
+            </div>
+          </div>
           <div class="table-card">
             <div class="tc-header">
               <div class="tc-title">👥 Associate Fellows Registry</div>
@@ -2695,6 +2805,16 @@
 
         <!-- ALUMNI TABLE -->
         <div class="people-section" id="psec-alumni">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+            <div class="v31-chart-box">
+              <div class="v31-chart-label">🏛️ Alumni by Source Category</div>
+              <div class="v31-chart-canvas" style="height:170px;"><canvas id="cat-alumni-source"></canvas></div>
+            </div>
+            <div class="v31-chart-box">
+              <div class="v31-chart-label">📉 Alumni Exit Trend (by Year)</div>
+              <div class="v31-chart-canvas" style="height:170px;"><canvas id="cat-alumni-trend"></canvas></div>
+            </div>
+          </div>
           <!-- Alumni Sub-Tabs -->
           <div style="display:flex;gap:0.4rem;flex-wrap:wrap;margin-bottom:1rem;padding:0.6rem;background:var(--surface2);border-radius:10px;border:1px solid var(--border);">
             <span style="font-size:0.72rem;color:var(--text3);font-family:var(--font-mono);align-self:center;margin-right:0.2rem;">ALUMNI BY SOURCE →</span>
@@ -6098,6 +6218,8 @@
         _currentRole = serverRole || (_users.find(u=>u.username===user)?.role) || 'admin';
         applyAccessLevelUI(_currentRole);
         initCharts();
+        // People Management is the primary landing dashboard for the portal.
+        if (typeof showTab === 'function') showTab('people');
         setTimeout(() => {
           initPeopleManagement();
           refreshSidebarAnalytics();
@@ -6228,6 +6350,8 @@
         _currentRole  = (_users.find(u=>u.username===savedUser)?.role) || 'admin';
         applyAccessLevelUI(_currentRole);
         initCharts();
+        // People Management is the primary landing dashboard for the portal.
+        if (typeof showTab === 'function') showTab('people');
         setTimeout(() => {
           initPeopleManagement();
           refreshSidebarAnalytics();
@@ -6745,7 +6869,10 @@
           window._wsaiUrlMemCache = window._wsaiUrlMemCache || {};
           Object.keys(data.moduleUrls).forEach(function(mod) {
             const url = data.moduleUrls[mod];
-            if (!url) return;
+            if (!url || (typeof _wsIsTrustedUrl === 'function' && !_wsIsTrustedUrl(url))) {
+              if (url) console.warn('[portalConfig] ignored untrusted server URL for module "' + mod + '":', url);
+              return;
+            }
             try { localStorage.setItem('wsai_url_' + mod, url); } catch(e) {}
             window._wsaiUrlMemCache[mod] = url;
             if (mod === 'people') {
@@ -6770,8 +6897,40 @@
     document.head.appendChild(script);
   }
 
+  // ── v43: Permanent hardcoded backend URLs ──────────────────────────────────
+  // These are the live, domain-restricted (dsai.iitm.ac.in) Apps Script Web
+  // App deployments. Baking them in here means every PC works out of the box
+  // with zero setup — no admin has to paste a URL first. If an admin DOES
+  // reconnect a sheet later (Systems tab), that per-module choice — saved in
+  // localStorage and pushed to PORTAL_MODULE_URLS on the server — always wins
+  // over these defaults (see _resolveUrl below). To roll out a redeployed
+  // backend URL to everyone at once, update the values here.
+  //
+  // IMPORTANT: when you redeploy the backend, use Deploy → Manage deployments
+  // → pencil icon → "New version" on THIS SAME deployment, not a brand new
+  // deployment. A new deployment gets a new /exec URL, which would silently
+  // break every PC that still has the old URL hardcoded/cached until this
+  // block (and the server's PORTAL_MODULE_URLS) is updated to match.
+  const WS_DEFAULT_MODULE_URLS = {
+    people:       'https://script.google.com/a/macros/dsai.iitm.ac.in/s/AKfycbxRekf3PKJgZ6lyCsYi-rpjs3C3XHqbFFIdwODS3tTtdHQJNu8d9kaLGFEmmMbLcWqBZA/exec',
+    assets:       'https://script.google.com/a/macros/dsai.iitm.ac.in/s/AKfycbx0Ljvn03l--oEYwqgE8euS86lqcKH1WbhLcYeta8maQpZGVc5SDbbzRFFuNyu473LY/exec',
+    publications: 'https://script.google.com/a/macros/dsai.iitm.ac.in/s/AKfycby5UV-D8jiDmtAJtxlYEwfIMqHGLQ4eR1M9vd4kjAbKccBxnLvQc3RBBCq6AoBD_agcZA/exec',
+    expenses:     'https://script.google.com/a/macros/dsai.iitm.ac.in/s/AKfycbw1OaElj4lczVU6KXKFWx1GmfVpXJOQJWZ0XBLXSTOQhkpJ1v_i8H9GWJRHEFuX59x6/exec',
+  };
+  // Only URLs under this exact IITM domain-restricted macro path are trusted
+  // as hardcoded defaults or accepted from the "connect a sheet" UI/server
+  // sync. This stops the portal from ever being silently pointed at some
+  // other Apps Script backend (e.g. a personal @gmail deployment) — whether
+  // by a mistaken paste, a compromised localStorage value, or a malicious
+  // PORTAL_MODULE_URLS response — since that backend would receive every
+  // subsequent read/write request, including HMAC-signed writes.
+  const WS_TRUSTED_URL_PREFIX = 'https://script.google.com/a/macros/dsai.iitm.ac.in/s/';
+  function _wsIsTrustedUrl(u) {
+    return typeof u === 'string' && u.indexOf(WS_TRUSTED_URL_PREFIX) === 0 && u.slice(-5) === '/exec';
+  }
+
   const WS_CONFIG = {
-    webAppUrl: 'https://script.google.com/macros/s/AKfycbyXk7_B0f1EbD8ut_VZnVGEqagS0Tnn-qNsDI9gJzT7t8h7lxCsr1Y4p43a03CVDBNz/exec',
+    webAppUrl: WS_DEFAULT_MODULE_URLS.people,
 
     sheets: {
       staff:                  'Staff',
@@ -6998,6 +7157,9 @@
         if (t) t.textContent = ALUMNI_SUB_LABELS[_currentAlumniSub] || '🏛️ Alumni Registry';
         renderAlumni();
         break;
+    }
+    if (typeof renderPeopleCategoryCharts === 'function') {
+      setTimeout(() => renderPeopleCategoryCharts(tab), 30);
     }
   }
 
@@ -8145,6 +8307,9 @@
     runTenureCheck();
     refreshPeopleDashboard();
     refreshSidebarAnalytics();
+    if (typeof renderPeopleCategoryCharts === 'function') {
+      setTimeout(() => renderPeopleCategoryCharts(currentPeopleTab || 'staff'), 60);
+    }
   }
 
   // ── PEOPLE MANAGEMENT DASHBOARD REFRESH ──
@@ -8332,6 +8497,203 @@
     el('dash-last-refresh', ts);
     const totalRecs = DB.staff.length + DB.faculty.length + DB.assocFaculty.length + DB.affiFaculty.length + DB.researchers.length + DB.students.length + DB.fellows.length;
     el('dash-total-records', totalRecs.toLocaleString());
+
+    renderPeopleOverviewCharts();
+  }
+
+  // ══════════════════════════════════════════════════════════════════
+  // PEOPLE MANAGEMENT — POWER BI STYLE VISUALS (Chart.js)
+  // ══════════════════════════════════════════════════════════════════
+  const PeopleCharts = {};
+  const PPL_PALETTE = ['#3B82F6','#10B981','#8B5CF6','#F59E0B','#EF4444','#06B6D4','#F97316','#EC4899','#64748B','#84CC16'];
+
+  function _pplChart(canvasId, type, labels, datasets, extraOpts) {
+    const c = document.getElementById(canvasId);
+    if (!c) return;
+    if (PeopleCharts[canvasId]) { try { PeopleCharts[canvasId].destroy(); } catch(e) {} }
+    const baseOpts = {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: type === 'doughnut' || type === 'pie', position: 'bottom', labels: { color: 'var(--text2)', font: { size: 9 }, boxWidth: 10 } } },
+      scales: (type === 'bar' || type === 'line') ? {
+        y: { beginAtZero: true, ticks: { color: 'var(--text3)', font: { size: 9 } }, grid: { color: 'rgba(99,179,237,0.08)' } },
+        x: { ticks: { color: 'var(--text3)', font: { size: 9 }, maxRotation: 40 }, grid: { display: false } }
+      } : undefined,
+      cutout: (type === 'doughnut') ? '62%' : undefined
+    };
+    PeopleCharts[canvasId] = new Chart(c.getContext('2d'), {
+      type, data: { labels, datasets },
+      options: Object.assign(baseOpts, extraOpts || {})
+    });
+  }
+
+  function _pplCountBy(arr, field, fallback) {
+    const map = {};
+    (arr || []).forEach(r => { const v = (r[field] || fallback || 'Unspecified'); map[v] = (map[v]||0) + 1; });
+    return map;
+  }
+
+  function _pplBarDataset(map, color) {
+    const labels = Object.keys(map);
+    return { labels, data: labels.map(l => map[l]), color };
+  }
+
+  // ── MAIN OVERVIEW GRID (shown at top of People Management dashboard) ──
+  function renderPeopleOverviewCharts() {
+    if (typeof Chart === 'undefined') return;
+
+    // 1. Headcount by Category (bar)
+    const catMap = {
+      Staff: (DB.staff||[]).length,
+      Faculty: (DB.faculty||[]).length,
+      'Assoc. Faculty': (DB.assocFaculty||[]).length,
+      'Affiliate Faculty': (DB.affiFaculty||[]).length,
+      Researchers: (DB.researchers||[]).length,
+      Students: (DB.students||[]).length,
+      'Assoc. Fellows': (DB.fellows||[]).length,
+      Alumni: (DB.alumni||[]).length
+    };
+    _pplChart('ppl-cat-bar', 'bar', Object.keys(catMap), [{
+      data: Object.values(catMap), backgroundColor: PPL_PALETTE, borderRadius: 4
+    }], { plugins: { legend: { display: false } } });
+
+    // 2. Faculty Type Split — Core / Assoc / Affiliate
+    _pplChart('ppl-faculty-donut', 'doughnut', ['Core Faculty','Assoc. Faculty','Affiliate Faculty'], [{
+      data: [(DB.faculty||[]).length, (DB.assocFaculty||[]).length, (DB.affiFaculty||[]).length],
+      backgroundColor: ['#10B981','#06B6D4','#8B5CF6'], borderWidth: 0
+    }]);
+
+    // 3. Active vs Alumni
+    const activeTotal = (DB.staff||[]).length + (DB.faculty||[]).length + (DB.assocFaculty||[]).length +
+                         (DB.affiFaculty||[]).length + (DB.researchers||[]).length + (DB.students||[]).length + (DB.fellows||[]).length;
+    _pplChart('ppl-status-donut', 'doughnut', ['Active','Alumni'], [{
+      data: [activeTotal, (DB.alumni||[]).length], backgroundColor: ['#3B82F6','#F59E0B'], borderWidth: 0
+    }]);
+
+    // 4. Staff Designation Mix (bar)
+    const sd = _pplCountBy(DB.staff, 'designation');
+    _pplChart('ppl-staffdesig-bar', 'bar', Object.keys(sd), [{
+      data: Object.values(sd), backgroundColor: 'rgba(59,130,246,0.65)', borderRadius: 4
+    }], { plugins: { legend: { display: false } } });
+
+    // 5. Student Designation Mix (donut)
+    const std = _pplCountBy(DB.students, 'designation');
+    _pplChart('ppl-student-donut', 'doughnut', Object.keys(std), [{
+      data: Object.values(std), backgroundColor: PPL_PALETTE, borderWidth: 0
+    }]);
+
+    // 6. Researcher Status (donut)
+    const rst = _pplCountBy(DB.researchers, 'status', 'On-going');
+    _pplChart('ppl-researcher-donut', 'doughnut', Object.keys(rst), [{
+      data: Object.values(rst), backgroundColor: ['#10B981','#EF4444','#F59E0B','#8B5CF6'], borderWidth: 0
+    }]);
+
+    // 7. Joining Trend — last 12 months, across all categories
+    const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const now = new Date();
+    const bucket = [];
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      bucket.push({ key: d.getFullYear() + '-' + d.getMonth(), label: MONTHS[d.getMonth()] + " '" + String(d.getFullYear()).slice(2) });
+    }
+    const counts = {};
+    bucket.forEach(b => counts[b.key] = 0);
+    const allPeople = [].concat(DB.staff||[], DB.faculty||[], DB.assocFaculty||[], DB.affiFaculty||[], DB.researchers||[], DB.students||[]);
+    allPeople.forEach(r => {
+      if (!r.joiningDate) return;
+      const jd = new Date(r.joiningDate);
+      if (isNaN(jd)) return;
+      const key = jd.getFullYear() + '-' + jd.getMonth();
+      if (counts[key] !== undefined) counts[key]++;
+    });
+    _pplChart('ppl-joining-line', 'line', bucket.map(b => b.label), [{
+      label: 'New Joins', data: bucket.map(b => counts[b.key]),
+      borderColor: '#06B6D4', backgroundColor: 'rgba(6,182,212,0.08)', tension: 0.4, fill: true, pointRadius: 3
+    }]);
+
+    // 8. Center-wise Staff Distribution (bar)
+    const cd = _pplCountBy(DB.staff, 'center');
+    _pplChart('ppl-center-bar', 'bar', Object.keys(cd), [{
+      data: Object.values(cd), backgroundColor: 'rgba(16,185,129,0.65)', borderRadius: 4
+    }], { plugins: { legend: { display: false } } });
+  }
+
+  // ── PER-CATEGORY "NICHE" INSIGHT CHARTS (rendered on each People sub-tab) ──
+  function renderPeopleCategoryCharts(tab) {
+    if (typeof Chart === 'undefined') return;
+    switch (tab) {
+      case 'staff': {
+        const center = _pplCountBy(DB.staff, 'center');
+        _pplChart('cat-staff-center', 'doughnut', Object.keys(center), [{ data: Object.values(center), backgroundColor: PPL_PALETTE, borderWidth: 0 }]);
+        const cat = _pplCountBy(DB.staff, 'category');
+        _pplChart('cat-staff-category', 'bar', Object.keys(cat), [{ data: Object.values(cat), backgroundColor: 'rgba(59,130,246,0.65)', borderRadius: 4 }], { plugins:{legend:{display:false}} });
+        break;
+      }
+      case 'faculty': {
+        const type = _pplCountBy(DB.faculty, 'facultyType');
+        _pplChart('cat-faculty-type', 'doughnut', Object.keys(type), [{ data: Object.values(type), backgroundColor: PPL_PALETTE, borderWidth: 0 }]);
+        const dept = _pplCountBy(DB.faculty, 'department');
+        _pplChart('cat-faculty-dept', 'bar', Object.keys(dept), [{ data: Object.values(dept), backgroundColor: 'rgba(139,92,246,0.65)', borderRadius: 4 }], { plugins:{legend:{display:false}} });
+        break;
+      }
+      case 'assocfaculty': {
+        const type = _pplCountBy(DB.assocFaculty, 'facultyType');
+        _pplChart('cat-assocfac-type', 'doughnut', Object.keys(type), [{ data: Object.values(type), backgroundColor: PPL_PALETTE, borderWidth: 0 }]);
+        const buckets = { 'Overdue/Critical (<0d)':0, 'Warning (0-90d)':0, 'Healthy (>90d)':0 };
+        (DB.assocFaculty||[]).forEach(r => {
+          const dl = daysLeft(r.exitDate);
+          if (dl === Infinity) return;
+          if (dl < 0) buckets['Overdue/Critical (<0d)']++;
+          else if (dl <= 90) buckets['Warning (0-90d)']++;
+          else buckets['Healthy (>90d)']++;
+        });
+        _pplChart('cat-assocfac-tenure', 'bar', Object.keys(buckets), [{ data: Object.values(buckets), backgroundColor: ['#EF4444','#F59E0B','#10B981'], borderRadius: 4 }], { plugins:{legend:{display:false}} });
+        break;
+      }
+      case 'affifaculty': {
+        const type = _pplCountBy(DB.affiFaculty, 'facultyType');
+        _pplChart('cat-affifac-type', 'doughnut', Object.keys(type), [{ data: Object.values(type), backgroundColor: PPL_PALETTE, borderWidth: 0 }]);
+        const dept = _pplCountBy(DB.affiFaculty, 'department');
+        _pplChart('cat-affifac-dept', 'bar', Object.keys(dept), [{ data: Object.values(dept), backgroundColor: 'rgba(6,182,212,0.65)', borderRadius: 4 }], { plugins:{legend:{display:false}} });
+        break;
+      }
+      case 'researchers': {
+        const desig = _pplCountBy(DB.researchers, 'designation');
+        _pplChart('cat-researcher-desig', 'bar', Object.keys(desig), [{ data: Object.values(desig), backgroundColor: 'rgba(245,158,11,0.65)', borderRadius: 4 }], { plugins:{legend:{display:false}} });
+        const guide = _pplCountBy(DB.researchers, 'facultyGuide');
+        _pplChart('cat-researcher-guide', 'doughnut', Object.keys(guide), [{ data: Object.values(guide), backgroundColor: PPL_PALETTE, borderWidth: 0 }]);
+        break;
+      }
+      case 'students': {
+        const desig = _pplCountBy(DB.students, 'designation');
+        _pplChart('cat-student-desig', 'doughnut', Object.keys(desig), [{ data: Object.values(desig), backgroundColor: PPL_PALETTE, borderWidth: 0 }]);
+        const year = _pplCountBy(DB.students, 'year');
+        _pplChart('cat-student-year', 'bar', Object.keys(year), [{ data: Object.values(year), backgroundColor: 'rgba(239,68,68,0.65)', borderRadius: 4 }], { plugins:{legend:{display:false}} });
+        break;
+      }
+      case 'fellows': {
+        const affil = _pplCountBy(DB.fellows, 'affiliation');
+        _pplChart('cat-fellow-affil', 'bar', Object.keys(affil), [{ data: Object.values(affil), backgroundColor: 'rgba(100,116,139,0.65)', borderRadius: 4 }], { plugins:{legend:{display:false}} });
+        break;
+      }
+      case 'alumni': {
+        const src = _pplCountBy(DB.alumni, 'category', 'Unclassified');
+        _pplChart('cat-alumni-source', 'doughnut', Object.keys(src), [{ data: Object.values(src), backgroundColor: PPL_PALETTE, borderWidth: 0 }]);
+        const yearMap = {};
+        (DB.alumni||[]).forEach(r => {
+          if (!r.exitDate) return;
+          const d = new Date(r.exitDate);
+          if (isNaN(d)) return;
+          const y = d.getFullYear();
+          yearMap[y] = (yearMap[y]||0) + 1;
+        });
+        const yLabels = Object.keys(yearMap).sort();
+        _pplChart('cat-alumni-trend', 'line', yLabels, [{
+          label: 'Exits', data: yLabels.map(y => yearMap[y]),
+          borderColor: '#F59E0B', backgroundColor: 'rgba(245,158,11,0.08)', tension: 0.4, fill: true, pointRadius: 3
+        }], { plugins:{legend:{display:false}} });
+        break;
+      }
+    }
   }
 
 
@@ -9666,8 +10028,8 @@
     const urlInput = document.getElementById('sys-url-input');
     const url = urlInput?.value.trim();
     if (!url) { toast('⚠️ Please paste your Apps Script Web App URL'); return; }
-    if (!url.startsWith('https://script.google.com/')) {
-      sysShowDetail('❌ Invalid URL — must start with https://script.google.com/', true);
+    if (!_wsIsTrustedUrl(url)) {
+      sysShowDetail('❌ Invalid URL — must be a dsai.iitm.ac.in domain-restricted Web App URL, e.g. https://script.google.com/a/macros/dsai.iitm.ac.in/s/…/exec', true);
       return;
     }
     WS_CONFIG.webAppUrl = url;
@@ -9713,9 +10075,18 @@
     sysShowDetail('❌ Connection blocked — ' + errMsg + '<br>👉 Update your Apps Script doGet() to support JSONP callback. See the guide in the Drive tab.', true);
   }
 
-  // Resolve URL for any module - localStorage key takes priority over WS_CONFIG
+  // Resolve URL for any module.
+  // Priority: locally-saved override (only if it's still a trusted IITM
+  // domain-restricted URL) → hardcoded per-module default → global fallback.
+  // A stored URL that no longer matches the trusted prefix is ignored rather
+  // than used, so a stale/corrupted/tampered localStorage entry can't quietly
+  // redirect this module's reads and writes to an untrusted backend.
   function _resolveUrl(mod) {
-    try { var u = localStorage.getItem('wsai_url_' + mod) || ''; if (u) return u; } catch(e) {}
+    try {
+      var u = localStorage.getItem('wsai_url_' + mod) || '';
+      if (u && _wsIsTrustedUrl(u)) return u;
+    } catch(e) {}
+    if (WS_DEFAULT_MODULE_URLS[mod]) return WS_DEFAULT_MODULE_URLS[mod];
     return WS_CONFIG.webAppUrl || '';
   }
 
@@ -9971,8 +10342,8 @@
     const url = (driveInp?.value || '').trim();
     if (driveInp && driveInp.value !== url) driveInp.value = url;
     if (!url) { toast('⚠️ Please paste your Apps Script Web App URL'); return; }
-    if (!url.startsWith('https://script.google.com/')) {
-      toast('❌ Invalid URL — must start with https://script.google.com/'); return;
+    if (!_wsIsTrustedUrl(url)) {
+      toast('❌ Invalid URL — must be a dsai.iitm.ac.in domain-restricted Web App URL ending in /exec'); return;
     }
     const mod = window._driveActiveModule || 'people';
     WS_CONFIG.webAppUrl = url;
@@ -19905,8 +20276,13 @@
   // sheetName (optional) is filled in once a live PING confirms the sheet.
   window._saveWebAppUrl = function(url, mod, sheetName) {
     mod = mod || window._driveActiveModule;
-    if (!url || !url.trim().startsWith('https://script.google.com/')) return;
-    url = url.trim();
+    url = (url || '').trim();
+    if (!url) return;
+    if (typeof _wsIsTrustedUrl === 'function' && !_wsIsTrustedUrl(url)) {
+      toast('❌ Rejected — must be a dsai.iitm.ac.in domain-restricted Web App URL ending in /exec');
+      console.warn('[urlPersist] refused to save untrusted URL for module "' + mod + '":', url);
+      return;
+    }
     const meta = { savedAt: new Date().toISOString(), url, module: mod };
     if (sheetName) meta.sheetName = sheetName;
 
@@ -20090,7 +20466,7 @@
     // the URL to the wrong module.
     const mod = window._driveActiveModule || 'people';
     const v = (val || '').trim();
-    if (!v.startsWith('https://script.google.com/')) {
+    if (!_wsIsTrustedUrl(v)) {
       const badge  = document.getElementById('drive-url-saved-badge');
       const noSave = document.getElementById('drive-url-nosave-badge');
       if (badge)  badge.style.display  = 'none';
@@ -20116,7 +20492,7 @@
     try {
       // ── 1. Load people URL as default WS_CONFIG.webAppUrl (legacy compat) ──
       const peopleUrl = _getModuleUrl('people') || localStorage.getItem('wsai_webAppUrl') || '';
-      if (peopleUrl && peopleUrl.startsWith('https://script.google.com/')) {
+      if (peopleUrl && _wsIsTrustedUrl(peopleUrl)) {
         WS_CONFIG.webAppUrl = peopleUrl;
         if (!_getModuleUrl('people')) {
           try { localStorage.setItem(_lsKey('people'), peopleUrl); } catch(e) {}
