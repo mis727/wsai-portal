@@ -1669,6 +1669,12 @@
             '<span><span class="ni-icon">👥</span> People Management</span>',
             '<button id="mod-refresh-people" onclick="event.stopPropagation();moduleRefresh(\'people\')" title="Refresh People data" style="' + btnStyle + '" onmouseover="this.style.color=\'var(--accent)\'" onmouseout="this.style.color=\'var(--text3)\'">↻</button>',
           '</div>',
+          '<div class="nav-item" data-tab="tenure-alerts" onclick="showTab(\'tenure-alerts\')" style="display:flex;align-items:center;justify-content:space-between;">',
+            '<span><span class="ni-icon">⏰</span> Tenure Alert and Decisions</span>',
+          '</div>',
+          '<div class="nav-item" data-tab="attendance" onclick="showTab(\'attendance\')" style="display:flex;align-items:center;justify-content:space-between;">',
+            '<span><span class="ni-icon">🗓️</span> Attendance Report</span>',
+          '</div>',
         '</div>',
         '<div class="sidebar-divider"></div>'
       ].join('');
@@ -1776,25 +1782,44 @@
           <p>WSAI Staff · Faculty · Associate Faculty · Affiliate Faculty · Researchers · Students · Associate Fellows · Alumni</p>
         </div>
 
-        <!-- KPI GRID -->
-        <div class="kpi-grid">
-          <div class="kpi-card blue"><div class="kpi-icon">👔</div><div class="kpi-val" id="kpi-staff">0</div><div class="kpi-label">Staff</div></div>
-          <div class="kpi-card cyan"><div class="kpi-icon">👨‍🏫</div><div class="kpi-val" id="kpi-faculty">0</div><div class="kpi-label">Faculty</div></div>
-          <div class="kpi-card green"><div class="kpi-icon">🔬</div><div class="kpi-val" id="kpi-researchers">0</div><div class="kpi-label">Researchers</div></div>
-          <div class="kpi-card purple"><div class="kpi-icon">🎓</div><div class="kpi-val" id="kpi-students">0</div><div class="kpi-label">Students</div></div>
-          <div class="kpi-card gold"><div class="kpi-icon">🏛️</div><div class="kpi-val" id="kpi-assocfaculty">0</div><div class="kpi-label">Assoc. Faculty</div></div>
-          <div class="kpi-card cyan"><div class="kpi-icon">🔗</div><div class="kpi-val" id="kpi-affifaculty">0</div><div class="kpi-label">Affiliate Faculty</div></div>
-          <div class="kpi-card green"><div class="kpi-icon">🤝</div><div class="kpi-val" id="kpi-fellows">0</div><div class="kpi-label">Associate Fellows</div></div>
-          <div class="kpi-card orange"><div class="kpi-icon">🎓</div><div class="kpi-val" id="kpi-alumni">0</div><div class="kpi-label">Alumni</div></div>
+        <!-- COUNT CARDS — click a card to open that sheet's dedicated view -->
+        <div class="kpi-grid" id="people-count-cards">
+          <div class="kpi-card blue" onclick="openPeopleSheet('staff')" style="cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='var(--shadow-lg)'" onmouseout="this.style.transform='';this.style.boxShadow=''" title="Open Staff registry"><div class="kpi-icon">👔</div><div class="kpi-val" id="kpi-staff">0</div><div class="kpi-label">Staff</div></div>
+          <div class="kpi-card cyan" onclick="openPeopleSheet('faculty')" style="cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='var(--shadow-lg)'" onmouseout="this.style.transform='';this.style.boxShadow=''" title="Open Faculty registry"><div class="kpi-icon">👨‍🏫</div><div class="kpi-val" id="kpi-faculty">0</div><div class="kpi-label">Faculty</div></div>
+          <div class="kpi-card green" onclick="openPeopleSheet('researchers')" style="cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='var(--shadow-lg)'" onmouseout="this.style.transform='';this.style.boxShadow=''" title="Open Researchers registry"><div class="kpi-icon">🔬</div><div class="kpi-val" id="kpi-researchers">0</div><div class="kpi-label">Researchers</div></div>
+          <div class="kpi-card purple" onclick="openPeopleSheet('students')" style="cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='var(--shadow-lg)'" onmouseout="this.style.transform='';this.style.boxShadow=''" title="Open Students registry"><div class="kpi-icon">🎓</div><div class="kpi-val" id="kpi-students">0</div><div class="kpi-label">Students</div></div>
+          <div class="kpi-card gold" onclick="openPeopleSheet('assocfaculty')" style="cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='var(--shadow-lg)'" onmouseout="this.style.transform='';this.style.boxShadow=''" title="Open Associate Faculty registry"><div class="kpi-icon">🏛️</div><div class="kpi-val" id="kpi-assocfaculty">0</div><div class="kpi-label">Assoc. Faculty</div></div>
+          <div class="kpi-card cyan" onclick="openPeopleSheet('affifaculty')" style="cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='var(--shadow-lg)'" onmouseout="this.style.transform='';this.style.boxShadow=''" title="Open Affiliate Faculty registry"><div class="kpi-icon">🔗</div><div class="kpi-val" id="kpi-affifaculty">0</div><div class="kpi-label">Affiliate Faculty</div></div>
+          <div class="kpi-card green" onclick="openPeopleSheet('fellows')" style="cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='var(--shadow-lg)'" onmouseout="this.style.transform='';this.style.boxShadow=''" title="Open Associate Fellows registry"><div class="kpi-icon">🤝</div><div class="kpi-val" id="kpi-fellows">0</div><div class="kpi-label">Associate Fellows</div></div>
+          <div class="kpi-card orange" onclick="openPeopleSheet('alumni')" style="cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='var(--shadow-lg)'" onmouseout="this.style.transform='';this.style.boxShadow=''" title="Open Alumni registry"><div class="kpi-icon">🎓</div><div class="kpi-val" id="kpi-alumni">0</div><div class="kpi-label">Alumni</div></div>
         </div>
 
         <!-- PEOPLE MANAGEMENT DASHBOARD ANALYTICS -->
         <div id="people-dashboard-analytics" style="margin-bottom:1.5rem;">
 
           <!-- ═══ POWER BI STYLE VISUAL OVERVIEW ═══ -->
-          <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.75rem;">
+          <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.75rem;flex-wrap:wrap;">
             <h3 style="font-size:0.95rem;margin:0;color:var(--text);">📊 People Analytics — Visual Overview</h3>
             <span style="font-size:0.62rem;font-family:var(--font-mono);color:var(--accent);background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.25);border-radius:5px;padding:0.15rem 0.45rem;">Live · Auto-refreshed</span>
+            <div style="display:flex;align-items:center;gap:0.5rem;margin-left:auto;flex-wrap:wrap;">
+              <label style="font-size:0.7rem;color:var(--text3);font-family:var(--font-mono);">Category</label>
+              <select id="ppl-filter-category" onchange="renderPeopleOverviewCharts()" style="background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:0.35rem 0.6rem;color:var(--text);font-size:0.78rem;outline:none;">
+                <option value="all">All Categories</option>
+                <option value="Staff">Staff</option>
+                <option value="Faculty">Faculty</option>
+                <option value="Assoc. Faculty">Assoc. Faculty</option>
+                <option value="Affiliate Faculty">Affiliate Faculty</option>
+                <option value="Researchers">Researchers</option>
+                <option value="Students">Students</option>
+                <option value="Assoc. Fellows">Assoc. Fellows</option>
+                <option value="Alumni">Alumni</option>
+              </select>
+              <label style="font-size:0.7rem;color:var(--text3);font-family:var(--font-mono);">Center</label>
+              <select id="ppl-filter-center" onchange="renderPeopleOverviewCharts()" style="background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:0.35rem 0.6rem;color:var(--text);font-size:0.78rem;outline:none;">
+                <option value="all">All Centers</option>
+              </select>
+              <button class="tc-btn" onclick="document.getElementById('ppl-filter-category').value='all';document.getElementById('ppl-filter-center').value='all';renderPeopleOverviewCharts();" style="font-size:0.72rem;">Reset</button>
+            </div>
           </div>
           <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1rem;">
             <div class="v31-chart-box">
@@ -1979,7 +2004,7 @@
         </div>
 
         <!-- PEOPLE SUB-NAV -->
-        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1.5rem;">
+        <div id="people-registry-anchor" style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1.5rem;">
           <button class="people-tab-btn active" onclick="switchPeopleTab('staff')">👔 Staff</button>
           <button class="people-tab-btn" onclick="switchPeopleTab('faculty')">👨‍🏫 Faculty</button>
           <button class="people-tab-btn" onclick="switchPeopleTab('assocfaculty')">👩‍🏫 Assoc. Faculty</button>
@@ -2247,8 +2272,15 @@
           </div>
         </div>
 
-        <!-- TENURE ACTIONS REQUIRED -->
-        <div class="table-card" style="margin-top:1.5rem;">
+      </div>
+
+      <!-- ── TENURE ALERT AND DECISIONS ── -->
+      <div class="tabs" id="tab-tenure-alerts">
+        <div class="page-header">
+          <h2>⏰ Tenure Alert and Decisions</h2>
+          <p>Upcoming tenure exits across Staff, Faculty, Researchers, and related categories — review and record decisions.</p>
+        </div>
+        <div class="table-card" style="margin-top:0;">
           <div class="tc-header">
             <div class="tc-title">⏰ Tenure Actions Required</div>
             <div class="tc-actions">
@@ -2263,6 +2295,14 @@
         </div>
       </div>
 
+      <!-- ── ATTENDANCE REPORT ── -->
+      <div class="tabs" id="tab-attendance">
+        <div class="page-header">
+          <h2>🗓️ Attendance Report</h2>
+          <p>Upload WSAI or RBCDSAI biometric exports directly — parsing, LI/EO detection, holidays, leave/WFH/OD, permission slots, thresholds and Excel export all run in your browser.</p>
+        </div>
+        <div id="att-root"></div>
+      </div>
 
             <!-- ── BIOMETRIC ── -->
       <div class="tabs" id="tab-assets">
@@ -4444,6 +4484,7 @@
     }
     window.scrollTo(0, 0);
     if (tabId === 'people')    { setTimeout(initPeopleManagement, 50); }
+    if (tabId === 'tenure-alerts') { setTimeout(function(){ if (typeof runTenureCheck === 'function') runTenureCheck(); }, 50); }
     if (tabId === 'systems')   { setTimeout(sysInitViewer, 80); }
     if (tabId === 'dropdown-manager') {
       setTimeout(ddmInit, 60);
@@ -4458,6 +4499,7 @@
       if (driveInp && WS_CONFIG.webAppUrl && !driveInp.value) driveInp.value = WS_CONFIG.webAppUrl;
       if (WS_CONFIG.webAppUrl) driveSetConnBadge(true, 'Connected ✓');
     }, 80); }
+    if (tabId === 'attendance') { setTimeout(attInit, 50); }
     if (tabId === 'assets')    { setTimeout(assetInit, 50); }
     if (tabId === 'inventory') { setTimeout(() => { renderInventory(); _invShowCacheStamp(); }, 50); }
     if (tabId === 'expenses')  { setTimeout(() => {
@@ -5035,6 +5077,13 @@
   }
 
   // ── TAB SWITCHING ──
+  // Count-card click-through: switch to the sheet's dedicated view and scroll it into frame.
+  function openPeopleSheet(tab) {
+    switchPeopleTab(tab);
+    const anchor = document.getElementById('people-registry-anchor');
+    if (anchor) anchor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
   function switchPeopleTab(tab) {
     currentPeopleTab = tab;
     document.querySelectorAll('.people-section').forEach(s => s.classList.remove('active'));
@@ -6220,11 +6269,24 @@
   function refreshPeopleDashboard() {
     const el = (id, val) => { const e = document.getElementById(id); if(e) e.textContent = val; };
 
-    // Also keep KPI cards in sync for the two new cards
+    // Also keep KPI cards in sync for the two new cards (always true totals — not filtered)
     const affiEl = document.getElementById('kpi-affifaculty');
     if (affiEl) affiEl.textContent = (DB.affiFaculty || []).length;
     const fellowsEl = document.getElementById('kpi-fellows');
     if (fellowsEl) fellowsEl.textContent = (DB.fellows || []).length;
+
+    // ── Category / Center filters (from the Visual Overview filter bar) ──
+    // Apply to every stat table below, not just the headline charts.
+    const _catFilter    = (document.getElementById('ppl-filter-category') || {}).value || 'all';
+    const _centerFilter = (document.getElementById('ppl-filter-center') || {}).value || 'all';
+    const _catActive = (label) => _catFilter === 'all' || _catFilter === label;
+    const staffData        = (_catActive('Staff')             ? (DB.staff||[])        : []).filter(r => _centerFilter === 'all' || r.center === _centerFilter);
+    const facultyData      =  _catActive('Faculty')            ? (DB.faculty||[])      : [];
+    const assocFacultyData =  _catActive('Assoc. Faculty')     ? (DB.assocFaculty||[]) : [];
+    const affiFacultyData  =  _catActive('Affiliate Faculty')  ? (DB.affiFaculty||[])  : [];
+    const researchersData  =  _catActive('Researchers')        ? (DB.researchers||[])  : [];
+    const studentsData     =  _catActive('Students')           ? (DB.students||[])     : [];
+    const alumniData       =  _catActive('Alumni')             ? (DB.alumni||[])       : [];
 
     // ── Helper: merge WS_CONFIG static list with any live values found in DB,
     //   so new designations/types added directly in the Google Sheet are always shown.
@@ -6235,7 +6297,7 @@
       return merged;
     }
 
-    // Faculty Category Distribution — three grouped sections (auto-updated from sheet)
+    // Faculty Category Distribution — three grouped sections (auto-updated from sheet, filter-aware)
     const tbody = document.getElementById('dash-faculty-dist');
     if (tbody) {
       const rows = [];
@@ -6246,76 +6308,76 @@
 
       rows.push(`<tr style="background:rgba(40,167,69,0.08);"><td colspan="3" style="font-size:0.7rem;font-family:var(--font-mono);letter-spacing:0.08em;text-transform:uppercase;color:var(--green);font-weight:700;padding:0.4rem 1rem;">Core Faculty</td></tr>`);
       coreFacTypes.forEach(t => {
-        const cnt = DB.faculty.filter(f => f.facultyType === t).length;
+        const cnt = facultyData.filter(f => f.facultyType === t).length;
         rows.push(`<tr><td>${t}</td><td style="font-weight:700;text-align:center;">${cnt}</td><td style="text-align:center;color:${cnt>0?'var(--green)':'var(--text3)'};">${cnt>0?'✓ Active':'-- Inactive'}</td></tr>`);
       });
       rows.push(`<tr style="background:rgba(6,182,212,0.08);"><td colspan="3" style="font-size:0.7rem;font-family:var(--font-mono);letter-spacing:0.08em;text-transform:uppercase;color:var(--accent2);font-weight:700;padding:0.4rem 1rem;">Associate Faculty</td></tr>`);
       assocFacTypes.forEach(t => {
-        const cnt = (DB.assocFaculty || []).filter(f => f.facultyType === t).length;
+        const cnt = assocFacultyData.filter(f => f.facultyType === t).length;
         rows.push(`<tr><td>${t}</td><td style="font-weight:700;text-align:center;">${cnt}</td><td style="text-align:center;color:${cnt>0?'var(--accent2)':'var(--text3)'};">${cnt>0?'✓ Active':'-- Inactive'}</td></tr>`);
       });
       rows.push(`<tr style="background:rgba(139,92,246,0.08);"><td colspan="3" style="font-size:0.7rem;font-family:var(--font-mono);letter-spacing:0.08em;text-transform:uppercase;color:var(--purple);font-weight:700;padding:0.4rem 1rem;">Affiliate Faculty</td></tr>`);
       affiFacTypes.forEach(t => {
-        const cnt = (DB.affiFaculty || []).filter(f => f.facultyType === t).length;
+        const cnt = affiFacultyData.filter(f => f.facultyType === t).length;
         rows.push(`<tr><td>${t}</td><td style="font-weight:700;text-align:center;">${cnt}</td><td style="text-align:center;color:${cnt>0?'var(--purple)':'var(--text3)'};">${cnt>0?'✓ Active':'-- Inactive'}</td></tr>`);
       });
-      const coreN  = DB.faculty.length;
-      const assocN = (DB.assocFaculty || []).length;
-      const affiN  = (DB.affiFaculty  || []).length;
+      const coreN  = facultyData.length;
+      const assocN = assocFacultyData.length;
+      const affiN  = affiFacultyData.length;
       rows.push(`<tr style="background:rgba(40,167,69,0.12);font-weight:700;"><td>🧮 Grand Total</td><td style="text-align:center;color:var(--green);">${coreN + assocN + affiN}</td><td style="text-align:center;font-size:0.72rem;font-family:var(--font-mono);">Core: ${coreN} · Assoc: ${assocN} · Affiliate: ${affiN}</td></tr>`);
       tbody.innerHTML = rows.join('');
     }
 
-    // Student Designation Distribution (auto-updated from sheet)
+    // Student Designation Distribution (auto-updated from sheet, filter-aware)
     const studentTbody = document.getElementById('dash-student-dist');
     if (studentTbody) {
       const stuDesigs = _liveUnion(WS_CONFIG.studentDesignation, DB.students, 'designation');
       const studentRows = [];
       stuDesigs.forEach(t => {
-        const cnt = DB.students.filter(s => s.designation === t).length;
+        const cnt = studentsData.filter(s => s.designation === t).length;
         studentRows.push(`<tr><td>${t}</td><td style="font-weight:700;text-align:center;">${cnt}</td><td style="text-align:center;color:${cnt>0?'var(--green)':'var(--text3)'};">${cnt>0?'✓ Active':'—'}</td></tr>`);
       });
-      const studentTotal = DB.students.length;
+      const studentTotal = studentsData.length;
       studentRows.push(`<tr style="background:rgba(239,68,68,0.1);font-weight:700;"><td>🧮 Student Total</td><td style="text-align:center;color:var(--orange);">${studentTotal}</td><td style="text-align:center;">✓</td></tr>`);
       studentTbody.innerHTML = studentRows.join('');
     }
 
-    // Researcher Designation Distribution (auto-updated from sheet)
+    // Researcher Designation Distribution (auto-updated from sheet, filter-aware)
     const resTbody = document.getElementById('dash-researcher-dist');
     if (resTbody) {
       const resDesigs = _liveUnion(WS_CONFIG.researcherDesignation, DB.researchers, 'designation');
       const resRows = [];
       resDesigs.forEach(t => {
-        const cnt = DB.researchers.filter(r => r.designation === t).length;
+        const cnt = researchersData.filter(r => r.designation === t).length;
         resRows.push(`<tr><td>${t}</td><td style="font-weight:700;text-align:center;">${cnt}</td><td style="text-align:center;color:${cnt>0?'var(--purple)':'var(--text3)'};">${cnt>0?'✓':'—'}</td></tr>`);
       });
-      const resTotal = DB.researchers.length;
+      const resTotal = researchersData.length;
       resRows.push(`<tr style="background:rgba(139,92,246,0.12);font-weight:700;"><td>🧮 Grand Total</td><td style="text-align:center;color:var(--purple);">${resTotal}</td><td style="text-align:center;">✓</td></tr>`);
       resTbody.innerHTML = resRows.join('');
     }
 
-    // Staff Designation Distribution (auto-updated from sheet)
+    // Staff Designation Distribution (auto-updated from sheet, filter-aware)
     const staffDesigTbody = document.getElementById('dash-staff-desig-dist');
     if (staffDesigTbody) {
       const staffDesigs = _liveUnion(WS_CONFIG.staffDesignation, DB.staff, 'designation');
       const sdRows = [];
       staffDesigs.forEach(des => {
-        const cnt = DB.staff.filter(s => s.designation === des).length;
+        const cnt = staffData.filter(s => s.designation === des).length;
         sdRows.push(`<tr><td>${des}</td><td style="font-weight:700;text-align:center;">${cnt}</td><td style="text-align:center;color:${cnt>0?'var(--accent)':'var(--text3)'};">${cnt>0?'✓':'—'}</td></tr>`);
       });
-      const sdTotal = DB.staff.length;
+      const sdTotal = staffData.length;
       sdRows.push(`<tr style="background:rgba(30,136,229,0.12);font-weight:700;"><td>🧮 Grand Total</td><td style="text-align:center;color:var(--accent);">${sdTotal}</td><td style="text-align:center;">✓</td></tr>`);
       staffDesigTbody.innerHTML = sdRows.join('');
     }
 
-    // Executive Summary - Active & Alumni counts
-    const staffActive = DB.staff.length;
-    const staffAlumni = DB.alumni ? DB.alumni.filter(a => a.category === 'Staff' || !a.category).length : 0;
-    const assocFacActive = DB.assocFaculty.length;
-    const assocFacAlumni = DB.alumni ? DB.alumni.filter(a => a.category === 'AssocFaculty').length : 0;
-    const resActive = DB.researchers.filter(r => r.status === 'On-going' || !r.status).length;
-    const resAlumni = DB.alumni ? DB.alumni.filter(a => a.category === 'Researcher').length : 0;
-    const facActive = DB.faculty.length;
+    // Executive Summary - Active & Alumni counts (filter-aware)
+    const staffActive = staffData.length;
+    const staffAlumni = alumniData.length ? alumniData.filter(a => a.category === 'Staff' || !a.category).length : 0;
+    const assocFacActive = assocFacultyData.length;
+    const assocFacAlumni = alumniData.length ? alumniData.filter(a => a.category === 'AssocFaculty').length : 0;
+    const resActive = researchersData.filter(r => r.status === 'On-going' || !r.status).length;
+    const resAlumni = alumniData.length ? alumniData.filter(a => a.category === 'Researcher').length : 0;
+    const facActive = facultyData.length;
     el('dash-exec-staff-active', staffActive);
     el('dash-exec-staff-alumni', staffAlumni);
     el('dash-exec-assocfac-active', assocFacActive);
@@ -6326,10 +6388,10 @@
     el('dash-exec-total-active', staffActive + assocFacActive + resActive + facActive);
     el('dash-exec-total-alumni', staffAlumni + assocFacAlumni + resAlumni);
 
-    // Total Counts Active + Alumni
+    // Total Counts Active + Alumni (filter-aware)
     const tStaff = staffActive + staffAlumni;
     const tAssocFac = assocFacActive + assocFacAlumni;
-    const tRes = DB.researchers.length + resAlumni;
+    const tRes = researchersData.length + resAlumni;
     const tFac = facActive;
     const tGrand = tStaff + tAssocFac + tRes + tFac;
     el('dash-total-staff', tStaff);
@@ -6342,36 +6404,37 @@
     el('dash-grand-total', tGrand);
     el('dash-grand-status', tGrand > 80 ? '🟢 Strong' : '🟡 Review');
 
-    // Capacity Utilization - Center Distribution
+    // Capacity Utilization - Center Distribution (filter-aware; Category filter zeroes this
+    // out entirely when a non-Staff category is selected, since centers only apply to Staff)
     const centerTbody = document.getElementById('dash-center-dist');
     if (centerTbody) {
       const centerRows = [];
-      const totalStaff = DB.staff.length || 1;
+      const totalStaff = staffData.length || 1;
       WS_CONFIG.staffCenter.forEach(c => {
-        const cnt = DB.staff.filter(s => s.center === c).length;
+        const cnt = staffData.filter(s => s.center === c).length;
         const pct = ((cnt / totalStaff) * 100).toFixed(1) + '%';
         centerRows.push(`<tr><td>${c}</td><td style="font-weight:700;text-align:center;">${cnt}</td><td style="text-align:center;color:${cnt>0?'var(--green)':'var(--text3)'};">${pct}</td></tr>`);
       });
-      centerRows.push(`<tr style="background:rgba(16,185,129,0.12);font-weight:700;"><td>TOTAL CAPACITY</td><td style="text-align:center;color:var(--green);">${DB.staff.length}</td><td style="text-align:center;">100.0%</td></tr>`);
+      centerRows.push(`<tr style="background:rgba(16,185,129,0.12);font-weight:700;"><td>TOTAL CAPACITY</td><td style="text-align:center;color:var(--green);">${staffData.length}</td><td style="text-align:center;">100.0%</td></tr>`);
       centerTbody.innerHTML = centerRows.join('');
     }
 
-    // Staff Category Distribution
-    const catStaff = DB.staff.filter(r => r.category === 'Staff').length;
-    const catResearcher = DB.staff.filter(r => r.category === 'Researcher' || r.category === 'Student').length;
+    // Staff Category Distribution (filter-aware)
+    const catStaff = staffData.filter(r => r.category === 'Staff').length;
+    const catResearcher = staffData.filter(r => r.category === 'Researcher' || r.category === 'Student').length;
     el('dash-cat-staff', catStaff);
     el('dash-cat-researcher', catResearcher);
     el('dash-cat-total', catStaff + catResearcher);
 
-    // Researcher Analytics
-    const resOngoing = DB.researchers.filter(r => r.status === 'On-going' || !r.status).length;
-    const resCompleted = DB.alumni ? DB.alumni.filter(a => a.category === 'Researcher').length : 0;
+    // Researcher Analytics (filter-aware)
+    const resOngoing = researchersData.filter(r => r.status === 'On-going' || !r.status).length;
+    const resCompleted = alumniData.length ? alumniData.filter(a => a.category === 'Researcher').length : 0;
     el('dash-res-ongoing', resOngoing);
     el('dash-res-alumni', resCompleted);
 
-    // Tenure & Retention Intelligence
+    // Tenure & Retention Intelligence (filter-aware — Staff-based, so respects Center filter too)
     const today = new Date();
-    const staffWithTenure = DB.staff.filter(s => s.joiningDate);
+    const staffWithTenure = staffData.filter(s => s.joiningDate);
     let avgTenure = 0;
     if (staffWithTenure.length > 0) {
       const totalDays = staffWithTenure.reduce((sum, s) => {
@@ -6381,7 +6444,7 @@
       avgTenure = Math.round(totalDays / staffWithTenure.length);
     }
     el('dash-tenure-avg', avgTenure);
-    const highRisk = DB.staff.filter(s => {
+    const highRisk = staffData.filter(s => {
       if (!s.exitDate) return false;
       const exit = new Date(s.exitDate);
       const daysLeft = Math.floor((exit - today) / 86400000);
@@ -6390,13 +6453,13 @@
     el('dash-tenure-risk', highRisk);
     const riskEl = document.getElementById('dash-tenure-risk-status');
     if (riskEl) riskEl.innerHTML = highRisk > 5 ? '<span style="color:var(--red);">🔴 CRITICAL</span>' : '<span style="color:var(--green);">🟢 OK</span>';
-    const recentJoins = DB.staff.filter(s => {
+    const recentJoins = staffData.filter(s => {
       if (!s.joiningDate) return false;
       return Math.floor((today - new Date(s.joiningDate)) / 86400000) <= 30;
     }).length;
     el('dash-recent-joins', recentJoins);
 
-    // System Health
+    // System Health — always reflects the TRUE full dataset (audit metric, not filtered)
     const ts = new Date().toLocaleString('en-IN', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
     el('dash-last-refresh', ts);
     const totalRecs = DB.staff.length + DB.faculty.length + DB.assocFaculty.length + DB.affiFaculty.length + DB.researchers.length + DB.students.length + DB.fellows.length;
@@ -6445,9 +6508,23 @@
   function renderPeopleOverviewCharts() {
     if (typeof Chart === 'undefined') return;
 
+    // Populate the Center filter's options (once) from live staff data
+    const centerSel = document.getElementById('ppl-filter-center');
+    if (centerSel && centerSel.options.length <= 1) {
+      const centers = [...new Set((DB.staff||[]).map(r => (r.center||'').trim()).filter(Boolean))].sort();
+      centers.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c; opt.textContent = c;
+        centerSel.appendChild(opt);
+      });
+    }
+    const catFilter    = (document.getElementById('ppl-filter-category') || {}).value || 'all';
+    const centerFilter = (document.getElementById('ppl-filter-center') || {}).value || 'all';
+    const staffFiltered = centerFilter === 'all' ? (DB.staff||[]) : (DB.staff||[]).filter(r => r.center === centerFilter);
+
     // 1. Headcount by Category (bar)
-    const catMap = {
-      Staff: (DB.staff||[]).length,
+    let catMap = {
+      Staff: staffFiltered.length,
       Faculty: (DB.faculty||[]).length,
       'Assoc. Faculty': (DB.assocFaculty||[]).length,
       'Affiliate Faculty': (DB.affiFaculty||[]).length,
@@ -6456,6 +6533,7 @@
       'Assoc. Fellows': (DB.fellows||[]).length,
       Alumni: (DB.alumni||[]).length
     };
+    if (catFilter !== 'all') catMap = { [catFilter]: catMap[catFilter] || 0 };
     _pplChart('ppl-cat-bar', 'bar', Object.keys(catMap), [{
       data: Object.values(catMap), backgroundColor: PPL_PALETTE, borderRadius: 4
     }], { plugins: { legend: { display: false } } });
@@ -6474,7 +6552,7 @@
     }]);
 
     // 4. Staff Designation Mix (bar)
-    const sd = _pplCountBy(DB.staff, 'designation');
+    const sd = _pplCountBy(staffFiltered, 'designation');
     _pplChart('ppl-staffdesig-bar', 'bar', Object.keys(sd), [{
       data: Object.values(sd), backgroundColor: 'rgba(59,130,246,0.65)', borderRadius: 4
     }], { plugins: { legend: { display: false } } });
@@ -6515,7 +6593,7 @@
     }]);
 
     // 8. Center-wise Staff Distribution (bar)
-    const cd = _pplCountBy(DB.staff, 'center');
+    const cd = _pplCountBy(staffFiltered, 'center');
     _pplChart('ppl-center-bar', 'bar', Object.keys(cd), [{
       data: Object.values(cd), backgroundColor: 'rgba(16,185,129,0.65)', borderRadius: 4
     }], { plugins: { legend: { display: false } } });
@@ -7009,27 +7087,27 @@
   // labs, inventory, drive, systems, analytics, exec-dashboard,
   // dropdown-manager) no longer appear in any role's tab list.
   const ACCESS_LEVEL_MAP = {
-    'creator':      { label:'Creator (Full Admin)',    tabs:['people','assets','expenses','publications','access','activity'], canEdit:true,  interface:'full'    },
-    'admin':        { label:'Full Access (Admin)',      tabs:['people','assets','expenses','publications','access','activity'], canEdit:true,  interface:'full'    },
+    'creator':      { label:'Creator (Full Admin)',    tabs:['people','tenure-alerts','attendance','assets','expenses','publications','access','activity'], canEdit:true,  interface:'full'    },
+    'admin':        { label:'Full Access (Admin)',      tabs:['people','tenure-alerts','attendance','assets','expenses','publications','access','activity'], canEdit:true,  interface:'full'    },
 
     // ── v27 — Dedicated interfaces ─────────────────────────────────────────
-    'coo':          { label:'COO / Leadership View',   tabs:['people','assets','expenses','publications','access','activity'], canEdit:true,  interface:'coo',     badge:'👔 COO',    color:'#F59E0B' },
-    'faculty':      { label:'Faculty Interface',        tabs:['people','publications','activity'],                     canEdit:false, interface:'faculty', badge:'👨‍🏫 Faculty', color:'#06B6D4' },
+    'coo':          { label:'COO / Leadership View',   tabs:['people','tenure-alerts','attendance','assets','expenses','publications','access','activity'], canEdit:true,  interface:'coo',     badge:'👔 COO',    color:'#F59E0B' },
+    'faculty':      { label:'Faculty Interface',        tabs:['people','tenure-alerts','attendance','publications','activity'],                     canEdit:false, interface:'faculty', badge:'👨‍🏫 Faculty', color:'#06B6D4' },
     // ── Staff sub-roles: one per management function ─────────────────────────
-    'staff':        { label:'Staff Interface',           tabs:['people','expenses','activity'],                                                             canEdit:true,  interface:'staff',        badge:'🏢 Staff',                    color:'#10B981' },
-    'hr_manager':   { label:'HR Manager',                tabs:['people','activity'],                                                                       canEdit:true,  interface:'hr_manager',   badge:'👥 HR Manager',               color:'#8B5CF6' },
+    'staff':        { label:'Staff Interface',           tabs:['people','tenure-alerts','attendance','expenses','activity'],                                                             canEdit:true,  interface:'staff',        badge:'🏢 Staff',                    color:'#10B981' },
+    'hr_manager':   { label:'HR Manager',                tabs:['people','tenure-alerts','attendance','activity'],                                                                       canEdit:true,  interface:'hr_manager',   badge:'👥 HR Manager',               color:'#8B5CF6' },
     'finance_mgr':  { label:'Accounts / Procurement Manager',           tabs:['expenses','activity'],                                                    canEdit:true,  interface:'finance_mgr',  badge:'💰 Accounts / Procurement Manager',          color:'#F59E0B' },
     'facility_mgr': { label:'Facility Manager',          tabs:['assets','activity'],                                                    canEdit:true,  interface:'facility_mgr', badge:'🏗️ Facility Manager',         color:'#06B6D4' },
-    'edu_pgm_mgr':  { label:'Education Program Manager', tabs:['people','publications','activity'],                                                             canEdit:true,  interface:'edu_pgm_mgr',  badge:'🎓 Education Program Manager', color:'#EC4899' },
-    'sys_admin':    { label:'System Administrator',      tabs:['people','assets','expenses','publications','access','activity'], canEdit:true, interface:'sys_admin', badge:'⚙️ Sys Admin', color:'#64748B' },
-    'mis':          { label:'MIS',                       tabs:['people','assets','expenses','publications','access','activity'], canEdit:true, interface:'full', badge:'📊 MIS', color:'#3B82F6' },
+    'edu_pgm_mgr':  { label:'Education Program Manager', tabs:['people','tenure-alerts','attendance','publications','activity'],                                                             canEdit:true,  interface:'edu_pgm_mgr',  badge:'🎓 Education Program Manager', color:'#EC4899' },
+    'sys_admin':    { label:'System Administrator',      tabs:['people','tenure-alerts','attendance','assets','expenses','publications','access','activity'], canEdit:true, interface:'sys_admin', badge:'⚙️ Sys Admin', color:'#64748B' },
+    'mis':          { label:'MIS',                       tabs:['people','tenure-alerts','attendance','assets','expenses','publications','access','activity'], canEdit:true, interface:'full', badge:'📊 MIS', color:'#3B82F6' },
 
     // ── Legacy / granular roles ────────────────────────────────────────────
-    'hr':           { label:'HR & People Only',         tabs:['people','activity'],                                                                                    canEdit:true,  interface:'full'    },
+    'hr':           { label:'HR & People Only',         tabs:['people','tenure-alerts','attendance','activity'],                                                                                    canEdit:true,  interface:'full'    },
     'finance':      { label:'Finance Only',             tabs:['expenses','activity'],                                                                                  canEdit:true,  interface:'full'    },
     'labs':         { label:'Assets Only',              tabs:['assets','activity'],                                                      canEdit:true,  interface:'full'    },
     'publications': { label:'Publications Only',        tabs:['publications','activity'],                                                                               canEdit:true,  interface:'full'    },
-    'readonly':     { label:'Read Only',                tabs:['people','expenses','publications','activity'],                                                canEdit:false, interface:'full'    }
+    'readonly':     { label:'Read Only',                tabs:['people','tenure-alerts','attendance','expenses','publications','activity'],                                                canEdit:false, interface:'full'    }
   };
 
   // ── Custom roles (v60) — admin-defined roles created from the Access
@@ -19518,6 +19596,8 @@ function closeAssetCatManager() {
   // v65: Rebuilt to only the modules that currently exist in the portal.
   var ALL_MODULES = [
     { key:'people',           icon:'👥', label:'People'           },
+    { key:'tenure-alerts',    icon:'⏰', label:'Tenure Alert and Decisions' },
+    { key:'attendance',       icon:'🗓️', label:'Attendance Report' },
     { key:'assets',           icon:'🖥️', label:'Assets'           },
     { key:'expenses',         icon:'💰', label:'Expenses'         },
     { key:'publications',     icon:'📄', label:'Publications'     },
@@ -26362,18 +26442,18 @@ function _v31SimpleTable(tbodyId, rows, rowFn, countId) {
   // Maps each role to exactly the sidebar sections + nav tabs it should access
   // ─────────────────────────────────────────────────────────────────────────────
   const V32_ROLE_ACCESS = {
-    creator:      { tabs: ['people','biometric','labs','assets','expenses','publications','inventory','analytics','drive','systems','access','activity','exec-dashboard','dropdown-manager'], canEdit: true  },
-    admin:        { tabs: ['people','biometric','labs','assets','expenses','publications','inventory','analytics','drive','systems','access','activity','exec-dashboard','dropdown-manager'], canEdit: true  },
-    coo:          { tabs: ['exec-dashboard','analytics','people','biometric','labs','assets','expenses','publications','inventory','drive','systems','access','activity'], canEdit: true  },
-    faculty:      { tabs: ['exec-dashboard','analytics','people','labs','publications','biometric','activity'], canEdit: false },
-    hr_manager:   { tabs: ['people','analytics','activity'], canEdit: true  },
+    creator:      { tabs: ['people','tenure-alerts','attendance','biometric','labs','assets','expenses','publications','inventory','analytics','drive','systems','access','activity','exec-dashboard','dropdown-manager'], canEdit: true  },
+    admin:        { tabs: ['people','tenure-alerts','attendance','biometric','labs','assets','expenses','publications','inventory','analytics','drive','systems','access','activity','exec-dashboard','dropdown-manager'], canEdit: true  },
+    coo:          { tabs: ['exec-dashboard','analytics','people','tenure-alerts','attendance','biometric','labs','assets','expenses','publications','inventory','drive','systems','access','activity'], canEdit: true  },
+    faculty:      { tabs: ['exec-dashboard','analytics','people','tenure-alerts','attendance','labs','publications','biometric','activity'], canEdit: false },
+    hr_manager:   { tabs: ['people','tenure-alerts','attendance','analytics','activity'], canEdit: true  },
     finance_mgr:  { tabs: ['expenses','analytics','exec-dashboard','activity'], canEdit: true  },
     facility_mgr: { tabs: ['analytics','activity'], canEdit: true  },
     event_mgr:    { tabs: ['analytics','activity'], canEdit: true  },
-    mis:          { tabs: ['people','biometric','labs','assets','expenses','publications','inventory','analytics','drive','systems','access','activity','exec-dashboard','dropdown-manager'], canEdit: true  },
+    mis:          { tabs: ['people','tenure-alerts','attendance','biometric','labs','assets','expenses','publications','inventory','analytics','drive','systems','access','activity','exec-dashboard','dropdown-manager'], canEdit: true  },
     sys_admin:    { tabs: ['biometric','systems','analytics','activity'], canEdit: true  },
-    edu_pgm_mgr:  { tabs: ['people','analytics','activity'], canEdit: true  },
-    hr:           { tabs: ['people','analytics','activity'], canEdit: true  },
+    edu_pgm_mgr:  { tabs: ['people','tenure-alerts','attendance','analytics','activity'], canEdit: true  },
+    hr:           { tabs: ['people','tenure-alerts','attendance','analytics','activity'], canEdit: true  },
     finance:      { tabs: ['expenses','analytics','activity'], canEdit: true  },
     labs:         { tabs: ['labs','assets','analytics','activity'], canEdit: true  },
     publications: { tabs: ['publications','analytics','activity'], canEdit: false },
@@ -33278,5 +33358,1317 @@ tbody td { vertical-align: middle; }
   });
   console.log('%c🚫 Delete functions disabled portal-wide', 'color:#ef4444;font-weight:700;');
 })();
+</script>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+// ATTENDANCE MANAGER — client-side port of the Google Apps Script
+// "AttendanceManager_v3_fixed.gs" business logic. Runs entirely in the
+// browser: SheetJS (already loaded as xlsx@0.18.5) parses uploaded WSAI /
+// RBCDSAI biometric exports directly, no Google Sheet required.
+// All state persists to localStorage under ATT_STORE_KEY.
+// ═══════════════════════════════════════════════════════════════════════════
+(function () {
+  'use strict';
+
+  // ─── CONSTANTS (mirrors GAS) ────────────────────────────────
+  const ATT_STORE_KEY   = 'wsai_attendance_v1';
+  const MINS_PER_DAY    = 9 * 60 + 15;      // 555
+  const DEFAULT_BENCHMARK_DAYS = 19;
+  const LATE_IN_HOUR_DEFAULT   = 9,  LATE_IN_MIN_DEFAULT   = 30;
+  const EARLY_OUT_HOUR_DEFAULT = 18, EARLY_OUT_MIN_DEFAULT = 45;
+
+  const STATUS = {
+    WO: 'WO', PH: 'PH', AB: 'AB', NP: 'NP', WFH: 'WFH',
+    LEAVE: 'PL', OD: 'OD', LI: 'LI', EO: 'EO',
+    PE: 'PE', PE_LI: 'PE-LI', PE_EO: 'PE-EO'
+  };
+  const STATUS_CODES = ['WO','PH','AB','NP','WFH','PL','OD','PE','PE-LI','PE-EO','LI','EO'];
+
+  const SUMMARY_HEADERS = [
+    'Total Working Hrs.', 'Total Working Days', 'Emp Working Hrs.', 'Emp Working Days',
+    'Leave', 'WFH', 'OD', 'Permission (1h+1h)', 'LI Count', 'LI Days', 'EO Count', 'EO Days'
+  ];
+
+  // ─── STATE ───────────────────────────────────────────────────
+  let ATT = null;
+
+  function attDefaultState() {
+    return {
+      months: {},              // { "March 2026": { holidays:[], benchmarkDays:19, employees:[...] } }
+      thresholds: {
+        lateInH: LATE_IN_HOUR_DEFAULT, lateInM: LATE_IN_MIN_DEFAULT,
+        earlyOutH: EARLY_OUT_HOUR_DEFAULT, earlyOutM: EARLY_OUT_MIN_DEFAULT
+      },
+      empIds: {},               // { "john doe": "E001" }
+      currentMonth: null
+    };
+  }
+
+  function attLoad() {
+    try {
+      const raw = localStorage.getItem(ATT_STORE_KEY);
+      ATT = raw ? JSON.parse(raw) : attDefaultState();
+    } catch (e) { ATT = attDefaultState(); }
+    if (!ATT.months) ATT = attDefaultState();
+  }
+
+  function attSave() {
+    try { localStorage.setItem(ATT_STORE_KEY, JSON.stringify(ATT)); } catch (e) { console.error('attSave failed', e); }
+  }
+
+  // ─── MONTH / DATE HELPERS ────────────────────────────────────
+  function getDaysInMonth(monthName) {
+    try {
+      const parts = monthName.trim().split(' ');
+      const year = parseInt(parts[1]);
+      const mi = new Date(parts[0] + ' 1 ' + year).getMonth();
+      return new Date(year, mi + 1, 0).getDate();
+    } catch (e) { return 31; }
+  }
+  function getDayOfWeek(day, monthName) {
+    try {
+      const parts = monthName.trim().split(' ');
+      const year = parseInt(parts[1]);
+      const mi = new Date(parts[0] + ' 1 ' + year).getMonth();
+      return new Date(year, mi, day).getDay();
+    } catch (e) { return -1; }
+  }
+  function getDaySuffix(day, monthName) {
+    const dow = getDayOfWeek(day, monthName);
+    return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][dow] || '';
+  }
+  function buildWOSet(monthName, daysInMonth) {
+    const s = new Set();
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dow = getDayOfWeek(d, monthName);
+      if (dow === 0 || dow === 6) s.add(d);
+    }
+    return s;
+  }
+
+  // ─── TIME UTILITIES (ported) ─────────────────────────────────
+  function pad2(n) { return String(n).padStart(2, '0'); }
+
+  function cleanTime(val) {
+    if (val === null || val === undefined) return '';
+    if (val instanceof Date) {
+      const h = val.getHours(), m = val.getMinutes();
+      if (h === 0 && m === 0) return '';
+      return pad2(h) + ':' + pad2(m);
+    }
+    if (typeof val === 'number') {
+      if (val <= 0 || val >= 1) {
+        // could be a raw hour count (e.g. RBCDSAI Total Hrs as decimal hours) — treat like GAS did in extractEmployeesFromExcel
+        return '';
+      }
+      const totalMins = Math.round(val * 24 * 60);
+      if (totalMins === 0) return '';
+      const h = Math.floor(totalMins / 60), m = totalMins % 60;
+      if (h === 0 && m === 0) return '';
+      return pad2(h) + ':' + pad2(m);
+    }
+    const s = String(val).trim();
+    if (s === '' || s === 'nan' || s === 'undefined' || s === 'null' || s === '0' || s === '00:00') return '';
+    const parts = s.split(':');
+    if (parts.length >= 2) {
+      const h = parts[0].padStart(2, '0'), m = parts[1].padStart(2, '0');
+      if (h === '00' && m === '00') return '';
+      return h + ':' + m;
+    }
+    return s;
+  }
+
+  function formatTime(t) {
+    if (!t || t === '00:00') return '';
+    const parts = String(t).split(':');
+    if (parts.length >= 2) {
+      if (parts[0] === '00' && parts[1] === '00') return '';
+      return parts[0].padStart(2, '0') + ':' + parts[1].padStart(2, '0');
+    }
+    return t;
+  }
+
+  function calcHours(inT, outT) {
+    if (!inT || !outT) return '';
+    try {
+      const [ih, im] = inT.split(':').map(Number);
+      const [oh, om] = outT.split(':').map(Number);
+      let mins = (oh * 60 + om) - (ih * 60 + im);
+      if (mins < 0) mins += 1440;
+      if (mins === 0) return '';
+      return pad2(Math.floor(mins / 60)) + ':' + pad2(mins % 60);
+    } catch (e) { return ''; }
+  }
+
+  function parseWrkHrs(val) {
+    if (!val || val === '') return 0;
+    if (val instanceof Date) return val.getHours() * 60 + val.getMinutes();
+    const s = String(val).trim();
+    if (s === '' || s === 'nan' || s === '00:00') return 0;
+    if (s.includes(':')) {
+      const p = s.split(':');
+      return (parseInt(p[0] || '0') * 60) + parseInt(p[1] || '0');
+    }
+    const f = parseFloat(s);
+    return isNaN(f) ? 0 : Math.round(f * 24 * 60);
+  }
+
+  function hmmToMins(s) {
+    if (!s) return 0;
+    const p = String(s).split(':');
+    return (parseInt(p[0] || '0') * 60) + parseInt(p[1] || '0');
+  }
+
+  function toTimeMins(t) {
+    if (!t || t === '' || t === '00:00') return 0;
+    const p = String(t).split(':');
+    const h = parseInt(p[0] || '0'), m = parseInt(p[1] || '0');
+    if (isNaN(h) || isNaN(m) || h > 23) return 0;
+    return h * 60 + m;
+  }
+
+  function minsToHHMM(mins) {
+    if (mins <= 0) return '00:00';
+    return pad2(Math.floor(mins / 60)) + ':' + pad2(mins % 60);
+  }
+
+  function isStatusCode(val) { return STATUS_CODES.includes(val); }
+
+  function parseWrkHrsFromCell(raw) {
+    if (raw === null || raw === undefined || raw === '') return 0;
+    const s = String(raw).trim();
+    if (s === '' || s === 'nan' || s === '00:00' || isStatusCode(s)) return 0;
+    if (s.includes(':')) {
+      const p = s.split(':');
+      const h = parseInt(p[0] || '0'), m = parseInt(p[1] || '0');
+      if (isNaN(h) || isNaN(m)) return 0;
+      return h * 60 + m;
+    }
+    const f = parseFloat(s);
+    return isNaN(f) ? 0 : Math.round(f * 24 * 60);
+  }
+
+  // ─── THRESHOLDS / BENCHMARK ──────────────────────────────────
+  function getThresholds() { return ATT.thresholds; }
+  function LATE_IN_MINS()   { const t = getThresholds(); return t.lateInH * 60 + t.lateInM; }
+  function EARLY_OUT_MINS() { const t = getThresholds(); return t.earlyOutH * 60 + t.earlyOutM; }
+
+  function getBenchmark(monthName) {
+    const mo = ATT.months[monthName];
+    const days = (mo && mo.benchmarkDays) ? mo.benchmarkDays : DEFAULT_BENCHMARK_DAYS;
+    return { days, hrs: minsToHHMM(days * MINS_PER_DAY) };
+  }
+
+  // ─── EMP ID STORE ────────────────────────────────────────────
+  function getEmpId(name) { return ATT.empIds[String(name).trim().toLowerCase()] || ''; }
+  function saveEmpId(name, id) { ATT.empIds[String(name).trim().toLowerCase()] = id; attSave(); }
+
+  // ─── XLSX READING ────────────────────────────────────────────
+  function readWorkbookRows(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const wb = XLSX.read(e.target.result, { type: 'array', cellDates: true });
+          const ws = wb.Sheets[wb.SheetNames[0]];
+          const rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: '' });
+          resolve(rows);
+        } catch (err) { reject(err); }
+      };
+      reader.onerror = reject;
+      reader.readAsArrayBuffer(file);
+    });
+  }
+
+  // ─── EXTRACT: WSAI Biometric (rptDAttendanceReg) ─────────────
+  // Ported 1:1 from extractEmployees() in the GAS script.
+  function extractEmployeesWSAI(rawValues) {
+    const employees = [];
+    let i = 0;
+
+    function isNextEmpHeader(row) {
+      if (!row) return false;
+      const srRaw = row[1];
+      if (srRaw === '' || srRaw === null || srRaw === undefined) return false;
+      const sr = parseInt(String(srRaw));
+      if (isNaN(sr) || sr <= 0) return false;
+      const uid = String(row[2] || '').trim();
+      if (uid === '') return false;
+      const name = String(row[4] || '').trim();
+      if (name === '') return false;
+      const asNum = parseFloat(name);
+      if (!isNaN(asNum)) return false;
+      return true;
+    }
+    function normLabel(v) { return String(v || '').toLowerCase().replace(/[^a-z]/g, ''); }
+    function isFirstIn(l) { return l === 'firstin' || l === 'intime' || l === 'firstintime' || l.startsWith('firstin') || l.startsWith('intime'); }
+    function isLastOut(l) { return l === 'lastout' || l === 'outtime' || l === 'lastouttime' || l.startsWith('lastout') || l.startsWith('outtime'); }
+    function isWrkHrs(l) {
+      return l.includes('wrkhrs') || l.includes('wrkhr') || l.includes('workhrs') || l.includes('workhr') ||
+             l.includes('workhours') || l.includes('duration') || l.includes('workedhrs') ||
+             l.includes('totalhrs') || l.includes('nethrs');
+    }
+    function getRowLabel(row) {
+      const b = normLabel(row[1]);
+      if (b !== '') return b;
+      return normLabel(row[0]);
+    }
+
+    while (i < rawValues.length) {
+      const row = rawValues[i];
+      if (!isNextEmpHeader(row)) { i++; continue; }
+
+      const srNum = parseInt(String(row[1]));
+      const userId = String(row[2]).trim();
+      const name = String(row[4]).trim();
+
+      const emp = {
+        srNo: srNum, userId, name,
+        inTimes: Array(31).fill(''), outTimes: Array(31).fill(''), wrkHrs: Array(31).fill('')
+      };
+      const savedId = getEmpId(emp.name);
+      if (savedId) emp.userId = savedId;
+
+      let foundIn = false, foundOut = false, foundWrk = false;
+      for (let j = i + 1; j < Math.min(i + 20, rawValues.length); j++) {
+        const jRow = rawValues[j];
+        if (isNextEmpHeader(jRow)) break;
+        const lbl = getRowLabel(jRow);
+        if (lbl === '') continue;
+        if (!foundIn && isFirstIn(lbl)) {
+          for (let d = 0; d < 31; d++) emp.inTimes[d] = cleanTime(jRow[d + 3]);
+          foundIn = true;
+        } else if (!foundOut && isLastOut(lbl)) {
+          for (let d = 0; d < 31; d++) emp.outTimes[d] = cleanTime(jRow[d + 3]);
+          foundOut = true;
+        } else if (!foundWrk && isWrkHrs(lbl)) {
+          for (let d = 0; d < 31; d++) emp.wrkHrs[d] = cleanTime(jRow[d + 3]);
+          foundWrk = true;
+        }
+        if (foundIn && foundOut && foundWrk) break;
+      }
+      employees.push(emp);
+      i++;
+    }
+    return employees;
+  }
+
+  // ─── EXTRACT: RBCDSAI Biometric (WorkHour In-Out Horizontal) ─
+  // Ported 1:1 from extractEmployeesFromExcel() in the GAS script.
+  function extractEmployeesRBCDSAI(rawValues, monthName) {
+    const employees = [];
+    let headerRowIdx = -1;
+    for (let i = 0; i < Math.min(rawValues.length, 10); i++) {
+      const r = rawValues[i];
+      const a = String(r[0] || '').trim().toLowerCase();
+      const b = String(r[1] || '').trim().toLowerCase();
+      if (a.includes('sr') || a.includes('no') || b.includes('employee') || b.includes('emp')) { headerRowIdx = i; break; }
+    }
+    if (headerRowIdx === -1) headerRowIdx = 4;
+
+    const headerRow = rawValues[headerRowIdx] || [];
+    let dayCount = 0;
+    for (let c = 4; c < headerRow.length; c++) {
+      if (headerRow[c] !== null && headerRow[c] !== undefined && String(headerRow[c]).trim() !== '') dayCount++;
+    }
+    if (dayCount === 0) dayCount = getDaysInMonth(monthName);
+
+    function normLabel(v) { return String(v || '').toLowerCase().replace(/[^a-z]/g, ''); }
+    function isIn(l) { return l.includes('in') && !l.includes('out'); }
+    function isOut(l) { return l.includes('out'); }
+    function isTot(l) { return l.includes('total') || l.includes('wrk') || l.includes('work') || l.includes('dur'); }
+
+    function cleanExcelTime(val) {
+      if (val === null || val === undefined) return '';
+      if (val instanceof Date) {
+        const h = val.getHours(), m = val.getMinutes();
+        if (h === 0 && m === 0) return '';
+        return pad2(h) + ':' + pad2(m);
+      }
+      if (typeof val === 'number') {
+        if (val < 0) return '';
+        if (val < 1) {
+          const totalMins = Math.round(val * 24 * 60);
+          if (totalMins === 0) return '';
+          return pad2(Math.floor(totalMins / 60)) + ':' + pad2(totalMins % 60);
+        }
+        const h = Math.floor(val), m = Math.round((val - h) * 60);
+        if (h === 0 && m === 0) return '';
+        return pad2(h) + ':' + pad2(m);
+      }
+      const s = String(val).trim();
+      if (!s || s === '00:00' || s === '00:00:00' || s === '000:00:00') return '';
+      const parts = s.split(':');
+      if (parts.length >= 2) {
+        const h = parseInt(parts[0]), m = parseInt(parts[1]);
+        if (isNaN(h) || isNaN(m) || (h === 0 && m === 0)) return '';
+        return pad2(h) + ':' + pad2(m);
+      }
+      return '';
+    }
+
+    let i = headerRowIdx + 1;
+    while (i < rawValues.length) {
+      const row = rawValues[i];
+      const srRaw = row[0];
+      const sr = parseInt(String(srRaw === null || srRaw === undefined ? '' : srRaw));
+      if (!isNaN(sr) && sr > 0) {
+        const userId = String(row[1] || '').trim();
+        const name = String(row[2] || '').trim();
+        if (!name) { i++; continue; }
+        const emp = {
+          srNo: sr, userId: userId || name, name,
+          inTimes: Array(31).fill(''), outTimes: Array(31).fill(''), wrkHrs: Array(31).fill('')
+        };
+        const savedId = getEmpId(emp.name);
+        if (savedId) emp.userId = savedId;
+
+        const labelA = normLabel(row[3]);
+        if (isIn(labelA)) {
+          for (let d = 0; d < dayCount; d++) emp.inTimes[d] = cleanExcelTime(row[4 + d]);
+          let foundOut = false, foundTot = false;
+          for (let j = i + 1; j < Math.min(i + 6, rawValues.length); j++) {
+            const jr = rawValues[j];
+            const jlbl = normLabel(jr[3]);
+            if (!foundOut && isOut(jlbl)) {
+              for (let d = 0; d < dayCount; d++) emp.outTimes[d] = cleanExcelTime(jr[4 + d]);
+              foundOut = true;
+            } else if (!foundTot && isTot(jlbl)) {
+              for (let d = 0; d < dayCount; d++) emp.wrkHrs[d] = cleanExcelTime(jr[4 + d]);
+              foundTot = true;
+            }
+            if (foundOut && foundTot) break;
+            const nextSr = parseInt(String(jr[0] === null || jr[0] === undefined ? '' : jr[0]));
+            if (!isNaN(nextSr) && nextSr > 0 && String(jr[2] || '').trim()) break;
+          }
+          employees.push(emp);
+        }
+      }
+      i++;
+    }
+    return employees;
+  }
+
+  // ─── BUILD DAY ROW (In / Out / Total status+time per day) ────
+  // Ported from buildDayRow() in the GAS script.
+  function buildDayRow(emp, label, woSet, holidays, daysInMonth) {
+    const row = Array(31).fill('');
+    for (let d = 1; d <= daysInMonth; d++) {
+      const i = d - 1;
+      const inT = emp.inTimes[i], outT = emp.outTimes[i], wrk = emp.wrkHrs[i];
+
+      if (holidays.includes(d)) {
+        const hasIn = inT && inT !== '00:00', hasOut = outT && outT !== '00:00';
+        row[i] = (!hasIn && !hasOut) ? STATUS.AB : STATUS.PH;
+        continue;
+      }
+
+      if (woSet.has(d)) {
+        const hasIn = inT && inT !== '00:00', hasOut = outT && outT !== '00:00';
+        if ((hasIn || hasOut) && !(hasIn && hasOut)) {
+          if (label === 'In Time') row[i] = hasIn ? formatTime(inT) : STATUS.NP;
+          else if (label === 'Out Time') row[i] = hasOut ? formatTime(outT) : STATUS.NP;
+          else row[i] = STATUS.NP;
+        } else if (hasIn && hasOut) {
+          if (inT === outT) {
+            row[i] = (label === 'In Time') ? formatTime(inT) : STATUS.NP;
+          } else {
+            if (label === 'In Time') row[i] = formatTime(inT);
+            else if (label === 'Out Time') row[i] = formatTime(outT);
+            else row[i] = ((wrk && wrk !== '00:00') ? formatTime(wrk) : calcHours(inT, outT)) || '';
+          }
+        } else {
+          row[i] = STATUS.WO;
+        }
+        continue;
+      }
+
+      const hasIn = inT && inT !== '00:00', hasOut = outT && outT !== '00:00';
+      if (!hasIn && !hasOut) {
+        row[i] = STATUS.AB;
+      } else if (hasIn && hasOut) {
+        if (inT === outT) {
+          row[i] = (label === 'In Time') ? formatTime(inT) : STATUS.NP;
+        } else {
+          if (label === 'In Time') row[i] = formatTime(inT);
+          else if (label === 'Out Time') row[i] = formatTime(outT);
+          else row[i] = ((wrk && wrk !== '00:00') ? formatTime(wrk) : calcHours(inT, outT)) || '';
+        }
+      } else if (hasIn && !hasOut) {
+        row[i] = (label === 'In Time') ? formatTime(inT) : STATUS.NP;
+      } else if (!hasIn && hasOut) {
+        row[i] = (label === 'Out Time') ? formatTime(outT) : STATUS.NP;
+      }
+    }
+    return row;
+  }
+
+  // ─── LI / EO COUNTING (from raw punches, at import time) ─────
+  function countLIEO(emp, holidays, woSet, daysInMonth) {
+    const liMins = LATE_IN_MINS(), eoMins = EARLY_OUT_MINS();
+    let liCount = 0, eoCount = 0;
+    const liDays = [], eoDays = [];
+    for (let d = 1; d <= daysInMonth; d++) {
+      const i = d - 1;
+      const inT = emp.inTimes[i], outT = emp.outTimes[i];
+      if (holidays.includes(d) || woSet.has(d)) continue;
+      const hasIn = inT && inT !== '00:00', hasOut = outT && outT !== '00:00';
+      if (!hasIn || !hasOut) continue;
+      if (inT === outT) {
+        const inMins = toTimeMins(inT);
+        if (inMins > 0 && inMins > liMins) { liCount++; liDays.push(d); }
+        continue;
+      }
+      const inMins = toTimeMins(inT), outMins = toTimeMins(outT);
+      if (inMins > 0 && inMins > liMins) { liCount++; liDays.push(d); }
+      if (outMins > 0 && outMins < eoMins) { eoCount++; eoDays.push(d); }
+    }
+    return { liCount, eoCount, liDays, eoDays };
+  }
+
+  // ─── SUMMARY (initial, at import time) — ports writeSummary() ─
+  function buildInitialSummary(emp, woSet, holidays, daysInMonth, li, monthName) {
+    let totalMins = 0, empDays = 0;
+    for (let d = 1; d <= daysInMonth; d++) {
+      const i = d - 1;
+      const inT = emp.inTimes[i], outT = emp.outTimes[i], wrk = emp.wrkHrs[i];
+      if (holidays.includes(d) || woSet.has(d)) continue;
+      const hasIn = inT && inT !== '00:00', hasOut = outT && outT !== '00:00';
+      if (!hasIn && !hasOut) continue;
+      if (hasIn && hasOut && inT === outT) {
+        empDays++;
+        const rawMins = parseWrkHrs(wrk);
+        if (rawMins > 0) totalMins += rawMins;
+        continue;
+      }
+      if (hasIn !== hasOut) {
+        empDays++;
+        const rawMins = parseWrkHrs(wrk);
+        if (rawMins > 0) totalMins += rawMins;
+        continue;
+      }
+      empDays++;
+      const rawMins = parseWrkHrs(wrk);
+      const calcMins = hmmToMins(calcHours(inT, outT));
+      totalMins += rawMins > 0 ? rawMins : calcMins;
+    }
+    const bm = getBenchmark(monthName);
+    return {
+      totalHrs: bm.hrs, totalDays: bm.days,
+      empHrs: minsToHHMM(totalMins), empDays,
+      leave: 0, wfh: 0, od: 0, permission: '',
+      liCount: li.liCount || '', liDays: li.liDays.length ? li.liDays.join(',') : '',
+      eoCount: li.eoCount || '', eoDays: li.eoDays.length ? li.eoDays.join(',') : ''
+    };
+  }
+
+  // ─── RECALC SUMMARY (post-edit) — ports recalcSummary() ───────
+  // Operates purely off the stored In/Out/Total cell rows, exactly like the
+  // GAS version does once data lives in the sheet.
+  function attRecalcSummary(monthName) {
+    const mo = ATT.months[monthName];
+    if (!mo) return;
+    const daysInMonth = getDaysInMonth(monthName);
+    const liMins = LATE_IN_MINS(), eoMins = EARLY_OUT_MINS();
+    const bm = getBenchmark(monthName);
+
+    mo.employees.forEach(emp => {
+      let totalMins = 0, empDays = 0, leaveDays = 0, wfhDays = 0, odDays = 0;
+      let liCount = 0, eoCount = 0;
+      const liDays = [], eoDays = [], permDaysList = [];
+
+      for (let d = 0; d < daysInMonth; d++) {
+        const dayNum = d + 1;
+        const inCell = String(emp.inRow[d] || '');
+        const outCell = String(emp.outRow[d] || '');
+        const totCell = String(emp.totRow[d] || '');
+
+        if (totCell === STATUS.WO || inCell === STATUS.WO) continue;
+        if (totCell === STATUS.PH || inCell === STATUS.PH) continue;
+        if (totCell === STATUS.AB || inCell === STATUS.AB) continue;
+        if (totCell === 'PL' || inCell === 'PL') { leaveDays++; continue; }
+
+        const isPeLi = (inCell === 'PE-LI' || inCell === 'PE' || totCell === 'PE-LI' || totCell === 'PE');
+        const isPeEo = (inCell === 'PE-EO' || inCell === 'PE' || totCell === 'PE-EO' || totCell === 'PE');
+        if (inCell === 'PE-LI' || totCell === 'PE-LI') permDaysList.push(dayNum);
+        if (inCell === 'PE-EO' || totCell === 'PE-EO') permDaysList.push(dayNum);
+        if (inCell === 'PE' || totCell === 'PE') { permDaysList.push(dayNum); permDaysList.push(dayNum); }
+
+        if (totCell === STATUS.OD || inCell === STATUS.OD) {
+          odDays++; empDays++;
+          const hasInT = inCell && !isStatusCode(inCell) && inCell.includes(':');
+          const hasOutT = outCell && !isStatusCode(outCell) && outCell.includes(':');
+          if (hasInT && hasOutT) totalMins += hmmToMins(calcHours(inCell, outCell));
+          continue;
+        }
+        if (totCell === STATUS.WFH || inCell === STATUS.WFH) {
+          wfhDays++; empDays++;
+          const hasInT = inCell && !isStatusCode(inCell) && inCell.includes(':');
+          const hasOutT = outCell && !isStatusCode(outCell) && outCell.includes(':');
+          if (hasInT && hasOutT) totalMins += hmmToMins(calcHours(inCell, outCell));
+          continue;
+        }
+        if (totCell === STATUS.NP) {
+          empDays++;
+          const npMins = parseWrkHrsFromCell(totCell === STATUS.NP ? emp.totRow[d] : totCell);
+          if (npMins > 0) totalMins += npMins;
+          continue;
+        }
+
+        const mins = parseWrkHrsFromCell(totCell);
+        const hasInT = inCell && !isStatusCode(inCell) && inCell.includes(':');
+        const hasOutT = outCell && !isStatusCode(outCell) && outCell.includes(':');
+
+        if (hasInT && hasOutT && inCell === outCell) {
+          empDays++;
+          if (mins > 0) totalMins += mins;
+          const inMins = toTimeMins(inCell);
+          if (!isPeLi && inMins > 0 && inMins > liMins) { liCount++; liDays.push(dayNum); }
+          continue;
+        }
+
+        if (mins > 0 || hasInT || hasOutT) {
+          empDays++;
+          if (mins > 0) totalMins += mins;
+          else if (hasInT && hasOutT) totalMins += hmmToMins(calcHours(inCell, outCell));
+        }
+
+        const isSinglePunch = totCell === STATUS.NP || outCell === STATUS.NP;
+        if (hasInT && (hasOutT || isSinglePunch)) {
+          const inMins = toTimeMins(inCell);
+          const outMins = hasOutT ? toTimeMins(outCell) : 0;
+          if (!isPeLi && inMins > 0 && inMins > liMins) { liCount++; liDays.push(dayNum); }
+          if (!isSinglePunch && !isPeEo && outMins > 0 && outMins < eoMins) { eoCount++; eoDays.push(dayNum); }
+        }
+      }
+
+      const permSlotCount = permDaysList.length;
+      const permUniqueDays = [...new Set(permDaysList)].sort((a, b) => a - b);
+      emp.summary = {
+        totalHrs: bm.hrs, totalDays: bm.days,
+        empHrs: minsToHHMM(totalMins), empDays,
+        leave: leaveDays || '', wfh: wfhDays || '', od: odDays || '',
+        permission: permUniqueDays.length ? permSlotCount + ': ' + permUniqueDays.join(',') : '',
+        liCount: liCount || '', liDays: liDays.length ? liDays.join(',') : '',
+        eoCount: eoCount || '', eoDays: eoDays.length ? eoDays.join(',') : ''
+      };
+    });
+    attSave();
+  }
+
+  // ─── IMPORT (creates or replaces a month's employee data) ─────
+  function attImport(monthName, type, employees) {
+    if (!ATT.months[monthName]) ATT.months[monthName] = { holidays: [], benchmarkDays: DEFAULT_BENCHMARK_DAYS, employees: [] };
+    const mo = ATT.months[monthName];
+    const daysInMonth = getDaysInMonth(monthName);
+    const woSet = buildWOSet(monthName, daysInMonth);
+    const holidays = mo.holidays || [];
+
+    mo.employees = employees.map(emp => {
+      const li = countLIEO(emp, holidays, woSet, daysInMonth);
+      const inRow = buildDayRow(emp, 'In Time', woSet, holidays, daysInMonth);
+      const outRow = buildDayRow(emp, 'Out Time', woSet, holidays, daysInMonth);
+      const totRow = buildDayRow(emp, 'Total Hrs', woSet, holidays, daysInMonth);
+      const summary = buildInitialSummary(emp, woSet, holidays, daysInMonth, li, monthName);
+      return { empId: emp.userId, name: emp.name, sourceType: type, inRow, outRow, totRow, summary };
+    });
+
+    ATT.currentMonth = monthName;
+    attSave();
+    attRecalcSummary(monthName); // normalise through the same path as every later edit
+  }
+
+  // ─── HOLIDAYS ────────────────────────────────────────────────
+  function getAbCountsPerDay(monthName) {
+    const mo = ATT.months[monthName];
+    const daysInMonth = getDaysInMonth(monthName);
+    const counts = Array(31).fill(0);
+    if (!mo) return { totalEmps: 0, counts };
+    mo.employees.forEach(emp => {
+      for (let d = 0; d < daysInMonth; d++) if (emp.inRow[d] === STATUS.AB) counts[d]++;
+    });
+    return { totalEmps: mo.employees.length, counts };
+  }
+
+  function attApplyHolidays(monthName, days) {
+    const mo = ATT.months[monthName];
+    if (!mo) return;
+    mo.holidays = [...new Set(days)].sort((a, b) => a - b);
+    const daysInMonth = getDaysInMonth(monthName);
+    mo.employees.forEach(emp => {
+      days.forEach(d => {
+        if (d < 1 || d > daysInMonth) return;
+        if (emp.inRow[d - 1] !== STATUS.AB) return;
+        emp.inRow[d - 1] = STATUS.PH; emp.outRow[d - 1] = STATUS.PH; emp.totRow[d - 1] = STATUS.PH;
+      });
+    });
+    attSave();
+    attRecalcSummary(monthName);
+  }
+
+  // ─── LEAVE / WFH / OD ────────────────────────────────────────
+  function attApplyLeaveWFHOD(monthName, empIndex, days, status) {
+    const mo = ATT.months[monthName];
+    if (!mo) return;
+    const emp = mo.employees[empIndex];
+    if (!emp) return;
+    const daysInMonth = getDaysInMonth(monthName);
+    const disp = (status === 'PL' || status === 'Leave') ? 'PL' : (status === 'OD') ? 'OD' : 'WFH';
+    days.forEach(d => {
+      if (d < 1 || d > daysInMonth) return;
+      [emp.inRow, emp.outRow, emp.totRow].forEach(arr => {
+        const cur = arr[d - 1];
+        if ([STATUS.AB, STATUS.NP, '', 'WFH', 'PL', 'OD', 'PE'].includes(cur)) arr[d - 1] = disp;
+      });
+    });
+    attSave();
+    attRecalcSummary(monthName);
+  }
+
+  // ─── PERMISSION ──────────────────────────────────────────────
+  function attApplyPermission(monthName, empIndex, liDays, eoDays) {
+    const mo = ATT.months[monthName];
+    if (!mo) return;
+    const emp = mo.employees[empIndex];
+    if (!emp) return;
+    const daysInMonth = getDaysInMonth(monthName);
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const v = emp.inRow[d - 1];
+      if (v === 'PE' || v === 'PE-LI' || v === 'PE-EO') emp.inRow[d - 1] = '';
+    }
+    const liSet = new Set(liDays || []), eoSet = new Set(eoDays || []);
+    liSet.forEach(d => { if (d >= 1 && d <= daysInMonth) emp.inRow[d - 1] = 'PE-LI'; });
+    eoSet.forEach(d => {
+      if (d < 1 || d > daysInMonth) return;
+      const cur = emp.inRow[d - 1];
+      if (cur !== 'PE-LI') emp.inRow[d - 1] = 'PE-EO';
+      if (cur === 'PE-LI' && eoSet.has(d)) emp.inRow[d - 1] = 'PE';
+    });
+    attSave();
+    attRecalcSummary(monthName);
+  }
+
+  // ─── THRESHOLDS / BENCHMARK ──────────────────────────────────
+  function attApplyThresholds(lateInH, lateInM, earlyOutH, earlyOutM) {
+    ATT.thresholds = { lateInH, lateInM, earlyOutH, earlyOutM };
+    attSave();
+    Object.keys(ATT.months).forEach(mn => attRecalcSummary(mn));
+  }
+
+  function attApplyBenchmark(monthName, days) {
+    if (!ATT.months[monthName]) return;
+    ATT.months[monthName].benchmarkDays = days;
+    attSave();
+    attRecalcSummary(monthName);
+  }
+
+  // ─── SORT A→Z ────────────────────────────────────────────────
+  function attSortAlpha(monthName) {
+    const mo = ATT.months[monthName];
+    if (!mo) return;
+    mo.employees.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
+    attSave();
+  }
+
+  // ─── EMP ID ──────────────────────────────────────────────────
+  function attSetEmpId(monthName, empIndex, newId) {
+    const mo = ATT.months[monthName];
+    if (!mo) return;
+    const emp = mo.employees[empIndex];
+    if (!emp) return;
+    emp.empId = newId;
+    saveEmpId(emp.name, newId);
+  }
+  function attApplyEmpIdStoreToMonth(monthName) {
+    const mo = ATT.months[monthName];
+    if (!mo) return 0;
+    let count = 0;
+    mo.employees.forEach(emp => {
+      const id = getEmpId(emp.name);
+      if (id && id !== emp.empId) { emp.empId = id; count++; }
+    });
+    attSave();
+    return count;
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // UI LAYER
+  // ═══════════════════════════════════════════════════════════
+  const STATUS_COLORS = {
+    AB: '#c62828', NP: '#e65100', WO: '#9e9e9e', PH: '#6a1b9a',
+    WFH: '#2e7d32', PL: '#1565c0', OD: '#f57f17',
+    PE: '#b06000', 'PE-LI': '#b06000', 'PE-EO': '#b06000'
+  };
+  const STATUS_BG = {
+    AB: 'rgba(198,40,40,0.12)', NP: 'rgba(230,81,0,0.12)', WO: 'rgba(158,158,158,0.15)',
+    PH: 'rgba(106,27,154,0.12)', WFH: 'rgba(46,125,50,0.12)', PL: 'rgba(21,101,192,0.12)',
+    OD: 'rgba(245,127,23,0.12)', PE: 'rgba(255,193,7,0.15)', 'PE-LI': 'rgba(255,193,7,0.15)', 'PE-EO': 'rgba(255,193,7,0.15)'
+  };
+
+  function attCellStyle(val) {
+    if (STATUS_COLORS[val]) return `color:${STATUS_COLORS[val]};background:${STATUS_BG[val]};font-weight:700;`;
+    return '';
+  }
+
+  function attModal(html, wide) {
+    attCloseModal();
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.id = 'att-modal-overlay';
+    overlay.innerHTML = `<div class="modal-box" style="${wide ? 'max-width:820px;width:94vw;' : 'max-width:520px;width:94vw;'}max-height:88vh;overflow-y:auto;">${html}</div>`;
+    overlay.addEventListener('click', e => { if (e.target === overlay) attCloseModal(); });
+    document.body.appendChild(overlay);
+  }
+  function attCloseModal() { const m = document.getElementById('att-modal-overlay'); if (m) m.remove(); }
+
+  function attToast(msg) { if (typeof toast === 'function') toast(msg); else alert(msg); }
+
+  // ─── INIT / TAB ENTRY ────────────────────────────────────────
+  function attInit() {
+    if (!ATT) attLoad();
+    attRenderShell();
+  }
+
+  function attMonthList() { return Object.keys(ATT.months).sort((a, b) => new Date(b) - new Date(a)); }
+
+  function attRenderShell() {
+    const root = document.getElementById('att-root');
+    if (!root) return;
+    const months = attMonthList();
+    if (!ATT.currentMonth || !ATT.months[ATT.currentMonth]) ATT.currentMonth = months[0] || null;
+
+    const monthOptions = months.map(m => `<option value="${m}" ${m === ATT.currentMonth ? 'selected' : ''}>${m}</option>`).join('');
+
+    root.innerHTML = `
+      <div class="table-card" style="margin-bottom:1rem;">
+        <div class="tc-header" style="flex-wrap:wrap;gap:0.6rem;">
+          <div class="tc-title">🗓️ Attendance Report ${ATT.currentMonth ? '— ' + ATT.currentMonth : ''}</div>
+          <div class="tc-actions" style="flex-wrap:wrap;">
+            <select class="filter-select" id="att-month-select" onchange="attSwitchMonth(this.value)" ${months.length ? '' : 'disabled'}>
+              ${months.length ? monthOptions : '<option>No months yet</option>'}
+            </select>
+            <button class="tc-btn primary" onclick="attOpenImportModal()">➕ New Month / Import</button>
+            <button class="tc-btn" onclick="attOpenHolidayModal()" ${ATT.currentMonth ? '' : 'disabled'}>🏖️ Holidays</button>
+            <button class="tc-btn" onclick="attOpenLeaveModal()" ${ATT.currentMonth ? '' : 'disabled'}>✏️ AB→Leave/WFH/OD</button>
+            <button class="tc-btn" onclick="attOpenPermissionModal()" ${ATT.currentMonth ? '' : 'disabled'}>🟡 Permission</button>
+            <button class="tc-btn" onclick="attOpenBenchmarkModal()" ${ATT.currentMonth ? '' : 'disabled'}>⏱️ Benchmark</button>
+            <button class="tc-btn" onclick="attOpenThresholdModal()">⚙️ Thresholds</button>
+            <button class="tc-btn" onclick="attOpenEmpIdModal()" ${ATT.currentMonth ? '' : 'disabled'}>🪪 Employee IDs</button>
+            <button class="tc-btn" onclick="attDoSort()" ${ATT.currentMonth ? '' : 'disabled'}>🔤 Sort A→Z</button>
+            <button class="tc-btn" onclick="attDoRecalc()" ${ATT.currentMonth ? '' : 'disabled'}>♻️ Recalculate</button>
+            <button class="tc-btn" onclick="attDownloadExcel()" ${ATT.currentMonth ? '' : 'disabled'}>⬇️ Download Excel</button>
+          </div>
+        </div>
+        <div id="att-table-wrap" style="overflow-x:auto;max-height:640px;overflow-y:auto;"></div>
+      </div>
+    `;
+    attRenderTable();
+  }
+
+  function attSwitchMonth(m) { ATT.currentMonth = m; attSave(); attRenderShell(); }
+
+  function attRenderTable() {
+    const wrap = document.getElementById('att-table-wrap');
+    if (!wrap) return;
+    const mn = ATT.currentMonth;
+    if (!mn || !ATT.months[mn]) {
+      wrap.innerHTML = `<div style="padding:2.5rem;text-align:center;color:var(--text2);font-size:0.9rem;">
+        No attendance data yet. Click <b>➕ New Month / Import</b> to upload a WSAI or RBCDSAI biometric export.
+      </div>`;
+      return;
+    }
+    const mo = ATT.months[mn];
+    const daysInMonth = getDaysInMonth(mn);
+    if (!mo.employees.length) {
+      wrap.innerHTML = `<div style="padding:2.5rem;text-align:center;color:var(--text2);font-size:0.9rem;">No employees imported for ${mn}.</div>`;
+      return;
+    }
+
+    let dayHeaders = '';
+    for (let d = 1; d <= daysInMonth; d++) {
+      dayHeaders += `<th style="min-width:52px;font-size:0.65rem;">${d}<br><span style="opacity:.65">${getDaySuffix(d, mn)}</span></th>`;
+    }
+    const summaryHeaders = SUMMARY_HEADERS.map(h => `<th style="min-width:70px;font-size:0.65rem;">${h.replace(/ /g, '<br>')}</th>`).join('');
+
+    let bodyRows = '';
+    mo.employees.forEach((emp, idx) => {
+      const bg = idx % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)';
+      const s = emp.summary || {};
+      const rowsMeta = [
+        { label: 'In Time', arr: emp.inRow },
+        { label: 'Out Time', arr: emp.outRow },
+        { label: 'Total Hrs', arr: emp.totRow }
+      ];
+      rowsMeta.forEach((rm, ri) => {
+        bodyRows += `<tr style="background:${bg};">`;
+        if (ri === 0) {
+          bodyRows += `<td rowspan="3" style="text-align:center;font-weight:700;">${idx + 1}</td>`;
+          bodyRows += `<td rowspan="3" style="text-align:center;">${emp.empId || ''}</td>`;
+          bodyRows += `<td rowspan="3" style="font-weight:600;">${emp.name}</td>`;
+        }
+        bodyRows += `<td style="font-size:0.68rem;color:var(--text3);">${rm.label}</td>`;
+        rm.arr.forEach(v => {
+          bodyRows += `<td style="text-align:center;font-size:0.72rem;${attCellStyle(v)}">${v || ''}</td>`;
+        });
+        if (ri === 2) {
+          bodyRows += `
+            <td style="text-align:center;">${s.totalHrs || ''}</td>
+            <td style="text-align:center;">${s.totalDays || ''}</td>
+            <td style="text-align:center;">${s.empHrs || ''}</td>
+            <td style="text-align:center;">${s.empDays || ''}</td>
+            <td style="text-align:center;">${s.leave || ''}</td>
+            <td style="text-align:center;">${s.wfh || ''}</td>
+            <td style="text-align:center;">${s.od || ''}</td>
+            <td style="text-align:center;font-size:0.68rem;">${s.permission || ''}</td>
+            <td style="text-align:center;">${s.liCount || ''}</td>
+            <td style="text-align:center;font-size:0.65rem;">${s.liDays || ''}</td>
+            <td style="text-align:center;">${s.eoCount || ''}</td>
+            <td style="text-align:center;font-size:0.65rem;">${s.eoDays || ''}</td>`;
+        } else {
+          bodyRows += `<td colspan="12"></td>`;
+        }
+        bodyRows += `</tr>`;
+      });
+    });
+
+    wrap.innerHTML = `
+      <table style="border-collapse:collapse;width:100%;">
+        <thead>
+          <tr style="position:sticky;top:0;background:var(--surface2);z-index:2;">
+            <th>#</th><th>ID</th><th>Name</th><th></th>${dayHeaders}${summaryHeaders}
+          </tr>
+        </thead>
+        <tbody>${bodyRows}</tbody>
+      </table>
+    `;
+  }
+
+  // ─── IMPORT MODAL ────────────────────────────────────────────
+  function attOpenImportModal() {
+    const months = attMonthList();
+    attModal(`
+      <button class="modal-close" onclick="attCloseModal()">✕ Close</button>
+      <div class="modal-title">➕ New Month / Import Attendance</div>
+      <div class="modal-field">
+        <label>Month Name</label>
+        <input list="att-existing-months" id="att-import-month" placeholder="e.g. March 2026" style="width:100%;">
+        <datalist id="att-existing-months">${months.map(m => `<option value="${m}">`).join('')}</datalist>
+        <small style="color:var(--text3);">Existing month re-imports replace that month's employee rows (holidays are preserved).</small>
+      </div>
+      <div class="modal-field">
+        <label>Source Type</label>
+        <select id="att-import-type" style="width:100%;">
+          <option value="WSAI">WSAI Biometric (rptDAttendanceReg export)</option>
+          <option value="RBCDSAI">RBCDSAI Biometric (WorkHour In-Out Horizontal export)</option>
+        </select>
+      </div>
+      <div class="modal-field">
+        <label>Excel File (.xlsx / .xls / .csv)</label>
+        <input type="file" id="att-import-file" accept=".xlsx,.xls,.csv" style="width:100%;">
+      </div>
+      <p id="att-import-status" style="font-size:0.8rem;color:var(--text2);display:none;"></p>
+      <div class="modal-row" style="margin-top:1rem;">
+        <button class="modal-btn cancel" onclick="attCloseModal()">Cancel</button>
+        <button class="modal-btn primary" onclick="attRunImport()">📥 Import</button>
+      </div>
+    `);
+  }
+
+  function attRunImport() {
+    const monthName = document.getElementById('att-import-month').value.trim();
+    const type = document.getElementById('att-import-type').value;
+    const fileInput = document.getElementById('att-import-file');
+    const statusEl = document.getElementById('att-import-status');
+    if (!monthName) { alert('Please enter a month name (e.g. "March 2026").'); return; }
+    if (!fileInput.files.length) { alert('Please choose a file to import.'); return; }
+
+    statusEl.style.display = 'block';
+    statusEl.textContent = '⏳ Parsing file…';
+
+    readWorkbookRows(fileInput.files[0]).then(rows => {
+      const employees = (type === 'WSAI')
+        ? extractEmployeesWSAI(rows)
+        : extractEmployeesRBCDSAI(rows, monthName);
+
+      if (!employees.length) {
+        statusEl.textContent = '❌ No employee data found — check the file format matches the selected source type.';
+        return;
+      }
+      attImport(monthName, type, employees);
+      attCloseModal();
+      attRenderShell();
+      attToast(`✅ Imported ${employees.length} employee(s) for ${monthName}`);
+    }).catch(err => {
+      console.error(err);
+      statusEl.textContent = '❌ Error reading file: ' + err.message;
+    });
+  }
+
+  // ─── HOLIDAY MODAL ───────────────────────────────────────────
+  function attOpenHolidayModal() {
+    const mn = ATT.currentMonth;
+    if (!mn) return;
+    const mo = ATT.months[mn];
+    const daysInMonth = getDaysInMonth(mn);
+    const woSet = buildWOSet(mn, daysInMonth);
+    const { totalEmps, counts } = getAbCountsPerDay(mn);
+    const existing = new Set(mo.holidays || []);
+    const suggested = new Set();
+    for (let d = 1; d <= daysInMonth; d++) {
+      if (woSet.has(d)) continue;
+      const pct = totalEmps > 0 ? counts[d - 1] / totalEmps : 0;
+      if (pct >= 0.5) suggested.add(d);
+    }
+
+    let boxes = '';
+    for (let d = 1; d <= daysInMonth; d++) {
+      const isWO = woSet.has(d);
+      const pct = totalEmps > 0 ? Math.round(counts[d - 1] / totalEmps * 100) : 0;
+      const isSugg = suggested.has(d);
+      const checked = (existing.has(d) || isSugg) ? 'checked' : '';
+      const badge = (!isWO && counts[d - 1] > 0) ? `<span style="font-size:9px;color:${isSugg ? '#ef4444' : '#888'};">${pct}%AB</span>` : '';
+      const hl = isSugg ? 'background:rgba(239,68,68,0.12);border:1px solid #ef4444;' : (isWO ? 'opacity:.4;' : '');
+      boxes += `<label style="display:inline-block;width:110px;margin:3px 2px;padding:2px 4px;border-radius:4px;font-size:0.75rem;${hl}">
+        <input type="checkbox" value="${d}" ${checked} ${isWO ? 'disabled' : ''}> <b>${d}</b> ${getDaySuffix(d, mn)} ${badge}
+      </label>`;
+    }
+
+    attModal(`
+      <button class="modal-close" onclick="attCloseModal()">✕ Close</button>
+      <div class="modal-title">🏖️ Mark Holidays — ${mn}</div>
+      <p style="font-size:0.78rem;color:var(--text2);">🔍 Auto-detected (≥50% of employees AB) are pre-checked in red. Only <b>AB</b> days convert to <b>PH</b>; WFH/PL/OD are preserved.</p>
+      <div style="max-height:280px;overflow-y:auto;border:1px solid var(--border);padding:8px;border-radius:6px;">${boxes}</div>
+      <div class="modal-row" style="margin-top:1rem;">
+        <button class="modal-btn cancel" onclick="attCloseModal()">Cancel</button>
+        <button class="modal-btn primary" onclick="attRunApplyHolidays()">✅ Apply Holidays</button>
+      </div>
+    `, true);
+  }
+  function attRunApplyHolidays() {
+    const checked = [...document.querySelectorAll('#att-modal-overlay input[type=checkbox]:not(:disabled):checked')].map(c => parseInt(c.value));
+    attApplyHolidays(ATT.currentMonth, checked);
+    attCloseModal();
+    attRenderShell();
+    attToast('✅ Holidays applied');
+  }
+
+  // ─── LEAVE / WFH / OD MODAL ──────────────────────────────────
+  function attOpenLeaveModal() {
+    const mn = ATT.currentMonth;
+    if (!mn) return;
+    const mo = ATT.months[mn];
+    const daysInMonth = getDaysInMonth(mn);
+    const empOptions = mo.employees.map((e, i) => `<option value="${i}">${e.empId ? e.empId + ' – ' : ''}${e.name}</option>`).join('');
+    const abDaysByEmp = mo.employees.map(e => {
+      const days = [];
+      for (let d = 0; d < daysInMonth; d++) if (e.inRow[d] === STATUS.AB) days.push(d + 1);
+      return days;
+    });
+
+    attModal(`
+      <button class="modal-close" onclick="attCloseModal()">✕ Close</button>
+      <div class="modal-title">✏️ Mark AB → Leave / WFH / OD — ${mn}</div>
+      <div class="modal-field"><label>Employee</label>
+        <select id="att-lv-emp" style="width:100%;" onchange="attLoadAbDays()">${empOptions}</select>
+      </div>
+      <div class="modal-field"><label>Mark as</label>
+        <select id="att-lv-status" style="width:100%;">
+          <option value="PL">🌴 PL (Paid Leave)</option>
+          <option value="WFH">🏠 WFH (Work From Home)</option>
+          <option value="OD">🚗 OD (On Duty)</option>
+        </select>
+      </div>
+      <label style="font-size:0.8rem;font-weight:700;">AB Days <span style="font-weight:400;color:var(--accent);cursor:pointer;" onclick="attToggleAllDays('att-lv-days')">(select/deselect all)</span></label>
+      <div id="att-lv-days" style="max-height:160px;overflow-y:auto;border:1px solid var(--border);padding:8px;border-radius:6px;margin-top:4px;"></div>
+      <div class="modal-row" style="margin-top:1rem;">
+        <button class="modal-btn cancel" onclick="attCloseModal()">Cancel</button>
+        <button class="modal-btn primary" onclick="attRunApplyLeave()">✅ Apply</button>
+      </div>
+    `);
+    window.__attAbDays = abDaysByEmp;
+    attLoadAbDays();
+  }
+  function attLoadAbDays() {
+    const idx = parseInt(document.getElementById('att-lv-emp').value);
+    const days = (window.__attAbDays || [])[idx] || [];
+    const box = document.getElementById('att-lv-days');
+    box.innerHTML = days.length
+      ? days.map(d => `<label style="display:inline-block;width:70px;margin:2px;font-size:0.78rem;"><input type="checkbox" class="att-day-chk" value="${d}" checked> <b>${d}</b></label>`).join('')
+      : `<span style="color:var(--text3);font-style:italic;font-size:0.8rem;">No AB days for this employee.</span>`;
+  }
+  function attToggleAllDays(boxId) {
+    const chks = document.querySelectorAll('#' + boxId + ' input[type=checkbox]');
+    const allChecked = [...chks].every(c => c.checked);
+    chks.forEach(c => c.checked = !allChecked);
+  }
+  function attRunApplyLeave() {
+    const idx = parseInt(document.getElementById('att-lv-emp').value);
+    const status = document.getElementById('att-lv-status').value;
+    const days = [...document.querySelectorAll('.att-day-chk:checked')].map(c => parseInt(c.value));
+    if (!days.length) { alert('Select at least one day.'); return; }
+    attApplyLeaveWFHOD(ATT.currentMonth, idx, days, status);
+    attCloseModal();
+    attRenderShell();
+    attToast('✅ Applied');
+  }
+
+  // ─── PERMISSION MODAL ────────────────────────────────────────
+  function attOpenPermissionModal() {
+    const mn = ATT.currentMonth;
+    if (!mn) return;
+    const mo = ATT.months[mn];
+    const daysInMonth = getDaysInMonth(mn);
+    const empOptions = mo.employees.map((e, i) => `<option value="${i}">${e.empId ? e.empId + ' – ' : ''}${e.name}</option>`).join('');
+
+    const dayInfoByEmp = mo.employees.map(emp => {
+      const s = emp.summary || {};
+      const liSet = new Set(String(s.liDays || '').split(',').filter(Boolean).map(Number));
+      const eoSet = new Set(String(s.eoDays || '').split(',').filter(Boolean).map(Number));
+      const info = [];
+      for (let d = 1; d <= daysInMonth; d++) {
+        const v = emp.inRow[d - 1];
+        if (['AB', 'WO', 'PH', 'PL'].includes(v) || v === 'NP') continue;
+        const peLi = (v === 'PE-LI' || v === 'PE');
+        const peEo = (v === 'PE-EO' || v === 'PE');
+        const hasLI = peLi || liSet.has(d);
+        const hasEO = peEo || eoSet.has(d);
+        if (peLi || peEo || hasLI || hasEO) info.push({ day: d, hasLI, hasEO, peLi, peEo });
+      }
+      return info;
+    });
+
+    attModal(`
+      <button class="modal-close" onclick="attCloseModal()">✕ Close</button>
+      <div class="modal-title">🟡 Mark Permission Days — ${mn}</div>
+      <p style="font-size:0.78rem;color:var(--text2);">2h/month permission = two 1h slots. Use 1 slot to excuse a Late IN, and/or 1 slot to excuse an Early OUT (same or different day). Max 2 slots.</p>
+      <div class="modal-field"><label>Employee</label>
+        <select id="att-pe-emp" style="width:100%;" onchange="attLoadPeDays()">${empOptions}</select>
+      </div>
+      <p id="att-pe-quota" style="font-size:0.8rem;color:var(--text2);"></p>
+      <label style="font-size:0.78rem;font-weight:700;">Late IN days</label>
+      <div id="att-pe-li" style="max-height:110px;overflow-y:auto;border:1px solid var(--border);padding:6px;border-radius:6px;margin:4px 0 10px;"></div>
+      <label style="font-size:0.78rem;font-weight:700;">Early OUT days</label>
+      <div id="att-pe-eo" style="max-height:110px;overflow-y:auto;border:1px solid var(--border);padding:6px;border-radius:6px;margin-top:4px;"></div>
+      <div class="modal-row" style="margin-top:1rem;">
+        <button class="modal-btn cancel" onclick="attCloseModal()">Cancel</button>
+        <button class="modal-btn primary" onclick="attRunApplyPermission()">✅ Apply</button>
+      </div>
+    `);
+    window.__attPeDayInfo = dayInfoByEmp;
+    attLoadPeDays();
+  }
+  function attLoadPeDays() {
+    const idx = parseInt(document.getElementById('att-pe-emp').value);
+    const days = (window.__attPeDayInfo || [])[idx] || [];
+    let slots = 0;
+    days.forEach(d => { if (d.peLi) slots++; if (d.peEo) slots++; });
+    document.getElementById('att-pe-quota').innerHTML = `Slots used: <b>${slots} / 2</b>`;
+
+    const liDays = days.filter(d => d.hasLI || d.peLi);
+    const eoDays = days.filter(d => d.hasEO || d.peEo);
+    document.getElementById('att-pe-li').innerHTML = liDays.length
+      ? liDays.map(d => `<label style="display:inline-block;margin:2px 6px;font-size:0.78rem;"><input type="checkbox" class="att-pe-li-chk" data-day="${d.day}" ${d.peLi ? 'checked' : ''}> Day <b>${d.day}</b></label>`).join('')
+      : `<span style="color:var(--text3);font-style:italic;font-size:0.78rem;">No Late IN days.</span>`;
+    document.getElementById('att-pe-eo').innerHTML = eoDays.length
+      ? eoDays.map(d => `<label style="display:inline-block;margin:2px 6px;font-size:0.78rem;"><input type="checkbox" class="att-pe-eo-chk" data-day="${d.day}" ${d.peEo ? 'checked' : ''}> Day <b>${d.day}</b></label>`).join('')
+      : `<span style="color:var(--text3);font-style:italic;font-size:0.78rem;">No Early OUT days.</span>`;
+  }
+  function attRunApplyPermission() {
+    const idx = parseInt(document.getElementById('att-pe-emp').value);
+    const liDays = [...document.querySelectorAll('.att-pe-li-chk:checked')].map(c => parseInt(c.dataset.day));
+    const eoDays = [...document.querySelectorAll('.att-pe-eo-chk:checked')].map(c => parseInt(c.dataset.day));
+    if (liDays.length + eoDays.length > 2) { alert('Only 2 permission slots allowed per month.'); return; }
+    attApplyPermission(ATT.currentMonth, idx, liDays, eoDays);
+    attCloseModal();
+    attRenderShell();
+    attToast('✅ Permission slots applied');
+  }
+
+  // ─── BENCHMARK MODAL ─────────────────────────────────────────
+  function attOpenBenchmarkModal() {
+    const mn = ATT.currentMonth;
+    if (!mn) return;
+    const cur = getBenchmark(mn);
+    attModal(`
+      <button class="modal-close" onclick="attCloseModal()">✕ Close</button>
+      <div class="modal-title">⏱️ Set Working Hours Benchmark — ${mn}</div>
+      <div class="modal-field">
+        <label>Total Working Days in Month</label>
+        <input type="number" id="att-bm-days" min="1" max="31" value="${cur.days}" style="width:100%;" oninput="attUpdateBmPreview()">
+      </div>
+      <p id="att-bm-preview" style="font-size:0.85rem;color:var(--text2);">${cur.days} days × 9h15m = <b>${cur.hrs}</b></p>
+      <div class="modal-row" style="margin-top:1rem;">
+        <button class="modal-btn cancel" onclick="attCloseModal()">Cancel</button>
+        <button class="modal-btn primary" onclick="attRunApplyBenchmark()">✅ Apply</button>
+      </div>
+    `);
+  }
+  function attUpdateBmPreview() {
+    const d = parseInt(document.getElementById('att-bm-days').value) || 0;
+    const mins = d * MINS_PER_DAY;
+    document.getElementById('att-bm-preview').innerHTML = `${d} days × 9h15m = <b>${minsToHHMM(mins)}</b>`;
+  }
+  function attRunApplyBenchmark() {
+    const d = parseInt(document.getElementById('att-bm-days').value);
+    if (!d || d < 1 || d > 31) { alert('Enter a valid number of working days (1–31).'); return; }
+    attApplyBenchmark(ATT.currentMonth, d);
+    attCloseModal();
+    attRenderShell();
+    attToast('✅ Benchmark applied');
+  }
+
+  // ─── THRESHOLD MODAL ─────────────────────────────────────────
+  function attOpenThresholdModal() {
+    const t = getThresholds();
+    const li = pad2(t.lateInH) + ':' + pad2(t.lateInM);
+    const eo = pad2(t.earlyOutH) + ':' + pad2(t.earlyOutM);
+    attModal(`
+      <button class="modal-close" onclick="attCloseModal()">✕ Close</button>
+      <div class="modal-title">⚙️ Threshold Settings</div>
+      <div class="modal-row">
+        <div class="modal-field"><label>🕘 Late IN after</label><input type="time" id="att-th-li" value="${li}" style="width:100%;"></div>
+        <div class="modal-field"><label>🕕 Early OUT before</label><input type="time" id="att-th-eo" value="${eo}" style="width:100%;"></div>
+      </div>
+      <p style="font-size:0.78rem;color:var(--text2);">Applies across all imported months and recalculates automatically.</p>
+      <div class="modal-row" style="margin-top:1rem;">
+        <button class="modal-btn cancel" onclick="attCloseModal()">Cancel</button>
+        <button class="modal-btn primary" onclick="attRunApplyThresholds()">✅ Save & Recalculate</button>
+      </div>
+    `);
+  }
+  function attRunApplyThresholds() {
+    const li = document.getElementById('att-th-li').value;
+    const eo = document.getElementById('att-th-eo').value;
+    if (!li || !eo) { alert('Fill in both times.'); return; }
+    const [lih, lim] = li.split(':').map(Number);
+    const [eoh, eom] = eo.split(':').map(Number);
+    attApplyThresholds(lih, lim, eoh, eom);
+    attCloseModal();
+    attRenderShell();
+    attToast('✅ Thresholds saved & recalculated');
+  }
+
+  // ─── EMPLOYEE ID MODAL ───────────────────────────────────────
+  function attOpenEmpIdModal() {
+    const mn = ATT.currentMonth;
+    if (!mn) return;
+    const mo = ATT.months[mn];
+    const rows = mo.employees.map((e, i) => `
+      <tr>
+        <td style="padding:5px 8px;">${i + 1}</td>
+        <td style="padding:5px 8px;"><input id="att-id-${i}" value="${e.empId || ''}" style="width:110px;padding:4px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text);"></td>
+        <td style="padding:5px 8px;">${e.name}</td>
+      </tr>`).join('');
+    attModal(`
+      <button class="modal-close" onclick="attCloseModal()">✕ Close</button>
+      <div class="modal-title">🪪 Set / Change Employee IDs — ${mn}</div>
+      <div style="max-height:340px;overflow-y:auto;">
+        <table style="width:100%;font-size:0.8rem;"><thead><tr><th>#</th><th>Employee ID</th><th>Name</th></tr></thead><tbody>${rows}</tbody></table>
+      </div>
+      <div class="modal-row" style="margin-top:1rem;">
+        <button class="modal-btn cancel" onclick="attCloseModal()">Cancel</button>
+        <button class="modal-btn" onclick="attRunApplyEmpIdStore()">🔄 Apply Saved IDs</button>
+        <button class="modal-btn primary" onclick="attRunSaveAllEmpIds()">💾 Save All</button>
+      </div>
+    `, true);
+  }
+  function attRunSaveAllEmpIds() {
+    const mo = ATT.months[ATT.currentMonth];
+    mo.employees.forEach((e, i) => {
+      const v = document.getElementById('att-id-' + i).value.trim();
+      if (v) attSetEmpId(ATT.currentMonth, i, v);
+    });
+    attSave();
+    attCloseModal();
+    attRenderShell();
+    attToast('✅ Employee IDs saved');
+  }
+  function attRunApplyEmpIdStore() {
+    const count = attApplyEmpIdStoreToMonth(ATT.currentMonth);
+    attCloseModal();
+    attRenderShell();
+    attToast(`✅ Applied ${count} saved ID(s) to this month`);
+  }
+
+  // ─── SORT / RECALC ───────────────────────────────────────────
+  function attDoSort() {
+    if (!ATT.currentMonth) return;
+    attSortAlpha(ATT.currentMonth);
+    attRenderShell();
+    attToast('✅ Sorted A→Z');
+  }
+  function attDoRecalc() {
+    if (!ATT.currentMonth) return;
+    attRecalcSummary(ATT.currentMonth);
+    attRenderShell();
+    attToast('✅ Recalculated');
+  }
+
+  // ─── DOWNLOAD AS EXCEL ───────────────────────────────────────
+  function attDownloadExcel() {
+    const mn = ATT.currentMonth;
+    if (!mn) return;
+    const mo = ATT.months[mn];
+    const daysInMonth = getDaysInMonth(mn);
+
+    const dayHeaders = [];
+    for (let d = 1; d <= daysInMonth; d++) dayHeaders.push(d + ' ' + getDaySuffix(d, mn));
+    for (let d = daysInMonth + 1; d <= 31; d++) dayHeaders.push('');
+
+    const header = ['Sl.No', 'Employee ID', 'Employee Name', ''].concat(dayHeaders).concat(SUMMARY_HEADERS);
+    const aoa = [['Access Report – ' + mn], header];
+
+    mo.employees.forEach((emp, idx) => {
+      const s = emp.summary || {};
+      aoa.push([idx + 1, emp.empId || '', emp.name, 'In Time', ...pad31(emp.inRow)]);
+      aoa.push(['', '', '', 'Out Time', ...pad31(emp.outRow),
+        s.totalHrs || '', s.totalDays || '', s.empHrs || '', s.empDays || '',
+        s.leave || '', s.wfh || '', s.od || '', s.permission || '',
+        s.liCount || '', s.liDays || '', s.eoCount || '', s.eoDays || '']);
+      aoa.push(['', '', '', 'Total Hrs', ...pad31(emp.totRow)]);
+    });
+
+    function pad31(arr) {
+      const out = arr.slice(0, 31);
+      while (out.length < 31) out.push('');
+      return out;
+    }
+
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, mn.substring(0, 31));
+    XLSX.writeFile(wb, mn.replace(/\s+/g, '_') + '_AccessReport.xlsx');
+  }
+
+  // ─── EXPOSE GLOBALS ──────────────────────────────────────────
+  window.attInit = attInit;
+  window.attSwitchMonth = attSwitchMonth;
+  window.attOpenImportModal = attOpenImportModal;
+  window.attRunImport = attRunImport;
+  window.attOpenHolidayModal = attOpenHolidayModal;
+  window.attRunApplyHolidays = attRunApplyHolidays;
+  window.attOpenLeaveModal = attOpenLeaveModal;
+  window.attLoadAbDays = attLoadAbDays;
+  window.attToggleAllDays = attToggleAllDays;
+  window.attRunApplyLeave = attRunApplyLeave;
+  window.attOpenPermissionModal = attOpenPermissionModal;
+  window.attLoadPeDays = attLoadPeDays;
+  window.attRunApplyPermission = attRunApplyPermission;
+  window.attOpenBenchmarkModal = attOpenBenchmarkModal;
+  window.attUpdateBmPreview = attUpdateBmPreview;
+  window.attRunApplyBenchmark = attRunApplyBenchmark;
+  window.attOpenThresholdModal = attOpenThresholdModal;
+  window.attRunApplyThresholds = attRunApplyThresholds;
+  window.attOpenEmpIdModal = attOpenEmpIdModal;
+  window.attRunSaveAllEmpIds = attRunSaveAllEmpIds;
+  window.attRunApplyEmpIdStore = attRunApplyEmpIdStore;
+  window.attDoSort = attDoSort;
+  window.attDoRecalc = attDoRecalc;
+  window.attDownloadExcel = attDownloadExcel;
+  window.attCloseModal = attCloseModal;
+})();
+
 </script>
 </html>
