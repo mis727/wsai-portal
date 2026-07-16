@@ -6,7 +6,38 @@
 <title>WSAI - PORTAL</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
+  // ── GLOBAL CHART DEFAULTS: legends + numeric value labels on every visualization ──
+  // Registered once, here, so every Chart.js instance in the portal (People, Assets,
+  // Expenses, Publications, COO Dashboard, etc.) shows a legend and the actual number
+  // on each bar/segment/point by default, without having to touch each chart config.
+  // Individual chart configs can still override `plugins.datalabels` per-chart if a
+  // specific visualization gets too cluttered with labels.
+  if (window.Chart && window.ChartDataLabels) {
+    Chart.register(ChartDataLabels);
+    Chart.defaults.plugins.legend.display = true;
+    Chart.defaults.plugins.legend.position = 'bottom';
+    Chart.defaults.plugins.legend.labels = Object.assign({}, Chart.defaults.plugins.legend.labels, {
+      color: '#94A3B8', font: { size: 9 }, boxWidth: 10, padding: 10
+    });
+    Chart.defaults.plugins.datalabels = {
+      display: function(ctx) {
+        var v = ctx.dataset && ctx.dataset.data ? ctx.dataset.data[ctx.dataIndex] : null;
+        return v !== 0 && v !== null && v !== undefined && v !== '';
+      },
+      color: function(ctx) { return ctx.chart.config.type === 'doughnut' || ctx.chart.config.type === 'pie' ? '#fff' : '#CBD5E1'; },
+      anchor: function(ctx) { return ctx.chart.config.type === 'bar' ? 'end' : 'center'; },
+      align: function(ctx) { return ctx.chart.config.type === 'bar' ? 'top' : 'center'; },
+      font: { size: 9, weight: '600' },
+      formatter: function(value) {
+        if (typeof value === 'number') return value.toLocaleString('en-IN');
+        return value;
+      }
+    };
+  }
+</script>
 <style>
   :root {
     --bg: #0A0E1A;
@@ -927,7 +958,7 @@
     background: linear-gradient(90deg, var(--accent), var(--accent2), var(--purple));
     border-radius: 18px 18px 0 0;
   }
-  .modal-title { font-family: var(--font-display); font-size: 1.4rem; margin-bottom: 1.5rem; }
+  .modal-title { font-family: var(--font-display); font-size: 1.4rem; margin-bottom: 1.5rem; padding-right: 4.5rem; }
   .modal-close {
     position: absolute; top: 1rem; right: 1rem;
     background: none; border: 1px solid var(--border); border-radius: 7px;
@@ -976,8 +1007,10 @@
   .tenure-modal-box {
     background: var(--surface); border: 1px solid var(--border);
     border-radius: 18px; padding: 2rem; max-width: 500px; width: 100%;
+    max-height: 90vh; overflow-y: auto; box-sizing: border-box;
     position: relative; animation: slideUp 0.3s cubic-bezier(.22,1,.36,1);
   }
+  .tenure-modal-box .modal-title { padding-right: 4.5rem; }
   .tenure-preview {
     background: var(--surface2); border-radius: 10px; padding: 1rem;
     margin: 1rem 0; font-family: var(--font-mono); font-size: 0.82rem;
@@ -1565,13 +1598,14 @@
        ══════════════════════════════════════════════════════════════ */
 
     /* Compact KPI strip with trend indicators */
-    .exec-kpi-strip { display:grid; grid-template-columns:repeat(6,1fr); gap:0.65rem; margin-bottom:1rem; }
+    .exec-kpi-strip { display:grid; grid-template-columns:repeat(5,1fr); gap:0.65rem; margin-bottom:1rem; }
     @media (max-width:1100px) { .exec-kpi-strip { grid-template-columns:repeat(3,1fr); } }
     @media (max-width:640px)  { .exec-kpi-strip { grid-template-columns:repeat(2,1fr); } }
     .exec-kpi {
       background:var(--surface); border:1px solid var(--border); border-radius:12px;
-      padding:0.75rem 0.9rem; position:relative; overflow:hidden;
+      padding:0.75rem 0.9rem; position:relative; overflow:hidden; transition:border-color 0.2s, transform 0.15s;
     }
+    .exec-kpi[onclick]:hover { border-color:var(--accent); transform:translateY(-2px); }
     .exec-kpi .ek-label { font-size:0.62rem; font-family:var(--font-mono); text-transform:uppercase; letter-spacing:0.06em; color:var(--text3); margin-bottom:0.3rem; }
     .exec-kpi .ek-val { font-size:1.35rem; font-weight:700; font-family:var(--font-mono); color:var(--text); line-height:1; }
     .exec-kpi .ek-trend { font-size:0.68rem; margin-top:0.3rem; display:flex; align-items:center; gap:3px; }
@@ -1927,8 +1961,7 @@
             <div class="exec-kpi"><div class="ek-label">Total People</div><div class="ek-val" id="ek-total">—</div><div class="ek-trend flat" id="ek-total-trend">—</div></div>
             <div class="exec-kpi"><div class="ek-label">Active</div><div class="ek-val" id="ek-active">—</div><div class="ek-trend up" id="ek-active-trend">—</div></div>
             <div class="exec-kpi"><div class="ek-label">Alumni</div><div class="ek-val" id="ek-alumni">—</div><div class="ek-trend flat" id="ek-alumni-trend">—</div></div>
-            <div class="exec-kpi"><div class="ek-label">Recent Joins (30d)</div><div class="ek-val" id="ek-recent">—</div><div class="ek-trend up" id="ek-recent-trend">—</div></div>
-            <div class="exec-kpi"><div class="ek-label">Avg Staff Tenure</div><div class="ek-val" id="ek-tenure">—</div><div class="ek-trend flat" id="ek-tenure-trend">days</div></div>
+            <div class="exec-kpi" id="ek-recent-card" onclick="openRecentJoinsModal()" style="cursor:pointer;" title="Click to see who joined in the last 30 days"><div class="ek-label">Recent Joins (30d)</div><div class="ek-val" id="ek-recent">—</div><div class="ek-trend up" id="ek-recent-trend">—</div></div>
             <div class="exec-kpi"><div class="ek-label">High Tenure Risk</div><div class="ek-val" id="ek-risk">—</div><div class="ek-trend down" id="ek-risk-trend">—</div></div>
           </div>
 
@@ -6356,24 +6389,22 @@
 
     // ── Executive KPI strip (always reflects the TRUE full dataset — an audit-style summary, not filtered) ──
     const today = new Date();
-    const allActivePeople = [].concat(DB.staff||[], DB.faculty||[], DB.assocFaculty||[], DB.affiFaculty||[], DB.researchers||[], DB.students||[], DB.fellows||[]);
+    const _tagType = (arr, type) => (arr||[]).map(r => Object.assign({}, r, { _type: type }));
+    const allActivePeople = [].concat(
+      _tagType(DB.staff, 'Staff'), _tagType(DB.faculty, 'Faculty'), _tagType(DB.assocFaculty, 'Assoc. Faculty'),
+      _tagType(DB.affiFaculty, 'Affiliate Faculty'), _tagType(DB.researchers, 'Researcher'),
+      _tagType(DB.students, 'Student'), _tagType(DB.fellows, 'Assoc. Fellow')
+    );
     const alumniCount = (DB.alumni||[]).length;
     const totalPeople = allActivePeople.length + alumniCount;
     el('ek-total', totalPeople);
     el('ek-active', allActivePeople.length);
     el('ek-alumni', alumniCount);
 
-    const recentJoins = allActivePeople.filter(r => r.joiningDate && Math.floor((today - new Date(r.joiningDate)) / 86400000) <= 30).length;
-    el('ek-recent', recentJoins);
-    document.getElementById('ek-recent-trend').innerHTML = recentJoins > 0 ? `▲ last 30 days` : `— none this month`;
-
-    const staffWithTenure = (DB.staff||[]).filter(s => s.joiningDate);
-    let avgTenure = 0;
-    if (staffWithTenure.length) {
-      const totalDays = staffWithTenure.reduce((sum,s)=> sum + Math.max(0, Math.floor((today - new Date(s.joiningDate))/86400000)), 0);
-      avgTenure = Math.round(totalDays / staffWithTenure.length);
-    }
-    el('ek-tenure', avgTenure);
+    const recentJoinsList = allActivePeople.filter(r => r.joiningDate && Math.floor((today - new Date(r.joiningDate)) / 86400000) <= 30);
+    window._recentJoinsList = recentJoinsList; // consumed by openRecentJoinsModal()
+    el('ek-recent', recentJoinsList.length);
+    document.getElementById('ek-recent-trend').innerHTML = recentJoinsList.length > 0 ? `▲ last 30 days` : `— none this month`;
 
     const highRisk = (DB.staff||[]).filter(s => {
       if (!s.exitDate) return false;
@@ -6401,6 +6432,46 @@
     renderAW_studentDonut();
     renderAW_researcherDonut();
     renderAW_matrix();
+  }
+
+  // ── Recent Joins (30d) — click-through detail modal ──
+  function openRecentJoinsModal() {
+    const list = (window._recentJoinsList || []).slice().sort((a, b) => new Date(b.joiningDate) - new Date(a.joiningDate));
+    let overlay = document.getElementById('recent-joins-modal-overlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'recent-joins-modal-overlay';
+      overlay.className = 'tenure-modal-overlay';
+      overlay.addEventListener('click', e => { if (e.target === overlay) closeRecentJoinsModal(); });
+      document.body.appendChild(overlay);
+    }
+    const rows = list.map(r => `
+      <tr>
+        <td>${r.name || '—'}</td>
+        <td><span class="badge-active" style="background:rgba(59,130,246,0.15);color:#3B82F6;">${r._type || '—'}</span></td>
+        <td>${r.designation || r.facultyType || r.category || '—'}</td>
+        <td>${r.center || r.department || r.affiliation || '—'}</td>
+        <td>${r.joiningDate || '—'}</td>
+      </tr>`).join('');
+    overlay.innerHTML = `
+      <div class="tenure-modal-box" style="max-width:720px;">
+        <button class="modal-close" onclick="closeRecentJoinsModal()">✕ Close</button>
+        <h3 class="modal-title" style="margin-bottom:0.35rem;">🆕 Recent Joins — Last 30 Days</h3>
+        <div style="font-size:0.8rem;color:var(--text2);margin-bottom:1rem;">${list.length} ${list.length === 1 ? 'person' : 'people'} joined across all categories</div>
+        ${list.length ? `
+        <div style="max-height:55vh;overflow:auto;border:1px solid var(--border);border-radius:10px;">
+          <table class="data-table" style="width:100%;">
+            <thead><tr><th>Name</th><th>Type</th><th>Designation</th><th>Center / Dept.</th><th>Joined</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>` : `<div style="text-align:center;color:var(--text3);padding:2rem 0;">No one has joined in the last 30 days.</div>`}
+        <div class="modal-actions"><button class="modal-btn cancel" onclick="closeRecentJoinsModal()">Close</button></div>
+      </div>`;
+    overlay.classList.add('show');
+  }
+  function closeRecentJoinsModal() {
+    const overlay = document.getElementById('recent-joins-modal-overlay');
+    if (overlay) overlay.classList.remove('show');
   }
 
   // Helper: populate a <select> filter's options exactly once (keeps each
@@ -6583,18 +6654,39 @@
     const c = document.getElementById(canvasId);
     if (!c) return;
     if (PeopleCharts[canvasId]) { try { PeopleCharts[canvasId].destroy(); } catch(e) {} }
+    extraOpts = extraOpts || {};
+    // Give every dataset a legend-friendly label (single-series bar/line charts
+    // previously had no `label`, so a visible legend would just say "undefined").
+    (datasets || []).forEach(function(ds, i) {
+      if (!ds.label) ds.label = labels && labels.length ? 'Count' : ('Series ' + (i + 1));
+    });
+    const extraPlugins = extraOpts.plugins || {};
+    // Legend is ALWAYS shown now (per-chart callers used to pass
+    // `plugins:{legend:{display:false}}` for single-series bar charts — that
+    // override is intentionally ignored here so every visualization gets a
+    // legend, as requested). Value labels are handled separately by the
+    // global Chart.defaults.plugins.datalabels config, so no need to
+    // duplicate that here.
+    const mergedPlugins = Object.assign({}, extraPlugins, {
+      legend: Object.assign(
+        { position: 'bottom', labels: { color: 'var(--text2)', font: { size: 9 }, boxWidth: 10 } },
+        extraPlugins.legend || {},
+        { display: true }
+      )
+    });
     const baseOpts = {
       responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: type === 'doughnut' || type === 'pie', position: 'bottom', labels: { color: 'var(--text2)', font: { size: 9 }, boxWidth: 10 } } },
+      plugins: mergedPlugins,
       scales: (type === 'bar' || type === 'line') ? {
         y: { beginAtZero: true, ticks: { color: 'var(--text3)', font: { size: 9 } }, grid: { color: 'rgba(99,179,237,0.08)' } },
         x: { ticks: { color: 'var(--text3)', font: { size: 9 }, maxRotation: 40 }, grid: { display: false } }
       } : undefined,
       cutout: (type === 'doughnut') ? '62%' : undefined
     };
+    const finalOpts = Object.assign({}, baseOpts, extraOpts, { plugins: mergedPlugins });
     PeopleCharts[canvasId] = new Chart(c.getContext('2d'), {
       type, data: { labels, datasets },
-      options: Object.assign(baseOpts, extraOpts || {})
+      options: finalOpts
     });
   }
 
@@ -25366,7 +25458,7 @@ function _v31RenderExpenseBreakdown(rows, prebuilt) {
     V31.charts.bar = new Chart(bc.getContext('2d'), {
       type:'bar',
       data:{ labels:mLabels, datasets:[{ label:'₹ Amount', data:mLabels.map(function(m){ return monthly[m]||0; }), backgroundColor:'rgba(59,130,246,0.65)', borderRadius:4 }] },
-      options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+      options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:true,position:'bottom',labels:{color:'var(--text2)',font:{size:9},boxWidth:10}}},
         scales:{ y:{ticks:{color:'var(--text3)',font:{size:9}},grid:{color:'rgba(99,179,237,0.08)'}}, x:{ticks:{color:'var(--text3)',font:{size:9}},grid:{display:false}} } }
     });
   }
@@ -25416,7 +25508,7 @@ function _v31RenderFacultyCharts(stus, ress) {
     V31.charts.fLine = new Chart(lc.getContext('2d'), {
       type:'line',
       data:{ labels:yLabels, datasets:[{ label:'Students', data:yLabels.map(function(l){ return yearMap[l]||0; }), borderColor:'#06B6D4', backgroundColor:'rgba(6,182,212,0.08)', tension:0.4, fill:true, pointRadius:4 }] },
-      options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+      options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:true,position:'bottom',labels:{color:'var(--text2)',font:{size:9},boxWidth:10}}},
         scales:{ y:{ticks:{color:'var(--text3)',font:{size:9}},grid:{color:'rgba(99,179,237,0.08)'}}, x:{ticks:{color:'var(--text3)',font:{size:9}},grid:{display:false}} } }
     });
   }
@@ -25429,8 +25521,8 @@ function _v31RenderFacultyCharts(stus, ress) {
     if (V31.charts.fBar) V31.charts.fBar.destroy();
     V31.charts.fBar = new Chart(bc2.getContext('2d'), {
       type:'bar',
-      data:{ labels:dLabels, datasets:[{ data:dLabels.map(function(l){ return desigMap[l]||0; }), backgroundColor:'rgba(139,92,246,0.65)', borderRadius:4 }] },
-      options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+      data:{ labels:dLabels, datasets:[{ label:'Researchers', data:dLabels.map(function(l){ return desigMap[l]||0; }), backgroundColor:'rgba(139,92,246,0.65)', borderRadius:4 }] },
+      options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:true,position:'bottom',labels:{color:'var(--text2)',font:{size:9},boxWidth:10}}},
         scales:{ y:{ticks:{color:'var(--text3)',font:{size:9}},grid:{color:'rgba(99,179,237,0.08)'}}, x:{ticks:{color:'var(--text3)',font:{size:8},maxRotation:40},grid:{display:false}} } }
     });
   }
@@ -26134,8 +26226,8 @@ function _v31BarChart(canvasId, dataObj, color, key) {
   if (V31.charts[key]) V31.charts[key].destroy();
   V31.charts[key] = new Chart(ctx.getContext('2d'), {
     type:'bar',
-    data:{ labels:labels, datasets:[{ data:data, backgroundColor:color||'rgba(59,130,246,0.65)', borderRadius:4 }] },
-    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+    data:{ labels:labels, datasets:[{ label:'Count', data:data, backgroundColor:color||'rgba(59,130,246,0.65)', borderRadius:4 }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:true,position:'bottom',labels:{color:'var(--text2)',font:{size:9},boxWidth:10}}},
       scales:{ y:{ticks:{color:'var(--text3)',font:{size:9}},grid:{color:'rgba(99,179,237,0.08)'}}, x:{ticks:{color:'var(--text3)',font:{size:9},maxRotation:35},grid:{display:false}} } }
   });
 }
@@ -27681,9 +27773,12 @@ tbody td { vertical-align: middle; }
   .table-card { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .table-card table { min-width: 560px; }
 
-  .modal-box { padding: 1.25rem; max-width: 94vw; }
+  .modal-box, .tenure-modal-box { padding: 1.25rem; max-width: 94vw; }
   .modal-row { grid-template-columns: 1fr; }
   .form-row { grid-template-columns: 1fr; }
+  .modal-actions { flex-direction: column-reverse; align-items: stretch; }
+  .modal-actions .modal-btn { width: 100%; text-align: center; }
+  .exec-kpi-strip { grid-template-columns: repeat(2, 1fr) !important; }
 
   #toast { left: 1rem; right: 1rem; bottom: 1rem; max-width: none; }
 }
@@ -32137,7 +32232,7 @@ tbody td { vertical-align: middle; }
   // ══════════════════════════════════════════════════════════════════════
   const _chartRegistry = {};
 
-  function _buildChart(canvasId, type, labels, data, colors, opts) {
+  function _buildChart(canvasId, type, labels, data, colors, opts, seriesLabel) {
     if (!window.Chart) return;
     const canvas = _id(canvasId);
     if (!canvas) return;
@@ -32147,16 +32242,18 @@ tbody td { vertical-align: middle; }
     }
     const defaults = {
       responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{ display: type !== 'bar', position:'right', labels:{ font:{size:10}, boxWidth:10, color:'var(--text2)' } } },
+      plugins:{ legend:{ display: true, position:'right', labels:{ font:{size:10}, boxWidth:10, color:'var(--text2)' } } },
       scales: type === 'bar' ? {
         x:{ ticks:{ font:{size:9}, color:'var(--text3)' }, grid:{ color:'rgba(255,255,255,0.04)' } },
         y:{ ticks:{ font:{size:9}, color:'var(--text3)' }, grid:{ color:'rgba(255,255,255,0.06)' }, beginAtZero:true }
       } : {}
     };
+    const merged = Object.assign({}, defaults, opts||{});
+    if (opts && opts.plugins) merged.plugins = Object.assign({}, defaults.plugins, opts.plugins, { legend: Object.assign({}, defaults.plugins.legend, (opts.plugins.legend||{})) });
     _chartRegistry[canvasId] = new Chart(canvas, {
       type,
-      data:{ labels, datasets:[{ data, backgroundColor:colors, borderWidth:0, borderRadius: type==='bar'?4:0 }] },
-      options: Object.assign(defaults, opts||{})
+      data:{ labels, datasets:[{ label: seriesLabel || 'Count', data, backgroundColor:colors, borderWidth:0, borderRadius: type==='bar'?4:0 }] },
+      options: merged
     });
   }
 
@@ -32196,10 +32293,19 @@ tbody td { vertical-align: middle; }
     const staff = DB.staff || [];
     const groups = {};
     staff.forEach(s => { const d = s.designation||s.category||'Other'; groups[d] = (groups[d]||0)+1; });
-    const labels = Object.keys(groups).slice(0,6);
-    const data   = labels.map(l => groups[l]);
-    const cols   = ['#3B82F6','#06B6D4','#10B981','#8B5CF6','#F59E0B','#F97316'];
-    _buildChart(prefix + 'staff-desig-chart', 'bar', labels.length ? labels : ['No Data'], data.length ? data : [0], data.length ? cols : ['#334155']);
+    // FIX: previously truncated to the first 6 designations (Object.keys
+    // insertion order), silently dropping every designation past that.
+    // Now shows ALL designations, sorted by headcount (highest first) so the
+    // most common ones read first, with each bar labelled by its own count.
+    const sorted = Object.entries(groups).sort((a, b) => b[1] - a[1]);
+    const labels = sorted.map(e => e[0]);
+    const data   = sorted.map(e => e[1]);
+    const palette = ['#3B82F6','#06B6D4','#10B981','#8B5CF6','#F59E0B','#F97316','#EF4444','#EC4899','#14B8A6','#A78BFA','#84CC16','#64748B'];
+    const cols   = labels.map((_, i) => palette[i % palette.length]);
+    // Horizontal bars once there are more than a handful of designations —
+    // keeps every label readable instead of crowding/rotating x-axis text.
+    const extraOpts = labels.length > 8 ? { indexAxis: 'y' } : {};
+    _buildChart(prefix + 'staff-desig-chart', 'bar', labels.length ? labels : ['No Data'], data.length ? data : [0], data.length ? cols : ['#334155'], extraOpts, 'Staff Count');
   }
 
   // HR — Student Designation Distribution
@@ -33446,17 +33552,23 @@ tbody td { vertical-align: middle; }
 </script>
 
 <script>
-// ═══════════════════════════════════════════════════════════════════════════
-// ATTENDANCE MANAGER — client-side port of the Google Apps Script
-// "AttendanceManager_v3_fixed.gs" business logic. Runs entirely in the
-// browser: SheetJS (already loaded as xlsx@0.18.5) parses uploaded WSAI /
-// RBCDSAI biometric exports directly, no Google Sheet required.
+// ATTENDANCE MANAGER v4 — client-side, multi-dataset, fully editable.
+// Runs entirely in the browser: SheetJS (xlsx@0.18.5) parses uploaded
+// biometric exports and previously-exported "Access Report" files directly.
+// Supports two simultaneous datasets per month ("Dataset 1" / "Dataset 2"),
+// auto-detects which of the known formats a file is in, lets users add /
+// edit / delete / copy / move individual attendance records, remove or
+// replace an uploaded dataset without resetting the app, and exports
+// Dataset 1 only, Dataset 2 only, or a combined report — all matching the
+// original "Access Report" workbook layout as closely as SheetJS's free
+// (community) build allows (values + column widths + row/column merges;
+// cell colors/fonts are not supported by the bundled xlsx.js build).
 // All state persists to localStorage under ATT_STORE_KEY.
 // ═══════════════════════════════════════════════════════════════════════════
 (function () {
   'use strict';
 
-  // ─── CONSTANTS (mirrors GAS) ────────────────────────────────
+  // ─── CONSTANTS ──────────────────────────────────────────────
   const ATT_STORE_KEY   = 'wsai_attendance_v1';
   const MINS_PER_DAY    = 9 * 60 + 15;      // 555
   const DEFAULT_BENCHMARK_DAYS = 19;
@@ -33475,19 +33587,23 @@ tbody td { vertical-align: middle; }
     'Leave', 'WFH', 'OD', 'Permission (1h+1h)', 'LI Count', 'LI Days', 'EO Count', 'EO Days'
   ];
 
+  const DS_KEYS = ['ds1', 'ds2'];
+  const DS_LABEL_DEFAULT = { ds1: 'Dataset 1', ds2: 'Dataset 2' };
+
   // ─── STATE ───────────────────────────────────────────────────
   let ATT = null;
 
   function attDefaultState() {
     return {
-      months: {},              // { "March 2026": { holidays:[], benchmarkDays:19, employees:[...] } }
+      months: {},               // { "March 2026": { holidays:[], benchmarkDays:19, employees:[...], datasets:{ds1:{...},ds2:{...}} } }
       thresholds: {
         lateInH: LATE_IN_HOUR_DEFAULT, lateInM: LATE_IN_MIN_DEFAULT,
         earlyOutH: EARLY_OUT_HOUR_DEFAULT, earlyOutM: EARLY_OUT_MIN_DEFAULT
       },
-      empIds: {},               // { "john doe": "E001" }
-      empMatches: {},            // { "john doe": { id:"ST001", personName:"John Doe", category:"Staff" } }
-      currentMonth: null
+      empIds: {},                // { "john doe": "E001" }
+      empMatches: {},             // { "john doe": { id:"ST001", personName:"John Doe", category:"Staff" } }
+      currentMonth: null,
+      dsFilter: { ds1: true, ds2: true } // which dataset(s) are shown in the table
     };
   }
 
@@ -33497,7 +33613,19 @@ tbody td { vertical-align: middle; }
       ATT = raw ? JSON.parse(raw) : attDefaultState();
     } catch (e) { ATT = attDefaultState(); }
     if (!ATT.months) ATT = attDefaultState();
-    if (!ATT.empMatches) ATT.empMatches = {}; // backward-compat for state saved before this field existed
+    if (!ATT.empMatches) ATT.empMatches = {};
+    if (!ATT.dsFilter) ATT.dsFilter = { ds1: true, ds2: true };
+    // backward-compat: tag any pre-existing employees (from the older
+    // single-dataset version of this module) as Dataset 1, and make sure
+    // every month has a `datasets` map so the new UI never crashes on old data.
+    Object.keys(ATT.months).forEach(mn => {
+      const mo = ATT.months[mn];
+      if (!mo.datasets) mo.datasets = {};
+      (mo.employees || []).forEach(e => { if (!e.ds) e.ds = 'ds1'; });
+      if ((mo.employees || []).length && !mo.datasets.ds1) {
+        mo.datasets.ds1 = { label: DS_LABEL_DEFAULT.ds1, sourceType: (mo.employees[0] && mo.employees[0].sourceType) || 'Unknown', fileName: '', importedAt: null, count: mo.employees.filter(e => e.ds === 'ds1').length };
+      }
+    });
   }
 
   function attSave() {
@@ -33545,10 +33673,7 @@ tbody td { vertical-align: middle; }
       return pad2(h) + ':' + pad2(m);
     }
     if (typeof val === 'number') {
-      if (val <= 0 || val >= 1) {
-        // could be a raw hour count (e.g. RBCDSAI Total Hrs as decimal hours) — treat like GAS did in extractEmployeesFromExcel
-        return '';
-      }
+      if (val <= 0 || val >= 1) return '';
       const totalMins = Math.round(val * 24 * 60);
       if (totalMins === 0) return '';
       const h = Math.floor(totalMins / 60), m = totalMins % 60;
@@ -33651,12 +33776,31 @@ tbody td { vertical-align: middle; }
   function getEmpId(name) { return ATT.empIds[String(name).trim().toLowerCase()] || ''; }
   function saveEmpId(name, id) { ATT.empIds[String(name).trim().toLowerCase()] = id; attSave(); }
 
+  // ─── VALIDATION HELPERS ──────────────────────────────────────
+  // Kept intentionally permissive (warn, don't hard-block) since real biometric
+  // exports contain messy IDs — but this is the single place that decides
+  // whether an ID/name "looks" usable, so every entry point (import, add,
+  // edit, dataset merge) enforces the same rule.
+  function attIsValidEmpId(id) {
+    if (id === null || id === undefined) return false;
+    const s = String(id).trim();
+    if (!s) return false;
+    return /^[A-Za-z0-9][A-Za-z0-9 _\-\.\/]{0,24}$/.test(s);
+  }
+  function attIsBlankRow(name) { return !String(name || '').trim(); }
+
+  function attFindDuplicateIndex(mo, dsKey, empId, name, excludeIdx) {
+    if (!mo || !mo.employees) return -1;
+    return mo.employees.findIndex((e, i) => {
+      if (i === excludeIdx) return false;
+      if (e.ds !== dsKey) return false;
+      const idMatch = empId && e.empId && String(e.empId).trim().toLowerCase() === String(empId).trim().toLowerCase();
+      const nameMatch = name && e.name && String(e.name).trim().toLowerCase() === String(name).trim().toLowerCase();
+      return idMatch || (idMatch === false && !e.empId && !empId && nameMatch);
+    });
+  }
+
   // ─── PEOPLE ROSTER MATCH ────────────────────────────────────
-  // Builds a flat, searchable roster from every People Management category
-  // currently loaded in DB, so attendance import can be matched to a real
-  // person record instead of a free-typed ID. Falls back to email prefix
-  // for categories with no formal ID field (only Staff.id / Student.rollNo
-  // are true IDs today).
   function attPeopleRoster() {
     const D = window.DB || {};
     const roster = [];
@@ -33679,13 +33823,10 @@ tbody td { vertical-align: middle; }
     return roster;
   }
 
-  // Saves a full People-record match (not just a bare ID string) for an
-  // attendance name, so re-imports and the modal pre-fill can recall which
-  // exact person/category was matched, not only the ID.
   function saveEmpMatch(attName, match) {
     const key = String(attName).trim().toLowerCase();
     ATT.empMatches[key] = { id: match.id || '', personName: match.name || '', category: match.category || '' };
-    if (match.id) ATT.empIds[key] = match.id; // keep legacy ID store in sync
+    if (match.id) ATT.empIds[key] = match.id;
     attSave();
   }
   function getEmpMatch(attName) {
@@ -33703,14 +33844,9 @@ tbody td { vertical-align: middle; }
         try {
           const wb = XLSX.read(e.target.result, { type: 'array', cellDates: true });
           const ws = wb.Sheets[wb.SheetNames[0]];
-          // Some biometric exports (e.g. rptDAttendanceReg) leave column A
-          // entirely blank, so Excel saves the used range starting at column
-          // B (e.g. "B1:AH24"). SheetJS's header:1 mode indexes arrays from
-          // the range's FIRST column, not always column A — so every value
-          // silently shifts one column left and the row/column assumptions
-          // below (ported from the original Apps Script) break. Force the
-          // range to start at column A so blank leading columns are padded
-          // back in and indices line up correctly regardless of source.
+          // Some biometric exports leave column A entirely blank, so Excel
+          // saves the used range starting at column B. Force the range to
+          // start at column A so indices line up regardless of source.
           if (ws['!ref']) {
             const range = XLSX.utils.decode_range(ws['!ref']);
             if (range.s.c > 0) {
@@ -33727,8 +33863,50 @@ tbody td { vertical-align: middle; }
     });
   }
 
+  // ─── FORMAT AUTO-DETECTION ────────────────────────────────────
+  // Distinguishes three known shapes so the user never has to pick a format
+  // by hand: (1) a raw WSAI biometric export (rptDAttendanceReg), (2) a raw
+  // RBCDSAI biometric export (WorkHour In-Out Horizontal), and (3) a file
+  // previously exported *from this very portal* ("Access Report" layout,
+  // 3 rows/employee + day columns + summary columns) being re-uploaded,
+  // e.g. after edits were made outside the app. Returns null if none match,
+  // so the caller can fall back to asking the user.
+  function attDetectFormat(rows) {
+    for (let i = 0; i < Math.min(rows.length, 6); i++) {
+      const r = rows[i] || [];
+      const joined = r.map(c => String(c || '').toLowerCase()).join('|');
+      if (joined.includes('employee id') && joined.includes('employee name') && (joined.includes('sl.no') || joined.includes('sl no'))) {
+        return 'ACCESS';
+      }
+    }
+    for (let i = 0; i < Math.min(rows.length, 40); i++) {
+      const row = rows[i] || [];
+      const srRaw = row[1];
+      if (srRaw === '' || srRaw === null || srRaw === undefined) continue;
+      const sr = parseInt(String(srRaw));
+      if (isNaN(sr) || sr <= 0) continue;
+      const uid = String(row[2] || '').trim();
+      if (!uid) continue;
+      const name = String(row[4] || '').trim();
+      if (!name || !isNaN(parseFloat(name))) continue;
+      return 'WSAI';
+    }
+    for (let i = 0; i < Math.min(rows.length, 10); i++) {
+      const r = rows[i] || [];
+      const a = String(r[0] || '').trim().toLowerCase();
+      const b = String(r[1] || '').trim().toLowerCase();
+      if ((a.includes('sr') || a.includes('no')) && (b.includes('employee') || b.includes('emp'))) return 'RBCDSAI';
+    }
+    return null;
+  }
+
+  const FORMAT_LABELS = {
+    WSAI: 'WSAI Biometric (rptDAttendanceReg export)',
+    RBCDSAI: 'RBCDSAI Biometric (WorkHour In-Out Horizontal export)',
+    ACCESS: 'Access Report (previously exported from this portal)'
+  };
+
   // ─── EXTRACT: WSAI Biometric (rptDAttendanceReg) ─────────────
-  // Ported 1:1 from extractEmployees() in the GAS script.
   function extractEmployeesWSAI(rawValues) {
     const employees = [];
     let i = 0;
@@ -33801,7 +33979,6 @@ tbody td { vertical-align: middle; }
   }
 
   // ─── EXTRACT: RBCDSAI Biometric (WorkHour In-Out Horizontal) ─
-  // Ported 1:1 from extractEmployeesFromExcel() in the GAS script.
   function extractEmployeesRBCDSAI(rawValues, monthName) {
     const employees = [];
     let headerRowIdx = -1;
@@ -33896,8 +34073,70 @@ tbody td { vertical-align: middle; }
     return employees;
   }
 
+  // ─── EXTRACT: Access Report (re-import of a portal export) ───
+  // Parses the exact layout attDownloadExcel() produces: a title row, a
+  // header row containing "Sl.No / Employee ID / Employee Name", then three
+  // rows per employee (In Time / Out Time / Total Hrs) with day-of-month
+  // columns starting at column E, followed by the 12 summary columns on the
+  // "Out Time" row. Cell values (status codes or times) are taken as-is —
+  // this lets a report that was downloaded, hand-edited in Excel, and
+  // re-uploaded come back in exactly as it left, edits included.
+  function cellToDayStr(v) {
+    if (v === null || v === undefined) return '';
+    if (v instanceof Date) {
+      const h = v.getHours(), m = v.getMinutes();
+      if (h === 0 && m === 0) return '';
+      return pad2(h) + ':' + pad2(m);
+    }
+    if (typeof v === 'number') {
+      if (v >= 1 || v < 0) return '';
+      const totalMins = Math.round(v * 24 * 60);
+      if (totalMins === 0) return '';
+      return pad2(Math.floor(totalMins / 60)) + ':' + pad2(totalMins % 60);
+    }
+    const s = String(v).trim();
+    if (s === '' || s === 'nan') return '';
+    return s;
+  }
+  function extractEmployeesAccessReport(rawValues, monthName) {
+    const employees = [];
+    let headerRowIdx = -1;
+    for (let i = 0; i < Math.min(rawValues.length, 8); i++) {
+      const r = rawValues[i] || [];
+      const joined = r.map(c => String(c || '').toLowerCase()).join('|');
+      if (joined.includes('employee id') && joined.includes('employee name')) { headerRowIdx = i; break; }
+    }
+    if (headerRowIdx === -1) return employees;
+    const daysInMonth = getDaysInMonth(monthName);
+    const DAY_COL_START = 4; // A=Sl.No, B=EmpID, C=Name, D=row label, E.. = days
+
+    let i = headerRowIdx + 1;
+    while (i < rawValues.length) {
+      const row = rawValues[i] || [];
+      const slRaw = row[0];
+      const sl = parseInt(String(slRaw === null || slRaw === undefined ? '' : slRaw));
+      if (!isNaN(sl) && sl > 0) {
+        const empId = String(row[1] || '').trim();
+        const name = String(row[2] || '').trim();
+        if (!name) { i++; continue; }
+        const outR = rawValues[i + 1] || [];
+        const totR = rawValues[i + 2] || [];
+        const inRow = Array(31).fill(''), outRow = Array(31).fill(''), totRow = Array(31).fill('');
+        for (let d = 0; d < daysInMonth; d++) {
+          inRow[d]  = cellToDayStr(row[DAY_COL_START + d]);
+          outRow[d] = cellToDayStr(outR[DAY_COL_START + d]);
+          totRow[d] = cellToDayStr(totR[DAY_COL_START + d]);
+        }
+        employees.push({ empId, name, inRow, outRow, totRow });
+        i += 3;
+      } else {
+        i++;
+      }
+    }
+    return employees;
+  }
+
   // ─── BUILD DAY ROW (In / Out / Total status+time per day) ────
-  // Ported from buildDayRow() in the GAS script.
   function buildDayRow(emp, label, woSet, holidays, daysInMonth) {
     const row = Array(31).fill('');
     for (let d = 1; d <= daysInMonth; d++) {
@@ -34010,8 +34249,9 @@ tbody td { vertical-align: middle; }
   }
 
   // ─── RECALC SUMMARY (post-edit) — ports recalcSummary() ───────
-  // Operates purely off the stored In/Out/Total cell rows, exactly like the
-  // GAS version does once data lives in the sheet.
+  // Operates purely off the stored In/Out/Total cell rows — the single
+  // source of truth for every dataset format after import, so edits, adds,
+  // copies, and moves all flow through the exact same calculation.
   function attRecalcSummary(monthName) {
     const mo = ATT.months[monthName];
     if (!mo) return;
@@ -34103,26 +34343,194 @@ tbody td { vertical-align: middle; }
     attSave();
   }
 
-  // ─── IMPORT (creates or replaces a month's employee data) ─────
-  function attImport(monthName, type, employees) {
-    if (!ATT.months[monthName]) ATT.months[monthName] = { holidays: [], benchmarkDays: DEFAULT_BENCHMARK_DAYS, employees: [] };
+  // ─── IMPORT (creates a dataset slot, or replaces it in place) ─
+  // `sourceType` is one of 'WSAI' | 'RBCDSAI' | 'ACCESS'. `rawEmployees` is
+  // the extractor's raw output. `dsKey` is 'ds1' or 'ds2' — re-importing
+  // into a slot that already has data REPLACES only that slot's rows; the
+  // other dataset (and this month's holidays) are left untouched, so a
+  // corrected file can be re-uploaded without resetting anything else.
+  function attImport(monthName, sourceType, rawEmployees, dsKey, fileMeta) {
+    dsKey = (dsKey === 'ds2') ? 'ds2' : 'ds1';
+    fileMeta = fileMeta || {};
+    if (!ATT.months[monthName]) ATT.months[monthName] = { holidays: [], benchmarkDays: DEFAULT_BENCHMARK_DAYS, employees: [], datasets: {} };
     const mo = ATT.months[monthName];
+    if (!mo.datasets) mo.datasets = {};
     const daysInMonth = getDaysInMonth(monthName);
     const woSet = buildWOSet(monthName, daysInMonth);
     const holidays = mo.holidays || [];
 
-    mo.employees = employees.map(emp => {
-      const li = countLIEO(emp, holidays, woSet, daysInMonth);
-      const inRow = buildDayRow(emp, 'In Time', woSet, holidays, daysInMonth);
-      const outRow = buildDayRow(emp, 'Out Time', woSet, holidays, daysInMonth);
-      const totRow = buildDayRow(emp, 'Total Hrs', woSet, holidays, daysInMonth);
-      const summary = buildInitialSummary(emp, woSet, holidays, daysInMonth, li, monthName);
-      return { empId: emp.userId, name: emp.name, sourceType: type, inRow, outRow, totRow, summary };
+    let skipped = 0;
+    let builtRows;
+    if (sourceType === 'ACCESS') {
+      builtRows = rawEmployees.filter(e => {
+        if (attIsBlankRow(e.name)) { skipped++; return false; }
+        return true;
+      }).map(emp => ({
+        empId: emp.empId, name: emp.name, sourceType, ds: dsKey,
+        inRow: emp.inRow, outRow: emp.outRow, totRow: emp.totRow, summary: {}
+      }));
+      // Re-infer holidays from any PH markers in the re-imported file so a
+      // previously-marked holiday isn't lost, merged with what's already set.
+      const inferred = new Set(holidays);
+      builtRows.forEach(r => {
+        for (let d = 0; d < daysInMonth; d++) {
+          if (r.inRow[d] === STATUS.PH || r.totRow[d] === STATUS.PH) inferred.add(d + 1);
+        }
+      });
+      mo.holidays = [...inferred].sort((a, b) => a - b);
+    } else {
+      builtRows = rawEmployees.filter(e => {
+        if (attIsBlankRow(e.name)) { skipped++; return false; }
+        return true;
+      }).map(emp => {
+        const li = countLIEO(emp, mo.holidays || [], woSet, daysInMonth);
+        const inRow = buildDayRow(emp, 'In Time', woSet, mo.holidays || [], daysInMonth);
+        const outRow = buildDayRow(emp, 'Out Time', woSet, mo.holidays || [], daysInMonth);
+        const totRow = buildDayRow(emp, 'Total Hrs', woSet, mo.holidays || [], daysInMonth);
+        const summary = buildInitialSummary(emp, woSet, mo.holidays || [], daysInMonth, li, monthName);
+        return { empId: emp.userId, name: emp.name, sourceType, ds: dsKey, inRow, outRow, totRow, summary };
+      });
+    }
+
+    // De-duplicate within the incoming batch itself (same Employee ID twice
+    // in one file) — keep the first, count the rest as skipped-as-duplicate.
+    const seen = new Set();
+    let dupInFile = 0;
+    builtRows = builtRows.filter(r => {
+      const key = (r.empId || r.name).trim().toLowerCase();
+      if (seen.has(key)) { dupInFile++; return false; }
+      seen.add(key);
+      return true;
     });
+
+    // Replace only this dataset's existing rows; keep the other dataset intact.
+    mo.employees = (mo.employees || []).filter(e => e.ds !== dsKey).concat(builtRows);
+    mo.datasets[dsKey] = {
+      label: fileMeta.label || (mo.datasets[dsKey] && mo.datasets[dsKey].label) || DS_LABEL_DEFAULT[dsKey],
+      sourceType, fileName: fileMeta.fileName || '', importedAt: new Date().toISOString(), count: builtRows.length
+    };
 
     ATT.currentMonth = monthName;
     attSave();
-    attRecalcSummary(monthName); // normalise through the same path as every later edit
+    attRecalcSummary(monthName);
+    return { imported: builtRows.length, skipped, dupInFile };
+  }
+
+  // ─── DATASET MANAGEMENT (remove / rename) ────────────────────
+  function attRemoveDataset(monthName, dsKey) {
+    const mo = ATT.months[monthName];
+    if (!mo) return;
+    mo.employees = (mo.employees || []).filter(e => e.ds !== dsKey);
+    if (mo.datasets) delete mo.datasets[dsKey];
+    attSave();
+    attRecalcSummary(monthName);
+  }
+  function attRenameDataset(monthName, dsKey, label) {
+    const mo = ATT.months[monthName];
+    if (!mo || !mo.datasets || !mo.datasets[dsKey]) return;
+    mo.datasets[dsKey].label = (label || '').trim() || DS_LABEL_DEFAULT[dsKey];
+    attSave();
+  }
+  function attDatasetInfo(monthName) {
+    const mo = ATT.months[monthName];
+    if (!mo) return { ds1: null, ds2: null };
+    return {
+      ds1: (mo.datasets && mo.datasets.ds1) || null,
+      ds2: (mo.datasets && mo.datasets.ds2) || null
+    };
+  }
+
+  // ─── RECORD CRUD (add / edit / delete / copy / move) ─────────
+  function attAddRecord(monthName, dsKey, empId, name) {
+    const mo = ATT.months[monthName];
+    if (!mo) return { ok: false, msg: 'Create or select a month first.' };
+    name = (name || '').trim();
+    empId = (empId || '').trim();
+    if (!name) return { ok: false, msg: 'Employee Name is required.' };
+    if (empId && !attIsValidEmpId(empId)) {
+      if (!confirm('That Employee ID looks unusual (' + empId + '). Add it anyway?')) return { ok: false };
+    }
+    const dupIdx = attFindDuplicateIndex(mo, dsKey, empId, name, -1);
+    if (dupIdx !== -1) {
+      if (!confirm('An employee with this ID/name already exists in this dataset. Add a second record anyway?')) return { ok: false };
+    }
+    const daysInMonth = getDaysInMonth(monthName);
+    if (!mo.datasets) mo.datasets = {};
+    if (!mo.datasets[dsKey]) mo.datasets[dsKey] = { label: DS_LABEL_DEFAULT[dsKey], sourceType: 'Manual', fileName: '', importedAt: new Date().toISOString(), count: 0 };
+    mo.employees.push({
+      empId, name, sourceType: 'Manual', ds: dsKey,
+      inRow: Array(daysInMonth).fill(''), outRow: Array(daysInMonth).fill(''), totRow: Array(daysInMonth).fill(''),
+      summary: {}
+    });
+    mo.datasets[dsKey].count = mo.employees.filter(e => e.ds === dsKey).length;
+    attSave();
+    attRecalcSummary(monthName);
+    return { ok: true };
+  }
+
+  function attDeleteRecords(monthName, indices) {
+    const mo = ATT.months[monthName];
+    if (!mo) return;
+    const sortedDesc = [...new Set(indices)].sort((a, b) => b - a);
+    sortedDesc.forEach(idx => { if (mo.employees[idx]) mo.employees.splice(idx, 1); });
+    if (mo.datasets) {
+      Object.keys(mo.datasets).forEach(k => { mo.datasets[k].count = mo.employees.filter(e => e.ds === k).length; });
+    }
+    attSave();
+    attRecalcSummary(monthName);
+  }
+
+  function attUpdateRecordMeta(monthName, idx, empId, name) {
+    const mo = ATT.months[monthName];
+    if (!mo || !mo.employees[idx]) return { ok: false, msg: 'Record not found.' };
+    name = (name || '').trim();
+    if (!name) return { ok: false, msg: 'Employee Name is required.' };
+    if (empId && !attIsValidEmpId(empId)) {
+      if (!confirm('That Employee ID looks unusual (' + empId + '). Save anyway?')) return { ok: false };
+    }
+    const dupIdx = attFindDuplicateIndex(mo, mo.employees[idx].ds, empId, name, idx);
+    if (dupIdx !== -1) {
+      if (!confirm('Another record in this dataset already has this ID/name. Save anyway?')) return { ok: false };
+    }
+    mo.employees[idx].empId = (empId || '').trim();
+    mo.employees[idx].name = name;
+    attSave();
+    return { ok: true };
+  }
+
+  function attUpdateRecordDay(monthName, idx, dayIdx, field, value) {
+    const mo = ATT.months[monthName];
+    if (!mo || !mo.employees[idx]) return;
+    const emp = mo.employees[idx];
+    const arr = field === 'in' ? emp.inRow : field === 'out' ? emp.outRow : emp.totRow;
+    if (!arr) return;
+    arr[dayIdx] = String(value || '').trim();
+  }
+
+  function attCopyMoveRecords(monthName, indices, targetDs, move) {
+    const mo = ATT.months[monthName];
+    if (!mo) return { ok: false };
+    if (!mo.datasets) mo.datasets = {};
+    const newRecs = [];
+    indices.forEach(idx => {
+      const src = mo.employees[idx];
+      if (!src) return;
+      const copy = JSON.parse(JSON.stringify(src));
+      copy.ds = targetDs;
+      copy.sourceType = src.sourceType + (move ? '' : ' (copy)');
+      newRecs.push(copy);
+    });
+    if (!newRecs.length) return { ok: false, msg: 'Nothing to copy/move.' };
+    if (move) {
+      const sortedDesc = [...new Set(indices)].sort((a, b) => b - a);
+      sortedDesc.forEach(idx => { if (mo.employees[idx]) mo.employees.splice(idx, 1); });
+    }
+    mo.employees = mo.employees.concat(newRecs);
+    if (!mo.datasets[targetDs]) mo.datasets[targetDs] = { label: DS_LABEL_DEFAULT[targetDs], sourceType: 'Manual', fileName: '', importedAt: new Date().toISOString(), count: 0 };
+    Object.keys(mo.datasets).forEach(k => { mo.datasets[k].count = mo.employees.filter(e => e.ds === k).length; });
+    attSave();
+    attRecalcSummary(monthName);
+    return { ok: true, count: newRecs.length };
   }
 
   // ─── HOLIDAYS ────────────────────────────────────────────────
@@ -34218,7 +34626,13 @@ tbody td { vertical-align: middle; }
     attSave();
   }
 
-  // ─── EMP ID ──────────────────────────────────────────────────
+  // ─── EMP ID / MANAGER MAPPING ─────────────────────────────────
+  // "Manager" here refers to the Employee-selector dropdowns used throughout
+  // the attendance UI (Leave/WFH/OD, Permission, Employee-ID matching). They
+  // must map an Employee ID consistently no matter which dataset/format the
+  // row came from, so every option is built from the same {ds, empId, name}
+  // shape and tagged with its dataset so two people who share a name across
+  // Dataset 1 / Dataset 2 are never confused with each other.
   function attSetEmpId(monthName, empIndex, newId, match) {
     const mo = ATT.months[monthName];
     if (!mo) return;
@@ -34246,6 +34660,20 @@ tbody td { vertical-align: middle; }
     attSave();
     return count;
   }
+  // Builds the option list for every "pick an employee" dropdown in the
+  // module (Leave modal, Permission modal) so they all agree on labelling.
+  function attEmployeeOptions(monthName, filterDs) {
+    const mo = ATT.months[monthName];
+    if (!mo) return [];
+    return mo.employees
+      .map((e, i) => ({ i, e }))
+      .filter(({ e }) => !filterDs || ATT.dsFilter[e.ds] !== false)
+      .map(({ i, e }) => {
+        const dsTag = e.ds === 'ds2' ? '[DS2]' : '[DS1]';
+        const label = `${dsTag} ${e.empId ? e.empId + ' – ' : ''}${e.name}`;
+        return { index: i, label };
+      });
+  }
 
   // ═══════════════════════════════════════════════════════════
   // UI LAYER
@@ -34260,6 +34688,7 @@ tbody td { vertical-align: middle; }
     PH: 'rgba(106,27,154,0.12)', WFH: 'rgba(46,125,50,0.12)', PL: 'rgba(21,101,192,0.12)',
     OD: 'rgba(245,127,23,0.12)', PE: 'rgba(255,193,7,0.15)', 'PE-LI': 'rgba(255,193,7,0.15)', 'PE-EO': 'rgba(255,193,7,0.15)'
   };
+  const DS_BADGE_COLOR = { ds1: '#2563eb', ds2: '#9333ea' };
 
   function attCellStyle(val) {
     if (STATUS_COLORS[val]) return `color:${STATUS_COLORS[val]};background:${STATUS_BG[val]};font-weight:700;`;
@@ -34271,7 +34700,7 @@ tbody td { vertical-align: middle; }
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
     overlay.id = 'att-modal-overlay';
-    overlay.innerHTML = `<div class="modal-box" style="${wide ? 'max-width:820px;width:94vw;' : 'max-width:520px;width:94vw;'}max-height:88vh;overflow-y:auto;">${html}</div>`;
+    overlay.innerHTML = `<div class="modal-box" style="${wide ? 'max-width:900px;width:96vw;' : 'max-width:520px;width:94vw;'}max-height:88vh;overflow-y:auto;">${html}</div>`;
     overlay.addEventListener('click', e => { if (e.target === overlay) attCloseModal(); });
     document.body.appendChild(overlay);
   }
@@ -34287,6 +34716,17 @@ tbody td { vertical-align: middle; }
 
   function attMonthList() { return Object.keys(ATT.months).sort((a, b) => new Date(b) - new Date(a)); }
 
+  // Rows currently visible in the table, respecting the Dataset 1 / Dataset 2
+  // show/hide filter — every render, export-preview count, and bulk-select
+  // action works off this same filtered list so they can never disagree.
+  function attVisibleEmployees(monthName) {
+    const mo = ATT.months[monthName];
+    if (!mo) return [];
+    return mo.employees
+      .map((e, i) => ({ e, i }))
+      .filter(({ e }) => ATT.dsFilter[e.ds] !== false);
+  }
+
   function attRenderShell() {
     const root = document.getElementById('att-root');
     if (!root) return;
@@ -34294,6 +34734,16 @@ tbody td { vertical-align: middle; }
     if (!ATT.currentMonth || !ATT.months[ATT.currentMonth]) ATT.currentMonth = months[0] || null;
 
     const monthOptions = months.map(m => `<option value="${m}" ${m === ATT.currentMonth ? 'selected' : ''}>${m}</option>`).join('');
+    const dsInfo = ATT.currentMonth ? attDatasetInfo(ATT.currentMonth) : { ds1: null, ds2: null };
+
+    const dsFilterChips = ['ds1', 'ds2'].map(k => {
+      const info = dsInfo[k];
+      const on = ATT.dsFilter[k] !== false;
+      const label = info ? attEsc(info.label) + ` (${info.count || 0})` : DS_LABEL_DEFAULT[k] + ' (empty)';
+      return `<label style="display:inline-flex;align-items:center;gap:4px;font-size:0.72rem;padding:3px 8px;border-radius:12px;border:1px solid ${DS_BADGE_COLOR[k]};color:${on ? DS_BADGE_COLOR[k] : 'var(--text3)'};opacity:${info ? 1 : 0.5};">
+        <input type="checkbox" ${on ? 'checked' : ''} ${info ? '' : 'disabled'} onchange="attToggleDsFilter('${k}', this.checked)"> ${label}
+      </label>`;
+    }).join(' ');
 
     root.innerHTML = `
       <div class="table-card" style="margin-bottom:1rem;">
@@ -34304,6 +34754,8 @@ tbody td { vertical-align: middle; }
               ${months.length ? monthOptions : '<option>No months yet</option>'}
             </select>
             <button class="tc-btn primary" onclick="attOpenImportModal()">➕ New Month / Import</button>
+            <button class="tc-btn" onclick="attOpenDatasetModal()" ${ATT.currentMonth ? '' : 'disabled'}>🗂️ Manage Datasets</button>
+            <button class="tc-btn" onclick="attOpenAddRecordModal()" ${ATT.currentMonth ? '' : 'disabled'}>➕ Add Record</button>
             <button class="tc-btn" onclick="attOpenHolidayModal()" ${ATT.currentMonth ? '' : 'disabled'}>🏖️ Holidays</button>
             <button class="tc-btn" onclick="attOpenLeaveModal()" ${ATT.currentMonth ? '' : 'disabled'}>✏️ AB→Leave/WFH/OD</button>
             <button class="tc-btn" onclick="attOpenPermissionModal()" ${ATT.currentMonth ? '' : 'disabled'}>🟡 Permission</button>
@@ -34312,16 +34764,71 @@ tbody td { vertical-align: middle; }
             <button class="tc-btn" onclick="attOpenEmpIdModal()" ${ATT.currentMonth ? '' : 'disabled'}>🪪 Employee IDs</button>
             <button class="tc-btn" onclick="attDoSort()" ${ATT.currentMonth ? '' : 'disabled'}>🔤 Sort A→Z</button>
             <button class="tc-btn" onclick="attDoRecalc()" ${ATT.currentMonth ? '' : 'disabled'}>♻️ Recalculate</button>
-            <button class="tc-btn" onclick="attDownloadExcel()" ${ATT.currentMonth ? '' : 'disabled'}>⬇️ Download Excel</button>
+            <button class="tc-btn" onclick="attOpenExportModal()" ${ATT.currentMonth ? '' : 'disabled'}>⬇️ Download Excel</button>
           </div>
         </div>
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:0.4rem 1rem;border-top:1px solid var(--border);">
+          <span style="font-size:0.7rem;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;">Showing:</span>
+          ${ATT.currentMonth ? dsFilterChips : '<span style="font-size:0.75rem;color:var(--text3);">No month selected</span>'}
+        </div>
+        <div id="att-bulkbar" style="display:none;align-items:center;gap:8px;flex-wrap:wrap;padding:0.5rem 1rem;background:rgba(37,99,235,0.08);border-top:1px solid var(--border);font-size:0.78rem;"></div>
         <div id="att-table-wrap" style="overflow-x:auto;max-height:640px;overflow-y:auto;"></div>
       </div>
     `;
     attRenderTable();
   }
 
+  function attToggleDsFilter(key, checked) {
+    ATT.dsFilter[key] = checked;
+    attSave();
+    attRenderShell();
+  }
+
   function attSwitchMonth(m) { ATT.currentMonth = m; attSave(); attRenderShell(); }
+
+  function attSelectedIndices() {
+    return [...document.querySelectorAll('.att-row-chk:checked')].map(c => parseInt(c.dataset.idx, 10));
+  }
+
+  function attUpdateBulkBar() {
+    const bar = document.getElementById('att-bulkbar');
+    if (!bar) return;
+    const sel = attSelectedIndices();
+    if (!sel.length) { bar.style.display = 'none'; bar.innerHTML = ''; return; }
+    bar.style.display = 'flex';
+    bar.innerHTML = `
+      <b>${sel.length} selected</b>
+      <button class="tc-btn" onclick="attToggleAllRows(true)">☑️ Select All</button>
+      <button class="tc-btn" onclick="attToggleAllRows(false)">⬜ Unselect All</button>
+      <button class="tc-btn" onclick="attRunBulkDelete()">🗑️ Delete Selected</button>
+      <button class="tc-btn" onclick="attRunBulkCopyMove('ds1', false)">📋 Copy → Dataset 1</button>
+      <button class="tc-btn" onclick="attRunBulkCopyMove('ds2', false)">📋 Copy → Dataset 2</button>
+      <button class="tc-btn" onclick="attRunBulkCopyMove('ds1', true)">➡️ Move → Dataset 1</button>
+      <button class="tc-btn" onclick="attRunBulkCopyMove('ds2', true)">➡️ Move → Dataset 2</button>
+    `;
+  }
+
+  function attToggleAllRows(state) {
+    document.querySelectorAll('.att-row-chk').forEach(c => { c.checked = state; });
+    attUpdateBulkBar();
+  }
+
+  function attRunBulkDelete() {
+    const sel = attSelectedIndices();
+    if (!sel.length) return;
+    if (!confirm(`Delete ${sel.length} record(s)? This cannot be undone.`)) return;
+    attDeleteRecords(ATT.currentMonth, sel);
+    attRenderShell();
+    attToast(`🗑️ Deleted ${sel.length} record(s)`);
+  }
+
+  function attRunBulkCopyMove(targetDs, move) {
+    const sel = attSelectedIndices();
+    if (!sel.length) return;
+    const res = attCopyMoveRecords(ATT.currentMonth, sel, targetDs, move);
+    attRenderShell();
+    if (res.ok) attToast(`✅ ${move ? 'Moved' : 'Copied'} ${res.count} record(s) to ${DS_LABEL_DEFAULT[targetDs]}`);
+  }
 
   function attRenderTable() {
     const wrap = document.getElementById('att-table-wrap');
@@ -34329,14 +34836,19 @@ tbody td { vertical-align: middle; }
     const mn = ATT.currentMonth;
     if (!mn || !ATT.months[mn]) {
       wrap.innerHTML = `<div style="padding:2.5rem;text-align:center;color:var(--text2);font-size:0.9rem;">
-        No attendance data yet. Click <b>➕ New Month / Import</b> to upload a WSAI or RBCDSAI biometric export.
+        No attendance data yet. Click <b>➕ New Month / Import</b> to upload a WSAI, RBCDSAI, or previously-exported Access Report file.
       </div>`;
       return;
     }
     const mo = ATT.months[mn];
     const daysInMonth = getDaysInMonth(mn);
+    const visible = attVisibleEmployees(mn);
     if (!mo.employees.length) {
-      wrap.innerHTML = `<div style="padding:2.5rem;text-align:center;color:var(--text2);font-size:0.9rem;">No employees imported for ${mn}.</div>`;
+      wrap.innerHTML = `<div style="padding:2.5rem;text-align:center;color:var(--text2);font-size:0.9rem;">No employees imported for ${mn}. Use <b>➕ New Month / Import</b> or <b>➕ Add Record</b>.</div>`;
+      return;
+    }
+    if (!visible.length) {
+      wrap.innerHTML = `<div style="padding:2.5rem;text-align:center;color:var(--text2);font-size:0.9rem;">Both datasets are hidden. Toggle a "Showing" chip above to see records.</div>`;
       return;
     }
 
@@ -34347,9 +34859,10 @@ tbody td { vertical-align: middle; }
     const summaryHeaders = SUMMARY_HEADERS.map(h => `<th style="min-width:70px;font-size:0.65rem;">${h.replace(/ /g, '<br>')}</th>`).join('');
 
     let bodyRows = '';
-    mo.employees.forEach((emp, idx) => {
-      const bg = idx % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)';
+    visible.forEach(({ e: emp, i: idx }, vi) => {
+      const bg = vi % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)';
       const s = emp.summary || {};
+      const dsColor = DS_BADGE_COLOR[emp.ds] || DS_BADGE_COLOR.ds1;
       const rowsMeta = [
         { label: 'In Time', arr: emp.inRow },
         { label: 'Out Time', arr: emp.outRow },
@@ -34358,13 +34871,19 @@ tbody td { vertical-align: middle; }
       rowsMeta.forEach((rm, ri) => {
         bodyRows += `<tr style="background:${bg};">`;
         if (ri === 0) {
-          bodyRows += `<td rowspan="3" style="text-align:center;font-weight:700;">${idx + 1}</td>`;
-          bodyRows += `<td rowspan="3" style="text-align:center;">${emp.empId || ''}</td>`;
-          bodyRows += `<td rowspan="3" style="font-weight:600;">${emp.name}</td>`;
+          bodyRows += `<td rowspan="3" style="text-align:center;"><input type="checkbox" class="att-row-chk" data-idx="${idx}" onchange="attUpdateBulkBar()"></td>`;
+          bodyRows += `<td rowspan="3" style="text-align:center;font-weight:700;">${vi + 1}</td>`;
+          bodyRows += `<td rowspan="3" style="text-align:center;"><span title="${attEsc((emp.ds === 'ds2') ? 'Dataset 2' : 'Dataset 1')}" style="display:inline-block;padding:1px 5px;border-radius:8px;font-size:0.62rem;font-weight:700;color:${dsColor};border:1px solid ${dsColor};">${emp.ds === 'ds2' ? 'DS2' : 'DS1'}</span></td>`;
+          bodyRows += `<td rowspan="3" style="text-align:center;">${attEsc(emp.empId || '')}</td>`;
+          bodyRows += `<td rowspan="3" style="font-weight:600;">${attEsc(emp.name)}</td>`;
+          bodyRows += `<td rowspan="3" style="text-align:center;white-space:nowrap;">
+            <button class="tc-btn" style="padding:2px 6px;font-size:0.68rem;" onclick="attOpenEditRecordModal(${idx})" title="Edit">✏️</button>
+            <button class="tc-btn" style="padding:2px 6px;font-size:0.68rem;" onclick="attRunSingleDelete(${idx})" title="Delete">🗑️</button>
+          </td>`;
         }
         bodyRows += `<td style="font-size:0.68rem;color:var(--text3);">${rm.label}</td>`;
         rm.arr.forEach(v => {
-          bodyRows += `<td style="text-align:center;font-size:0.72rem;${attCellStyle(v)}">${v || ''}</td>`;
+          bodyRows += `<td style="text-align:center;font-size:0.72rem;${attCellStyle(v)}">${attEsc(v || '')}</td>`;
         });
         if (ri === 2) {
           bodyRows += `
@@ -34388,35 +34907,207 @@ tbody td { vertical-align: middle; }
     });
 
     wrap.innerHTML = `
+      <div style="padding:4px 8px;font-size:0.72rem;">
+        <a href="javascript:void(0)" onclick="attToggleAllRows(true)">☑️ Select All</a> ·
+        <a href="javascript:void(0)" onclick="attToggleAllRows(false)">⬜ Unselect All</a>
+      </div>
       <table style="border-collapse:collapse;width:100%;">
         <thead>
           <tr style="position:sticky;top:0;background:var(--surface2);z-index:2;">
-            <th>#</th><th>ID</th><th>Name</th><th></th>${dayHeaders}${summaryHeaders}
+            <th></th><th>#</th><th>DS</th><th>ID</th><th>Name</th><th>Actions</th><th></th>${dayHeaders}${summaryHeaders}
           </tr>
         </thead>
         <tbody>${bodyRows}</tbody>
       </table>
     `;
+    attUpdateBulkBar();
+  }
+
+  function attRunSingleDelete(idx) {
+    const mo = ATT.months[ATT.currentMonth];
+    const emp = mo && mo.employees[idx];
+    if (!emp) return;
+    if (!confirm(`Delete the attendance record for "${emp.name}"? This cannot be undone.`)) return;
+    attDeleteRecords(ATT.currentMonth, [idx]);
+    attRenderShell();
+    attToast('🗑️ Record deleted');
+  }
+
+  // ─── ADD RECORD MODAL ────────────────────────────────────────
+  function attOpenAddRecordModal() {
+    const mn = ATT.currentMonth;
+    if (!mn) return;
+    const info = attDatasetInfo(mn);
+    attModal(`
+      <button class="modal-close" onclick="attCloseModal()">✕ Close</button>
+      <div class="modal-title">➕ Add Attendance Record — ${mn}</div>
+      <div class="modal-field">
+        <label>Add to Dataset</label>
+        <select id="att-add-ds" style="width:100%;">
+          <option value="ds1">${attEsc(info.ds1 ? info.ds1.label : DS_LABEL_DEFAULT.ds1)}</option>
+          <option value="ds2">${attEsc(info.ds2 ? info.ds2.label : DS_LABEL_DEFAULT.ds2)}</option>
+        </select>
+      </div>
+      <div class="modal-field"><label>Employee ID</label><input type="text" id="att-add-id" style="width:100%;" placeholder="e.g. IC44434"></div>
+      <div class="modal-field"><label>Employee Name</label><input type="text" id="att-add-name" style="width:100%;" placeholder="Full name"></div>
+      <p style="font-size:0.75rem;color:var(--text2);">All days start blank — edit them afterwards with the ✏️ button on the row, or via <b>AB→Leave/WFH/OD</b> / <b>Permission</b>.</p>
+      <div class="modal-row" style="margin-top:1rem;">
+        <button class="modal-btn cancel" onclick="attCloseModal()">Cancel</button>
+        <button class="modal-btn primary" onclick="attRunAddRecord()">➕ Add</button>
+      </div>
+    `);
+  }
+  function attRunAddRecord() {
+    const ds = document.getElementById('att-add-ds').value;
+    const id = document.getElementById('att-add-id').value;
+    const name = document.getElementById('att-add-name').value;
+    const res = attAddRecord(ATT.currentMonth, ds, id, name);
+    if (!res.ok) { if (res.msg) alert(res.msg); return; }
+    attCloseModal();
+    attRenderShell();
+    attToast('✅ Record added');
+  }
+
+  // ─── EDIT RECORD MODAL ───────────────────────────────────────
+  function attOpenEditRecordModal(idx) {
+    const mn = ATT.currentMonth;
+    const mo = ATT.months[mn];
+    const emp = mo && mo.employees[idx];
+    if (!emp) return;
+    const daysInMonth = getDaysInMonth(mn);
+    let dayRows = '';
+    for (let d = 0; d < daysInMonth; d++) {
+      dayRows += `<tr>
+        <td style="text-align:center;font-size:0.72rem;">${d + 1} ${getDaySuffix(d + 1, mn)}</td>
+        <td><input class="att-edit-cell" data-field="in" data-day="${d}" value="${attEsc(emp.inRow[d] || '')}" style="width:64px;padding:3px;font-size:0.72rem;"></td>
+        <td><input class="att-edit-cell" data-field="out" data-day="${d}" value="${attEsc(emp.outRow[d] || '')}" style="width:64px;padding:3px;font-size:0.72rem;"></td>
+        <td><input class="att-edit-cell" data-field="tot" data-day="${d}" value="${attEsc(emp.totRow[d] || '')}" style="width:64px;padding:3px;font-size:0.72rem;"></td>
+      </tr>`;
+    }
+    attModal(`
+      <button class="modal-close" onclick="attCloseModal()">✕ Close</button>
+      <div class="modal-title">✏️ Edit Record — ${attEsc(emp.name)}</div>
+      <div class="modal-row">
+        <div class="modal-field"><label>Employee ID</label><input type="text" id="att-edit-id" value="${attEsc(emp.empId || '')}" style="width:100%;"></div>
+        <div class="modal-field"><label>Employee Name</label><input type="text" id="att-edit-name" value="${attEsc(emp.name)}" style="width:100%;"></div>
+      </div>
+      <p style="font-size:0.74rem;color:var(--text2);">Type a time as <b>HH:MM</b> or a status code (${STATUS_CODES.join(', ')}). Recalculation runs automatically on save.</p>
+      <div style="max-height:340px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;">
+        <table style="width:100%;font-size:0.75rem;"><thead style="position:sticky;top:0;background:var(--surface2);"><tr><th>Day</th><th>In</th><th>Out</th><th>Total</th></tr></thead>
+        <tbody>${dayRows}</tbody></table>
+      </div>
+      <div class="modal-row" style="margin-top:1rem;">
+        <button class="modal-btn cancel" onclick="attCloseModal()">Cancel</button>
+        <button class="modal-btn primary" onclick="attRunSaveEditRecord(${idx})">💾 Save & Recalculate</button>
+      </div>
+    `, true);
+  }
+  function attRunSaveEditRecord(idx) {
+    const mn = ATT.currentMonth;
+    const id = document.getElementById('att-edit-id').value;
+    const name = document.getElementById('att-edit-name').value;
+    const metaRes = attUpdateRecordMeta(mn, idx, id, name);
+    if (!metaRes.ok) { if (metaRes.msg) alert(metaRes.msg); return; }
+    document.querySelectorAll('.att-edit-cell').forEach(inp => {
+      attUpdateRecordDay(mn, idx, parseInt(inp.dataset.day, 10), inp.dataset.field, inp.value);
+    });
+    attSave();
+    attRecalcSummary(mn);
+    attCloseModal();
+    attRenderShell();
+    attToast('✅ Record saved & recalculated');
+  }
+
+  // ─── DATASET MANAGEMENT MODAL ─────────────────────────────────
+  function attOpenDatasetModal() {
+    const mn = ATT.currentMonth;
+    if (!mn) return;
+    const info = attDatasetInfo(mn);
+    function block(key) {
+      const d = info[key];
+      if (!d) {
+        return `<div class="table-card" style="padding:0.8rem;">
+          <b>${DS_LABEL_DEFAULT[key]}</b> — <span style="color:var(--text3);">no data uploaded</span>
+        </div>`;
+      }
+      return `<div class="table-card" style="padding:0.8rem;">
+        <div class="modal-field"><label>Label</label>
+          <input type="text" id="att-ds-label-${key}" value="${attEsc(d.label)}" style="width:100%;">
+        </div>
+        <p style="font-size:0.75rem;color:var(--text2);">
+          Format: <b>${attEsc(FORMAT_LABELS[d.sourceType] || d.sourceType)}</b><br>
+          File: ${attEsc(d.fileName || '—')}<br>
+          Employees: <b>${d.count || 0}</b>
+        </p>
+        <div class="modal-row">
+          <button class="modal-btn" onclick="attRunRenameDataset('${key}')">💾 Save Label</button>
+          <button class="modal-btn cancel" onclick="attRunRemoveDataset('${key}')" style="color:#c62828;">🗑️ Remove Dataset</button>
+        </div>
+      </div>`;
+    }
+    attModal(`
+      <button class="modal-close" onclick="attCloseModal()">✕ Close</button>
+      <div class="modal-title">🗂️ Manage Datasets — ${mn}</div>
+      <p style="font-size:0.78rem;color:var(--text2);">Remove a dataset to clear its rows, or re-import a replacement file into the same slot from <b>➕ New Month / Import</b> — the other dataset and this month's holidays stay untouched.</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;">
+        ${block('ds1')}
+        ${block('ds2')}
+      </div>
+      <div class="modal-row" style="margin-top:1rem;">
+        <button class="modal-btn cancel" onclick="attCloseModal()">Close</button>
+      </div>
+    `, true);
+  }
+  function attRunRenameDataset(key) {
+    const label = document.getElementById('att-ds-label-' + key).value;
+    attRenameDataset(ATT.currentMonth, key, label);
+    attToast('✅ Label saved');
+    attOpenDatasetModal();
+  }
+  function attRunRemoveDataset(key) {
+    const info = attDatasetInfo(ATT.currentMonth);
+    const d = info[key];
+    if (!d) return;
+    if (!confirm(`Remove "${d.label}" (${d.count || 0} employee record(s)) from ${ATT.currentMonth}? This cannot be undone. You can upload a replacement file afterwards without affecting the other dataset.`)) return;
+    attRemoveDataset(ATT.currentMonth, key);
+    attCloseModal();
+    attRenderShell();
+    attToast('🗑️ Dataset removed');
   }
 
   // ─── IMPORT MODAL ────────────────────────────────────────────
   function attOpenImportModal() {
     const months = attMonthList();
+    const info = ATT.currentMonth ? attDatasetInfo(ATT.currentMonth) : { ds1: null, ds2: null };
     attModal(`
       <button class="modal-close" onclick="attCloseModal()">✕ Close</button>
       <div class="modal-title">➕ New Month / Import Attendance</div>
       <div class="modal-field">
         <label>Month Name</label>
-        <input list="att-existing-months" id="att-import-month" placeholder="e.g. March 2026" style="width:100%;">
+        <input list="att-existing-months" id="att-import-month" placeholder="e.g. March 2026" style="width:100%;" value="${attEsc(ATT.currentMonth || '')}">
         <datalist id="att-existing-months">${months.map(m => `<option value="${m}">`).join('')}</datalist>
-        <small style="color:var(--text3);">Existing month re-imports replace that month's employee rows (holidays are preserved).</small>
+        <small style="color:var(--text3);">Existing month re-imports replace only the chosen dataset slot below (holidays and the other dataset are preserved).</small>
       </div>
       <div class="modal-field">
-        <label>Source Type</label>
+        <label>Dataset Slot</label>
+        <select id="att-import-ds" style="width:100%;">
+          <option value="ds1">${attEsc(info.ds1 ? 'Replace: ' + info.ds1.label : 'Dataset 1 (new)')}</option>
+          <option value="ds2">${attEsc(info.ds2 ? 'Replace: ' + info.ds2.label : 'Dataset 2 (new)')}</option>
+        </select>
+      </div>
+      <div class="modal-field">
+        <label>Dataset Label (optional)</label>
+        <input type="text" id="att-import-label" placeholder="e.g. WSAI Biometric — June" style="width:100%;">
+      </div>
+      <div class="modal-field">
+        <label>Format</label>
         <select id="att-import-type" style="width:100%;">
+          <option value="AUTO" selected>🔍 Auto-detect</option>
           <option value="WSAI">WSAI Biometric (rptDAttendanceReg export)</option>
           <option value="RBCDSAI">RBCDSAI Biometric (WorkHour In-Out Horizontal export)</option>
+          <option value="ACCESS">Access Report (previously exported from this portal)</option>
         </select>
+        <small style="color:var(--text3);">Auto-detect reads the file's layout to pick the right format; override it here only if detection gets it wrong.</small>
       </div>
       <div class="modal-field">
         <label>Excel File (.xlsx / .xls / .csv)</label>
@@ -34432,28 +35123,43 @@ tbody td { vertical-align: middle; }
 
   function attRunImport() {
     const monthName = document.getElementById('att-import-month').value.trim();
-    const type = document.getElementById('att-import-type').value;
+    const dsKey = document.getElementById('att-import-ds').value;
+    const dsLabel = document.getElementById('att-import-label').value.trim();
+    let type = document.getElementById('att-import-type').value;
     const fileInput = document.getElementById('att-import-file');
     const statusEl = document.getElementById('att-import-status');
     if (!monthName) { alert('Please enter a month name (e.g. "March 2026").'); return; }
     if (!fileInput.files.length) { alert('Please choose a file to import.'); return; }
+    const file = fileInput.files[0];
 
     statusEl.style.display = 'block';
     statusEl.textContent = '⏳ Parsing file…';
 
-    readWorkbookRows(fileInput.files[0]).then(rows => {
-      const employees = (type === 'WSAI')
-        ? extractEmployeesWSAI(rows)
-        : extractEmployeesRBCDSAI(rows, monthName);
+    readWorkbookRows(file).then(rows => {
+      if (type === 'AUTO') {
+        const detected = attDetectFormat(rows);
+        if (!detected) {
+          statusEl.textContent = '❌ Could not auto-detect the file format. Please pick a Format manually and click Import again.';
+          return;
+        }
+        type = detected;
+        statusEl.textContent = `🔍 Detected format: ${FORMAT_LABELS[type]}. Importing…`;
+      }
+      const employees = (type === 'WSAI') ? extractEmployeesWSAI(rows)
+        : (type === 'RBCDSAI') ? extractEmployeesRBCDSAI(rows, monthName)
+        : extractEmployeesAccessReport(rows, monthName);
 
       if (!employees.length) {
-        statusEl.textContent = '❌ No employee data found — check the file format matches the selected source type.';
+        statusEl.textContent = '❌ No employee data found — check the file matches the selected/detected format.';
         return;
       }
-      attImport(monthName, type, employees);
+      const result = attImport(monthName, type, employees, dsKey, { label: dsLabel, fileName: file.name });
       attCloseModal();
       attRenderShell();
-      attToast(`✅ Imported ${employees.length} employee(s) for ${monthName}`);
+      let msg = `✅ Imported ${result.imported} employee(s) for ${monthName} (${DS_LABEL_DEFAULT[dsKey]})`;
+      if (result.skipped) msg += ` · ${result.skipped} row(s) skipped (missing name)`;
+      if (result.dupInFile) msg += ` · ${result.dupInFile} duplicate row(s) in file skipped`;
+      attToast(msg);
     }).catch(err => {
       console.error(err);
       statusEl.textContent = '❌ Error reading file: ' + err.message;
@@ -34485,15 +35191,17 @@ tbody td { vertical-align: middle; }
       const badge = (!isWO && counts[d - 1] > 0) ? `<span style="font-size:9px;color:${isSugg ? '#ef4444' : '#888'};">${pct}%AB</span>` : '';
       const hl = isSugg ? 'background:rgba(239,68,68,0.12);border:1px solid #ef4444;' : (isWO ? 'opacity:.4;' : '');
       boxes += `<label style="display:inline-block;width:110px;margin:3px 2px;padding:2px 4px;border-radius:4px;font-size:0.75rem;${hl}">
-        <input type="checkbox" value="${d}" ${checked} ${isWO ? 'disabled' : ''}> <b>${d}</b> ${getDaySuffix(d, mn)} ${badge}
+        <input type="checkbox" class="att-holiday-chk" value="${d}" ${checked} ${isWO ? 'disabled' : ''}> <b>${d}</b> ${getDaySuffix(d, mn)} ${badge}
       </label>`;
     }
 
     attModal(`
       <button class="modal-close" onclick="attCloseModal()">✕ Close</button>
       <div class="modal-title">🏖️ Mark Holidays — ${mn}</div>
-      <p style="font-size:0.78rem;color:var(--text2);">🔍 Auto-detected (≥50% of employees AB) are pre-checked in red. Only <b>AB</b> days convert to <b>PH</b>; WFH/PL/OD are preserved.</p>
-      <div style="max-height:280px;overflow-y:auto;border:1px solid var(--border);padding:8px;border-radius:6px;">${boxes}</div>
+      <p style="font-size:0.78rem;color:var(--text2);">🔍 Auto-detected (≥50% of employees AB) are pre-checked in red. Only <b>AB</b> days convert to <b>PH</b>; WFH/PL/OD are preserved.
+        <span style="color:var(--accent);cursor:pointer;font-weight:600;" onclick="attToggleAllDays('att-holiday-box', '.att-holiday-chk')">(select/deselect all)</span>
+      </p>
+      <div id="att-holiday-box" style="max-height:280px;overflow-y:auto;border:1px solid var(--border);padding:8px;border-radius:6px;">${boxes}</div>
       <div class="modal-row" style="margin-top:1rem;">
         <button class="modal-btn cancel" onclick="attCloseModal()">Cancel</button>
         <button class="modal-btn primary" onclick="attRunApplyHolidays()">✅ Apply Holidays</button>
@@ -34501,7 +35209,7 @@ tbody td { vertical-align: middle; }
     `, true);
   }
   function attRunApplyHolidays() {
-    const checked = [...document.querySelectorAll('#att-modal-overlay input[type=checkbox]:not(:disabled):checked')].map(c => parseInt(c.value));
+    const checked = [...document.querySelectorAll('#att-modal-overlay input.att-holiday-chk:not(:disabled):checked')].map(c => parseInt(c.value));
     attApplyHolidays(ATT.currentMonth, checked);
     attCloseModal();
     attRenderShell();
@@ -34514,7 +35222,8 @@ tbody td { vertical-align: middle; }
     if (!mn) return;
     const mo = ATT.months[mn];
     const daysInMonth = getDaysInMonth(mn);
-    const empOptions = mo.employees.map((e, i) => `<option value="${i}">${e.empId ? e.empId + ' – ' : ''}${e.name}</option>`).join('');
+    const opts = attEmployeeOptions(mn, false);
+    const empOptions = opts.map(o => `<option value="${o.index}">${attEsc(o.label)}</option>`).join('');
     const abDaysByEmp = mo.employees.map(e => {
       const days = [];
       for (let d = 0; d < daysInMonth; d++) if (e.inRow[d] === STATUS.AB) days.push(d + 1);
@@ -34542,6 +35251,7 @@ tbody td { vertical-align: middle; }
       </div>
     `);
     window.__attAbDays = abDaysByEmp;
+    window.__attLvIndexMap = opts.map(o => o.index);
     attLoadAbDays();
   }
   function attLoadAbDays() {
@@ -34552,8 +35262,15 @@ tbody td { vertical-align: middle; }
       ? days.map(d => `<label style="display:inline-block;width:70px;margin:2px;font-size:0.78rem;"><input type="checkbox" class="att-day-chk" value="${d}" checked> <b>${d}</b></label>`).join('')
       : `<span style="color:var(--text3);font-style:italic;font-size:0.8rem;">No AB days for this employee.</span>`;
   }
-  function attToggleAllDays(boxId) {
-    const chks = document.querySelectorAll('#' + boxId + ' input[type=checkbox]');
+  // Generic multi-select "select/deselect all" toggle. Works for a
+  // container id (toggles every checkbox inside it) or, when a selector is
+  // given, for a specific checkbox class within #att-modal-overlay — used by
+  // every multi-select control in the attendance module (Holidays, AB days,
+  // Permission LI/EO days, and the record table's bulk row selector).
+  function attToggleAllDays(boxIdOrSelector, maybeSelector) {
+    const chks = maybeSelector
+      ? document.querySelectorAll('#' + boxIdOrSelector + ' ' + maybeSelector)
+      : document.querySelectorAll('#' + boxIdOrSelector + ' input[type=checkbox]');
     const allChecked = [...chks].every(c => c.checked);
     chks.forEach(c => c.checked = !allChecked);
   }
@@ -34574,7 +35291,8 @@ tbody td { vertical-align: middle; }
     if (!mn) return;
     const mo = ATT.months[mn];
     const daysInMonth = getDaysInMonth(mn);
-    const empOptions = mo.employees.map((e, i) => `<option value="${i}">${e.empId ? e.empId + ' – ' : ''}${e.name}</option>`).join('');
+    const opts = attEmployeeOptions(mn, false);
+    const empOptions = opts.map(o => `<option value="${o.index}">${attEsc(o.label)}</option>`).join('');
 
     const dayInfoByEmp = mo.employees.map(emp => {
       const s = emp.summary || {};
@@ -34601,9 +35319,9 @@ tbody td { vertical-align: middle; }
         <select id="att-pe-emp" style="width:100%;" onchange="attLoadPeDays()">${empOptions}</select>
       </div>
       <p id="att-pe-quota" style="font-size:0.8rem;color:var(--text2);"></p>
-      <label style="font-size:0.78rem;font-weight:700;">Late IN days</label>
+      <label style="font-size:0.78rem;font-weight:700;">Late IN days <span style="font-weight:400;color:var(--accent);cursor:pointer;" onclick="attToggleAllDays('att-pe-li')">(select/deselect all)</span></label>
       <div id="att-pe-li" style="max-height:110px;overflow-y:auto;border:1px solid var(--border);padding:6px;border-radius:6px;margin:4px 0 10px;"></div>
-      <label style="font-size:0.78rem;font-weight:700;">Early OUT days</label>
+      <label style="font-size:0.78rem;font-weight:700;">Early OUT days <span style="font-weight:400;color:var(--accent);cursor:pointer;" onclick="attToggleAllDays('att-pe-eo')">(select/deselect all)</span></label>
       <div id="att-pe-eo" style="max-height:110px;overflow-y:auto;border:1px solid var(--border);padding:6px;border-radius:6px;margin-top:4px;"></div>
       <div class="modal-row" style="margin-top:1rem;">
         <button class="modal-btn cancel" onclick="attCloseModal()">Cancel</button>
@@ -34709,13 +35427,15 @@ tbody td { vertical-align: middle; }
     const mn = ATT.currentMonth;
     if (!mn) return;
     const mo = ATT.months[mn];
-    window._attRoster = attPeopleRoster(); // fresh snapshot of People module each time modal opens
+    window._attRoster = attPeopleRoster();
     const rows = mo.employees.map((e, i) => {
       const saved = getEmpMatch(e.name);
       const matchLabel = saved && saved.personName ? `${saved.personName} — ${saved.category}` : (e.matchedPerson ? `${e.matchedPerson} — ${e.matchedCategory}` : '');
+      const dsColor = DS_BADGE_COLOR[e.ds] || DS_BADGE_COLOR.ds1;
       return `
       <tr>
         <td style="padding:5px 8px;">${i + 1}</td>
+        <td style="padding:5px 8px;"><span style="padding:1px 5px;border-radius:8px;font-size:0.62rem;font-weight:700;color:${dsColor};border:1px solid ${dsColor};">${e.ds === 'ds2' ? 'DS2' : 'DS1'}</span></td>
         <td style="padding:5px 8px;">${attEsc(e.name)}</td>
         <td style="padding:5px 8px;position:relative;min-width:220px;">
           <input type="text" id="att-match-${i}" value="${attEsc(matchLabel)}" placeholder="🔍 Search People roster by name…"
@@ -34733,9 +35453,9 @@ tbody td { vertical-align: middle; }
     attModal(`
       <button class="modal-close" onclick="attCloseModal()">✕ Close</button>
       <div class="modal-title">🪪 Match Attendance to People Records — ${mn}</div>
-      <p style="font-size:0.76rem;color:var(--text2);margin:-0.3rem 0 0.8rem;">Search and select the real Staff / Faculty / Researcher / Student record for each attendance name — the Employee ID auto-fills from that record. If someone isn't in the People module yet, just type an ID manually on the right.</p>
+      <p style="font-size:0.76rem;color:var(--text2);margin:-0.3rem 0 0.8rem;">Search and select the real Staff / Faculty / Researcher / Student record for each attendance name — the Employee ID auto-fills from that record and stays consistent across both datasets. If someone isn't in the People module yet, just type an ID manually on the right.</p>
       <div style="max-height:360px;overflow-y:auto;">
-        <table style="width:100%;font-size:0.8rem;"><thead><tr><th>#</th><th>Name (from file)</th><th>Match to People record</th><th>Employee ID</th></tr></thead><tbody>${rows}</tbody></table>
+        <table style="width:100%;font-size:0.8rem;"><thead><tr><th>#</th><th>DS</th><th>Name (from file)</th><th>Match to People record</th><th>Employee ID</th></tr></thead><tbody>${rows}</tbody></table>
       </div>
       <div class="modal-row" style="margin-top:1rem;">
         <button class="modal-btn cancel" onclick="attCloseModal()">Cancel</button>
@@ -34745,8 +35465,6 @@ tbody td { vertical-align: middle; }
     `, true);
   }
 
-  // Live-filters the People roster as the user types a name, and renders
-  // clickable suggestions (name + category + ID, or "no ID on file").
   function attFilterRoster(i) {
     const input = document.getElementById('att-match-' + i);
     const box = document.getElementById('att-suggest-' + i);
@@ -34767,7 +35485,7 @@ tbody td { vertical-align: middle; }
       <div class="att-suggest-item" data-idx="${idx}">
         <strong>${attEsc(m.name)}</strong><span class="att-suggest-cat">${attEsc(m.category)}</span>${m.id ? `<span class="att-suggest-id">${attEsc(m.id)}</span>` : '<span class="att-suggest-noid">no ID on file</span>'}
       </div>`).join('');
-    box._matches = matches; // stash objects directly — no attribute-escaping needed
+    box._matches = matches;
     box.onmousedown = (ev) => {
       const item = ev.target.closest('.att-suggest-item');
       if (!item) return;
@@ -34791,7 +35509,6 @@ tbody td { vertical-align: middle; }
     if (box) { box.style.display = 'none'; box.innerHTML = ''; }
   }
 
-  // Hide any open suggestion dropdown when clicking outside it.
   document.addEventListener('click', (ev) => {
     if (ev.target.closest && (ev.target.closest('.att-suggest-box') || (ev.target.id || '').startsWith('att-match-'))) return;
     document.querySelectorAll('.att-suggest-box').forEach(b => { b.style.display = 'none'; });
@@ -34834,47 +35551,108 @@ tbody td { vertical-align: middle; }
     attToast('✅ Recalculated');
   }
 
+  // ─── EXPORT MODAL (Dataset 1 / Dataset 2 / Combined) ─────────
+  function attOpenExportModal() {
+    const mn = ATT.currentMonth;
+    if (!mn) return;
+    const info = attDatasetInfo(mn);
+    attModal(`
+      <button class="modal-close" onclick="attCloseModal()">✕ Close</button>
+      <div class="modal-title">⬇️ Download Excel — ${mn}</div>
+      <p style="font-size:0.78rem;color:var(--text2);">Every export re-creates the "Access Report" workbook layout (values, column widths, and row/column merges) so it matches the originally uploaded template as closely as this portal's Excel engine supports. All edits made in the portal are included.</p>
+      <div class="modal-row" style="flex-direction:column;gap:8px;">
+        <button class="modal-btn primary" ${info.ds1 ? '' : 'disabled'} onclick="attDownloadExcel('ds1')">⬇️ ${info.ds1 ? attEsc(info.ds1.label) : 'Dataset 1'} only ${info.ds1 ? '(' + info.ds1.count + ' employees)' : '(no data)'}</button>
+        <button class="modal-btn primary" ${info.ds2 ? '' : 'disabled'} onclick="attDownloadExcel('ds2')">⬇️ ${info.ds2 ? attEsc(info.ds2.label) : 'Dataset 2'} only ${info.ds2 ? '(' + info.ds2.count + ' employees)' : '(no data)'}</button>
+        <button class="modal-btn primary" ${(info.ds1 || info.ds2) ? '' : 'disabled'} onclick="attDownloadExcel('combined')">⬇️ Combined Report (both datasets)</button>
+      </div>
+      <div class="modal-row" style="margin-top:1rem;">
+        <button class="modal-btn cancel" onclick="attCloseModal()">Close</button>
+      </div>
+    `);
+  }
+
   // ─── DOWNLOAD AS EXCEL ───────────────────────────────────────
-  function attDownloadExcel() {
+  function attDownloadExcel(mode) {
     const mn = ATT.currentMonth;
     if (!mn) return;
     const mo = ATT.months[mn];
     const daysInMonth = getDaysInMonth(mn);
+    mode = mode || 'combined';
+
+    const employees = mode === 'combined' ? mo.employees : mo.employees.filter(e => e.ds === mode);
+    if (!employees.length) { attToast('Nothing to export for that selection.'); return; }
 
     const dayHeaders = [];
-    for (let d = 1; d <= daysInMonth; d++) dayHeaders.push(d + ' ' + getDaySuffix(d, mn));
+    for (let d = 1; d <= daysInMonth; d++) dayHeaders.push(d + '\n' + getDaySuffix(d, mn));
     for (let d = daysInMonth + 1; d <= 31; d++) dayHeaders.push('');
 
+    const showDsCol = mode === 'combined';
     const header = ['Sl.No', 'Employee ID', 'Employee Name', ''].concat(dayHeaders).concat(SUMMARY_HEADERS);
-    const aoa = [['Access Report – ' + mn], header];
+    if (showDsCol) header.push('Dataset');
+    const aoa = [['Access Report – ' + mn + (mode === 'ds1' ? ' (' + (mo.datasets && mo.datasets.ds1 ? mo.datasets.ds1.label : 'Dataset 1') + ')' : mode === 'ds2' ? ' (' + (mo.datasets && mo.datasets.ds2 ? mo.datasets.ds2.label : 'Dataset 2') + ')' : ' (Combined)')], header];
 
-    mo.employees.forEach((emp, idx) => {
-      const s = emp.summary || {};
-      aoa.push([idx + 1, emp.empId || '', emp.name, 'In Time', ...pad31(emp.inRow)]);
-      aoa.push(['', '', '', 'Out Time', ...pad31(emp.outRow),
-        s.totalHrs || '', s.totalDays || '', s.empHrs || '', s.empDays || '',
-        s.leave || '', s.wfh || '', s.od || '', s.permission || '',
-        s.liCount || '', s.liDays || '', s.eoCount || '', s.eoDays || '']);
-      aoa.push(['', '', '', 'Total Hrs', ...pad31(emp.totRow)]);
-    });
+    const merges = [{ s: { r: 0, c: 0 }, e: { r: 0, c: header.length - 1 } }];
 
     function pad31(arr) {
-      const out = arr.slice(0, 31);
+      const out = (arr || []).slice(0, 31);
       while (out.length < 31) out.push('');
       return out;
     }
 
+    employees.forEach((emp, idx) => {
+      const s = emp.summary || {};
+      const rowBase = aoa.length; // 0-based row index of the "In Time" row about to be pushed
+      const dsLabel = emp.ds === 'ds2' ? (mo.datasets && mo.datasets.ds2 ? mo.datasets.ds2.label : 'Dataset 2') : (mo.datasets && mo.datasets.ds1 ? mo.datasets.ds1.label : 'Dataset 1');
+
+      const row1 = [idx + 1, emp.empId || '', emp.name, 'In Time', ...pad31(emp.inRow)];
+      const row2 = ['', '', '', 'Out Time', ...pad31(emp.outRow),
+        s.totalHrs || '', s.totalDays || '', s.empHrs || '', s.empDays || '',
+        s.leave || '', s.wfh || '', s.od || '', s.permission || '',
+        s.liCount || '', s.liDays || '', s.eoCount || '', s.eoDays || ''];
+      const row3 = ['', '', '', 'Total Hrs', ...pad31(emp.totRow)];
+      if (showDsCol) { row1.push(dsLabel); row2.push(''); row3.push(''); }
+
+      aoa.push(row1, row2, row3);
+
+      // Mirror the source template's merges: Sl.No / Employee ID / Employee
+      // Name each span the 3 rows belonging to one employee.
+      merges.push({ s: { r: rowBase, c: 0 }, e: { r: rowBase + 2, c: 0 } });
+      merges.push({ s: { r: rowBase, c: 1 }, e: { r: rowBase + 2, c: 1 } });
+      merges.push({ s: { r: rowBase, c: 2 }, e: { r: rowBase + 2, c: 2 } });
+      if (showDsCol) merges.push({ s: { r: rowBase, c: header.length - 1 }, e: { r: rowBase + 2, c: header.length - 1 } });
+    });
+
     const ws = XLSX.utils.aoa_to_sheet(aoa);
+    ws['!merges'] = merges;
+    ws['!cols'] = [{ wch: 7 }, { wch: 12 }, { wch: 20 }, { wch: 10 }]
+      .concat(Array(31).fill({ wch: 7 }))
+      .concat(Array(SUMMARY_HEADERS.length).fill({ wch: 9 }))
+      .concat(showDsCol ? [{ wch: 14 }] : []);
+
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, mn.substring(0, 31));
-    XLSX.writeFile(wb, mn.replace(/\s+/g, '_') + '_AccessReport.xlsx');
+    const sheetSuffix = mode === 'ds1' ? '_DS1' : mode === 'ds2' ? '_DS2' : '_Combined';
+    XLSX.utils.book_append_sheet(wb, ws, (mn + sheetSuffix).substring(0, 31));
+    XLSX.writeFile(wb, mn.replace(/\s+/g, '_') + sheetSuffix + '_AttendanceReport.xlsx');
   }
 
   // ─── EXPOSE GLOBALS ──────────────────────────────────────────
   window.attInit = attInit;
   window.attSwitchMonth = attSwitchMonth;
+  window.attToggleDsFilter = attToggleDsFilter;
   window.attOpenImportModal = attOpenImportModal;
   window.attRunImport = attRunImport;
+  window.attOpenDatasetModal = attOpenDatasetModal;
+  window.attRunRenameDataset = attRunRenameDataset;
+  window.attRunRemoveDataset = attRunRemoveDataset;
+  window.attOpenAddRecordModal = attOpenAddRecordModal;
+  window.attRunAddRecord = attRunAddRecord;
+  window.attOpenEditRecordModal = attOpenEditRecordModal;
+  window.attRunSaveEditRecord = attRunSaveEditRecord;
+  window.attRunSingleDelete = attRunSingleDelete;
+  window.attToggleAllRows = attToggleAllRows;
+  window.attUpdateBulkBar = attUpdateBulkBar;
+  window.attRunBulkDelete = attRunBulkDelete;
+  window.attRunBulkCopyMove = attRunBulkCopyMove;
   window.attOpenHolidayModal = attOpenHolidayModal;
   window.attRunApplyHolidays = attRunApplyHolidays;
   window.attOpenLeaveModal = attOpenLeaveModal;
@@ -34897,6 +35675,7 @@ tbody td { vertical-align: middle; }
   window.attPeopleRoster = attPeopleRoster;
   window.attDoSort = attDoSort;
   window.attDoRecalc = attDoRecalc;
+  window.attOpenExportModal = attOpenExportModal;
   window.attDownloadExcel = attDownloadExcel;
   window.attCloseModal = attCloseModal;
 })();
