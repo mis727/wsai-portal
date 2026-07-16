@@ -15,19 +15,40 @@
   // on each bar/segment/point by default, without having to touch each chart config.
   // Individual chart configs can still override `plugins.datalabels` per-chart if a
   // specific visualization gets too cluttered with labels.
+  // ── THEME-AWARE COLOR HELPER FOR CHART.JS ──
+  // Canvas 2D contexts cannot resolve CSS custom properties (fillStyle = 'var(--x)'
+  // is silently ignored by the browser), so every Chart.js color option that needs
+  // to track the active Light/Dark theme must be a *function* (Chart.js "scriptable
+  // option") that reads the resolved value via getComputedStyle at draw time. This
+  // helper returns such a function. It's declared here (global scope of the page)
+  // so it's reusable by every chart-building helper later in the document.
+  function _themeCSS(varName, fallback) {
+    return function() {
+      try {
+        var v = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+        return v || fallback;
+      } catch (e) { return fallback; }
+    };
+  }
   if (window.Chart && window.ChartDataLabels) {
     Chart.register(ChartDataLabels);
     Chart.defaults.plugins.legend.display = true;
     Chart.defaults.plugins.legend.position = 'bottom';
     Chart.defaults.plugins.legend.labels = Object.assign({}, Chart.defaults.plugins.legend.labels, {
-      color: '#94A3B8', font: { size: 9 }, boxWidth: 10, padding: 10
+      color: _themeCSS('--text2', '#94A3B8'), font: { size: 9 }, boxWidth: 10, padding: 10
     });
     Chart.defaults.plugins.datalabels = {
       display: function(ctx) {
         var v = ctx.dataset && ctx.dataset.data ? ctx.dataset.data[ctx.dataIndex] : null;
         return v !== 0 && v !== null && v !== undefined && v !== '';
       },
-      color: function(ctx) { return ctx.chart.config.type === 'doughnut' || ctx.chart.config.type === 'pie' ? '#fff' : '#CBD5E1'; },
+      color: function(ctx) {
+        // Doughnut/pie labels sit on top of a saturated segment color, so white
+        // reads fine in both themes. Bar/line labels sit against the card
+        // background, so those must track the theme's primary text color.
+        if (ctx.chart.config.type === 'doughnut' || ctx.chart.config.type === 'pie') return '#fff';
+        return _themeCSS('--text', '#CBD5E1')();
+      },
       anchor: function(ctx) { return ctx.chart.config.type === 'bar' ? 'end' : 'center'; },
       align: function(ctx) { return ctx.chart.config.type === 'bar' ? 'top' : 'center'; },
       font: { size: 9, weight: '600' },
@@ -1632,15 +1653,28 @@
     .aw-canvas-wrap { height:150px; position:relative; }
     .aw-canvas-wrap.short { height:118px; }
 
+    /* Search box used inside aw-card headers (e.g. Staff Designation Mix) — sized
+       and themed to match .aw-filter so both controls sit flush in .aw-head. */
+    .aw-mini-search {
+      background:var(--surface2); border:1px solid var(--border); border-radius:6px;
+      padding:0.18rem 0.5rem; color:var(--text); font-size:0.66rem; outline:none;
+      max-width:132px; font-family:var(--font-body);
+    }
+    .aw-mini-search:focus { border-color:var(--accent); }
+    .aw-mini-search::placeholder { color:var(--text3); }
+
     /* Matrix / table widget with conditional formatting */
+    .aw-matrix-scroll { max-height:150px; overflow-y:auto; }
     .matrix-table { width:100%; border-collapse:collapse; font-size:0.74rem; }
-    .matrix-table th { text-align:left; font-size:0.62rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--text3); font-family:var(--font-mono); padding:0.3rem 0.4rem; border-bottom:1px solid var(--border); }
-    .matrix-table td { padding:0.32rem 0.4rem; border-bottom:1px solid var(--border); }
+    .matrix-table th { text-align:left; font-size:0.62rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--text3); font-family:var(--font-mono); padding:0.3rem 0.4rem; border-bottom:1px solid var(--border); position:sticky; top:0; background:var(--surface); }
+    .matrix-table td { padding:0.32rem 0.4rem; border-bottom:1px solid var(--border); color:var(--text); }
     .matrix-table tr:last-child td { border-bottom:none; }
+    .matrix-table tr.mx-row-click { cursor:pointer; transition:background 0.12s ease; }
+    .matrix-table tr.mx-row-click:hover td { background:var(--surface2); }
     .mx-pill { display:inline-block; min-width:28px; text-align:center; padding:0.08rem 0.4rem; border-radius:5px; font-weight:700; font-family:var(--font-mono); }
-    .mx-hi   { background:rgba(16,185,129,0.16); color:#10B981; }
-    .mx-mid  { background:rgba(245,158,11,0.16); color:#F59E0B; }
-    .mx-lo   { background:rgba(239,68,68,0.14);  color:#EF4444; }
+    .mx-hi   { background:rgba(16,185,129,0.16); color:var(--green); }
+    .mx-mid  { background:rgba(245,158,11,0.16); color:var(--gold); }
+    .mx-lo   { background:rgba(239,68,68,0.14);  color:var(--red); }
     .mx-zero { background:rgba(100,116,139,0.14); color:var(--text3); }
 
     /* ── CATEGORY INTERFACE (full-screen workspace opened from a count card) ── */
@@ -2008,11 +2042,17 @@
             <div class="aw-card">
               <div class="aw-head">
                 <span class="aw-title">👔 Staff Designation Mix</span>
-                <select class="aw-filter" id="aw-staffdesig-center" onchange="renderAW_staffDesig()" title="Filter by Center">
+                <select class="aw-filter" id="aw-staffdesig-center" onchange="renderAW_staffDesigMatrix()" title="Filter by Center">
                   <option value="all">All Centers</option>
                 </select>
+                <input type="text" class="aw-mini-search" id="aw-staffdesig-search" placeholder="🔍 Search designation…" oninput="renderAW_staffDesigMatrix()" title="Search designations">
               </div>
-              <div class="aw-canvas-wrap"><canvas id="ppl-staffdesig-bar"></canvas></div>
+              <div class="aw-matrix-scroll">
+                <table class="matrix-table" id="aw-staffdesig-table">
+                  <thead><tr><th>Designation</th><th>Employees</th></tr></thead>
+                  <tbody id="aw-staffdesig-body"></tbody>
+                </table>
+              </div>
             </div>
 
             <div class="aw-card">
@@ -4609,6 +4649,14 @@
     const btn = document.getElementById('theme-toggle-btn');
     if (btn) btn.innerHTML = _currentTheme === 'light' ? '🌙 Dark' : '☀️ Light';
     try { localStorage.setItem('wsai_theme', _currentTheme); } catch(e) {}
+    // Repaint every live Chart.js instance on the page (People, Assets, Expenses,
+    // Publications, COO dashboard, etc.) so their scriptable color options
+    // (see _themeCSS) re-resolve against the CSS variables of the new theme.
+    if (window.Chart && Chart.instances) {
+      Object.values(Chart.instances).forEach(function(c) {
+        try { c.update(); } catch(e) {}
+      });
+    }
   }
   // Restore theme preference
   (function() {
@@ -6429,7 +6477,7 @@
     renderAW_catBar();
     renderAW_statusDonut();
     renderAW_facultyDonut();
-    renderAW_staffDesig();
+    renderAW_staffDesigMatrix();
     renderAW_centerBar();
     renderAW_joiningTrend();
     renderAW_studentDonut();
@@ -6547,14 +6595,40 @@
     }]);
   }
 
-  // 4. Staff Designation Mix — filtered by its own Center selector
-  function renderAW_staffDesig() {
+  // 4. Staff Designation Mix — category-matrix style: sorted desc by headcount,
+  //    filterable by its own Center selector, searchable, rows click through to
+  //    the Staff registry pre-filtered to that designation.
+  function renderAW_staffDesigMatrix() {
+    const body = document.getElementById('aw-staffdesig-body');
+    if (!body) return;
     const center = _selVal('aw-staffdesig-center');
+    const searchEl = document.getElementById('aw-staffdesig-search');
+    const q = ((searchEl && searchEl.value) || '').trim().toLowerCase();
     const staffFiltered = center === 'all' ? (DB.staff||[]) : (DB.staff||[]).filter(r => r.center === center);
     const sd = _pplCountBy(staffFiltered, 'designation');
-    _pplChart('ppl-staffdesig-bar', 'bar', Object.keys(sd), [{
-      data: Object.values(sd), backgroundColor: 'rgba(59,130,246,0.65)', borderRadius: 4
-    }], { indexAxis: 'y', plugins: { legend: { display: false } } });
+    let rows = Object.keys(sd).map(name => ({ name, count: sd[name] }));
+    rows.sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+    if (q) rows = rows.filter(r => r.name.toLowerCase().includes(q));
+    if (!rows.length) {
+      body.innerHTML = '<tr><td colspan="2" style="text-align:center;color:var(--text3);padding:0.6rem;">No matching designations</td></tr>';
+      return;
+    }
+    const maxCount = rows.reduce((m, r) => Math.max(m, r.count), 0) || 1;
+    body.innerHTML = rows.map(r => {
+      const cls = r.count === 0 ? 'mx-zero' : (r.count === maxCount ? 'mx-hi' : 'mx-mid');
+      const safeName = String(r.name).replace(/'/g, "\\'").replace(/"/g, '&quot;');
+      return `<tr class="mx-row-click" onclick="filterDashboardByDesignation('${safeName}')" title="Click to view ${safeName} staff">`
+           + `<td>${r.name}</td><td>${(`<span class="mx-pill ${cls}">${r.count}</span>`)}</td></tr>`;
+    }).join('');
+  }
+
+  // Click-through: open the Staff registry filtered to a single designation
+  function filterDashboardByDesignation(designation) {
+    openPeopleSheet('staff');
+    setTimeout(() => {
+      const search = document.getElementById('people-search');
+      if (search) { search.value = designation; filterPeopleTable(); }
+    }, 60);
   }
 
   // 5. Center-wise Staff Load — filtered by its own Staff-category selector
@@ -6672,7 +6746,7 @@
     // duplicate that here.
     const mergedPlugins = Object.assign({}, extraPlugins, {
       legend: Object.assign(
-        { position: 'bottom', labels: { color: 'var(--text2)', font: { size: 9 }, boxWidth: 10 } },
+        { position: 'bottom', labels: { color: _themeCSS('--text2', '#94A3B8'), font: { size: 9 }, boxWidth: 10 } },
         extraPlugins.legend || {},
         { display: true }
       )
@@ -6681,8 +6755,8 @@
       responsive: true, maintainAspectRatio: false,
       plugins: mergedPlugins,
       scales: (type === 'bar' || type === 'line') ? {
-        y: { beginAtZero: true, ticks: { color: 'var(--text3)', font: { size: 9 } }, grid: { color: 'rgba(99,179,237,0.08)' } },
-        x: { ticks: { color: 'var(--text3)', font: { size: 9 }, maxRotation: 40 }, grid: { display: false } }
+        y: { beginAtZero: true, ticks: { color: _themeCSS('--text3', '#64748B'), font: { size: 9 } }, grid: { color: _themeCSS('--border', 'rgba(99,179,237,0.08)') } },
+        x: { ticks: { color: _themeCSS('--text3', '#64748B'), font: { size: 9 }, maxRotation: 40 }, grid: { display: false } }
       } : undefined,
       cutout: (type === 'doughnut') ? '62%' : undefined
     };
@@ -6751,11 +6825,8 @@
       data: [activeTotal, (DB.alumni||[]).length], backgroundColor: ['#3B82F6','#F59E0B'], borderWidth: 0
     }]);
 
-    // 4. Staff Designation Mix (bar)
-    const sd = _pplCountBy(staffFiltered, 'designation');
-    _pplChart('ppl-staffdesig-bar', 'bar', Object.keys(sd), [{
-      data: Object.values(sd), backgroundColor: 'rgba(59,130,246,0.65)', borderRadius: 4
-    }], { plugins: { legend: { display: false } } });
+    // 4. Staff Designation Mix (category-matrix table — see renderAW_staffDesigMatrix)
+    renderAW_staffDesigMatrix();
 
     // 5. Student Designation Mix (donut)
     const std = _pplCountBy(DB.students, 'designation');
@@ -9606,7 +9677,7 @@
     const stMap={};
     all3.forEach(r=>{stMap[r.status]=(stMap[r.status]||0)+1;});
     const stSegs=Object.entries(stMap).map(([label,val],i)=>({label,val,color:AN_COLORS[i%7]}));
-    _anDonut('ane-status-donut','ane-status-leg',stSegs.length?stSegs:[{label:'No data',val:1,color:'var(--text3)'}]);
+    _anDonut('ane-status-donut','ane-status-leg',stSegs.length?stSegs:[{label:'No data',val:1,color:_themeCSS('--text3','#64748B')()}]);
     // Category table
     const catMap2={};
     all3.forEach(r=>{if(r.category)catMap2[r.category]=(catMap2[r.category]||{sum:0,count:0}),(catMap2[r.category].sum+=parseFloat(r.amount||0)),(catMap2[r.category].count++);});
@@ -17540,7 +17611,7 @@
     var canvas = document.getElementById('kpi-dd-dist-chart');
     if (canvas && typeof Chart !== 'undefined') {
       if (canvas._chartInst) { canvas._chartInst.destroy(); }
-      var isDark = document.body.getAttribute('data-theme') !== 'light';
+      var isDark = document.documentElement.getAttribute('data-theme') !== 'light';
       canvas._chartInst = new Chart(canvas, {
         type: 'doughnut',
         data: {
@@ -25444,7 +25515,7 @@ function _v31RenderExpenseBreakdown(rows, prebuilt) {
       data:{ labels:['Approved/Paid','Pending','Under-Process','Rejected'],
              datasets:[{ data:[approvedC,statusMap['Pending'],statusMap['Under-process'],statusMap['Rejected']],
              backgroundColor:['#10B981','#F59E0B','#3B82F6','#EF4444'], borderWidth:0 }] },
-      options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom', labels:{ color:'var(--text2)', font:{size:9} } } }, cutout:'62%' }
+      options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom', labels:{ color:_themeCSS('--text2','#94A3B8'), font:{size:9} } } }, cutout:'62%' }
     });
   }
   // Bar — monthly trend
@@ -25461,8 +25532,8 @@ function _v31RenderExpenseBreakdown(rows, prebuilt) {
     V31.charts.bar = new Chart(bc.getContext('2d'), {
       type:'bar',
       data:{ labels:mLabels, datasets:[{ label:'₹ Amount', data:mLabels.map(function(m){ return monthly[m]||0; }), backgroundColor:'rgba(59,130,246,0.65)', borderRadius:4 }] },
-      options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:true,position:'bottom',labels:{color:'var(--text2)',font:{size:9},boxWidth:10}}},
-        scales:{ y:{ticks:{color:'var(--text3)',font:{size:9}},grid:{color:'rgba(99,179,237,0.08)'}}, x:{ticks:{color:'var(--text3)',font:{size:9}},grid:{display:false}} } }
+      options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:true,position:'bottom',labels:{color:_themeCSS('--text2','#94A3B8'),font:{size:9},boxWidth:10}}},
+        scales:{ y:{ticks:{color:_themeCSS('--text3','#64748B'),font:{size:9}},grid:{color:_themeCSS('--border','rgba(99,179,237,0.08)')}}, x:{ticks:{color:_themeCSS('--text3','#64748B'),font:{size:9}},grid:{display:false}} } }
     });
   }
 }
@@ -25511,8 +25582,8 @@ function _v31RenderFacultyCharts(stus, ress) {
     V31.charts.fLine = new Chart(lc.getContext('2d'), {
       type:'line',
       data:{ labels:yLabels, datasets:[{ label:'Students', data:yLabels.map(function(l){ return yearMap[l]||0; }), borderColor:'#06B6D4', backgroundColor:'rgba(6,182,212,0.08)', tension:0.4, fill:true, pointRadius:4 }] },
-      options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:true,position:'bottom',labels:{color:'var(--text2)',font:{size:9},boxWidth:10}}},
-        scales:{ y:{ticks:{color:'var(--text3)',font:{size:9}},grid:{color:'rgba(99,179,237,0.08)'}}, x:{ticks:{color:'var(--text3)',font:{size:9}},grid:{display:false}} } }
+      options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:true,position:'bottom',labels:{color:_themeCSS('--text2','#94A3B8'),font:{size:9},boxWidth:10}}},
+        scales:{ y:{ticks:{color:_themeCSS('--text3','#64748B'),font:{size:9}},grid:{color:_themeCSS('--border','rgba(99,179,237,0.08)')}}, x:{ticks:{color:_themeCSS('--text3','#64748B'),font:{size:9}},grid:{display:false}} } }
     });
   }
   // Bar — researcher designations
@@ -25525,8 +25596,8 @@ function _v31RenderFacultyCharts(stus, ress) {
     V31.charts.fBar = new Chart(bc2.getContext('2d'), {
       type:'bar',
       data:{ labels:dLabels, datasets:[{ label:'Researchers', data:dLabels.map(function(l){ return desigMap[l]||0; }), backgroundColor:'rgba(139,92,246,0.65)', borderRadius:4 }] },
-      options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:true,position:'bottom',labels:{color:'var(--text2)',font:{size:9},boxWidth:10}}},
-        scales:{ y:{ticks:{color:'var(--text3)',font:{size:9}},grid:{color:'rgba(99,179,237,0.08)'}}, x:{ticks:{color:'var(--text3)',font:{size:8},maxRotation:40},grid:{display:false}} } }
+      options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:true,position:'bottom',labels:{color:_themeCSS('--text2','#94A3B8'),font:{size:9},boxWidth:10}}},
+        scales:{ y:{ticks:{color:_themeCSS('--text3','#64748B'),font:{size:9}},grid:{color:_themeCSS('--border','rgba(99,179,237,0.08)')}}, x:{ticks:{color:_themeCSS('--text3','#64748B'),font:{size:8},maxRotation:40},grid:{display:false}} } }
     });
   }
 }
@@ -26230,8 +26301,8 @@ function _v31BarChart(canvasId, dataObj, color, key) {
   V31.charts[key] = new Chart(ctx.getContext('2d'), {
     type:'bar',
     data:{ labels:labels, datasets:[{ label:'Count', data:data, backgroundColor:color||'rgba(59,130,246,0.65)', borderRadius:4 }] },
-    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:true,position:'bottom',labels:{color:'var(--text2)',font:{size:9},boxWidth:10}}},
-      scales:{ y:{ticks:{color:'var(--text3)',font:{size:9}},grid:{color:'rgba(99,179,237,0.08)'}}, x:{ticks:{color:'var(--text3)',font:{size:9},maxRotation:35},grid:{display:false}} } }
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:true,position:'bottom',labels:{color:_themeCSS('--text2','#94A3B8'),font:{size:9},boxWidth:10}}},
+      scales:{ y:{ticks:{color:_themeCSS('--text3','#64748B'),font:{size:9}},grid:{color:_themeCSS('--border','rgba(99,179,237,0.08)')}}, x:{ticks:{color:_themeCSS('--text3','#64748B'),font:{size:9},maxRotation:35},grid:{display:false}} } }
   });
 }
 
@@ -26245,7 +26316,7 @@ function _v31DonutChart(canvasId, dataObj, key) {
     type:'doughnut',
     data:{ labels:labels, datasets:[{ data:data, backgroundColor:CHART_COLORS.slice(0,labels.length), borderWidth:0 }] },
     options:{ responsive:true, maintainAspectRatio:false, cutout:'60%',
-      plugins:{ legend:{ position:'bottom', labels:{ color:'var(--text2)', font:{size:9}, boxWidth:10 } } } }
+      plugins:{ legend:{ position:'bottom', labels:{ color:_themeCSS('--text2','#94A3B8'), font:{size:9}, boxWidth:10 } } } }
   });
 }
 
@@ -32245,10 +32316,10 @@ tbody td { vertical-align: middle; }
     }
     const defaults = {
       responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{ display: true, position:'right', labels:{ font:{size:10}, boxWidth:10, color:'var(--text2)' } } },
+      plugins:{ legend:{ display: true, position:'right', labels:{ font:{size:10}, boxWidth:10, color:_themeCSS('--text2','#94A3B8') } } },
       scales: type === 'bar' ? {
-        x:{ ticks:{ font:{size:9}, color:'var(--text3)' }, grid:{ color:'rgba(255,255,255,0.04)' } },
-        y:{ ticks:{ font:{size:9}, color:'var(--text3)' }, grid:{ color:'rgba(255,255,255,0.06)' }, beginAtZero:true }
+        x:{ ticks:{ font:{size:9}, color:_themeCSS('--text3','#64748B') }, grid:{ color:_themeCSS('--border','rgba(255,255,255,0.04)') } },
+        y:{ ticks:{ font:{size:9}, color:_themeCSS('--text3','#64748B') }, grid:{ color:_themeCSS('--border','rgba(255,255,255,0.06)') }, beginAtZero:true }
       } : {}
     };
     const merged = Object.assign({}, defaults, opts||{});
