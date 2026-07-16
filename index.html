@@ -1928,9 +1928,12 @@
 
       <!-- ── DASHBOARD ── -->
       <div class="tabs" id="tab-people">
-        <div class="page-header">
-          <h2>🏛️ People Management</h2>
-          <p>WSAI Staff · Faculty · Associate Faculty · Affiliate Faculty · Researchers · Students · Associate Fellows · Alumni</p>
+        <div class="page-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.6rem;">
+          <div>
+            <h2>🏛️ People Management</h2>
+            <p>WSAI Staff · Faculty · Associate Faculty · Affiliate Faculty · Researchers · Students · Associate Fellows · Alumni</p>
+          </div>
+          <button class="tc-btn" onclick="arOpenReportManagement('history')" title="Per-employee attendance history sourced from the master Attendance Report sheet">🗓️ Report History</button>
         </div>
 
         <!-- COUNT CARDS — click a card to open that sheet's dedicated view -->
@@ -34708,6 +34711,42 @@ tbody td { vertical-align: middle; }
 
   function attToast(msg) { if (typeof toast === 'function') toast(msg); else alert(msg); }
 
+  // ─── v51: MASTER REPORT SYNC SUPPORT ───────────────────────────
+  // Read-only accessors used by the "Report Management" patch (loaded as a
+  // separate script block) to push this month's computed per-employee
+  // summary (Working Days / Leave / WFH / OD) to the server-side master
+  // Attendance Report sheet. Nothing in this IIFE's own state or behavior
+  // changes — these just expose what's already computed in mo.employees.
+  function attGetState() { return ATT; }
+
+  function attGetSyncPayload(monthName) {
+    const mo = ATT.months[monthName];
+    if (!mo) return [];
+    const parts = monthName.trim().split(' ');
+    const year = parts[1] || '';
+    const seen = new Set();
+    const out = [];
+    (mo.employees || []).forEach(emp => {
+      if (!ATT.dsFilter[emp.ds || 'ds1']) return; // respect which dataset(s) are active
+      const empId = (emp.empId || '').toString().trim();
+      const key = (empId || emp.name || '').toLowerCase();
+      if (!empId || seen.has(key)) return; // need a real Employee ID to sync; first occurrence wins
+      seen.add(key);
+      const s = emp.summary || {};
+      out.push({
+        empId: empId,
+        empName: emp.name || '',
+        month: parts[0] || monthName,
+        year: year,
+        workingDays: s.empDays || 0,
+        leave: s.leave || 0,
+        wfh: s.wfh || 0,
+        od: s.od || 0
+      });
+    });
+    return out;
+  }
+
   // ─── INIT / TAB ENTRY ────────────────────────────────────────
   function attInit() {
     if (!ATT) attLoad();
@@ -34765,6 +34804,8 @@ tbody td { vertical-align: middle; }
             <button class="tc-btn" onclick="attDoSort()" ${ATT.currentMonth ? '' : 'disabled'}>🔤 Sort A→Z</button>
             <button class="tc-btn" onclick="attDoRecalc()" ${ATT.currentMonth ? '' : 'disabled'}>♻️ Recalculate</button>
             <button class="tc-btn" onclick="attOpenExportModal()" ${ATT.currentMonth ? '' : 'disabled'}>⬇️ Download Excel</button>
+            <button class="tc-btn primary" style="border-color:rgba(16,185,129,0.5);color:var(--green);" onclick="arSyncCurrentMonth()" ${ATT.currentMonth ? '' : 'disabled'}>☁️ Save to Master Report</button>
+            <button class="tc-btn" onclick="arOpenReportManagement()">🗂️ Report Management</button>
           </div>
         </div>
         <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:0.4rem 1rem;border-top:1px solid var(--border);">
@@ -35678,7 +35719,413 @@ tbody td { vertical-align: middle; }
   window.attOpenExportModal = attOpenExportModal;
   window.attDownloadExcel = attDownloadExcel;
   window.attCloseModal = attCloseModal;
+  window.attGetState = attGetState;
+  window.attGetSyncPayload = attGetSyncPayload;
 })();
 
 </script>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     REPORT MANAGEMENT MODULE (v1)
+     Server-backed master Attendance Report + People roster. Talks to the
+     GET_PEOPLE_ROSTER / ADD_ROSTER_PERSON / EDIT_ROSTER_PERSON /
+     DELETE_ROSTER_PERSON / GET_ATTENDANCE_RECORDS / GET_ATTENDANCE_HISTORY /
+     SAVE_ATTENDANCE_RECORD / SAVE_ATTENDANCE_BATCH / UPDATE_ATTENDANCE_RECORD
+     / DELETE_ATTENDANCE_RECORD actions added by Attendance_Backend.gs.
+     Does not touch the existing local import/matching engine (attXxx
+     functions) — it only reads its computed monthly summary via
+     window.attGetSyncPayload() to push to the master sheet.
+     ═══════════════════════════════════════════════════════════════════════ -->
+<script>
+(function () {
+  'use strict';
+
+  const AR = { records: [], roster: [], history: [], tab: 'records', filter: { month: '', year: '', search: '' } };
+
+  // ── SERVER CALLS ─────────────────────────────────────────────
+  function arApi(action, extra) {
+    if (typeof _sessionPost === 'function') return _sessionPost(action, extra || {});
+    return Promise.resolve({ status: 'error', error: 'no_transport' });
+  }
+
+  function arUser() { return (typeof _currentUser !== 'undefined' && _currentUser) ? _currentUser : 'Admin'; }
+
+  // ── SYNC CURRENT MONTH FROM THE LOCAL IMPORT/MATCH TOOL ───────
+  async function arSyncCurrentMonth(overwrite) {
+    if (typeof window.attGetState !== 'function' || typeof window.attGetSyncPayload !== 'function') {
+      toast('⚠️ Attendance engine not ready'); return;
+    }
+    const state = window.attGetState();
+    const monthName = state && state.currentMonth;
+    if (!monthName) { toast('⚠️ Select a month first'); return; }
+    const payload = window.attGetSyncPayload(monthName);
+    const rowsWithId = payload.filter(r => r.empId);
+    if (!rowsWithId.length) {
+      toast('⚠️ No employees with an Employee ID to sync — use 🪪 Employee IDs to match records first');
+      return;
+    }
+    const res = await arApi('SAVE_ATTENDANCE_BATCH', {
+      records: JSON.stringify(rowsWithId),
+      overwrite: overwrite ? 'true' : 'false'
+    });
+    if (res.status !== 'ok') { toast('❌ Sync failed: ' + (res.error || res.message || 'unknown error')); return; }
+    if (res.duplicates && res.duplicates.length && !overwrite) {
+      const names = res.duplicates.slice(0, 5).map(d => d.empName + ' (' + d.empId + ')').join(', ');
+      const more = res.duplicates.length > 5 ? ' and ' + (res.duplicates.length - 5) + ' more' : '';
+      if (confirm('⚠️ ' + res.duplicates.length + ' record(s) already exist in the master report for ' + monthName + ':\n' + names + more +
+                  '\n\n' + res.added + ' new record(s) were added.\n\nOverwrite the existing record(s) with this month\'s current values?')) {
+        return arSyncCurrentMonth(true);
+      }
+      toast('✅ Added ' + res.added + ' new record(s). ' + res.duplicates.length + ' existing record(s) left unchanged.');
+      return;
+    }
+    toast('✅ Master Report updated — ' + res.added + ' added, ' + res.updated + ' overwritten');
+    if (typeof logAction === 'function') logAction('Sync to Master Report', arUser(), 'Attendance', monthName + ' → ' + res.added + ' added / ' + res.updated + ' updated');
+  }
+  window.arSyncCurrentMonth = arSyncCurrentMonth;
+
+  // ── MODAL SHELL ─────────────────────────────────────────────
+  function arModal(html) {
+    arCloseModal();
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.id = 'ar-modal-overlay';
+    overlay.innerHTML = '<div class="modal-box" style="max-width:1080px;width:96vw;max-height:90vh;overflow-y:auto;">' + html + '</div>';
+    overlay.addEventListener('click', function (e) { if (e.target === overlay) arCloseModal(); });
+    document.body.appendChild(overlay);
+  }
+  function arCloseModal() { const m = document.getElementById('ar-modal-overlay'); if (m) m.remove(); }
+  window.arCloseModal = arCloseModal;
+
+  async function arOpenReportManagement(startTab) {
+    AR.tab = startTab || 'records';
+    arModal('<div style="padding:1.2rem;text-align:center;color:var(--text2);">Loading…</div>');
+    await arRefreshAll();
+    arRenderModal();
+  }
+  window.arOpenReportManagement = arOpenReportManagement;
+
+  async function arRefreshAll() {
+    const [rec, ros] = await Promise.all([
+      arApi('GET_ATTENDANCE_RECORDS', {}),
+      arApi('GET_PEOPLE_ROSTER', {})
+    ]);
+    AR.records = (rec && rec.records) || [];
+    AR.roster = (ros && ros.roster) || [];
+  }
+
+  function arSwitchTab(tab) { AR.tab = tab; arRenderModal(); }
+  window.arSwitchTab = arSwitchTab;
+
+  // ── MAIN RENDER ─────────────────────────────────────────────
+  function arRenderModal() {
+    const tabBtn = (key, label) =>
+      '<button class="tc-btn' + (AR.tab === key ? ' primary' : '') + '" onclick="arSwitchTab(\'' + key + '\')">' + label + '</button>';
+
+    const body =
+      '<div class="modal-title">🗂️ Report Management</div>' +
+      '<div style="display:flex;gap:0.5rem;margin:0.6rem 0 1rem;flex-wrap:wrap;">' +
+        tabBtn('records', '📋 Attendance Records') + tabBtn('roster', '👥 People Roster') + tabBtn('history', '📈 Report History') +
+        '<button class="tc-btn" style="margin-left:auto;" onclick="arCloseModal()">✕ Close</button>' +
+      '</div>' +
+      '<div id="ar-tab-body">' +
+        (AR.tab === 'records' ? arRenderRecordsTab() : AR.tab === 'roster' ? arRenderRosterTab() : arRenderHistoryTab()) +
+      '</div>';
+
+    const box = document.querySelector('#ar-modal-overlay .modal-box');
+    if (box) box.innerHTML = body;
+  }
+
+  // ── RECORDS TAB ─────────────────────────────────────────────
+  function arRecordsFiltered() {
+    const f = AR.filter;
+    return AR.records.filter(r =>
+      (!f.month || String(r.month).toLowerCase() === f.month.toLowerCase()) &&
+      (!f.year || String(r.year) === f.year) &&
+      (!f.search || String(r.empId).toLowerCase().includes(f.search) || String(r.empName).toLowerCase().includes(f.search))
+    );
+  }
+
+  function arRenderRecordsTab() {
+    const months = [...new Set(AR.records.map(r => r.month))].sort();
+    const years = [...new Set(AR.records.map(r => String(r.year)))].sort();
+    const rows = arRecordsFiltered();
+
+    const rowsHtml = rows.map(r =>
+      '<tr>' +
+        '<td>' + r.sNo + '</td><td>' + r.month + '</td><td>' + r.year + '</td>' +
+        '<td>' + r.empId + '</td><td>' + r.empName + '</td>' +
+        '<td>' + r.workingDays + '</td><td>' + r.leave + '</td><td>' + r.wfh + '</td><td>' + r.od + '</td>' +
+        '<td style="white-space:nowrap;">' +
+          '<button class="tbl-action-btn" onclick="arOpenEditRecord(' + r._row + ')">✏️</button> ' +
+          '<button class="tbl-action-btn" onclick="arDeleteRecord(' + r._row + ',\'' + (r.empName || '').replace(/'/g, '') + '\')">🗑️</button>' +
+        '</td>' +
+      '</tr>'
+    ).join('') || '<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:1.5rem;">No records match this filter.</td></tr>';
+
+    return (
+      '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;margin-bottom:0.8rem;">' +
+        '<select class="filter-select" onchange="arSetFilter(\'month\',this.value)">' +
+          '<option value="">All Months</option>' + months.map(m => '<option value="' + m + '"' + (AR.filter.month === m ? ' selected' : '') + '>' + m + '</option>').join('') +
+        '</select>' +
+        '<select class="filter-select" onchange="arSetFilter(\'year\',this.value)">' +
+          '<option value="">All Years</option>' + years.map(y => '<option value="' + y + '"' + (AR.filter.year === y ? ' selected' : '') + '>' + y + '</option>').join('') +
+        '</select>' +
+        '<input type="text" placeholder="🔍 Search Employee ID or Name" style="flex:1;min-width:180px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0.4rem 0.8rem;color:var(--text);" oninput="arSetFilter(\'search\',this.value)">' +
+        '<button class="tc-btn primary" onclick="arOpenAddRecord()">➕ Add Record</button>' +
+        '<button class="tc-btn" onclick="arOpenExport()">⬇️ Export</button>' +
+      '</div>' +
+      '<table class="data-table" style="width:100%;"><thead><tr>' +
+        '<th>Sl.No</th><th>Month</th><th>Year</th><th>Employee ID</th><th>Employee Name</th>' +
+        '<th>Working Days</th><th>Leave</th><th>WFH</th><th>OD</th><th>Actions</th>' +
+      '</tr></thead><tbody>' + rowsHtml + '</tbody></table>'
+    );
+  }
+
+  function arSetFilter(key, val) { AR.filter[key] = key === 'search' ? val.toLowerCase() : val; arRenderModal(); }
+  window.arSetFilter = arSetFilter;
+
+  function arOpenAddRecord() {
+    arFormModal('➕ Add Attendance Record', { month: '', year: new Date().getFullYear(), empId: '', empName: '', workingDays: 0, leave: 0, wfh: 0, od: 0 }, async (vals) => {
+      const res = await arApi('SAVE_ATTENDANCE_RECORD', Object.assign({}, vals, { overwrite: 'false' }));
+      if (res.status === 'duplicate') {
+        if (confirm(res.message + '\n\nOverwrite it?')) {
+          const res2 = await arApi('SAVE_ATTENDANCE_RECORD', Object.assign({}, vals, { overwrite: 'true' }));
+          if (res2.status !== 'ok') { toast('❌ ' + (res2.error || 'save failed')); return false; }
+        } else { return false; }
+      } else if (res.status !== 'ok') { toast('❌ ' + (res.error || 'save failed')); return false; }
+      toast('✅ Record saved'); await arRefreshAll(); return true;
+    });
+  }
+  window.arOpenAddRecord = arOpenAddRecord;
+
+  function arOpenEditRecord(rowIndex) {
+    const rec = AR.records.find(r => r._row === rowIndex);
+    if (!rec) return;
+    arFormModal('✏️ Edit Attendance Record', rec, async (vals) => {
+      const res = await arApi('UPDATE_ATTENDANCE_RECORD', { rowIndex: rowIndex, empName: vals.empName, workingDays: vals.workingDays, leave: vals.leave, wfh: vals.wfh, od: vals.od });
+      if (res.status !== 'ok') { toast('❌ ' + (res.error || 'update failed')); return false; }
+      toast('✅ Record updated'); await arRefreshAll(); return true;
+    }, true);
+  }
+  window.arOpenEditRecord = arOpenEditRecord;
+
+  async function arDeleteRecord(rowIndex, name) {
+    if (!confirm('Delete the attendance record for "' + name + '"? This cannot be undone.')) return;
+    const res = await arApi('DELETE_ATTENDANCE_RECORD', { rowIndex: rowIndex });
+    if (res.status !== 'ok') { toast('❌ ' + (res.error || 'delete failed')); return; }
+    toast('🗑️ Record deleted'); await arRefreshAll(); arRenderModal();
+  }
+  window.arDeleteRecord = arDeleteRecord;
+
+  // Small generic form used by both Add and Edit record dialogs.
+  function arFormModal(title, vals, onSave, lockKeys) {
+    const box = document.querySelector('#ar-modal-overlay .modal-box') ? null : null; // no-op, keep same overlay
+    const overlay = document.getElementById('ar-modal-overlay');
+    const wrap = document.createElement('div');
+    wrap.className = 'modal-overlay';
+    wrap.id = 'ar-form-overlay';
+    wrap.innerHTML =
+      '<div class="modal-box" style="max-width:460px;width:92vw;">' +
+        '<div class="modal-title">' + title + '</div>' +
+        '<div style="display:grid;gap:0.6rem;margin:0.8rem 0;">' +
+          arField('Month', 'ar-f-month', vals.month, lockKeys) +
+          arField('Year', 'ar-f-year', vals.year, lockKeys) +
+          arField('Employee ID', 'ar-f-empId', vals.empId, lockKeys) +
+          arField('Employee Name', 'ar-f-empName', vals.empName) +
+          arField('Working Days', 'ar-f-workingDays', vals.workingDays) +
+          arField('Leave', 'ar-f-leave', vals.leave) +
+          arField('WFH', 'ar-f-wfh', vals.wfh) +
+          arField('OD', 'ar-f-od', vals.od) +
+        '</div>' +
+        '<div style="display:flex;gap:0.5rem;justify-content:flex-end;">' +
+          '<button class="tc-btn" onclick="document.getElementById(\'ar-form-overlay\').remove()">Cancel</button>' +
+          '<button class="tc-btn primary" id="ar-form-save">💾 Save</button>' +
+        '</div>' +
+      '</div>';
+    wrap.addEventListener('click', function (e) { if (e.target === wrap) wrap.remove(); });
+    document.body.appendChild(wrap);
+    document.getElementById('ar-form-save').onclick = async function () {
+      const out = {
+        month: document.getElementById('ar-f-month').value.trim(),
+        year: document.getElementById('ar-f-year').value.trim(),
+        empId: document.getElementById('ar-f-empId').value.trim(),
+        empName: document.getElementById('ar-f-empName').value.trim(),
+        workingDays: parseFloat(document.getElementById('ar-f-workingDays').value) || 0,
+        leave: parseFloat(document.getElementById('ar-f-leave').value) || 0,
+        wfh: parseFloat(document.getElementById('ar-f-wfh').value) || 0,
+        od: parseFloat(document.getElementById('ar-f-od').value) || 0
+      };
+      if (!out.month || !out.year || !out.empId || !out.empName) { toast('⚠️ Month, Year, Employee ID and Employee Name are required'); return; }
+      const ok = await onSave(out);
+      if (ok !== false) { wrap.remove(); arRenderModal(); }
+    };
+  }
+  function arField(label, id, val, lockKeys) {
+    const locked = lockKeys && ['ar-f-month', 'ar-f-year', 'ar-f-empId'].includes(id);
+    return '<label style="font-size:0.78rem;color:var(--text2);">' + label +
+      '<input id="' + id + '" value="' + (val !== undefined && val !== null ? val : '') + '" ' + (locked ? 'readonly style="opacity:0.6;"' : '') +
+      ' style="width:100%;margin-top:2px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0.4rem 0.6rem;color:var(--text);"></label>';
+  }
+
+  // ── ROSTER TAB ───────────────────────────────────────────────
+  function arRenderRosterTab() {
+    const rowsHtml = AR.roster.map(p =>
+      '<tr><td>' + p.sNo + '</td><td>' + p.empId + '</td><td>' + p.empName + '</td>' +
+      '<td style="white-space:nowrap;">' +
+        '<button class="tbl-action-btn" onclick="arOpenEditRoster(\'' + p.empId + '\')">✏️</button> ' +
+        '<button class="tbl-action-btn" onclick="arDeleteRoster(\'' + p.empId + '\')">🗑️</button>' +
+      '</td></tr>'
+    ).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:1.5rem;">No roster entries yet.</td></tr>';
+
+    return (
+      '<p style="font-size:0.78rem;color:var(--text2);margin-bottom:0.6rem;">The People roster is the source of truth for Employee ID / Employee Name. Editing a name or ID here automatically updates every historical Attendance Report record for that employee.</p>' +
+      '<button class="tc-btn primary" style="margin-bottom:0.6rem;" onclick="arOpenAddRoster()">➕ Add Person</button>' +
+      '<table class="data-table" style="width:100%;"><thead><tr><th>Sl.No</th><th>Employee ID</th><th>Employee Name</th><th>Actions</th></tr></thead><tbody>' + rowsHtml + '</tbody></table>'
+    );
+  }
+
+  function arOpenAddRoster() {
+    arRosterForm('➕ Add Person', '', '', async (empId, empName) => {
+      const res = await arApi('ADD_ROSTER_PERSON', { empId: empId, empName: empName });
+      if (res.status !== 'ok') { toast('❌ ' + (res.error || res.message || 'add failed')); return false; }
+      toast('✅ Added to roster'); await arRefreshAll(); return true;
+    });
+  }
+  window.arOpenAddRoster = arOpenAddRoster;
+
+  function arOpenEditRoster(empId) {
+    const p = AR.roster.find(r => String(r.empId) === String(empId));
+    if (!p) return;
+    arRosterForm('✏️ Edit Person', p.empId, p.empName, async (newId, newName) => {
+      const res = await arApi('EDIT_ROSTER_PERSON', { origEmpId: empId, empId: newId, empName: newName });
+      if (res.status !== 'ok') { toast('❌ ' + (res.error || res.message || 'update failed')); return false; }
+      toast('✅ Updated · ' + (res.attendanceRowsSynced || 0) + ' historical record(s) synced');
+      await arRefreshAll(); return true;
+    });
+  }
+  window.arOpenEditRoster = arOpenEditRoster;
+
+  async function arDeleteRoster(empId) {
+    if (!confirm('Remove "' + empId + '" from the People roster? Historical attendance records for this Employee ID are kept.')) return;
+    const res = await arApi('DELETE_ROSTER_PERSON', { empId: empId });
+    if (res.status !== 'ok') { toast('❌ ' + (res.error || 'delete failed')); return; }
+    toast('🗑️ Removed from roster' + (res.historicalAttendanceRows ? ' · ' + res.historicalAttendanceRows + ' historical record(s) retained' : ''));
+    await arRefreshAll(); arRenderModal();
+  }
+  window.arDeleteRoster = arDeleteRoster;
+
+  function arRosterForm(title, empId, empName, onSave) {
+    const wrap = document.createElement('div');
+    wrap.className = 'modal-overlay'; wrap.id = 'ar-form-overlay';
+    wrap.innerHTML =
+      '<div class="modal-box" style="max-width:400px;width:90vw;">' +
+        '<div class="modal-title">' + title + '</div>' +
+        '<div style="display:grid;gap:0.6rem;margin:0.8rem 0;">' +
+          arField('Employee ID', 'ar-r-empId', empId) + arField('Employee Name', 'ar-r-empName', empName) +
+        '</div>' +
+        '<div style="display:flex;gap:0.5rem;justify-content:flex-end;">' +
+          '<button class="tc-btn" onclick="document.getElementById(\'ar-form-overlay\').remove()">Cancel</button>' +
+          '<button class="tc-btn primary" id="ar-r-save">💾 Save</button>' +
+        '</div>' +
+      '</div>';
+    wrap.addEventListener('click', function (e) { if (e.target === wrap) wrap.remove(); });
+    document.body.appendChild(wrap);
+    document.getElementById('ar-r-save').onclick = async function () {
+      const id = document.getElementById('ar-r-empId').value.trim();
+      const name = document.getElementById('ar-r-empName').value.trim();
+      if (!id || !name) { toast('⚠️ Employee ID and Name are required'); return; }
+      const ok = await onSave(id, name);
+      if (ok !== false) { wrap.remove(); arRenderModal(); }
+    };
+  }
+
+  // ── HISTORY TAB (per People module "Report History") ──────────
+  function arRenderHistoryTab() {
+    const search = AR.filter.search || '';
+    const emps = search
+      ? AR.roster.filter(p => String(p.empId).toLowerCase().includes(search) || String(p.empName).toLowerCase().includes(search))
+      : AR.roster;
+
+    const byId = {};
+    AR.records.forEach(r => {
+      const k = String(r.empId).toLowerCase();
+      if (!byId[k]) byId[k] = { workingDays: 0, leave: 0, wfh: 0, od: 0, count: 0 };
+      byId[k].workingDays += parseFloat(r.workingDays) || 0;
+      byId[k].leave += parseFloat(r.leave) || 0;
+      byId[k].wfh += parseFloat(r.wfh) || 0;
+      byId[k].od += parseFloat(r.od) || 0;
+      byId[k].count++;
+    });
+
+    const rowsHtml = emps.map((p, i) => {
+      const t = byId[String(p.empId).toLowerCase()] || { workingDays: 0, leave: 0, wfh: 0, od: 0, count: 0 };
+      return '<tr><td>' + (i + 1) + '</td><td>' + p.empId + '</td><td>' + p.empName + '</td>' +
+        '<td>' + t.workingDays + '</td><td>' + t.leave + '</td><td>' + t.wfh + '</td><td>' + t.od + '</td>' +
+        '<td>' + t.count + ' month(s)</td></tr>';
+    }).join('') || '<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:1.5rem;">No employees found.</td></tr>';
+
+    return (
+      '<input type="text" placeholder="🔍 Search Employee ID or Name" style="width:100%;margin-bottom:0.8rem;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0.4rem 0.8rem;color:var(--text);" oninput="arSetFilter(\'search\',this.value)">' +
+      '<p style="font-size:0.75rem;color:var(--text2);margin-bottom:0.6rem;">Totals are summed across every month in the master Attendance Report. Click 📈 Export below for the full history workbook.</p>' +
+      '<button class="tc-btn" style="margin-bottom:0.6rem;" onclick="arExport(\'full\')">⬇️ Export Full History</button>' +
+      '<table class="data-table" style="width:100%;"><thead><tr>' +
+        '<th>Sl.No</th><th>Employee ID</th><th>Employee Name</th><th>Working Days</th><th>Leave</th><th>WFH</th><th>OD</th><th>Records</th>' +
+      '</tr></thead><tbody>' + rowsHtml + '</tbody></table>'
+    );
+  }
+
+  // ── EXPORT (Excel, via the xlsx.full.min.js already loaded in <head>) ──
+  function arOpenExport() {
+    const months = [...new Set(AR.records.map(r => r.month + ' ' + r.year))].sort();
+    const wrap = document.createElement('div');
+    wrap.className = 'modal-overlay'; wrap.id = 'ar-form-overlay';
+    wrap.innerHTML =
+      '<div class="modal-box" style="max-width:420px;width:90vw;">' +
+        '<div class="modal-title">⬇️ Export Attendance</div>' +
+        '<div style="display:grid;gap:0.6rem;margin:0.8rem 0;">' +
+          '<button class="tc-btn primary" onclick="arExport(\'filtered\')">Export current filtered view</button>' +
+          '<label style="font-size:0.78rem;color:var(--text2);">Select month(s) to export' +
+            '<select id="ar-export-months" multiple size="6" style="width:100%;margin-top:4px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);">' +
+              months.map(m => '<option value="' + m + '">' + m + '</option>').join('') +
+            '</select>' +
+          '</label>' +
+          '<button class="tc-btn" onclick="arExport(\'selected\')">Export selected month(s)</button>' +
+          '<button class="tc-btn" onclick="arExport(\'full\')">Export complete history</button>' +
+        '</div>' +
+        '<div style="text-align:right;"><button class="tc-btn" onclick="document.getElementById(\'ar-form-overlay\').remove()">Close</button></div>' +
+      '</div>';
+    wrap.addEventListener('click', function (e) { if (e.target === wrap) wrap.remove(); });
+    document.body.appendChild(wrap);
+  }
+  window.arOpenExport = arOpenExport;
+
+  function arExport(mode) {
+    let rows, filename;
+    if (mode === 'filtered') {
+      rows = arRecordsFiltered(); filename = 'Attendance_Filtered';
+    } else if (mode === 'selected') {
+      const sel = [...document.getElementById('ar-export-months').selectedOptions].map(o => o.value);
+      if (!sel.length) { toast('⚠️ Select at least one month'); return; }
+      rows = AR.records.filter(r => sel.includes(r.month + ' ' + r.year));
+      filename = sel.length === 1 ? sel[0].replace(/\s+/g, '_') : 'Attendance_Multi_Month';
+    } else {
+      rows = AR.records; filename = 'Attendance_Complete_History';
+    }
+    if (!rows.length) { toast('⚠️ Nothing to export'); return; }
+
+    const aoa = [['Sl.No', 'Month', 'Year', 'Employee ID', 'Employee Name', 'Working Days', 'Leave', 'WFH', 'OD']]
+      .concat(rows.map((r, i) => [i + 1, r.month, r.year, r.empId, r.empName, r.workingDays, r.leave, r.wfh, r.od]));
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    ws['!cols'] = [{ wch: 6 }, { wch: 12 }, { wch: 8 }, { wch: 14 }, { wch: 24 }, { wch: 12 }, { wch: 8 }, { wch: 8 }, { wch: 8 }];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Attendance Report'.substring(0, 31));
+    XLSX.writeFile(wb, filename + '_AttendanceReport.xlsx');
+    toast('⬇️ Export ready');
+  }
+  window.arExport = arExport;
+
+})();
+</script>
+
 </html>
