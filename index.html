@@ -6496,6 +6496,7 @@
   // ═══════════════════════════════════════════════════════════════════════
   let _reminderSettings  = { hour: 8, frequency: 'DAILY', weeklyDay: 'MONDAY', intervalDays: 3, enabled: true };
   let _reminderRecipients = [];
+  let _reminderManagerEmail = ''; // v53.2 — single dedicated Manager Email (distinct from the Recipients list)
   let _reminderRules     = [];
   let _reminderActiveTab = 'recipients';
 
@@ -6564,6 +6565,7 @@
         if (data.settings)   _reminderSettings   = Object.assign(_reminderSettings, data.settings);
         if (data.recipients) _reminderRecipients = data.recipients;
         if (data.rules)      _reminderRules      = data.rules;
+        _reminderManagerEmail = data.managerEmail || (data.settings && data.settings.managerEmail) || '';
       }
     } catch (e) {
       toast('❌ Could not load reminder settings: ' + e.message);
@@ -6631,20 +6633,44 @@
   function renderReminderRecipients() {
     const body = document.getElementById('rem-tab-body');
     if (!body) return;
+
+    // ── Manager's Email — single dedicated field ─────────────────
+    const managerBlock = _reminderManagerEmail
+      ? `<div style="display:flex;align-items:center;justify-content:space-between;padding:0.6rem 0.8rem;background:var(--surface2);border:1px solid rgba(102,126,234,0.4);border-radius:8px;margin-bottom:0.6rem;">
+          <span style="font-size:0.85rem;"><strong>Manager's Email:</strong> ${attEsc ? attEsc(_reminderManagerEmail) : _reminderManagerEmail}</span>
+          <span style="white-space:nowrap;">
+            <button class="tc-btn" style="padding:2px 8px;font-size:0.68rem;" onclick="editManagerEmail()">✏️ Update</button>
+            <button class="tc-btn" style="padding:2px 8px;font-size:0.68rem;" onclick="removeManagerEmailUI()">🗑️ Remove</button>
+          </span>
+        </div>`
+      : `<div class="modal-field" style="margin-bottom:0.8rem;padding:0.6rem 0.8rem;background:var(--surface2);border:1px solid rgba(102,126,234,0.4);border-radius:8px;">
+          <label>Manager's Email</label>
+          <div style="display:flex;gap:0.5rem;">
+            <input type="email" id="rem-manager-email" placeholder="manager@example.com" style="flex:1;">
+            <button class="modal-btn primary" onclick="setManagerEmailUI()">➕ Set</button>
+          </div>
+        </div>`;
+
     const rows = _reminderRecipients.length
       ? _reminderRecipients.map(email => `
         <div style="display:flex;align-items:center;justify-content:space-between;padding:0.5rem 0.75rem;background:var(--surface2);border-radius:8px;margin-bottom:0.4rem;">
           <span style="font-size:0.85rem;">${attEsc ? attEsc(email) : email}</span>
-          <button class="tc-btn" style="padding:2px 8px;font-size:0.68rem;" onclick="removeReminderRecipient('${email.replace(/'/g,"\\'")}')">🗑️ Remove</button>
+          <span style="white-space:nowrap;">
+            <button class="tc-btn" style="padding:2px 8px;font-size:0.68rem;" onclick="editReminderRecipient('${email.replace(/'/g,"\\'")}')">✏️ Edit</button>
+            <button class="tc-btn" style="padding:2px 8px;font-size:0.68rem;" onclick="removeReminderRecipient('${email.replace(/'/g,"\\'")}')">🗑️ Remove</button>
+          </span>
         </div>`).join('')
-      : '<div style="padding:1rem;text-align:center;color:var(--text2);font-size:0.85rem;">No recipients yet.</div>';
+      : '<div style="padding:1rem;text-align:center;color:var(--text2);font-size:0.85rem;">No additional recipients yet.</div>';
 
     body.innerHTML = `
-      <div style="max-height:260px;overflow-y:auto;margin-bottom:1rem;">${rows}</div>
+      <p style="font-size:0.78rem;color:var(--text2);margin:0 0 0.6rem;">The manager's email always receives the reminder digest. You can also add extra recipients below.</p>
+      ${managerBlock}
+      <div style="font-size:0.72rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.03em;margin:0.6rem 0 0.4rem;">Additional recipients</div>
+      <div style="max-height:220px;overflow-y:auto;margin-bottom:1rem;">${rows}</div>
       <div class="modal-field">
         <label>Add recipient</label>
         <div style="display:flex;gap:0.5rem;">
-          <input type="email" id="rem-new-email" placeholder="manager@example.com" style="flex:1;">
+          <input type="email" id="rem-new-email" placeholder="someone@example.com" style="flex:1;">
           <button class="modal-btn primary" onclick="addReminderRecipient()">➕ Add</button>
         </div>
       </div>`;
@@ -6653,6 +6679,56 @@
   function _isValidEmailClient(email) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || '').trim());
   }
+
+  async function setManagerEmailUI() {
+    const input = document.getElementById('rem-manager-email');
+    const email = (input.value || '').trim();
+    if (!email) { toast('⚠️ Enter an email address'); return; }
+    if (!_isValidEmailClient(email)) { toast('❌ That doesn\'t look like a valid email address'); return; }
+    try {
+      await syncToSheet('SET_MANAGER_EMAIL', { email });
+      _reminderManagerEmail = email;
+      renderReminderRecipients();
+      logAction('Manager Email Set', 'Admin', 'Reminders', email);
+      toast('✅ Manager\'s email saved');
+    } catch (e) {
+      toast('❌ Failed to save manager\'s email: ' + e.message);
+    }
+  }
+  window.setManagerEmailUI = setManagerEmailUI;
+
+  async function editManagerEmail() {
+    const input = prompt('Update manager\'s email address:', _reminderManagerEmail);
+    if (input === null) return; // cancelled
+    const email = input.trim();
+    if (!email) { toast('⚠️ Enter an email address'); return; }
+    if (!_isValidEmailClient(email)) { toast('❌ That doesn\'t look like a valid email address'); return; }
+    if (email.toLowerCase() === _reminderManagerEmail.toLowerCase()) return; // nothing changed
+    try {
+      await syncToSheet('SET_MANAGER_EMAIL', { email });
+      _reminderManagerEmail = email;
+      renderReminderRecipients();
+      logAction('Manager Email Updated', 'Admin', 'Reminders', email);
+      toast('✅ Manager\'s email updated');
+    } catch (e) {
+      toast('❌ Failed to update manager\'s email: ' + e.message);
+    }
+  }
+  window.editManagerEmail = editManagerEmail;
+
+  async function removeManagerEmailUI() {
+    if (!confirm('Remove the manager\'s email (' + _reminderManagerEmail + ')? Reminders will only go to the additional recipients list, if any.')) return;
+    try {
+      await syncToSheet('REMOVE_MANAGER_EMAIL', {});
+      logAction('Manager Email Removed', 'Admin', 'Reminders', _reminderManagerEmail);
+      _reminderManagerEmail = '';
+      renderReminderRecipients();
+      toast('🗑️ Manager\'s email removed');
+    } catch (e) {
+      toast('❌ Failed to remove manager\'s email: ' + e.message);
+    }
+  }
+  window.removeManagerEmailUI = removeManagerEmailUI;
 
   async function addReminderRecipient() {
     const input = document.getElementById('rem-new-email');
@@ -6671,6 +6747,26 @@
       toast('❌ Failed to add recipient: ' + e.message);
     }
   }
+
+  async function editReminderRecipient(oldEmail) {
+    const input = prompt('Update manager\'s email address:', oldEmail);
+    if (input === null) return; // cancelled
+    const newEmail = input.trim();
+    if (!newEmail) { toast('⚠️ Enter an email address'); return; }
+    if (!_isValidEmailClient(newEmail)) { toast('❌ That doesn\'t look like a valid email address'); return; }
+    if (newEmail.toLowerCase() === oldEmail.toLowerCase()) return; // nothing changed
+    if (_reminderRecipients.some(e => e.toLowerCase() === newEmail.toLowerCase())) { toast('ℹ️ Already in the list'); return; }
+    try {
+      await syncToSheet('UPDATE_REMINDER_RECIPIENT', { oldEmail: oldEmail, newEmail: newEmail });
+      _reminderRecipients = _reminderRecipients.map(e => e === oldEmail ? newEmail : e);
+      renderReminderRecipients();
+      logAction('Reminder Recipient Updated', 'Admin', 'Reminders', oldEmail + ' → ' + newEmail);
+      toast('✅ Updated to ' + newEmail);
+    } catch (e) {
+      toast('❌ Failed to update recipient: ' + e.message);
+    }
+  }
+  window.editReminderRecipient = editReminderRecipient;
 
   async function removeReminderRecipient(email) {
     if (!confirm('Remove ' + email + ' from reminder recipients?')) return;
