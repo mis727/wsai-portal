@@ -9,19 +9,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
-  // ── GLOBAL CHART DEFAULTS: legends + numeric value labels on every visualization ──
-  // Registered once, here, so every Chart.js instance in the portal (People, Assets,
-  // Expenses, Publications, COO Dashboard, etc.) shows a legend and the actual number
-  // on each bar/segment/point by default, without having to touch each chart config.
-  // Individual chart configs can still override `plugins.datalabels` per-chart if a
-  // specific visualization gets too cluttered with labels.
-  // ── THEME-AWARE COLOR HELPER FOR CHART.JS ──
-  // Canvas 2D contexts cannot resolve CSS custom properties (fillStyle = 'var(--x)'
-  // is silently ignored by the browser), so every Chart.js color option that needs
-  // to track the active Light/Dark theme must be a *function* (Chart.js "scriptable
-  // option") that reads the resolved value via getComputedStyle at draw time. This
-  // helper returns such a function. It's declared here (global scope of the page)
-  // so it's reusable by every chart-building helper later in the document.
+
   function _themeCSS(varName, fallback) {
     return function() {
       try {
