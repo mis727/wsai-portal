@@ -2423,6 +2423,7 @@
             <div class="tc-title">⏰ Tenure Actions Required</div>
             <div class="tc-actions">
               <button class="tc-btn" onclick="runTenureCheck()">🔄 Refresh Tenure Check</button>
+              <button class="tc-btn" onclick="openReminderManagementModal()">🔔 Reminder Management</button>
             </div>
           </div>
           <table>
@@ -6458,6 +6459,320 @@
     toast('✅ Tenure extended for ' + rec.name + ' → ' + fmtDate(DB[key][liveIdx].exitDate));
   }
 
+  // ═══════════════════════════════════════════════════════════════════════
+  // ── REMINDER MANAGEMENT ──────────────────────────────────────────────
+  // Portal-side UI for the server-side reminder digest (Alert Settings +
+  // tenure/registry scanning that already runs on a time trigger in Apps
+  // Script). This panel only reads/writes config — it does not compute
+  // reminders itself; GAS remains the source of truth, same as every other
+  // module in this file (JSONP read, syncToSheet write).
+  // Backend actions expected (see WSAI_Reminders.gs): GET_REMINDER_CONFIG,
+  // SAVE_REMINDER_SETTINGS, ADD_REMINDER_RECIPIENT, REMOVE_REMINDER_RECIPIENT,
+  // SAVE_REMINDER_RULE, DELETE_REMINDER_RULE, SEND_REMINDER_NOW.
+  // ═══════════════════════════════════════════════════════════════════════
+  let _reminderSettings  = { hour: 8, frequency: 'DAILY', weeklyDay: 'MONDAY', daysBeforeTenure: 2, intervalDays: 3 };
+  let _reminderRecipients = [];
+  let _reminderRules     = [];
+  let _reminderActiveTab = 'recipients';
+
+  // Registry modules a reminder rule can watch. Trimmed to what
+  // REMINDER_MODULE_SHEET_MAP in Code_v53.gs actually supports — Lab,
+  // Inventory, and Biometric Access were retired from the Portal in v40,
+  // and Assets has no single sheet (it's spread across IT/NON-IT/Spares/
+  // ILDS Cluster/GPU Cluster/Books/Consumables/Vendor List). Selecting any
+  // of those used to save silently as a fake success; now the backend
+  // correctly errors instead, but simplest is to not offer them until a
+  // real sheet + date field is chosen for each. Add them back here once
+  // REMINDER_MODULE_SHEET_MAP has a matching entry.
+  const REMINDER_MODULES = [
+    { value: 'expenses',     label: 'Expenses (payment due date)' },
+    { value: 'publications', label: 'Publications (submission/review deadline)' }
+  ];
+
+  function _reminderUrl() {
+    return (typeof _resolveUrl === 'function' ? (_resolveUrl('reminders') || _resolveUrl('people')) : '') || WS_CONFIG.webAppUrl || '';
+  }
+
+  function openReminderManagementModal() {
+    let modal = document.getElementById('reminder-modal-overlay');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.className = 'tenure-modal-overlay';
+      modal.id = 'reminder-modal-overlay';
+      modal.innerHTML = `
+        <div class="tenure-modal-box" style="max-width:640px;">
+          <button class="modal-close" onclick="closeReminderModal()">✕ Close</button>
+          <div class="modal-title">🔔 Reminder Management</div>
+          <div style="display:flex;gap:0.5rem;margin-bottom:1rem;border-bottom:1px solid var(--border);padding-bottom:0.75rem;">
+            <button class="tc-btn" id="rem-tab-recipients" onclick="_reminderSwitchTab('recipients')">👥 Recipients</button>
+            <button class="tc-btn" id="rem-tab-rules" onclick="_reminderSwitchTab('rules')">📋 Registry Rules</button>
+            <button class="tc-btn" id="rem-tab-frequency" onclick="_reminderSwitchTab('frequency')">⏱️ Frequency</button>
+          </div>
+          <div id="rem-tab-body" style="min-height:220px;">
+            <div style="text-align:center;padding:2rem;color:var(--text2);">Loading…</div>
+          </div>
+          <div class="modal-actions">
+            <button class="modal-btn cancel" onclick="sendReminderNow()">📧 Send Reminder Now</button>
+            <button class="modal-btn primary" onclick="closeReminderModal()">Done</button>
+          </div>
+        </div>`;
+      document.body.appendChild(modal);
+    }
+    modal.classList.add('show');
+    loadReminderConfig();
+  }
+
+  function closeReminderModal() {
+    const m = document.getElementById('reminder-modal-overlay');
+    if (m) m.classList.remove('show');
+  }
+
+  async function loadReminderConfig() {
+    const url = _reminderUrl();
+    if (!url) { toast('⚠️ Connect a sheet first — paste URL in Google Drive Sheets tab'); return; }
+    try {
+      const data = (typeof _jsonpFetch === 'function')
+        ? await _jsonpFetch(url, { action: 'GET_REMINDER_CONFIG', t: Date.now() })
+        : null;
+      if (data && data.error) throw new Error(data.error);
+      if (data) {
+        if (data.settings)   _reminderSettings   = Object.assign(_reminderSettings, data.settings);
+        if (data.recipients) _reminderRecipients = data.recipients;
+        if (data.rules)      _reminderRules      = data.rules;
+      }
+    } catch (e) {
+      toast('❌ Could not load reminder settings: ' + e.message);
+    }
+    _reminderSwitchTab(_reminderActiveTab);
+  }
+
+  function _reminderSwitchTab(tab) {
+    _reminderActiveTab = tab;
+    ['recipients', 'rules', 'frequency'].forEach(t => {
+      const btn = document.getElementById('rem-tab-' + t);
+      if (btn) btn.style.opacity = (t === tab) ? '1' : '0.55';
+    });
+    if (tab === 'recipients') renderReminderRecipients();
+    else if (tab === 'rules') renderReminderRules();
+    else renderReminderFrequency();
+  }
+
+  // ── Recipients (reuses the existing manager email list — same list the
+  //    Alert Settings digest already emails; add/remove here calls the
+  //    same bulkAddManagers()/removeManagers() functions on the backend) ──
+  function renderReminderRecipients() {
+    const body = document.getElementById('rem-tab-body');
+    if (!body) return;
+    const rows = _reminderRecipients.length
+      ? _reminderRecipients.map(email => `
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:0.5rem 0.75rem;background:var(--surface2);border-radius:8px;margin-bottom:0.4rem;">
+          <span style="font-size:0.85rem;">${attEsc ? attEsc(email) : email}</span>
+          <button class="tc-btn" style="padding:2px 8px;font-size:0.68rem;" onclick="removeReminderRecipient('${email.replace(/'/g,"\\'")}')">🗑️ Remove</button>
+        </div>`).join('')
+      : '<div style="padding:1rem;text-align:center;color:var(--text2);font-size:0.85rem;">No recipients yet.</div>';
+
+    body.innerHTML = `
+      <div style="max-height:260px;overflow-y:auto;margin-bottom:1rem;">${rows}</div>
+      <div class="modal-field">
+        <label>Add recipient</label>
+        <div style="display:flex;gap:0.5rem;">
+          <input type="email" id="rem-new-email" placeholder="manager@example.com" style="flex:1;">
+          <button class="modal-btn primary" onclick="addReminderRecipient()">➕ Add</button>
+        </div>
+      </div>`;
+  }
+
+  function _isValidEmailClient(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || '').trim());
+  }
+
+  async function addReminderRecipient() {
+    const input = document.getElementById('rem-new-email');
+    const email = (input.value || '').trim();
+    if (!email) { toast('⚠️ Enter an email address'); return; }
+    if (!_isValidEmailClient(email)) { toast('❌ That doesn\'t look like a valid email address'); return; }
+    if (_reminderRecipients.some(e => e.toLowerCase() === email.toLowerCase())) { toast('ℹ️ Already in the list'); return; }
+    try {
+      await syncToSheet('ADD_REMINDER_RECIPIENT', { email });
+      _reminderRecipients.push(email);
+      input.value = '';
+      renderReminderRecipients();
+      logAction('Reminder Recipient Added', 'Admin', 'Reminders', email);
+      toast('✅ Added ' + email);
+    } catch (e) {
+      toast('❌ Failed to add recipient: ' + e.message);
+    }
+  }
+
+  async function removeReminderRecipient(email) {
+    if (!confirm('Remove ' + email + ' from reminder recipients?')) return;
+    if (_reminderRecipients.length <= 1) { toast('❌ Cannot remove the last recipient — at least one is required'); return; }
+    try {
+      await syncToSheet('REMOVE_REMINDER_RECIPIENT', { email });
+      _reminderRecipients = _reminderRecipients.filter(e => e !== email);
+      renderReminderRecipients();
+      logAction('Reminder Recipient Removed', 'Admin', 'Reminders', email);
+      toast('✅ Removed ' + email);
+    } catch (e) {
+      toast('❌ Failed to remove recipient: ' + e.message);
+    }
+  }
+
+  // ── Registry Rules (generalized "tenure-style" reminders for other
+  //    modules — Assets, Expenses, Lab, Inventory, Publications, Biometric) ──
+  function renderReminderRules() {
+    const body = document.getElementById('rem-tab-body');
+    if (!body) return;
+    const moduleOptions = REMINDER_MODULES.map(m => `<option value="${m.value}">${m.label}</option>`).join('');
+    const rows = _reminderRules.length
+      ? _reminderRules.map(r => {
+          const modLabel = (REMINDER_MODULES.find(m => m.value === r.module) || {}).label || r.module;
+          return `
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:0.5rem 0.75rem;background:var(--surface2);border-radius:8px;margin-bottom:0.4rem;">
+            <span style="font-size:0.8rem;">
+              <strong>${modLabel}</strong> · field "<code>${r.dateField}</code>" · alert ${r.daysBefore}d before
+              ${r.enabled === false ? ' · <span style="color:var(--text3);">(disabled)</span>' : ''}
+            </span>
+            <button class="tc-btn" style="padding:2px 8px;font-size:0.68rem;" onclick="deleteReminderRule('${r.id}')">🗑️</button>
+          </div>`;
+        }).join('')
+      : '<div style="padding:1rem;text-align:center;color:var(--text2);font-size:0.85rem;">No registry reminder rules yet.</div>';
+
+    body.innerHTML = `
+      <div style="max-height:220px;overflow-y:auto;margin-bottom:1rem;">${rows}</div>
+      <div class="modal-field"><label>Module</label>
+        <select id="rem-rule-module">${moduleOptions}</select>
+      </div>
+      <div class="modal-row">
+        <div class="modal-field"><label>Date field name (as in sheet header)</label>
+          <input type="text" id="rem-rule-datefield" placeholder="e.g. warrantyExpiry"></div>
+        <div class="modal-field"><label>Days before due date</label>
+          <input type="number" id="rem-rule-days" min="1" max="365" value="7"></div>
+      </div>
+      <div class="modal-actions" style="justify-content:flex-start;">
+        <button class="modal-btn primary" onclick="addReminderRule()">➕ Add Rule</button>
+      </div>`;
+  }
+
+  async function addReminderRule() {
+    const module    = document.getElementById('rem-rule-module').value;
+    const dateField  = (document.getElementById('rem-rule-datefield').value || '').trim();
+    const daysBefore = parseInt(document.getElementById('rem-rule-days').value);
+
+    if (!dateField) { toast('⚠️ Enter the date field/column name to watch'); return; }
+    if (!daysBefore || daysBefore < 1 || daysBefore > 365) { toast('⚠️ Days before must be between 1 and 365'); return; }
+    if (_reminderRules.some(r => r.module === module && r.dateField.toLowerCase() === dateField.toLowerCase())) {
+      toast('ℹ️ A rule for that module/field already exists'); return;
+    }
+
+    const rule = { id: 'rule_' + Date.now().toString(36), module, dateField, daysBefore, enabled: true };
+    try {
+      await syncToSheet('SAVE_REMINDER_RULE', rule);
+      _reminderRules.push(rule);
+      renderReminderRules();
+      logAction('Reminder Rule Added', 'Admin', 'Reminders', module + ' / ' + dateField + ' (' + daysBefore + 'd)');
+      toast('✅ Rule added');
+    } catch (e) {
+      toast('❌ Failed to save rule: ' + e.message);
+    }
+  }
+
+  async function deleteReminderRule(id) {
+    if (!confirm('Delete this reminder rule?')) return;
+    try {
+      await syncToSheet('DELETE_REMINDER_RULE', { id });
+      _reminderRules = _reminderRules.filter(r => r.id !== id);
+      renderReminderRules();
+      toast('✅ Rule deleted');
+    } catch (e) {
+      toast('❌ Failed to delete rule: ' + e.message);
+    }
+  }
+
+  // ── Frequency (single uniform control for the whole reminder digest —
+  //    Daily / Weekly / Monthly / Custom interval in days / X days before
+  //    tenure ends. This is the one place frequency + tenure timing are
+  //    configured; the old sheet-bound Alert Settings dialog is legacy —
+  //    see the note above showAlertSettingsDialog() in Code_v53.gs) ──
+  function renderReminderFrequency() {
+    const body = document.getElementById('rem-tab-body');
+    if (!body) return;
+    const s = _reminderSettings;
+    const hourOpts = Array.from({ length: 24 }, (_, h) => {
+      const label = (h % 12 === 0 ? 12 : h % 12) + ':00 ' + (h < 12 ? 'AM' : 'PM');
+      return `<option value="${h}" ${h === s.hour ? 'selected' : ''}>${label}</option>`;
+    }).join('');
+    const days = ['MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY','SUNDAY'];
+    const dayOpts = days.map(d => `<option value="${d}" ${d === s.weeklyDay ? 'selected' : ''}>${d[0] + d.slice(1).toLowerCase()}</option>`).join('');
+    const freqs = [
+      ['DAILY', 'Daily'], ['WEEKLY', 'Weekly'], ['MONTHLY', 'Monthly'],
+      ['CUSTOM_INTERVAL_DAYS', 'Custom interval (every N days)'],
+      ['CUSTOM_DAYS_BEFORE', 'X Days Before Tenure Ends']
+    ];
+    const freqOpts = freqs.map(([v,l]) => `<option value="${v}" ${s.frequency === v ? 'selected' : ''}>${l}</option>`).join('');
+
+    body.innerHTML = `
+      <div class="modal-field"><label>Alert Time</label><select id="rem-hour">${hourOpts}</select></div>
+      <div class="modal-field"><label>Frequency</label><select id="rem-frequency" onchange="_reminderUpdateFreqFields()">${freqOpts}</select></div>
+      <div class="modal-field" id="rem-weekly-row" style="display:${s.frequency==='WEEKLY'?'':'none'};">
+        <label>Day of Week</label><select id="rem-weekly-day">${dayOpts}</select>
+      </div>
+      <div class="modal-field" id="rem-interval-row" style="display:${s.frequency==='CUSTOM_INTERVAL_DAYS'?'':'none'};">
+        <label>Send every N days</label><input type="number" id="rem-interval-days" min="1" max="90" value="${s.intervalDays || 3}">
+      </div>
+      <div class="modal-field" id="rem-daysbefore-row" style="display:${s.frequency==='CUSTOM_DAYS_BEFORE'?'':'none'};">
+        <label>Days Before Tenure Expiry</label><input type="number" id="rem-days-before-tenure" min="1" max="90" value="${s.daysBeforeTenure || 2}">
+        <div style="font-size:0.7rem;color:var(--text2);margin-top:4px;">Only alerts when a person is exactly this many days from their exit date (checked daily). Overdue people are always included regardless of this setting.</div>
+      </div>
+      <div class="modal-actions" style="justify-content:flex-start;">
+        <button class="modal-btn primary" onclick="saveReminderFrequency()">💾 Save Frequency</button>
+      </div>`;
+  }
+
+  function _reminderUpdateFreqFields() {
+    const freq = document.getElementById('rem-frequency').value;
+    document.getElementById('rem-weekly-row').style.display = (freq === 'WEEKLY') ? '' : 'none';
+    document.getElementById('rem-interval-row').style.display = (freq === 'CUSTOM_INTERVAL_DAYS') ? '' : 'none';
+    document.getElementById('rem-daysbefore-row').style.display = (freq === 'CUSTOM_DAYS_BEFORE') ? '' : 'none';
+  }
+
+  async function saveReminderFrequency() {
+    const hour = parseInt(document.getElementById('rem-hour').value);
+    const frequency = document.getElementById('rem-frequency').value;
+    const weeklyDay = document.getElementById('rem-weekly-day') ? document.getElementById('rem-weekly-day').value : _reminderSettings.weeklyDay;
+    const intervalDaysEl = document.getElementById('rem-interval-days');
+    const intervalDays = intervalDaysEl ? parseInt(intervalDaysEl.value) : _reminderSettings.intervalDays;
+    const daysBeforeEl = document.getElementById('rem-days-before-tenure');
+    const daysBeforeTenure = daysBeforeEl ? parseInt(daysBeforeEl.value) : _reminderSettings.daysBeforeTenure;
+
+    if (frequency === 'CUSTOM_INTERVAL_DAYS' && (!intervalDays || intervalDays < 1 || intervalDays > 90)) {
+      toast('⚠️ Interval must be between 1 and 90 days'); return;
+    }
+    if (frequency === 'CUSTOM_DAYS_BEFORE' && (!daysBeforeTenure || daysBeforeTenure < 1 || daysBeforeTenure > 90)) {
+      toast('⚠️ Days before tenure must be between 1 and 90'); return;
+    }
+
+    const payload = { hour, frequency, weeklyDay, intervalDays, daysBeforeTenure };
+    try {
+      await syncToSheet('SAVE_REMINDER_SETTINGS', payload);
+      _reminderSettings = Object.assign(_reminderSettings, payload);
+      logAction('Reminder Frequency Updated', 'Admin', 'Reminders', frequency + ' @ ' + hour + ':00');
+      toast('✅ Frequency saved — ' + frequency + ' at ' + hour + ':00');
+    } catch (e) {
+      toast('❌ Failed to save frequency: ' + e.message);
+    }
+  }
+
+  async function sendReminderNow() {
+    if (!confirm('Send the reminder digest to all recipients right now?')) return;
+    try {
+      await syncToSheet('SEND_REMINDER_NOW', {});
+      toast('✅ Reminder digest triggered — check recipient inboxes shortly');
+    } catch (e) {
+      toast('❌ Failed to send reminder: ' + e.message);
+    }
+  }
+
   // ── INIT PEOPLE SECTION ──
   function initPeopleManagement() {
     refreshKPIs();
@@ -7103,6 +7418,11 @@
       url = (typeof _resolveUrl === 'function' ? _resolveUrl('expenses') : '') || url;
     } else if (action.startsWith('ADD_PUB') || action.startsWith('UPDATE_PUB')) {
       url = (typeof _resolveUrl === 'function' ? _resolveUrl('publications') : '') || url;
+    } else if (/^(SAVE_REMINDER_SETTINGS|ADD_REMINDER_RECIPIENT|REMOVE_REMINDER_RECIPIENT|SAVE_REMINDER_RULE|DELETE_REMINDER_RULE|SEND_REMINDER_NOW)$/.test(action)) {
+      // Reminders live on whichever deployment hosts the Alert Settings /
+      // Reminder Rules sheets. Falls back to the People URL (same pattern
+      // used for Biometric) since that's usually the same spreadsheet.
+      url = (typeof _resolveUrl === 'function' ? (_resolveUrl('reminders') || _resolveUrl('people')) : '') || url;
     }
     if (!url) { setSyncStatus('error', 'No webAppUrl configured'); return; }
     setSyncStatus('syncing', 'Syncing to Sheet...');
@@ -33734,6 +34054,7 @@ tbody td { vertical-align: middle; }
     // backward-compat: tag any pre-existing employees (from the older
     // single-dataset version of this module) as Dataset 1, and make sure
     // every month has a `datasets` map so the new UI never crashes on old data.
+    let needsResave = false;
     Object.keys(ATT.months).forEach(mn => {
       const mo = ATT.months[mn];
       if (!mo.datasets) mo.datasets = {};
@@ -33741,7 +34062,26 @@ tbody td { vertical-align: middle; }
       if ((mo.employees || []).length && !mo.datasets.ds1) {
         mo.datasets.ds1 = { label: DS_LABEL_DEFAULT.ds1, sourceType: (mo.employees[0] && mo.employees[0].sourceType) || 'Unknown', fileName: '', importedAt: null, count: mo.employees.filter(e => e.ds === 'ds1').length };
       }
+      // self-healing migration: older versions of this module always
+      // allocated inRow/outRow/totRow at a fixed length of 31, even for
+      // shorter months. That left trailing blank slots which, on render,
+      // added extra <td> cells beyond the <th> day headers and shifted
+      // every summary column (Total Working Hrs onward) to the right.
+      // Trim any oversized arrays down to the month's real day count here,
+      // once, on load — so previously-saved data fixes itself without the
+      // user having to manually hit Recalculate or re-import.
+      const daysInMonth = getDaysInMonth(mn);
+      (mo.employees || []).forEach(e => {
+        ['inRow', 'outRow', 'totRow'].forEach(key => {
+          const arr = e[key];
+          if (Array.isArray(arr) && arr.length > daysInMonth) {
+            e[key] = arr.slice(0, daysInMonth);
+            needsResave = true;
+          }
+        });
+      });
     });
+    if (needsResave) attSave();
   }
 
   function attSave() {
@@ -34237,7 +34577,9 @@ tbody td { vertical-align: middle; }
         if (!name) { i++; continue; }
         const outR = rawValues[i + 1] || [];
         const totR = rawValues[i + 2] || [];
-        const inRow = Array(31).fill(''), outRow = Array(31).fill(''), totRow = Array(31).fill('');
+        // Same fix as buildDayRow: size to the actual month length so the
+        // rendered <td> count matches the <th> day-header count exactly.
+        const inRow = Array(daysInMonth).fill(''), outRow = Array(daysInMonth).fill(''), totRow = Array(daysInMonth).fill('');
         for (let d = 0; d < daysInMonth; d++) {
           inRow[d]  = cellToDayStr(row[DAY_COL_START + d]);
           outRow[d] = cellToDayStr(outR[DAY_COL_START + d]);
@@ -34254,7 +34596,13 @@ tbody td { vertical-align: middle; }
 
   // ─── BUILD DAY ROW (In / Out / Total status+time per day) ────
   function buildDayRow(emp, label, woSet, holidays, daysInMonth) {
-    const row = Array(31).fill('');
+    // IMPORTANT: size this to the *actual* days in the month, not a fixed
+    // 31. The table header row renders exactly `daysInMonth` <th> day
+    // columns; if this array is longer, the body <td> cells (one per
+    // array element) outnumber the headers and every column after it —
+    // Total Working Hrs, Total Working Days, etc. — shifts right by the
+    // difference, spilling the last summary column outside the table.
+    const row = Array(daysInMonth).fill('');
     for (let d = 1; d <= daysInMonth; d++) {
       const i = d - 1;
       const inT = emp.inTimes[i], outT = emp.outTimes[i], wrk = emp.wrkHrs[i];
