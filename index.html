@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -485,22 +486,55 @@
   ══════════════════════════════════════════════════════════════ */
   .kpi-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
     gap: 1rem;
     margin-bottom: 2rem;
   }
   .kpi-card {
     background: linear-gradient(145deg, var(--surface) 0%, var(--surface2) 100%);
     border: 1px solid var(--border);
-    border-radius: 18px;
-    padding: 1.35rem 1.25rem 1.1rem;
+    border-radius: 16px;
+    padding: 1.1rem 1.15rem 1rem;
     position: relative;
     overflow: hidden;
     cursor: default;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: flex-start;
+    min-height: 104px;
+    box-sizing: border-box;
     transition: transform 0.22s cubic-bezier(.22,1,.36,1),
                 box-shadow 0.22s cubic-bezier(.22,1,.36,1),
                 border-color 0.22s;
     box-shadow: 0 2px 8px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.04);
+  }
+  /* Even, gap-free layout for the People module's 8 category cards
+     (Staff / Faculty / Assoc. Faculty / Affiliate Faculty / Researchers /
+     Students / Assoc. Fellows / Alumni). A dedicated even-divisor column
+     count per breakpoint — instead of the generic auto-fit grid above —
+     is what stops the last row from stretching wider/narrower than the
+     rows above it, and keeps icon/text alignment identical on every card
+     in both Light and Dark Mode (the card styling itself is unchanged and
+     already theme-aware via the .kpi-card rules). */
+  #people-count-cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+  }
+  #people-count-cards .kpi-card {
+    min-height: 112px;
+    text-align: left;
+  }
+  @media (max-width: 1100px) {
+    #people-count-cards { grid-template-columns: repeat(4, 1fr); gap: 0.85rem; }
+  }
+  @media (max-width: 860px) {
+    #people-count-cards { grid-template-columns: repeat(2, 1fr); gap: 0.7rem; }
+  }
+  @media (max-width: 480px) {
+    #people-count-cards { grid-template-columns: repeat(2, 1fr); gap: 0.55rem; }
+    #people-count-cards .kpi-card { min-height: 96px; padding: 0.85rem 0.9rem 0.75rem; }
   }
   /* Gloss shine line */
   .kpi-card::before {
@@ -4111,7 +4145,7 @@
   // ── Call GAS with a session-bearing POST (all authenticated actions) ────────
   async function _sessionPost(action, extraParams) {
     const url = WS_CONFIG && WS_CONFIG.webAppUrl ? WS_CONFIG.webAppUrl : '';
-    if (!url) return { status: 'error', reason: 'no_web_app_url' };
+    if (!url) return { status: 'error', reason: 'no_web_app_url', error: 'No web app URL is configured for this portal.' };
     const payload = Object.assign({ action, sessionId: _serverSessionId || '' }, extraParams || {});
     try {
       const res = await fetch(url, {
@@ -4119,9 +4153,27 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-      return await res.json();
+      if (!res.ok) {
+        return { status: 'error', reason: 'http_' + res.status, error: 'Server returned HTTP ' + res.status + ' ' + res.statusText };
+      }
+      let parsed;
+      try { parsed = await res.json(); }
+      catch (parseErr) { return { status: 'error', reason: 'bad_json', error: 'Server response was not valid JSON: ' + parseErr.message }; }
+      // v52 FIX — normalize the response so every caller can rely on
+      // res.error being populated on failure. The GAS backend returns plain
+      // { error: '...' } (no `status` key) on exceptions/validation failures;
+      // without this, checks like `res.error || res.message || 'unknown error'`
+      // would silently fall through to "unknown error" even though the real
+      // message was sitting right there in `error`.
+      if (parsed && parsed.status === undefined && parsed.error !== undefined) parsed.status = 'error';
+      return parsed;
     } catch(e) {
-      return { status: 'error', reason: e.message };
+      // v52 FIX — this used to return only { status:'error', reason: e.message },
+      // which every attendance/report-management caller checks via
+      // `res.error || res.message`, NOT `res.reason` — so any network-level
+      // failure (offline, CORS, timeout, DNS) always displayed as a generic
+      // "unknown error" no matter what the real problem was.
+      return { status: 'error', reason: e.message, error: 'Network request failed: ' + e.message, message: e.message };
     }
   }
 
@@ -6394,10 +6446,13 @@
     renderCurrentTab(currentPeopleTab);
     runTenureCheck();
 
-    // FIX: the sheet uses DD/MM/YYYY everywhere else (see GAS formatCell()/
-    // normDateToSheet()) — this was previously swapped to MM/DD/YYYY, which
-    // silently corrupted the exit date whenever day and month differ.
-    const newExitDateForSheet = String(newExit.getDate()).padStart(2,'0') + '/' + String(newExit.getMonth()+1).padStart(2,'0') + '/' + newExit.getFullYear();
+    // v52 FIX — the master sheet must receive dates in MM/DD/YYYY format
+    // (see _parseAndValidateDateForSheet() in Code.gs, which now validates
+    // and rejects anything else). The app's own internal DB.exitDate display
+    // format (DD/MM/YYYY, set above) is unchanged — only the value sent to
+    // the sheet is different, so nothing else in the portal's date handling
+    // is affected.
+    const newExitDateForSheet = String(newExit.getMonth()+1).padStart(2,'0') + '/' + String(newExit.getDate()).padStart(2,'0') + '/' + newExit.getFullYear();
     syncToSheet('EXTEND_TENURE', { name: rec.name, sheetName: key, newExitDate: newExitDateForSheet, reason, extendedBy: 'Admin' });
     logAction('Tenure Extended', 'Admin', 'People', rec.name + ' → ' + fmtDate(DB[key][liveIdx].exitDate) + (reason ? ' | ' + reason : ''));
     toast('✅ Tenure extended for ' + rec.name + ' → ' + fmtDate(DB[key][liveIdx].exitDate));
@@ -27653,25 +27708,11 @@ function _v31SimpleTable(tbodyId, rows, rowFn, countId) {
 .table-card .tc-header { padding: 0.9rem 1.25rem 0.75rem; }
 .table-card table { width: 100%; }
 
-/* KPI grid alignment */
-.kpi-grid {
-  display: grid !important;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)) !important;
-  gap: 0.85rem !important;
-  margin-bottom: 1.5rem !important;
-}
-.kpi-card {
-  border-radius: 14px !important;
-  padding: 1rem 1.1rem !important;
-  display: flex !important;
-  flex-direction: column !important;
-  justify-content: space-between !important;
-  min-height: 90px !important;
-}
-.kpi-icon { font-size: 1.3rem !important; margin-bottom: 0.4rem !important; }
-.kpi-val  { font-size: 1.6rem !important; font-weight: 700 !important; line-height: 1 !important; }
-.kpi-label { font-size: 0.7rem !important; margin-top: 0.3rem !important; line-height: 1.3 !important; }
-.kpi-sub   { font-size: 0.62rem !important; margin-top: 3px !important; opacity: 0.7 !important; }
+/* KPI grid alignment — consolidated into the base .kpi-grid/.kpi-card rules
+   and the #people-count-cards rule (see main stylesheet); duplicate rules
+   used to live here too, fighting the base rules and the mobile CSS block
+   below with conflicting !important values depending on <style> tag
+   insertion order — that's what caused the uneven spacing/wrapping. */
 
 /* Page headers */
 .page-header { margin-bottom: 1.5rem !important; }
@@ -27718,7 +27759,6 @@ tbody td { vertical-align: middle; }
 
 /* Fix overflow on small screens */
 @media (max-width: 640px) {
-  .kpi-grid { grid-template-columns: 1fr 1fr !important; }
   .v31-affil-grid { grid-template-columns: 1fr 1fr !important; }
 }
 
@@ -27811,9 +27851,11 @@ tbody td { vertical-align: middle; }
 }
 .mobile-sidebar-backdrop.show { opacity: 1; pointer-events: auto; }
 
-@media (max-width: 900px) {
-  .kpi-grid { grid-template-columns: repeat(2, 1fr) !important; }
-}
+/* .kpi-grid responsive column counts are handled centrally in the main
+   stylesheet (base .kpi-grid rule + #people-count-cards) — this used to
+   also force 2 columns at 900px here, which fought the v32 patch's 640px
+   rule and the base rule depending on which <style> tag landed in <head>
+   last, producing inconsistent spacing. */
 
 @media (max-width: 768px) {
   .mobile-menu-btn { display: flex !important; }
@@ -34809,7 +34851,14 @@ tbody td { vertical-align: middle; }
         empName: emp.name || '',
         month: parts[0] || monthName,
         year: year,
-        workingDays: s.empDays || 0,
+        // v52 FIX — these four figures each go to their own column now
+        // (see ATT_REPORT_MAP in Code.gs); previously only workingDays was
+        // sent at all, so Total Working Hrs / Total Working Days / Emp
+        // Working Hrs never reached the master report.
+        workingDays: s.empDays || 0,             // -> ATT_REPORT_MAP.workingDays (Emp Working Days)
+        totalWorkingHrs: s.totalHrs || '',        // -> ATT_REPORT_MAP.totalWorkingHrs
+        totalWorkingDays: s.totalDays || 0,       // -> ATT_REPORT_MAP.totalWorkingDays
+        empWorkingHrs: s.empHrs || '',            // -> ATT_REPORT_MAP.empWorkingHrs
         leave: s.leave || 0,
         wfh: s.wfh || 0,
         od: s.od || 0
@@ -34871,7 +34920,7 @@ tbody td { vertical-align: middle; }
             <button class="tc-btn" onclick="attOpenPermissionModal()" ${ATT.currentMonth ? '' : 'disabled'}>🟡 Permission</button>
             <button class="tc-btn" onclick="attOpenBenchmarkModal()" ${ATT.currentMonth ? '' : 'disabled'}>⏱️ Benchmark</button>
             <button class="tc-btn" onclick="attOpenThresholdModal()">⚙️ Thresholds</button>
-            <button class="tc-btn" onclick="attOpenEmpIdModal()" ${ATT.currentMonth ? '' : 'disabled'}>🪪 Employee IDs</button>
+            <button class="tc-btn" onclick="attOpenEmpIdModal()">🪪 EMP IDs Manager</button>
             <button class="tc-btn" onclick="attDoSort()" ${ATT.currentMonth ? '' : 'disabled'}>🔤 Sort A→Z</button>
             <button class="tc-btn" onclick="attDoRecalc()" ${ATT.currentMonth ? '' : 'disabled'}>♻️ Recalculate</button>
             <button class="tc-btn" onclick="attOpenExportModal()" ${ATT.currentMonth ? '' : 'disabled'}>⬇️ Download Excel</button>
@@ -35534,12 +35583,164 @@ tbody td { vertical-align: middle; }
     attToast('✅ Thresholds saved & recalculated');
   }
 
-  // ─── EMPLOYEE ID MODAL ───────────────────────────────────────
+  // ─── EMP IDs MANAGER ───────────────────────────────────────────
+  // v52 — replaces the old "Match Attendance to People Records" modal.
+  // Tab 1 "EMP IDs Manager" is the full, server-backed directory: search,
+  // add, edit, delete, and duplicate-ID prevention for every Employee
+  // Name ⇄ Employee ID mapping, sourced from (and syncable against) the
+  // real People Management records. Tab 2 keeps the original per-month
+  // matcher for tying a freshly-imported attendance file's names to those
+  // mappings — same tool as before, just relocated under the new module.
+  const EMPIDMGR = { tab: 'manager', rows: [], search: '', loading: false };
+
   function attOpenEmpIdModal() {
     const mn = ATT.currentMonth;
-    if (!mn) return;
-    const mo = ATT.months[mn];
     window._attRoster = attPeopleRoster();
+    EMPIDMGR.tab = 'manager';
+    attModal(`
+      <button class="modal-close" onclick="attCloseModal()">✕ Close</button>
+      <div class="modal-title">🪪 EMP IDs Manager</div>
+      <p style="font-size:0.76rem;color:var(--text2);margin:-0.3rem 0 0.8rem;">One place to manage every Employee Name ⇄ Employee ID mapping. Duplicate IDs are blocked automatically, and renaming an ID here updates every historical attendance record for that employee.</p>
+      <div style="display:flex;gap:0.4rem;margin-bottom:0.7rem;">
+        <button class="tc-btn ${EMPIDMGR.tab === 'manager' ? 'primary' : ''}" id="empidmgr-tab-manager" onclick="empIdMgrSwitchTab('manager')">🪪 EMP IDs Manager</button>
+        <button class="tc-btn ${EMPIDMGR.tab === 'match' ? 'primary' : ''}" id="empidmgr-tab-match" onclick="empIdMgrSwitchTab('match')" ${mn ? '' : 'disabled title="Import a month first"'}>🔗 Match This Month${mn ? ' — ' + attEsc(mn) : ''}</button>
+      </div>
+      <div id="empidmgr-body"></div>
+    `, true);
+    empIdMgrRenderActiveTab();
+  }
+
+  function empIdMgrSwitchTab(tab) {
+    EMPIDMGR.tab = tab;
+    const mBtn = document.getElementById('empidmgr-tab-manager');
+    const tBtn = document.getElementById('empidmgr-tab-match');
+    if (mBtn) mBtn.className = 'tc-btn' + (tab === 'manager' ? ' primary' : '');
+    if (tBtn) tBtn.className = 'tc-btn' + (tab === 'match' ? ' primary' : '');
+    empIdMgrRenderActiveTab();
+  }
+  window.empIdMgrSwitchTab = empIdMgrSwitchTab;
+
+  function empIdMgrRenderActiveTab() {
+    const body = document.getElementById('empidmgr-body');
+    if (!body) return;
+    if (EMPIDMGR.tab === 'match') {
+      body.innerHTML = empIdMgrMatchTabHtml();
+    } else {
+      body.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text2);">Loading…</div>';
+      empIdMgrLoad();
+    }
+  }
+
+  // ── Tab 1: full manager (search / add / edit / delete / sync) ──
+  async function empIdMgrLoad() {
+    EMPIDMGR.loading = true;
+    const res = await _sessionPost('GET_EMP_IDS_MANAGER_DATA', { search: EMPIDMGR.search });
+    EMPIDMGR.loading = false;
+    if (res.status !== 'ok') {
+      const body = document.getElementById('empidmgr-body');
+      if (body) body.innerHTML = '<div style="padding:1rem;color:var(--red,#f87171);">❌ Could not load EMP IDs: ' + attEsc(res.error || res.message || 'unknown error') + '</div>';
+      return;
+    }
+    EMPIDMGR.rows = res.mappings || [];
+    empIdMgrRenderManagerTab(res.total, res.withId);
+  }
+
+  function empIdMgrRenderManagerTab(total, withId) {
+    const body = document.getElementById('empidmgr-body');
+    if (!body || EMPIDMGR.tab !== 'manager') return;
+    const rowsHtml = EMPIDMGR.rows.map((r, i) => `
+      <tr>
+        <td style="padding:5px 8px;">${attEsc(r.empName)}</td>
+        <td style="padding:5px 8px;font-size:0.68rem;color:var(--text2);">${attEsc(r.source === 'roster' ? 'EMP IDs sheet' : r.source)}</td>
+        <td style="padding:5px 8px;">
+          <input id="empidmgr-id-${i}" value="${attEsc(r.empId || '')}" placeholder="Assign ID…"
+            style="width:120px;padding:4px 6px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text);">
+        </td>
+        <td style="padding:5px 8px;white-space:nowrap;">
+          <button class="tbl-action-btn" onclick="empIdMgrSave(${i})">💾</button>
+          ${r.inRoster ? `<button class="tbl-action-btn" onclick="empIdMgrDelete('${attEsc(r.empId)}','${attEsc(r.empName).replace(/'/g, '')}')">🗑️</button>` : ''}
+        </td>
+      </tr>`).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:1.2rem;">No mappings match this search.</td></tr>';
+
+    body.innerHTML = `
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;margin-bottom:0.6rem;">
+        <input type="text" id="empidmgr-search" placeholder="🔍 Search name or Employee ID" value="${attEsc(EMPIDMGR.search)}"
+          oninput="empIdMgrSetSearch(this.value)" style="flex:1;min-width:180px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0.4rem 0.8rem;color:var(--text);">
+        <button class="tc-btn" onclick="empIdMgrSync()">🔄 Sync from People Records</button>
+        <button class="tc-btn primary" onclick="empIdMgrOpenAdd()">➕ Add Mapping</button>
+      </div>
+      <p style="font-size:0.7rem;color:var(--text2);margin:0 0 0.5rem;">${total} total · ${withId} with an Employee ID assigned · ${total - withId} unassigned</p>
+      <div style="max-height:340px;overflow-y:auto;">
+        <table style="width:100%;font-size:0.8rem;"><thead><tr><th>Employee Name</th><th>Source</th><th>Employee ID</th><th>Actions</th></tr></thead><tbody>${rowsHtml}</tbody></table>
+      </div>`;
+  }
+
+  let _empIdMgrSearchDebounce = null;
+  function empIdMgrSetSearch(v) {
+    EMPIDMGR.search = v;
+    clearTimeout(_empIdMgrSearchDebounce);
+    _empIdMgrSearchDebounce = setTimeout(empIdMgrLoad, 250);
+  }
+  window.empIdMgrSetSearch = empIdMgrSetSearch;
+
+  // Save = add (if this name has no roster row yet) or edit (if it does),
+  // reusing the existing duplicate-ID-safe backend actions.
+  async function empIdMgrSave(i) {
+    const row = EMPIDMGR.rows[i];
+    const idInput = document.getElementById('empidmgr-id-' + i);
+    if (!row || !idInput) return;
+    const newId = idInput.value.trim();
+    if (!newId) { attToast('⚠️ Enter an Employee ID before saving'); return; }
+
+    const res = row.inRoster
+      ? await _sessionPost('EDIT_ROSTER_PERSON', { origEmpId: row.empId, empId: newId, empName: row.empName })
+      : await _sessionPost('ADD_ROSTER_PERSON', { empId: newId, empName: row.empName });
+
+    if (res.status !== 'ok') {
+      attToast('❌ ' + (res.message || res.error || 'save failed'));
+      return;
+    }
+    attToast('✅ Saved — ' + row.empName + ' → ' + newId + (res.attendanceRowsSynced ? ' (' + res.attendanceRowsSynced + ' attendance row(s) synced)' : ''));
+    empIdMgrLoad();
+  }
+  window.empIdMgrSave = empIdMgrSave;
+
+  function empIdMgrOpenAdd() {
+    const name = prompt('Employee Name:');
+    if (!name || !name.trim()) return;
+    const id = prompt('Employee ID for "' + name.trim() + '":');
+    if (!id || !id.trim()) return;
+    (async () => {
+      const res = await _sessionPost('ADD_ROSTER_PERSON', { empId: id.trim(), empName: name.trim() });
+      if (res.status !== 'ok') { attToast('❌ ' + (res.message || res.error || 'add failed')); return; }
+      attToast('✅ Added ' + name.trim() + ' → ' + id.trim());
+      empIdMgrLoad();
+    })();
+  }
+  window.empIdMgrOpenAdd = empIdMgrOpenAdd;
+
+  async function empIdMgrDelete(empId, empName) {
+    if (!confirm('Remove the mapping for "' + empName + '" (' + empId + ')? Historical attendance rows are kept, but this ID will no longer resolve to a name automatically.')) return;
+    const res = await _sessionPost('DELETE_ROSTER_PERSON', { empId: empId });
+    if (res.status !== 'ok') { attToast('❌ ' + (res.error || 'delete failed')); return; }
+    attToast('🗑️ Mapping removed');
+    empIdMgrLoad();
+  }
+  window.empIdMgrDelete = empIdMgrDelete;
+
+  async function empIdMgrSync() {
+    const res = await _sessionPost('SYNC_EMP_IDS_FROM_PEOPLE', {});
+    if (res.status !== 'ok') { attToast('❌ Sync failed: ' + (res.error || 'unknown error')); return; }
+    attToast('✅ Pulled ' + res.added + ' new name(s) from People Management' + (res.skippedDuplicateId && res.skippedDuplicateId.length ? ' (' + res.skippedDuplicateId.length + ' ID clash left blank for review)' : ''));
+    empIdMgrLoad();
+  }
+  window.empIdMgrSync = empIdMgrSync;
+
+  // ── Tab 2: the original per-month matcher, relocated here ──
+  function empIdMgrMatchTabHtml() {
+    const mn = ATT.currentMonth;
+    if (!mn) return '<p style="color:var(--text2);">Import a month\'s attendance data first.</p>';
+    const mo = ATT.months[mn];
     const rows = mo.employees.map((e, i) => {
       const saved = getEmpMatch(e.name);
       const matchLabel = saved && saved.personName ? `${saved.personName} — ${saved.category}` : (e.matchedPerson ? `${e.matchedPerson} — ${e.matchedCategory}` : '');
@@ -35562,19 +35763,14 @@ tbody td { vertical-align: middle; }
         </td>
       </tr>`;
     }).join('');
-    attModal(`
-      <button class="modal-close" onclick="attCloseModal()">✕ Close</button>
-      <div class="modal-title">🪪 Match Attendance to People Records — ${mn}</div>
-      <p style="font-size:0.76rem;color:var(--text2);margin:-0.3rem 0 0.8rem;">Search and select the real Staff / Faculty / Researcher / Student record for each attendance name — the Employee ID auto-fills from that record and stays consistent across both datasets. If someone isn't in the People module yet, just type an ID manually on the right.</p>
-      <div style="max-height:360px;overflow-y:auto;">
+    return `
+      <div style="max-height:320px;overflow-y:auto;">
         <table style="width:100%;font-size:0.8rem;"><thead><tr><th>#</th><th>DS</th><th>Name (from file)</th><th>Match to People record</th><th>Employee ID</th></tr></thead><tbody>${rows}</tbody></table>
       </div>
       <div class="modal-row" style="margin-top:1rem;">
-        <button class="modal-btn cancel" onclick="attCloseModal()">Cancel</button>
         <button class="modal-btn" onclick="attRunApplyEmpIdStore()">🔄 Apply Saved Matches</button>
         <button class="modal-btn primary" onclick="attRunSaveAllEmpIds()">💾 Save All</button>
-      </div>
-    `, true);
+      </div>`;
   }
 
   function attFilterRoster(i) {
@@ -35839,7 +36035,15 @@ tbody td { vertical-align: middle; }
       records: JSON.stringify(rowsWithId),
       overwrite: overwrite ? 'true' : 'false'
     });
-    if (res.status !== 'ok') { toast('❌ Sync failed: ' + (res.error || res.message || 'unknown error')); return; }
+    if (res.status !== 'ok') {
+      const detail = res.error || res.message || res.reason || 'unknown error';
+      console.error('Sync to Master Report failed:', res);
+      toast('❌ Sync failed: ' + detail);
+      return;
+    }
+    if (res.skipped && res.skipped.length) {
+      console.warn('Sync to Master Report — ' + res.skipped.length + ' row(s) skipped:', res.skipped);
+    }
     if (res.duplicates && res.duplicates.length && !overwrite) {
       const names = res.duplicates.slice(0, 5).map(d => d.empName + ' (' + d.empId + ')').join(', ');
       const more = res.duplicates.length > 5 ? ' and ' + (res.duplicates.length - 5) + ' more' : '';
@@ -35926,13 +36130,15 @@ tbody td { vertical-align: middle; }
       '<tr>' +
         '<td>' + r.sNo + '</td><td>' + r.month + '</td><td>' + r.year + '</td>' +
         '<td>' + r.empId + '</td><td>' + r.empName + '</td>' +
-        '<td>' + r.workingDays + '</td><td>' + r.leave + '</td><td>' + r.wfh + '</td><td>' + r.od + '</td>' +
+        '<td>' + (r.totalWorkingHrs || '') + '</td><td>' + (r.totalWorkingDays || '') + '</td>' +
+        '<td>' + (r.empWorkingHrs || '') + '</td><td>' + r.workingDays + '</td>' +
+        '<td>' + r.leave + '</td><td>' + r.wfh + '</td><td>' + r.od + '</td>' +
         '<td style="white-space:nowrap;">' +
           '<button class="tbl-action-btn" onclick="arOpenEditRecord(' + r._row + ')">✏️</button> ' +
           '<button class="tbl-action-btn" onclick="arDeleteRecord(' + r._row + ',\'' + (r.empName || '').replace(/'/g, '') + '\')">🗑️</button>' +
         '</td>' +
       '</tr>'
-    ).join('') || '<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:1.5rem;">No records match this filter.</td></tr>';
+    ).join('') || '<tr><td colspan="13" style="text-align:center;color:var(--text3);padding:1.5rem;">No records match this filter.</td></tr>';
 
     return (
       '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;margin-bottom:0.8rem;">' +
@@ -35948,6 +36154,7 @@ tbody td { vertical-align: middle; }
       '</div>' +
       '<table class="data-table" style="width:100%;"><thead><tr>' +
         '<th>Sl.No</th><th>Month</th><th>Year</th><th>Employee ID</th><th>Employee Name</th>' +
+        '<th>Total Working Hrs</th><th>Total Working Days</th><th>Emp Working Hrs</th>' +
         '<th>Working Days</th><th>Leave</th><th>WFH</th><th>OD</th><th>Actions</th>' +
       '</tr></thead><tbody>' + rowsHtml + '</tbody></table>'
     );
@@ -35957,7 +36164,7 @@ tbody td { vertical-align: middle; }
   window.arSetFilter = arSetFilter;
 
   function arOpenAddRecord() {
-    arFormModal('➕ Add Attendance Record', { month: '', year: new Date().getFullYear(), empId: '', empName: '', workingDays: 0, leave: 0, wfh: 0, od: 0 }, async (vals) => {
+    arFormModal('➕ Add Attendance Record', { month: '', year: new Date().getFullYear(), empId: '', empName: '', totalWorkingHrs: '', totalWorkingDays: '', empWorkingHrs: '', workingDays: 0, leave: 0, wfh: 0, od: 0 }, async (vals) => {
       const res = await arApi('SAVE_ATTENDANCE_RECORD', Object.assign({}, vals, { overwrite: 'false' }));
       if (res.status === 'duplicate') {
         if (confirm(res.message + '\n\nOverwrite it?')) {
@@ -35974,7 +36181,11 @@ tbody td { vertical-align: middle; }
     const rec = AR.records.find(r => r._row === rowIndex);
     if (!rec) return;
     arFormModal('✏️ Edit Attendance Record', rec, async (vals) => {
-      const res = await arApi('UPDATE_ATTENDANCE_RECORD', { rowIndex: rowIndex, empName: vals.empName, workingDays: vals.workingDays, leave: vals.leave, wfh: vals.wfh, od: vals.od });
+      const res = await arApi('UPDATE_ATTENDANCE_RECORD', {
+        rowIndex: rowIndex, empName: vals.empName,
+        totalWorkingHrs: vals.totalWorkingHrs, totalWorkingDays: vals.totalWorkingDays, empWorkingHrs: vals.empWorkingHrs,
+        workingDays: vals.workingDays, leave: vals.leave, wfh: vals.wfh, od: vals.od
+      });
       if (res.status !== 'ok') { toast('❌ ' + (res.error || 'update failed')); return false; }
       toast('✅ Record updated'); await arRefreshAll(); return true;
     }, true);
@@ -36004,6 +36215,9 @@ tbody td { vertical-align: middle; }
           arField('Year', 'ar-f-year', vals.year, lockKeys) +
           arField('Employee ID', 'ar-f-empId', vals.empId, lockKeys) +
           arField('Employee Name', 'ar-f-empName', vals.empName) +
+          arField('Total Working Hrs', 'ar-f-totalWorkingHrs', vals.totalWorkingHrs) +
+          arField('Total Working Days', 'ar-f-totalWorkingDays', vals.totalWorkingDays) +
+          arField('Emp Working Hrs', 'ar-f-empWorkingHrs', vals.empWorkingHrs) +
           arField('Working Days', 'ar-f-workingDays', vals.workingDays) +
           arField('Leave', 'ar-f-leave', vals.leave) +
           arField('WFH', 'ar-f-wfh', vals.wfh) +
@@ -36022,6 +36236,9 @@ tbody td { vertical-align: middle; }
         year: document.getElementById('ar-f-year').value.trim(),
         empId: document.getElementById('ar-f-empId').value.trim(),
         empName: document.getElementById('ar-f-empName').value.trim(),
+        totalWorkingHrs: document.getElementById('ar-f-totalWorkingHrs').value.trim(),
+        totalWorkingDays: document.getElementById('ar-f-totalWorkingDays').value.trim(),
+        empWorkingHrs: document.getElementById('ar-f-empWorkingHrs').value.trim(),
         workingDays: parseFloat(document.getElementById('ar-f-workingDays').value) || 0,
         leave: parseFloat(document.getElementById('ar-f-leave').value) || 0,
         wfh: parseFloat(document.getElementById('ar-f-wfh').value) || 0,
