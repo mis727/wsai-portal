@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -598,6 +599,19 @@
   .kpi-card.gold:hover   { border-color: rgba(245,158,11,0.5);  box-shadow: 0 8px 28px rgba(245,158,11,0.15), 0 2px 8px rgba(0,0,0,0.2); }
   .kpi-card.red:hover    { border-color: rgba(239,68,68,0.5);   box-shadow: 0 8px 28px rgba(239,68,68,0.15),  0 2px 8px rgba(0,0,0,0.2); }
   .kpi-card.blue::after   { background: linear-gradient(90deg, var(--accent), rgba(6,182,212,0.8)); }
+  /* v56: trend chip on the top-level Asset Management count cards, mirroring
+     the .ek-trend styling used on the People/Asset executive KPI strips —
+     but scoped to .kpi-trend so it doesn't collide with the exec strip. */
+  .kpi-trend { font-size: 0.64rem; margin-top: 0.35rem; display: flex; align-items: center; gap: 3px; font-family: var(--font-mono); }
+  .kpi-trend.up { color: var(--green); }
+  .kpi-trend.down { color: var(--red); }
+  .kpi-trend.flat { color: var(--text3); }
+  /* v56: shared cross-module color legend — same palette semantics used by
+     both the People and Asset analytics grids, so a color always means the
+     same thing whichever module you're looking at. */
+  .wsai-color-legend { display:flex; flex-wrap:wrap; gap:0.55rem 0.9rem; margin:-0.15rem 0 0.75rem; padding:0.4rem 0.7rem; background:var(--surface2); border:1px solid var(--border); border-radius:8px; }
+  .wcl-item { display:flex; align-items:center; gap:5px; font-size:0.64rem; color:var(--text3); font-family:var(--font-mono); white-space:nowrap; }
+  .wcl-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
   .kpi-card.cyan::after   { background: linear-gradient(90deg, var(--accent2), rgba(59,130,246,0.8)); }
   .kpi-card.green::after  { background: linear-gradient(90deg, var(--green), rgba(16,185,129,0.6)); }
   .kpi-card.orange::after { background: linear-gradient(90deg, var(--orange), rgba(245,158,11,0.8)); }
@@ -2043,6 +2057,7 @@
             <span style="font-size:0.62rem;font-family:var(--font-mono);color:var(--accent);background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.25);border-radius:5px;padding:0.15rem 0.45rem;">Live · Auto-refreshed</span>
             <span style="font-size:0.68rem;color:var(--text3);margin-left:auto;">Each visual below filters independently — use the small selector on a card to slice just that chart.</span>
           </div>
+          <div class="wsai-color-legend" id="ppl-color-legend"></div>
 
           <!-- Executive KPI strip with trend indicators -->
           <div class="exec-kpi-strip" id="ppl-exec-kpis">
@@ -2467,16 +2482,18 @@
           <p>IT Assets · Non-IT · GPU Cluster · ILDS · Books · Consumables · Spares</p>
         </div>
 
-        <!-- KPI Strip -->
+        <!-- KPI Strip — v55: cards are now clickable, same interaction pattern as the
+             People module's count cards. Each opens the dedicated Category Interface
+             (modal workspace) below, which holds that category's charts + Registry + Add. -->
         <div class="kpi-grid" id="asset-kpi-grid">
-          <div class="kpi-card blue"><div class="kpi-icon">💻</div><div class="kpi-val" id="akpi-it">0</div><div class="kpi-label">IT Assets</div></div>
-          <div class="kpi-card cyan"><div class="kpi-icon">🏢</div><div class="kpi-val" id="akpi-nonit">0</div><div class="kpi-label">Non-IT Assets</div></div>
-          <div class="kpi-card purple"><div class="kpi-icon">🧠</div><div class="kpi-val" id="akpi-gpu">0</div><div class="kpi-label">GPU Nodes</div></div>
-          <div class="kpi-card green"><div class="kpi-icon">🌐</div><div class="kpi-val" id="akpi-ilds">0</div><div class="kpi-label">ILDS Nodes</div></div>
-          <div class="kpi-card gold"><div class="kpi-icon">📚</div><div class="kpi-val" id="akpi-books">0</div><div class="kpi-label">Books</div></div>
-          <div class="kpi-card orange"><div class="kpi-icon">🔧</div><div class="kpi-val" id="akpi-spares">0</div><div class="kpi-label">Spares</div></div>
-          <div class="kpi-card process"><div class="kpi-icon">🛒</div><div class="kpi-val" id="akpi-consumables">0</div><div class="kpi-label">Consumables</div></div>
-          <div class="kpi-card blue" style="border-color:rgba(16,185,129,0.25)"><div class="kpi-icon">💰</div><div class="kpi-val" id="akpi-value" style="font-size:1.3rem">₹0</div><div class="kpi-label">Total Value</div></div>
+          <div class="kpi-card blue" onclick="openAssetCategory('it')" style="cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='var(--shadow-lg)'" onmouseout="this.style.transform='';this.style.boxShadow=''" title="Open IT Assets registry"><div class="kpi-icon">💻</div><div class="kpi-val" id="akpi-it">0</div><div class="kpi-label">IT Assets</div><div class="kpi-trend flat" id="akpi-it-trend">—</div></div>
+          <div class="kpi-card cyan" onclick="openAssetCategory('nonit')" style="cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='var(--shadow-lg)'" onmouseout="this.style.transform='';this.style.boxShadow=''" title="Open Non-IT Assets registry"><div class="kpi-icon">🏢</div><div class="kpi-val" id="akpi-nonit">0</div><div class="kpi-label">Non-IT Assets</div><div class="kpi-trend flat" id="akpi-nonit-trend">—</div></div>
+          <div class="kpi-card purple" onclick="openAssetCategory('gpu')" style="cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='var(--shadow-lg)'" onmouseout="this.style.transform='';this.style.boxShadow=''" title="Open GPU Cluster registry"><div class="kpi-icon">🧠</div><div class="kpi-val" id="akpi-gpu">0</div><div class="kpi-label">GPU Nodes</div><div class="kpi-trend flat" id="akpi-gpu-trend">—</div></div>
+          <div class="kpi-card green" onclick="openAssetCategory('ilds')" style="cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='var(--shadow-lg)'" onmouseout="this.style.transform='';this.style.boxShadow=''" title="Open ILDS Cluster registry"><div class="kpi-icon">🌐</div><div class="kpi-val" id="akpi-ilds">0</div><div class="kpi-label">ILDS Nodes</div><div class="kpi-trend flat" id="akpi-ilds-trend">—</div></div>
+          <div class="kpi-card gold" onclick="openAssetCategory('books')" style="cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='var(--shadow-lg)'" onmouseout="this.style.transform='';this.style.boxShadow=''" title="Open Books registry"><div class="kpi-icon">📚</div><div class="kpi-val" id="akpi-books">0</div><div class="kpi-label">Books</div><div class="kpi-trend flat" id="akpi-books-trend">—</div></div>
+          <div class="kpi-card orange" onclick="openAssetCategory('spares')" style="cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='var(--shadow-lg)'" onmouseout="this.style.transform='';this.style.boxShadow=''" title="Open Spares registry"><div class="kpi-icon">🔧</div><div class="kpi-val" id="akpi-spares">0</div><div class="kpi-label">Spares</div><div class="kpi-trend flat" id="akpi-spares-trend">—</div></div>
+          <div class="kpi-card process" onclick="openAssetCategory('consumables')" style="cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='var(--shadow-lg)'" onmouseout="this.style.transform='';this.style.boxShadow=''" title="Open Consumables registry"><div class="kpi-icon">🛒</div><div class="kpi-val" id="akpi-consumables">0</div><div class="kpi-label">Consumables</div><div class="kpi-trend flat" id="akpi-consumables-trend">—</div></div>
+          <div class="kpi-card blue" style="border-color:rgba(16,185,129,0.25)" title="Sum of purchase value across all asset categories"><div class="kpi-icon">💰</div><div class="kpi-val" id="akpi-value" style="font-size:1.3rem">₹0</div><div class="kpi-label">Total Value</div><div class="kpi-trend flat" id="akpi-value-trend">—</div></div>
         </div>
 
         <!-- Asset sync button -->
@@ -2494,6 +2511,7 @@
             <span style="font-size:0.62rem;font-family:var(--font-mono);color:var(--accent);background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.25);border-radius:5px;padding:0.15rem 0.45rem;">Live · Auto-refreshed</span>
             <span style="font-size:0.68rem;color:var(--text3);margin-left:auto;">Click a KPI to drill down.</span>
           </div>
+          <div class="wsai-color-legend" id="asset-color-legend"></div>
 
           <!-- Executive KPI strip with trend indicators -->
           <div class="exec-kpi-strip" id="asset-exec-kpis">
@@ -2524,26 +2542,51 @@
             </div>
             <div class="aw-card">
               <div class="aw-head">
-                <span class="aw-title">⏳ Warranty Expiry (next 90 days)</span>
+                <span class="aw-title">⏳ Warranty Expiry by Month</span>
               </div>
               <div class="aw-canvas-wrap"><canvas id="asset-warranty-bar"></canvas></div>
             </div>
           </div>
         </div>
 
-        <!-- Sub-tabs -->
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1.25rem;">
-          <button class="asset-tab-btn active" id="atab-it"     onclick="switchAssetTab('it')"          >💻 IT Assets</button>
-          <button class="asset-tab-btn"         id="atab-nonit" onclick="switchAssetTab('nonit')"       >🏢 Non-IT</button>
-          <button class="asset-tab-btn"         id="atab-gpu"   onclick="switchAssetTab('gpu')"         >🧠 GPU Cluster</button>
-          <button class="asset-tab-btn"         id="atab-ilds"  onclick="switchAssetTab('ilds')"        >🌐 ILDS Cluster</button>
-          <button class="asset-tab-btn"         id="atab-books" onclick="switchAssetTab('books')"       >📚 Books</button>
-          <button class="asset-tab-btn"         id="atab-spares"onclick="switchAssetTab('spares')"          >🔧 Spares</button>
-          <button class="asset-tab-btn"         id="atab-nonrep"onclick="switchAssetTab('nonrepairable')"  >⚠️ Non Repairable</button>
-          <button class="asset-tab-btn"         id="atab-cons"  onclick="switchAssetTab('consumables')"     >🛒 Consumables</button>
-          <button class="asset-tab-btn"         id="atab-vendor" onclick="switchAssetTab('vendor')">🏪 Vendor List</button>
-          <button class="asset-tab-btn"         id="asset-tab-btn-actions"    onclick="switchAssetTab('actions')" style="margin-left:auto;border-color:rgba(139,92,246,0.4);color:var(--purple);">⚡ Actions</button>
-        </div>
+        <!-- ══════════════════════════════════════════════════════════
+             CATEGORY INTERFACE — v55: dedicated workspace opened from a
+             count card above. Holds Sub-tabs / Category Breakdown /
+             Add / Registry for exactly one Asset Management category at
+             a time — same "modal concept" as the People module's
+             people-category-overlay / pcp-* panel. Reuses the exact same
+             CSS classes so the two modules look and behave identically. -->
+        <div class="people-cat-overlay" id="asset-category-overlay" onclick="if(event.target===this) closeAssetCategory();">
+          <div class="people-cat-panel">
+
+            <div class="pcp-header">
+              <div class="pcp-icon" id="acp-icon">💻</div>
+              <div class="pcp-title-wrap">
+                <h3 class="pcp-title" id="acp-title">IT Assets</h3>
+                <div class="pcp-sub">Category workspace · breakdown, add, edit &amp; delete records</div>
+              </div>
+              <div class="pcp-stats" id="acp-stats">
+                <div class="pcp-stat"><div class="ps-val" id="acp-stat-total">0</div><div class="ps-lbl">Records</div></div>
+              </div>
+              <button class="tc-btn" onclick="assetLoadFromSheet(false)" title="Fetch latest from sheet" style="border-color:rgba(16,185,129,0.4);color:var(--green);">↻ Sync from Sheet</button>
+              <button class="pcp-close" onclick="closeAssetCategory()">✕ Close</button>
+            </div>
+
+            <!-- Sub-tabs -->
+            <div class="pcp-nav" id="acp-nav">
+              <button class="asset-tab-btn people-tab-btn active" id="atab-it"     onclick="switchAssetTab('it')"          >💻 IT Assets</button>
+              <button class="asset-tab-btn people-tab-btn"         id="atab-nonit" onclick="switchAssetTab('nonit')"       >🏢 Non-IT</button>
+              <button class="asset-tab-btn people-tab-btn"         id="atab-gpu"   onclick="switchAssetTab('gpu')"         >🧠 GPU Cluster</button>
+              <button class="asset-tab-btn people-tab-btn"         id="atab-ilds"  onclick="switchAssetTab('ilds')"        >🌐 ILDS Cluster</button>
+              <button class="asset-tab-btn people-tab-btn"         id="atab-books" onclick="switchAssetTab('books')"       >📚 Books</button>
+              <button class="asset-tab-btn people-tab-btn"         id="atab-spares"onclick="switchAssetTab('spares')"          >🔧 Spares</button>
+              <button class="asset-tab-btn people-tab-btn"         id="atab-nonrep"onclick="switchAssetTab('nonrepairable')"  >⚠️ Non Repairable</button>
+              <button class="asset-tab-btn people-tab-btn"         id="atab-cons"  onclick="switchAssetTab('consumables')"     >🛒 Consumables</button>
+              <button class="asset-tab-btn people-tab-btn"         id="atab-vendor" onclick="switchAssetTab('vendor')">🏪 Vendor List</button>
+              <button class="asset-tab-btn people-tab-btn"         id="asset-tab-btn-actions"    onclick="switchAssetTab('actions')" style="margin-left:auto;border-color:rgba(139,92,246,0.4);color:var(--purple);">⚡ Actions</button>
+            </div>
+
+            <div class="pcp-body">
 
         <!-- ── IT ASSETS SECTION ── -->
         <div class="asset-sec active" id="asec-it">
@@ -2554,6 +2597,10 @@
               <div style="display:flex;align-items:center;gap:0.5rem;">
                 <label style="font-size:0.68rem;color:var(--text3);font-family:var(--font-mono);">📍 Center:</label>
                 <select id="it-cat-center-filter" onchange="assetCatCenterFilter('it-cat-panel')" style="font-size:0.72rem;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:0.3rem 0.6rem;color:var(--text);outline:none;cursor:pointer;font-family:var(--font-mono);"><option value="">All Centers</option></select>
+                <label style="font-size:0.68rem;color:var(--text3);font-family:var(--font-mono);">👁 Show:</label>
+                <select id="it-cat-limit" onchange="assetCatCenterFilter('it-cat-panel')" title="Limit how many category tiles are shown" style="font-size:0.72rem;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:0.3rem 0.6rem;color:var(--text);outline:none;cursor:pointer;font-family:var(--font-mono);">
+                  <option value="5">Top 5</option><option value="10" selected>Top 10</option><option value="15">Top 15</option><option value="all">All</option>
+                </select>
                 <span style="font-size:0.68rem;color:var(--text3);">Auto-updated from Google Sheet</span>
               </div>
             </div>
@@ -2598,6 +2645,10 @@
               <div style="display:flex;align-items:center;gap:0.5rem;">
                 <label style="font-size:0.68rem;color:var(--text3);font-family:var(--font-mono);">📍 Center:</label>
                 <select id="nonit-cat-center-filter" onchange="assetCatCenterFilter('nonit-cat-panel')" style="font-size:0.72rem;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:0.3rem 0.6rem;color:var(--text);outline:none;cursor:pointer;font-family:var(--font-mono);"><option value="">All Centers</option></select>
+                <label style="font-size:0.68rem;color:var(--text3);font-family:var(--font-mono);">👁 Show:</label>
+                <select id="nonit-cat-limit" onchange="assetCatCenterFilter('nonit-cat-panel')" title="Limit how many category tiles are shown" style="font-size:0.72rem;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:0.3rem 0.6rem;color:var(--text);outline:none;cursor:pointer;font-family:var(--font-mono);">
+                  <option value="5">Top 5</option><option value="10" selected>Top 10</option><option value="15">Top 15</option><option value="all">All</option>
+                </select>
                 <span style="font-size:0.68rem;color:var(--text3);">Auto-updated from Google Sheet</span>
               </div>
             </div>
@@ -2641,6 +2692,10 @@
               <div style="display:flex;align-items:center;gap:0.5rem;">
                 <label style="font-size:0.68rem;color:var(--text3);font-family:var(--font-mono);">📍 Center:</label>
                 <select id="gpu-cat-center-filter" onchange="assetCatCenterFilter('gpu-cat-panel')" style="font-size:0.72rem;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:0.3rem 0.6rem;color:var(--text);outline:none;cursor:pointer;font-family:var(--font-mono);"><option value="">All Centers</option></select>
+                <label style="font-size:0.68rem;color:var(--text3);font-family:var(--font-mono);">👁 Show:</label>
+                <select id="gpu-cat-limit" onchange="assetCatCenterFilter('gpu-cat-panel')" title="Limit how many category tiles are shown" style="font-size:0.72rem;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:0.3rem 0.6rem;color:var(--text);outline:none;cursor:pointer;font-family:var(--font-mono);">
+                  <option value="5">Top 5</option><option value="10" selected>Top 10</option><option value="15">Top 15</option><option value="all">All</option>
+                </select>
                 <span style="font-size:0.68rem;color:var(--text3);">Auto-updated from Google Sheet</span>
               </div>
             </div>
@@ -2673,6 +2728,10 @@
               <div style="display:flex;align-items:center;gap:0.5rem;">
                 <label style="font-size:0.68rem;color:var(--text3);font-family:var(--font-mono);">📍 Center:</label>
                 <select id="ilds-cat-center-filter" onchange="assetCatCenterFilter('ilds-cat-panel')" style="font-size:0.72rem;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:0.3rem 0.6rem;color:var(--text);outline:none;cursor:pointer;font-family:var(--font-mono);"><option value="">All Centers</option></select>
+                <label style="font-size:0.68rem;color:var(--text3);font-family:var(--font-mono);">👁 Show:</label>
+                <select id="ilds-cat-limit" onchange="assetCatCenterFilter('ilds-cat-panel')" title="Limit how many category tiles are shown" style="font-size:0.72rem;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:0.3rem 0.6rem;color:var(--text);outline:none;cursor:pointer;font-family:var(--font-mono);">
+                  <option value="5">Top 5</option><option value="10" selected>Top 10</option><option value="15">Top 15</option><option value="all">All</option>
+                </select>
                 <span style="font-size:0.68rem;color:var(--text3);">Auto-updated from Google Sheet</span>
               </div>
             </div>
@@ -2700,9 +2759,15 @@
         <div class="asset-sec" id="asec-books">
           <!-- Unique Items Summary Panel -->
           <div id="books-cat-panel" style="margin-bottom:1rem;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:0.9rem 1.1rem;">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.7rem;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.7rem;flex-wrap:wrap;gap:0.5rem;">
               <div style="font-weight:700;font-size:0.85rem;color:var(--text);">📚 Books — Title Breakdown</div>
-              <div style="font-size:0.72rem;color:var(--text3);">Auto-updated from Google Sheet</div>
+              <div style="display:flex;align-items:center;gap:0.5rem;">
+                <label style="font-size:0.68rem;color:var(--text3);font-family:var(--font-mono);">👁 Show:</label>
+                <select id="books-cat-limit" onchange="_refreshCatPanelBooks('books-cat-grid', ASSET_DB.books)" title="Limit how many title tiles are shown" style="font-size:0.72rem;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:0.3rem 0.6rem;color:var(--text);outline:none;cursor:pointer;font-family:var(--font-mono);">
+                  <option value="10">Top 10</option><option value="20" selected>Top 20</option><option value="50">Top 50</option><option value="all">All</option>
+                </select>
+                <span style="font-size:0.72rem;color:var(--text3);">Auto-updated from Google Sheet</span>
+              </div>
             </div>
             <div id="books-cat-grid" style="display:flex;flex-wrap:wrap;gap:0.5rem;"></div>
           </div>
@@ -2845,6 +2910,10 @@
             </div>
           </div>
         </div>
+
+            </div><!-- /.pcp-body -->
+          </div><!-- /.people-cat-panel -->
+        </div><!-- /#asset-category-overlay -->
 
         <!-- ── ASSET ADD/EDIT MODAL ── -->
         <div id="asset-modal" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);display:none;align-items:flex-start;justify-content:center;padding:2rem 1rem;overflow-y:auto;">
@@ -6568,9 +6637,6 @@
   let _reminderRecipients = [];
   let _reminderRules     = [];
   let _reminderActiveTab = 'recipients';
-  let _reminderStatus = { lastRun: null, upcomingCount: 0, overdueCount: 0, sentTo: 0, nextRun: null, hasRunYet: false };
-  let _reminderSelectedForRemoval = new Set();   // tracks checked recipients for bulk remove
-  let _reminderPollTimer = null;
 
   // The only People types a reminder rule can watch — mirrors
   // PEOPLE_REMINDER_TYPES in WSAI_People_Reminders.gs exactly (same keys the
@@ -6618,35 +6684,11 @@
     }
     modal.classList.add('show');
     loadReminderConfig();
-    _reminderStartPolling();
   }
 
   function closeReminderModal() {
-    _reminderStopPolling();
     const m = document.getElementById('reminder-modal-overlay');
     if (m) m.classList.remove('show');
-  }
-
-  // ── Live status polling — keeps the status row current while the modal
-  //    is open, without the user needing to close and reopen it. ──
-  function _reminderStartPolling() {
-    _reminderStopPolling();
-    _reminderPollTimer = setInterval(async () => {
-      const modal = document.getElementById('reminder-modal-overlay');
-      if (!modal || !modal.classList.contains('show')) { _reminderStopPolling(); return; }
-      try {
-        const url = _reminderUrl();
-        if (!url || typeof _jsonpFetch !== 'function') return;
-        const data = await _jsonpFetch(url, { action: 'GET_REMINDER_STATUS', t: Date.now() });
-        if (data && !data.error) {
-          _reminderStatus = data;
-          _renderReminderStatus();
-        }
-      } catch (e) { /* silent — a missed poll isn't worth interrupting the user */ }
-    }, 60000); // 60s — matches how often the trigger itself could plausibly change
-  }
-  function _reminderStopPolling() {
-    if (_reminderPollTimer) { clearInterval(_reminderPollTimer); _reminderPollTimer = null; }
   }
 
   async function loadReminderConfig() {
@@ -6661,7 +6703,6 @@
         if (data.settings)   _reminderSettings   = Object.assign(_reminderSettings, data.settings);
         if (data.recipients) _reminderRecipients = data.recipients;
         if (data.rules)      _reminderRules      = data.rules;
-        if (data.status)     _reminderStatus     = data.status;
       }
     } catch (e) {
       toast('❌ Could not load reminder settings: ' + e.message);
@@ -6680,27 +6721,10 @@
     const label = document.getElementById('rem-status-label');
     const btn   = document.getElementById('rem-status-toggle-btn');
     if (!label || !btn) return;
-
     const running = _reminderSettings.enabled !== false;
-    const runLine = running
-      ? '🟢 <strong>Running</strong>'
-      : '⏸️ <strong>Stopped</strong> — no emails will be sent until you start them again';
-
-    let detailLine = '';
-    if (_reminderStatus.hasRunYet) {
-      const lastRun = _reminderStatus.lastRun ? new Date(_reminderStatus.lastRun) : null;
-      const nextRun = _reminderStatus.nextRun ? new Date(_reminderStatus.nextRun) : null;
-      const lastRunStr = lastRun ? lastRun.toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—';
-      const nextRunStr = nextRun ? nextRun.toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'not scheduled';
-      detailLine = `<div style="font-size:0.72rem;color:var(--text2);margin-top:2px;">` +
-        `Last checked ${lastRunStr} — ${_reminderStatus.upcomingCount} upcoming, ${_reminderStatus.overdueCount} overdue` +
-        (running ? ` · Next check ~${nextRunStr}` : '') +
-        `</div>`;
-    } else {
-      detailLine = `<div style="font-size:0.72rem;color:var(--text2);margin-top:2px;">Hasn't run yet — will check on the next scheduled time, or click "Send Reminder Now"</div>`;
-    }
-
-    label.innerHTML = runLine + detailLine;
+    label.innerHTML = running
+      ? '🟢 <strong>Running</strong> — automatic reminders are active'
+      : '⏸️ <strong>Stopped</strong> — automatic reminders are paused (no emails will be sent until you start them again)';
     btn.disabled = false;
     btn.textContent = running ? '⏸️ Stop Reminders' : '▶️ Start Reminders';
   }
@@ -6740,92 +6764,30 @@
     else renderReminderFrequency();
   }
 
-  // ── Recipients — this module's own list (People Reminder Recipients
-  //    sheet), independent of any other module's manager/email config.
-  //    Single add/remove kept for quick one-off changes; bulk paste/
-  //    multi-select remove added below for setting up or cleaning up
-  //    the list in one action. ──
+  // ── Recipients (reuses the existing manager email list — same list the
+  //    Alert Settings digest already emails; add/remove here calls the
+  //    same bulkAddManagers()/removeManagers() functions on the backend) ──
   function renderReminderRecipients() {
     const body = document.getElementById('rem-tab-body');
     if (!body) return;
-    _reminderSelectedForRemoval.clear();
-
     const rows = _reminderRecipients.length
       ? _reminderRecipients.map(email => `
-        <div style="display:flex;align-items:center;gap:0.5rem;padding:0.5rem 0.75rem;background:var(--surface2);border-radius:8px;margin-bottom:0.4rem;">
-          <input type="checkbox" onchange="toggleRecipientCheck('${email.replace(/'/g,"\\'")}', this.checked)" style="width:15px;height:15px;flex-shrink:0;">
-          <span style="font-size:0.85rem;flex:1;">${attEsc ? attEsc(email) : email}</span>
-          <button class="tc-btn" style="padding:2px 8px;font-size:0.68rem;" onclick="removeReminderRecipient('${email.replace(/'/g,"\\'")}')">🗑️</button>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:0.5rem 0.75rem;background:var(--surface2);border-radius:8px;margin-bottom:0.4rem;">
+          <span style="font-size:0.85rem;">${attEsc ? attEsc(email) : email}</span>
+          <button class="tc-btn" style="padding:2px 8px;font-size:0.68rem;" onclick="removeReminderRecipient('${email.replace(/'/g,"\\'")}')">🗑️ Remove</button>
         </div>`).join('')
       : '<div style="padding:1rem;text-align:center;color:var(--text2);font-size:0.85rem;">No recipients yet.</div>';
 
     body.innerHTML = `
-      <div style="max-height:220px;overflow-y:auto;margin-bottom:0.75rem;">${rows}</div>
-      <div style="display:flex;gap:0.5rem;margin-bottom:1rem;" id="rem-bulk-remove-row">
-        <button class="tc-btn" style="font-size:0.75rem;" onclick="bulkRemoveSelectedRecipients()" ${_reminderRecipients.length ? '' : 'disabled'}>
-          🗑️ Remove Selected
-        </button>
-      </div>
+      <div style="max-height:260px;overflow-y:auto;margin-bottom:1rem;">${rows}</div>
       <div class="modal-field">
         <label>Add recipient</label>
         <div style="display:flex;gap:0.5rem;">
           <input type="email" id="rem-new-email" placeholder="manager@example.com" style="flex:1;">
           <button class="modal-btn primary" onclick="addReminderRecipient()">➕ Add</button>
         </div>
-      </div>
-      <div class="modal-field" style="margin-top:0.75rem;">
-        <label>Bulk add (one email per line)</label>
-        <textarea id="rem-bulk-emails" placeholder="manager1@example.com&#10;manager2@example.com" style="width:100%;min-height:80px;font-family:monospace;font-size:0.78rem;padding:0.5rem;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);"></textarea>
-        <button class="modal-btn primary" style="margin-top:0.4rem;" onclick="bulkAddReminderRecipients()">➕ Add All</button>
       </div>`;
   }
-
-  function toggleRecipientCheck(email, checked) {
-    if (checked) _reminderSelectedForRemoval.add(email);
-    else _reminderSelectedForRemoval.delete(email);
-  }
-  window.toggleRecipientCheck = toggleRecipientCheck;
-
-  async function bulkAddReminderRecipients() {
-    const textarea = document.getElementById('rem-bulk-emails');
-    const raw = (textarea.value || '').trim();
-    if (!raw) { toast('⚠️ Paste at least one email address'); return; }
-    const emails = raw.split(/[\n,;]/).map(e => e.trim()).filter(Boolean);
-    const invalid = emails.filter(e => !_isValidEmailClient(e));
-    if (invalid.length) { toast('❌ Invalid email(s): ' + invalid.join(', ')); return; }
-
-    try {
-      const result = await syncToSheet('BULK_ADD_REMINDER_RECIPIENTS', { emails });
-      if (result && result.recipients) _reminderRecipients = result.recipients;
-      textarea.value = '';
-      renderReminderRecipients();
-      logAction('Reminder Recipients Bulk Added', 'Admin', 'Reminders', emails.length + ' email(s)');
-      toast('✅ ' + (result && result.message ? result.message : 'Recipients added'));
-    } catch (e) {
-      toast('❌ Failed to bulk add recipients: ' + e.message);
-    }
-  }
-  window.bulkAddReminderRecipients = bulkAddReminderRecipients;
-
-  async function bulkRemoveSelectedRecipients() {
-    const selected = Array.from(_reminderSelectedForRemoval);
-    if (!selected.length) { toast('⚠️ Check at least one recipient to remove'); return; }
-    if (selected.length >= _reminderRecipients.length) {
-      toast('❌ Cannot remove all recipients — at least one is required'); return;
-    }
-    if (!confirm('Remove ' + selected.length + ' recipient(s)?')) return;
-
-    try {
-      const result = await syncToSheet('BULK_REMOVE_REMINDER_RECIPIENTS', { emails: selected });
-      if (result && result.recipients) _reminderRecipients = result.recipients;
-      renderReminderRecipients();
-      logAction('Reminder Recipients Bulk Removed', 'Admin', 'Reminders', selected.length + ' email(s)');
-      toast('✅ ' + (result && result.message ? result.message : 'Recipients removed'));
-    } catch (e) {
-      toast('❌ Failed to bulk remove recipients: ' + e.message);
-    }
-  }
-  window.bulkRemoveSelectedRecipients = bulkRemoveSelectedRecipients;
 
   function _isValidEmailClient(email) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || '').trim());
@@ -7079,6 +7041,7 @@
     renderAW_catBar();
     renderAW_statusDonut();
     renderAW_facultyDonut();
+    renderWsaiColorLegend('ppl-color-legend');
     renderAW_staffDesigMatrix();
     renderAW_centerBar();
     renderAW_joiningTrend();
@@ -7328,6 +7291,28 @@
   // ══════════════════════════════════════════════════════════════════
   const PeopleCharts = {};
   const PPL_PALETTE = ['#3B82F6','#10B981','#8B5CF6','#F59E0B','#EF4444','#06B6D4','#F97316','#EC4899','#64748B','#84CC16'];
+
+  // v56: ONE semantic palette shared by both the People and Asset analytics
+  // grids. Both modules already happened to reuse these hex values for their
+  // charts (blue/amber/purple/cyan/green/slate/red) — this makes that
+  // consistency explicit and visible via a small legend strip, rather than
+  // being an accident a viewer has to notice on their own.
+  const WSAI_SHARED_PALETTE = [
+    { color:'#3B82F6', label:'Primary' },
+    { color:'#F59E0B', label:'Secondary' },
+    { color:'#8B5CF6', label:'Specialized' },
+    { color:'#06B6D4', label:'Auxiliary' },
+    { color:'#10B981', label:'Positive / Active' },
+    { color:'#64748B', label:'Neutral' },
+    { color:'#EF4444', label:'Alert' }
+  ];
+  function renderWsaiColorLegend(containerId) {
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    el.innerHTML = WSAI_SHARED_PALETTE.map(p =>
+      `<span class="wcl-item"><span class="wcl-dot" style="background:${p.color}"></span>${p.label}</span>`
+    ).join('');
+  }
 
   function _pplChart(canvasId, type, labels, datasets, extraOpts) {
     const c = document.getElementById(canvasId);
@@ -16637,6 +16622,46 @@
   let ASSET_EDITING = { type: null, id: null };
   let CURRENT_ASSET_TAB = 'it';
 
+  // ── v55: ASSET CATEGORY INTERFACE (modal workspace) — mirrors PPL_CATEGORY_META ──
+  const ASSET_CATEGORY_META = {
+    it:            { icon:'💻', label:'IT Assets',        key:'it' },
+    nonit:         { icon:'🏢', label:'Non-IT Assets',    key:'nonit' },
+    gpu:           { icon:'🧠', label:'GPU Cluster',      key:'gpu' },
+    ilds:          { icon:'🌐', label:'ILDS Cluster',     key:'ilds' },
+    books:         { icon:'📚', label:'Books',            key:'books' },
+    spares:        { icon:'🔧', label:'Spares',           key:'spares' },
+    nonrepairable: { icon:'⚠️', label:'Non Repairable',   key:'nonRepairable' },
+    consumables:   { icon:'🛒', label:'Consumables',      key:'consumables' },
+    vendor:        { icon:'🏪', label:'Vendor List',      key:'vendors' },
+    actions:       { icon:'⚡', label:'Quick Actions',    key:null }
+  };
+
+  // Count-card click-through: open the dedicated Category Interface for this asset sheet.
+  function openAssetCategory(tab) {
+    const overlay = document.getElementById('asset-category-overlay');
+    if (overlay) overlay.classList.add('show');
+    switchAssetTab(tab);
+  }
+
+  function closeAssetCategory() {
+    const overlay = document.getElementById('asset-category-overlay');
+    if (overlay) overlay.classList.remove('show');
+    const search = document.getElementById(CURRENT_ASSET_TAB + '-search');
+    if (search) search.value = '';
+  }
+
+  // Refresh the modal header (icon / title / record count chip) for the active category
+  function updateAssetCategoryHeader(tab) {
+    const meta = ASSET_CATEGORY_META[tab];
+    if (!meta) return;
+    const iconEl  = document.getElementById('acp-icon');
+    const titleEl = document.getElementById('acp-title');
+    const totalEl = document.getElementById('acp-stat-total');
+    if (iconEl)  iconEl.textContent  = meta.icon;
+    if (titleEl) titleEl.textContent = meta.label;
+    if (totalEl) totalEl.textContent = meta.key ? ((ASSET_DB[meta.key] || []).length) : '—';
+  }
+
   // ── INIT ──────────────────────────────────────────────────────
   // ── ASSET CATEGORY MANAGER (Change 1 — v9.0) ──────────────────────────────
   // Merged ASSET_CONFIG fields — populated on init from live sheet + Category Vocabulary
@@ -16811,6 +16836,11 @@
                 + ASSET_DB.books.reduce((s,r)=>s+_toINRNum(r.purchaseValue||r.costForeign),0)
                 + ASSET_DB.spares.reduce((s,r)=>s+_toINRNum(r.purchaseValue||r.value),0);
     set('akpi-value', '₹' + (total>=10000000 ? (total/10000000).toFixed(1)+'Cr' : total>=100000 ? (total/100000).toFixed(1)+'L' : total.toLocaleString('en-IN')));
+    _updateAssetKpiTrends({
+      it: _sumQty(ASSET_DB.it), nonit: ASSET_DB.nonit.length, gpu: ASSET_DB.gpu.length,
+      ilds: ASSET_DB.ilds.length, books: ASSET_DB.books.length, spares: ASSET_DB.spares.length,
+      consumables: ASSET_DB.consumables.length, value: total
+    });
     // Refresh category panels
     _refreshCatPanel('it-cat-grid',    ASSET_DB.it,   'category',    '#3B82F6');
     _refreshNonITCatPanel('nonit-cat-grid', ASSET_DB.nonit);
@@ -17047,6 +17077,7 @@
     renderAA_catBar();
     renderAA_valueDonut();
     renderAA_warrantyBar();
+    renderWsaiColorLegend('asset-color-legend');
   }
 
   function _assetChart(canvasId, type, labels, datasets, extraOpts) {
@@ -17089,19 +17120,40 @@
     ].filter(g => g.value > 0);
     _assetChart('asset-value-donut', 'doughnut', groups.map(g=>g.label), [{ data: groups.map(g=>g.value), backgroundColor: groups.map(g=>g.color), borderWidth:0 }]);
   }
+  // v56: was a flat 3-bucket bar (0-30d/31-60d/61-90d). Now groups by
+  // calendar month (current month + next 5) with an "Expired" bucket up
+  // front, stacked by IT vs Non-IT so procurement can spot which months
+  // and which asset type are about to cluster — the color of the Expired
+  // bucket (red) also carries the "already expired" status distinction.
   function renderAA_warrantyBar() {
     const now = new Date();
-    const buckets = ['0-30d','31-60d','61-90d'];
-    const counts = [0,0,0];
-    const scan = (arr, field) => arr.forEach(r => {
-      const d = _assetParseDate(r[field]);
-      if (!d || d < now) return;
-      const days = Math.ceil((d-now)/86400000);
-      if (days <= 30) counts[0]++; else if (days <= 60) counts[1]++; else if (days <= 90) counts[2]++;
+    const monthLabels = ['Expired'];
+    for (let i = 0; i < 6; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+      monthLabels.push(d.toLocaleDateString('en-IN', { month:'short', year:'2-digit' }));
+    }
+    const itCounts = new Array(monthLabels.length).fill(0);
+    const nonitCounts = new Array(monthLabels.length).fill(0);
+    const bucketIndex = d => {
+      if (!d) return -1;
+      if (d < now) return 0;
+      const monthsAhead = (d.getFullYear() - now.getFullYear()) * 12 + (d.getMonth() - now.getMonth());
+      return (monthsAhead >= 0 && monthsAhead <= 5) ? monthsAhead + 1 : -1;
+    };
+    (ASSET_DB.it || []).forEach(r => { const idx = bucketIndex(_assetParseDate(r.warrantyExpiry)); if (idx >= 0) itCounts[idx]++; });
+    (ASSET_DB.nonit || []).forEach(r => { const idx = bucketIndex(_assetParseDate(r.warrantyExpiration)); if (idx >= 0) nonitCounts[idx]++; });
+    const itColors    = monthLabels.map((_, i) => i === 0 ? '#DC2626' : '#3B82F6');
+    const nonitColors = monthLabels.map((_, i) => i === 0 ? '#EF4444' : '#F59E0B');
+    _assetChart('asset-warranty-bar', 'bar', monthLabels, [
+      { label:'IT Assets',     data: itCounts,    backgroundColor: itColors,    borderRadius:3, stack:'warranty' },
+      { label:'Non-IT Assets', data: nonitCounts, backgroundColor: nonitColors, borderRadius:3, stack:'warranty' }
+    ], {
+      plugins: { legend: { display:true } },
+      scales: {
+        x: { stacked:true, ticks:{ color:_themeCSS('--text3','#64748B'), font:{size:9} }, grid:{ display:false } },
+        y: { stacked:true, beginAtZero:true, ticks:{ color:_themeCSS('--text3','#64748B'), font:{size:9} }, grid:{ color:_themeCSS('--border','rgba(99,179,237,0.08)') } }
+      }
     });
-    scan(ASSET_DB.it||[], 'warrantyExpiry');
-    scan(ASSET_DB.nonit||[], 'warrantyExpiration');
-    _assetChart('asset-warranty-bar', 'bar', buckets, [{ data: counts, backgroundColor: ['#EF4444','#F59E0B','#10B981'], borderRadius:4 }], { plugins:{ legend:{ display:false } } });
   }
 
   // ── DRILL-DOWN LIST MODALS (Warranty / Assigned / Low Stock) ────────
@@ -17158,6 +17210,92 @@
 
   // Build category pill grid for an asset array
   // FIX (v21): quantity-aware — count = sum of quantity per row; value = purchaseValue per row
+  // v56: "since last sync" trend chips on the top Asset Management count
+  // cards, mirroring the People module's ek-trend arrows on its exec strip.
+  // Snapshots the last-seen counts/value in localStorage (this is a real
+  // deployed web app, not a sandboxed artifact, so localStorage is fine
+  // here) and diffs against them on every refresh.
+  const ASSET_KPI_SNAPSHOT_KEY = 'wsai_asset_kpi_snapshot_v1';
+  function _updateAssetKpiTrends(current) {
+    const fmtBig = v => Math.abs(v)>=10000000 ? (v/10000000).toFixed(1)+'Cr' : Math.abs(v)>=100000 ? (v/100000).toFixed(1)+'L' : Math.round(v).toLocaleString('en-IN');
+    let prev = null;
+    try { prev = JSON.parse(localStorage.getItem(ASSET_KPI_SNAPSHOT_KEY) || 'null'); } catch(e) { prev = null; }
+    Object.keys(current).forEach(function(k) {
+      const el = document.getElementById('akpi-' + k + '-trend');
+      if (!el) return;
+      if (!prev || prev[k] === undefined) { el.textContent = 'since last sync —'; el.className = 'kpi-trend flat'; return; }
+      const delta = current[k] - prev[k];
+      const deltaTxt = k === 'value' ? '₹' + fmtBig(Math.abs(delta)) : Math.abs(delta);
+      if (delta > 0)      { el.textContent = '▲ +' + deltaTxt + ' since last sync'; el.className = 'kpi-trend up'; }
+      else if (delta < 0) { el.textContent = '▼ −' + deltaTxt + ' since last sync'; el.className = 'kpi-trend down'; }
+      else                { el.textContent = '— no change'; el.className = 'kpi-trend flat'; }
+    });
+    try { localStorage.setItem(ASSET_KPI_SNAPSHOT_KEY, JSON.stringify(current)); } catch(e) {}
+  }
+
+  // v56: TREEMAP for category breakdowns — tiles degrade past ~20 categories,
+  // so when the user picks "All" in the Show selector we render an
+  // area-proportional treemap instead. Uses a simple recursive slice-and-dice
+  // layout (split by cumulative value, alternating orientation) rather than
+  // a squarified algorithm — slightly less optimal aspect ratios, but far
+  // fewer edge cases to get wrong, and plenty readable for this data size.
+  function _treemapEsc(s) {
+    return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+  function _treemapLayout(items, x, y, w, h, horizontal) {
+    if (!items.length) return;
+    if (items.length === 1) { items[0]._rect = { x:x, y:y, w:w, h:h }; return; }
+    const total = items.reduce((s,d) => s + d.value, 0);
+    let cum = 0, splitIdx = 1;
+    for (let i = 0; i < items.length; i++) {
+      cum += items[i].value;
+      if (cum >= total / 2) { splitIdx = i + 1; break; }
+    }
+    splitIdx = Math.max(1, Math.min(items.length - 1, splitIdx));
+    const groupA = items.slice(0, splitIdx), groupB = items.slice(splitIdx);
+    const fracA = total > 0 ? (groupA.reduce((s,d) => s + d.value, 0) / total) : 0.5;
+    if (horizontal) {
+      const wA = w * fracA;
+      _treemapLayout(groupA, x, y, wA, h, false);
+      _treemapLayout(groupB, x + wA, y, w - wA, h, false);
+    } else {
+      const hA = h * fracA;
+      _treemapLayout(groupA, x, y, w, hA, true);
+      _treemapLayout(groupB, x, y + hA, w, h - hA, true);
+    }
+  }
+  function _renderCatTreemap(entries, color) {
+    const W = 640, H = 230;
+    const items = entries.map(([label, value]) => ({ label, value })).filter(d => d.value > 0)
+      .sort((a,b) => b.value - a.value);
+    if (!items.length) return '';
+    _treemapLayout(items, 0, 0, W, H, true);
+    const maxV = items[0].value;
+    const cells = items.map(d => {
+      const r = d._rect;
+      const opacity = (0.32 + 0.58 * (d.value / maxV)).toFixed(2);
+      const showLabel = r.w > 52 && r.h > 24;
+      const rw = Math.max(0, r.w - 1.5).toFixed(1), rh = Math.max(0, r.h - 1.5).toFixed(1);
+      const label = d.label.length > 20 ? d.label.slice(0, 18) + '…' : d.label;
+      return `<g>`
+        + `<rect x="${r.x.toFixed(1)}" y="${r.y.toFixed(1)}" width="${rw}" height="${rh}" rx="4" fill="${color}" fill-opacity="${opacity}" stroke="var(--surface2)" stroke-width="1.5"><title>${_treemapEsc(d.label)}: ${d.value}</title></rect>`
+        + (showLabel ? `<text x="${(r.x+6).toFixed(1)}" y="${(r.y+15).toFixed(1)}" font-size="10" font-family="var(--font-mono)" fill="#fff" style="pointer-events:none;">${_treemapEsc(label)}</text>`
+                     + `<text x="${(r.x+6).toFixed(1)}" y="${(r.y+28).toFixed(1)}" font-size="9" font-family="var(--font-mono)" fill="#fff" fill-opacity="0.85" style="pointer-events:none;">${d.value}</text>` : '')
+        + `</g>`;
+    }).join('');
+    return `<div style="width:100%;margin-top:0.6rem;"><svg viewBox="0 0 ${W} ${H}" style="width:100%;height:220px;display:block;border-radius:8px;overflow:hidden;" xmlns="http://www.w3.org/2000/svg">${cells}</svg></div>`;
+  }
+
+  // v55: reads the sibling "Show" limit selector (id derived from gridId, e.g.
+  // 'it-cat-grid' -> 'it-cat-limit') so the user can restrict how many category
+  // tiles are shown in a breakdown panel. Falls back to "all" if no selector
+  // is present on the page, so this stays backward-compatible.
+  function _assetCatLimit(gridId) {
+    const sel = document.getElementById(gridId.replace('-grid', '-limit'));
+    const v = sel ? sel.value : 'all';
+    return v === 'all' ? Infinity : (parseInt(v) || Infinity);
+  }
+
   function _refreshCatPanel(gridId, arr, catField, color, centerFilter) {
     const grid = document.getElementById(gridId); if(!grid) return;
     if (!arr || arr.length === 0) {
@@ -17177,16 +17315,22 @@
     const fmtV = v => v>=10000000?'₹'+(v/10000000).toFixed(1)+'Cr':v>=100000?'₹'+(v/100000).toFixed(1)+'L':v>=1000?'₹'+(v/1000).toFixed(0)+'K':'₹'+Math.round(v);
     const totalCount = filtered.reduce((s,r)=>s+(toNum(r.quantity)||1),0);
     const totalVal   = filtered.reduce((s,r)=>s+toNum(r.purchaseValue),0);
+    const limit = _assetCatLimit(gridId);
+    const sortedEntries = Object.entries(map).sort((a,b)=>b[1]-a[1]);
+    const shown = sortedEntries.slice(0, limit);
+    const hiddenCount = sortedEntries.length - shown.length;
     // Summary pill
     grid.innerHTML = `<div style="background:rgba(var(--accent-rgb,59,130,246),0.08);border:1px solid ${color}44;border-radius:8px;padding:0.4rem 0.75rem;font-size:0.78rem;font-weight:700;color:${color};min-width:90px;text-align:center;border-left:3px solid ${color};">`
       + `<div style="font-size:1.1rem;">${totalCount}</div><div style="font-size:0.65rem;color:var(--text3);">Total Items</div>`
       + `<div style="font-size:0.7rem;margin-top:2px;color:var(--text2);">${fmtV(totalVal)}</div></div>`
-      + Object.entries(map).sort((a,b)=>b[1]-a[1]).map(([cat,count]) =>
+      + shown.map(([cat,count]) =>
           `<div style="background:var(--surface3);border:1px solid var(--border);border-radius:8px;padding:0.35rem 0.7rem;font-size:0.73rem;display:flex;flex-direction:column;align-items:center;min-width:80px;gap:1px;">`
         + `<div style="font-weight:700;color:var(--text);">${count}</div>`
         + `<div style="color:var(--text3);font-size:0.63rem;text-align:center;max-width:110px;">${cat}</div>`
         + `<div style="color:${color};font-size:0.65rem;font-family:var(--font-mono);">${fmtV(valMap[cat])}</div>`
-        + `</div>`).join('');
+        + `</div>`).join('')
+      + (hiddenCount > 0 ? `<div style="display:flex;align-items:center;justify-content:center;min-width:70px;padding:0.35rem 0.7rem;color:var(--text3);font-size:0.68rem;font-family:var(--font-mono);">+${hiddenCount} more</div>` : '')
+      + (limit === Infinity && sortedEntries.length > 12 ? _renderCatTreemap(sortedEntries, color) : '');
   }
 
   // Non-IT category panel — handles purchaseValue OR unitValue fallback
@@ -17211,16 +17355,22 @@
     const fmtV = v => v>=10000000?'₹'+(v/10000000).toFixed(1)+'Cr':v>=100000?'₹'+(v/100000).toFixed(1)+'L':v>=1000?'₹'+(v/1000).toFixed(0)+'K':'₹'+Math.round(v);
     const totalCount = filtered.length;
     const totalVal   = filtered.reduce((s,r) => s + getVal(r), 0);
+    const limit = _assetCatLimit(gridId);
+    const sortedEntries = Object.entries(map).sort((a,b) => b[1]-a[1]);
+    const shown = sortedEntries.slice(0, limit);
+    const hiddenCount = sortedEntries.length - shown.length;
     grid.innerHTML =
       `<div style="background:rgba(245,158,11,0.08);border:1px solid ${color}44;border-radius:8px;padding:0.4rem 0.75rem;font-size:0.78rem;font-weight:700;color:${color};min-width:90px;text-align:center;border-left:3px solid ${color};">`
       + `<div style="font-size:1.1rem;">${totalCount}</div><div style="font-size:0.65rem;color:var(--text3);">Total Items</div>`
       + `<div style="font-size:0.7rem;margin-top:2px;color:var(--text2);">${fmtV(totalVal)}</div></div>`
-      + Object.entries(map).sort((a,b) => b[1]-a[1]).map(([cat,count]) =>
+      + shown.map(([cat,count]) =>
           `<div style="background:var(--surface3);border:1px solid var(--border);border-radius:8px;padding:0.35rem 0.7rem;font-size:0.73rem;display:flex;flex-direction:column;align-items:center;min-width:80px;gap:1px;">`
         + `<div style="font-weight:700;color:var(--text);">${count}</div>`
         + `<div style="color:var(--text3);font-size:0.63rem;text-align:center;max-width:110px;">${cat}</div>`
         + `<div style="color:${color};font-size:0.65rem;font-family:var(--font-mono);">${fmtV(valMap[cat])}</div>`
-        + `</div>`).join('');
+        + `</div>`).join('')
+      + (hiddenCount > 0 ? `<div style="display:flex;align-items:center;justify-content:center;min-width:70px;padding:0.35rem 0.7rem;color:var(--text3);font-size:0.68rem;font-family:var(--font-mono);">+${hiddenCount} more</div>` : '')
+      + (limit === Infinity && sortedEntries.length > 12 ? _renderCatTreemap(sortedEntries, color) : '');
   }
 
   // Books category panel uses title as the key
@@ -17241,15 +17391,21 @@
     const fmtV = v => v>=100000?'₹'+(v/100000).toFixed(1)+'L':v>=1000?'₹'+(v/1000).toFixed(0)+'K':'₹'+Math.round(v);
     const totalCount = arr.length;
     const totalVal = arr.reduce((s,r)=>s+toNum(r.purchaseValue),0);
+    const limit = _assetCatLimit(gridId); // defaults to 20 via the panel's own select
+    const sortedEntries = Object.entries(map).sort((a,b)=>b[1]-a[1]);
+    const shown = sortedEntries.slice(0, limit);
+    const hiddenCount = sortedEntries.length - shown.length;
     grid.innerHTML = `<div style="background:rgba(245,158,11,0.08);border:1px solid #F59E0B44;border-radius:8px;padding:0.4rem 0.75rem;font-size:0.78rem;font-weight:700;color:#F59E0B;min-width:90px;text-align:center;border-left:3px solid #F59E0B;">`
       + `<div style="font-size:1.1rem;">${totalCount}</div><div style="font-size:0.65rem;color:var(--text3);">Total Copies</div>`
       + `<div style="font-size:0.7rem;margin-top:2px;color:var(--text2);">${fmtV(totalVal)}</div></div>`
-      + Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0,20).map(([title,count]) =>
+      + shown.map(([title,count]) =>
           `<div style="background:var(--surface3);border:1px solid var(--border);border-radius:8px;padding:0.35rem 0.7rem;font-size:0.73rem;display:flex;flex-direction:column;align-items:center;min-width:80px;max-width:160px;gap:1px;">`
         + `<div style="font-weight:700;color:var(--text);">${count}</div>`
         + `<div style="color:var(--text3);font-size:0.6rem;text-align:center;word-break:break-word;">${title}</div>`
         + `<div style="color:#F59E0B;font-size:0.65rem;font-family:var(--font-mono);">${fmtV(valMap[title])}</div>`
-        + `</div>`).join('');
+        + `</div>`).join('')
+      + (hiddenCount > 0 ? `<div style="display:flex;align-items:center;justify-content:center;min-width:70px;padding:0.35rem 0.7rem;color:var(--text3);font-size:0.68rem;font-family:var(--font-mono);">+${hiddenCount} more</div>` : '')
+      + (limit === Infinity && sortedEntries.length > 12 ? _renderCatTreemap(sortedEntries, '#F59E0B') : '');
   }
 
   // ── CENTER FILTER FOR CATEGORY BREAKDOWN PANELS ─────────────────────────
@@ -17297,6 +17453,7 @@
     const sec = document.getElementById('asec-' + _secId);
     if (btn) btn.classList.add('active');
     if (sec) sec.classList.add('active');
+    updateAssetCategoryHeader(tab);
     // Re-render the category panel for the newly visible tab so it always shows fresh data
     const catRefreshMap = {
       nonit:       () => { _populateAssetCenterDropdowns(); const cf=(document.getElementById('nonit-cat-center-filter')||{}).value||''; _refreshNonITCatPanel('nonit-cat-grid', ASSET_DB.nonit, cf); },
