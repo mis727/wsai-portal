@@ -6568,6 +6568,9 @@
   let _reminderRecipients = [];
   let _reminderRules     = [];
   let _reminderActiveTab = 'recipients';
+  let _reminderStatus = { lastRun: null, upcomingCount: 0, overdueCount: 0, sentTo: 0, nextRun: null, hasRunYet: false };
+  let _reminderSelectedForRemoval = new Set();   // tracks checked recipients for bulk remove
+  let _reminderPollTimer = null;
 
   // The only People types a reminder rule can watch — mirrors
   // PEOPLE_REMINDER_TYPES in WSAI_People_Reminders.gs exactly (same keys the
@@ -6615,11 +6618,35 @@
     }
     modal.classList.add('show');
     loadReminderConfig();
+    _reminderStartPolling();
   }
 
   function closeReminderModal() {
+    _reminderStopPolling();
     const m = document.getElementById('reminder-modal-overlay');
     if (m) m.classList.remove('show');
+  }
+
+  // ── Live status polling — keeps the status row current while the modal
+  //    is open, without the user needing to close and reopen it. ──
+  function _reminderStartPolling() {
+    _reminderStopPolling();
+    _reminderPollTimer = setInterval(async () => {
+      const modal = document.getElementById('reminder-modal-overlay');
+      if (!modal || !modal.classList.contains('show')) { _reminderStopPolling(); return; }
+      try {
+        const url = _reminderUrl();
+        if (!url || typeof _jsonpFetch !== 'function') return;
+        const data = await _jsonpFetch(url, { action: 'GET_REMINDER_STATUS', t: Date.now() });
+        if (data && !data.error) {
+          _reminderStatus = data;
+          _renderReminderStatus();
+        }
+      } catch (e) { /* silent — a missed poll isn't worth interrupting the user */ }
+    }, 60000); // 60s — matches how often the trigger itself could plausibly change
+  }
+  function _reminderStopPolling() {
+    if (_reminderPollTimer) { clearInterval(_reminderPollTimer); _reminderPollTimer = null; }
   }
 
   async function loadReminderConfig() {
@@ -6634,6 +6661,7 @@
         if (data.settings)   _reminderSettings   = Object.assign(_reminderSettings, data.settings);
         if (data.recipients) _reminderRecipients = data.recipients;
         if (data.rules)      _reminderRules      = data.rules;
+        if (data.status)     _reminderStatus     = data.status;
       }
     } catch (e) {
       toast('❌ Could not load reminder settings: ' + e.message);
@@ -6652,10 +6680,27 @@
     const label = document.getElementById('rem-status-label');
     const btn   = document.getElementById('rem-status-toggle-btn');
     if (!label || !btn) return;
+
     const running = _reminderSettings.enabled !== false;
-    label.innerHTML = running
-      ? '🟢 <strong>Running</strong> — automatic reminders are active'
-      : '⏸️ <strong>Stopped</strong> — automatic reminders are paused (no emails will be sent until you start them again)';
+    const runLine = running
+      ? '🟢 <strong>Running</strong>'
+      : '⏸️ <strong>Stopped</strong> — no emails will be sent until you start them again';
+
+    let detailLine = '';
+    if (_reminderStatus.hasRunYet) {
+      const lastRun = _reminderStatus.lastRun ? new Date(_reminderStatus.lastRun) : null;
+      const nextRun = _reminderStatus.nextRun ? new Date(_reminderStatus.nextRun) : null;
+      const lastRunStr = lastRun ? lastRun.toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—';
+      const nextRunStr = nextRun ? nextRun.toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'not scheduled';
+      detailLine = `<div style="font-size:0.72rem;color:var(--text2);margin-top:2px;">` +
+        `Last checked ${lastRunStr} — ${_reminderStatus.upcomingCount} upcoming, ${_reminderStatus.overdueCount} overdue` +
+        (running ? ` · Next check ~${nextRunStr}` : '') +
+        `</div>`;
+    } else {
+      detailLine = `<div style="font-size:0.72rem;color:var(--text2);margin-top:2px;">Hasn't run yet — will check on the next scheduled time, or click "Send Reminder Now"</div>`;
+    }
+
+    label.innerHTML = runLine + detailLine;
     btn.disabled = false;
     btn.textContent = running ? '⏸️ Stop Reminders' : '▶️ Start Reminders';
   }
@@ -6695,30 +6740,92 @@
     else renderReminderFrequency();
   }
 
-  // ── Recipients (reuses the existing manager email list — same list the
-  //    Alert Settings digest already emails; add/remove here calls the
-  //    same bulkAddManagers()/removeManagers() functions on the backend) ──
+  // ── Recipients — this module's own list (People Reminder Recipients
+  //    sheet), independent of any other module's manager/email config.
+  //    Single add/remove kept for quick one-off changes; bulk paste/
+  //    multi-select remove added below for setting up or cleaning up
+  //    the list in one action. ──
   function renderReminderRecipients() {
     const body = document.getElementById('rem-tab-body');
     if (!body) return;
+    _reminderSelectedForRemoval.clear();
+
     const rows = _reminderRecipients.length
       ? _reminderRecipients.map(email => `
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:0.5rem 0.75rem;background:var(--surface2);border-radius:8px;margin-bottom:0.4rem;">
-          <span style="font-size:0.85rem;">${attEsc ? attEsc(email) : email}</span>
-          <button class="tc-btn" style="padding:2px 8px;font-size:0.68rem;" onclick="removeReminderRecipient('${email.replace(/'/g,"\\'")}')">🗑️ Remove</button>
+        <div style="display:flex;align-items:center;gap:0.5rem;padding:0.5rem 0.75rem;background:var(--surface2);border-radius:8px;margin-bottom:0.4rem;">
+          <input type="checkbox" onchange="toggleRecipientCheck('${email.replace(/'/g,"\\'")}', this.checked)" style="width:15px;height:15px;flex-shrink:0;">
+          <span style="font-size:0.85rem;flex:1;">${attEsc ? attEsc(email) : email}</span>
+          <button class="tc-btn" style="padding:2px 8px;font-size:0.68rem;" onclick="removeReminderRecipient('${email.replace(/'/g,"\\'")}')">🗑️</button>
         </div>`).join('')
       : '<div style="padding:1rem;text-align:center;color:var(--text2);font-size:0.85rem;">No recipients yet.</div>';
 
     body.innerHTML = `
-      <div style="max-height:260px;overflow-y:auto;margin-bottom:1rem;">${rows}</div>
+      <div style="max-height:220px;overflow-y:auto;margin-bottom:0.75rem;">${rows}</div>
+      <div style="display:flex;gap:0.5rem;margin-bottom:1rem;" id="rem-bulk-remove-row">
+        <button class="tc-btn" style="font-size:0.75rem;" onclick="bulkRemoveSelectedRecipients()" ${_reminderRecipients.length ? '' : 'disabled'}>
+          🗑️ Remove Selected
+        </button>
+      </div>
       <div class="modal-field">
         <label>Add recipient</label>
         <div style="display:flex;gap:0.5rem;">
           <input type="email" id="rem-new-email" placeholder="manager@example.com" style="flex:1;">
           <button class="modal-btn primary" onclick="addReminderRecipient()">➕ Add</button>
         </div>
+      </div>
+      <div class="modal-field" style="margin-top:0.75rem;">
+        <label>Bulk add (one email per line)</label>
+        <textarea id="rem-bulk-emails" placeholder="manager1@example.com&#10;manager2@example.com" style="width:100%;min-height:80px;font-family:monospace;font-size:0.78rem;padding:0.5rem;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);"></textarea>
+        <button class="modal-btn primary" style="margin-top:0.4rem;" onclick="bulkAddReminderRecipients()">➕ Add All</button>
       </div>`;
   }
+
+  function toggleRecipientCheck(email, checked) {
+    if (checked) _reminderSelectedForRemoval.add(email);
+    else _reminderSelectedForRemoval.delete(email);
+  }
+  window.toggleRecipientCheck = toggleRecipientCheck;
+
+  async function bulkAddReminderRecipients() {
+    const textarea = document.getElementById('rem-bulk-emails');
+    const raw = (textarea.value || '').trim();
+    if (!raw) { toast('⚠️ Paste at least one email address'); return; }
+    const emails = raw.split(/[\n,;]/).map(e => e.trim()).filter(Boolean);
+    const invalid = emails.filter(e => !_isValidEmailClient(e));
+    if (invalid.length) { toast('❌ Invalid email(s): ' + invalid.join(', ')); return; }
+
+    try {
+      const result = await syncToSheet('BULK_ADD_REMINDER_RECIPIENTS', { emails });
+      if (result && result.recipients) _reminderRecipients = result.recipients;
+      textarea.value = '';
+      renderReminderRecipients();
+      logAction('Reminder Recipients Bulk Added', 'Admin', 'Reminders', emails.length + ' email(s)');
+      toast('✅ ' + (result && result.message ? result.message : 'Recipients added'));
+    } catch (e) {
+      toast('❌ Failed to bulk add recipients: ' + e.message);
+    }
+  }
+  window.bulkAddReminderRecipients = bulkAddReminderRecipients;
+
+  async function bulkRemoveSelectedRecipients() {
+    const selected = Array.from(_reminderSelectedForRemoval);
+    if (!selected.length) { toast('⚠️ Check at least one recipient to remove'); return; }
+    if (selected.length >= _reminderRecipients.length) {
+      toast('❌ Cannot remove all recipients — at least one is required'); return;
+    }
+    if (!confirm('Remove ' + selected.length + ' recipient(s)?')) return;
+
+    try {
+      const result = await syncToSheet('BULK_REMOVE_REMINDER_RECIPIENTS', { emails: selected });
+      if (result && result.recipients) _reminderRecipients = result.recipients;
+      renderReminderRecipients();
+      logAction('Reminder Recipients Bulk Removed', 'Admin', 'Reminders', selected.length + ' email(s)');
+      toast('✅ ' + (result && result.message ? result.message : 'Recipients removed'));
+    } catch (e) {
+      toast('❌ Failed to bulk remove recipients: ' + e.message);
+    }
+  }
+  window.bulkRemoveSelectedRecipients = bulkRemoveSelectedRecipients;
 
   function _isValidEmailClient(email) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || '').trim());
