@@ -598,6 +598,7 @@
   .kpi-card.purple:hover { border-color: rgba(139,92,246,0.5);  box-shadow: 0 8px 28px rgba(139,92,246,0.15), 0 2px 8px rgba(0,0,0,0.2); }
   .kpi-card.gold:hover   { border-color: rgba(245,158,11,0.5);  box-shadow: 0 8px 28px rgba(245,158,11,0.15), 0 2px 8px rgba(0,0,0,0.2); }
   .kpi-card.red:hover    { border-color: rgba(239,68,68,0.5);   box-shadow: 0 8px 28px rgba(239,68,68,0.15),  0 2px 8px rgba(0,0,0,0.2); }
+  .kpi-card-active { border-width: 2px !important; box-shadow: 0 0 0 3px rgba(59,130,246,0.18), 0 8px 28px rgba(0,0,0,0.18) !important; transform: translateY(-2px); }
   .kpi-card.blue::after   { background: linear-gradient(90deg, var(--accent), rgba(6,182,212,0.8)); }
   /* v56: trend chip on the top-level Asset Management count cards, mirroring
      the .ek-trend styling used on the People/Asset executive KPI strips —
@@ -3443,128 +3444,45 @@
           </div>
         </div>
 
-        <!-- KPI ROW — all live -->
-        <div class="kpi-grid" style="margin-bottom:1.5rem;">
-          <div class="kpi-card blue">  <div class="kpi-icon">💳</div><div class="kpi-val" id="exp-kpi-total">₹0</div><div class="kpi-label">Total Spend</div>   <div class="kpi-sub" id="exp-kpi-total-sub">—</div></div>
-          <div class="kpi-card green"> <div class="kpi-icon">✅</div><div class="kpi-val" id="exp-kpi-paid">₹0</div> <div class="kpi-label">Paid</div>            <div class="kpi-sub" id="exp-kpi-paid-sub">—</div></div>
-          <div class="kpi-card orange"><div class="kpi-icon">⏳</div><div class="kpi-val" id="exp-kpi-pend">₹0</div> <div class="kpi-label">Pending</div>         <div class="kpi-sub" id="exp-kpi-pend-sub">—</div></div>
-          <div class="kpi-card cyan">  <div class="kpi-icon">🔄</div><div class="kpi-val" id="exp-kpi-up">₹0</div>   <div class="kpi-label">Under-process</div>  <div class="kpi-sub" id="exp-kpi-up-sub">—</div></div>
-          <div class="kpi-card purple"><div class="kpi-icon">📊</div><div class="kpi-val" id="exp-kpi-avg">₹0</div>  <div class="kpi-label">Avg Transaction</div><div class="kpi-sub" id="exp-kpi-avg-sub">—</div></div>
-          <div class="kpi-card gold">  <div class="kpi-icon">📅</div><div class="kpi-val" id="exp-kpi-ytd">₹0</div>  <div class="kpi-label">YTD Spend</div>       <div class="kpi-sub" id="exp-kpi-ytd-sub">—</div></div>
+        <!-- KPI ROW — all live. Click a card to open its tailored expense registry below. -->
+        <div class="kpi-grid" style="margin-bottom:0.6rem;" id="exp-kpi-grid">
+          <div class="kpi-card blue"   id="exp-kpi-card-total" onclick="expOpenRegistry('total','exp-kpi-card-total')"          style="cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;" title="Open registry — all expenses"><div class="kpi-icon">💳</div><div class="kpi-val" id="exp-kpi-total">₹0</div><div class="kpi-label">Total Spend</div>   <div class="kpi-sub" id="exp-kpi-total-sub">—</div></div>
+          <div class="kpi-card green"  id="exp-kpi-card-paid"  onclick="expOpenRegistry('Paid','exp-kpi-card-paid')"           style="cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;" title="Open registry — paid expenses"><div class="kpi-icon">✅</div><div class="kpi-val" id="exp-kpi-paid">₹0</div> <div class="kpi-label">Paid</div>            <div class="kpi-sub" id="exp-kpi-paid-sub">—</div></div>
+          <div class="kpi-card orange" id="exp-kpi-card-pend"  onclick="expOpenRegistry('Pending','exp-kpi-card-pend')"        style="cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;" title="Open registry — pending expenses"><div class="kpi-icon">⏳</div><div class="kpi-val" id="exp-kpi-pend">₹0</div> <div class="kpi-label">Pending</div>         <div class="kpi-sub" id="exp-kpi-pend-sub">—</div></div>
+          <div class="kpi-card cyan"   id="exp-kpi-card-up"    onclick="expOpenRegistry('Under-process','exp-kpi-card-up')"    style="cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;" title="Open registry — under-process expenses"><div class="kpi-icon">🔄</div><div class="kpi-val" id="exp-kpi-up">₹0</div>   <div class="kpi-label">Under-process</div>  <div class="kpi-sub" id="exp-kpi-up-sub">—</div></div>
+          <div class="kpi-card purple" id="exp-kpi-card-avg"   onclick="expOpenRegistry('total','exp-kpi-card-avg')"           style="cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;" title="Open registry — all expenses"><div class="kpi-icon">📊</div><div class="kpi-val" id="exp-kpi-avg">₹0</div>  <div class="kpi-label">Avg Transaction</div><div class="kpi-sub" id="exp-kpi-avg-sub">—</div></div>
+          <div class="kpi-card gold"   id="exp-kpi-card-ytd"   onclick="expOpenRegistry('YTD','exp-kpi-card-ytd')"             style="cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;" title="Open registry — this year's expenses"><div class="kpi-icon">📅</div><div class="kpi-val" id="exp-kpi-ytd">₹0</div>  <div class="kpi-label">YTD Spend</div>       <div class="kpi-sub" id="exp-kpi-ytd-sub">—</div></div>
         </div>
+        <div style="text-align:center;margin-bottom:1.25rem;font-size:0.68rem;font-family:var(--font-mono);color:var(--text3);" id="exp-registry-hint">👆 Click a count card to open its expense list here</div>
 
-        <!-- ANALYTICS ROW 1: Monthly Trend + Top Categories -->
-        <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:1.5rem;margin-bottom:1.5rem;">
-          <!-- Monthly Trend Bar Chart -->
-          <div class="table-card">
-            <div class="tc-header">
-              <div class="tc-title">📅 Monthly Spend Trend</div>
-              <div style="display:flex;align-items:center;gap:0.5rem;">
-                <select id="exp-trend-year" onchange="expRenderTrend()" style="background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:0.28rem 0.6rem;color:var(--text2);font-size:0.72rem;font-family:var(--font-mono);outline:none;">
-                  <option value="2024">2024</option><option value="2025">2025</option><option value="2026" selected>2026</option>
-                </select>
-              </div>
-            </div>
-            <div style="padding:1rem 1.5rem 0.5rem;">
-              <div id="exp-trend-chart" style="display:flex;align-items:flex-end;gap:6px;height:100px;border-bottom:1px solid var(--border);padding-bottom:4px;"></div>
-              <div id="exp-trend-labels" style="display:flex;gap:6px;margin-top:4px;"></div>
-              <div id="exp-trend-legend" style="display:flex;gap:1rem;margin-top:8px;font-size:0.65rem;font-family:var(--font-mono);color:var(--text3);"></div>
-            </div>
-          </div>
-          <!-- Top Categories -->
-          <div class="table-card">
-            <div class="tc-header"><div class="tc-title">🗂️ Top Categories</div></div>
-            <div style="padding:0.75rem 1.5rem;" id="exp-cat-bars"></div>
-          </div>
-        </div>
-
-        <!-- ANALYTICS ROW 2: Status Breakdown + Department + Alerts -->
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.5rem;margin-bottom:1.5rem;">
-          <!-- Status Breakdown -->
-          <div class="table-card">
-            <div class="tc-header"><div class="tc-title">⚖️ Status Breakdown</div></div>
-            <div style="padding:1rem 1.5rem;" id="exp-status-breakdown"></div>
-          </div>
-          <!-- Project Breakdown -->
-          <div class="table-card">
-            <div class="tc-header"><div class="tc-title">📁 By Project</div></div>
-            <div style="padding:0.75rem 1.5rem;" id="exp-dept-bars"></div>
-          </div>
-          <!-- Attention Required -->
-          <div class="table-card" style="border-top:3px solid var(--orange);">
-            <div class="tc-header" style="background:rgba(245,158,11,0.05);">
-              <div class="tc-title" style="color:var(--orange);">⚠️ Needs Attention</div>
-            </div>
-            <div style="padding:0.75rem 1.5rem;max-height:180px;overflow-y:auto;" id="exp-alerts-list"></div>
-          </div>
-        </div>
-
-        <!-- ANALYTICS ROW 3: Category-wise Expenses by Project (NEW v49) -->
-        <div class="table-card" style="margin-bottom:1.5rem;border-top:3px solid var(--accent);">
-          <div class="tc-header" style="background:rgba(59,130,246,0.04);flex-wrap:wrap;gap:0.5rem;">
-            <div class="tc-title">🗂️ Category-wise Expenses by Project</div>
-            <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
-              <input type="text" id="exp-search" placeholder="🔍 Description / Project #…" oninput="expApplyFilters()" style="background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:0.28rem 0.8rem;color:var(--text);font-size:0.74rem;outline:none;width:180px;">
-              <select id="exp-proj-year-filter" onchange="expPopulateProjFilter();expRenderCatByProject();" style="background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:0.28rem 0.7rem;color:var(--text2);font-size:0.74rem;font-family:var(--font-mono);outline:none;cursor:pointer;min-width:110px;" title="Filter by Year">
-                <option value="">All Years</option>
+        <!-- REGISTRY PANEL — tailored to the selected count card (Total / Paid / Pending / Under-process / YTD) -->
+        <div class="table-card" id="exp-registry-panel" style="display:none;margin-bottom:1.5rem;border-top:3px solid var(--accent);">
+          <div class="tc-header" style="flex-wrap:wrap;gap:0.6rem;">
+            <div class="tc-title" id="exp-registry-title">💰 Expense Register <span id="exp-table-count" style="font-size:0.72rem;font-family:var(--font-mono);color:var(--text3);font-weight:400;margin-left:6px;"></span></div>
+            <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">
+              <select id="exp-filter-month" onchange="expApplyFilters()" style="background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:0.32rem 0.7rem;color:var(--text2);font-size:0.73rem;font-family:var(--font-mono);outline:none;cursor:pointer;">
+                <option value="">All Months</option>
               </select>
-              <select id="exp-proj-filter" onchange="expPopulateProjFilter();expRenderCatByProject()" style="background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:0.28rem 0.7rem;color:var(--text2);font-size:0.74rem;font-family:var(--font-mono);outline:none;cursor:pointer;min-width:170px;">
-                <option value="">All Projects</option>
+              <select id="exp-filter-status" onchange="expStatusDropdownChanged()" style="background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:0.32rem 0.7rem;color:var(--text2);font-size:0.73rem;font-family:var(--font-mono);outline:none;cursor:pointer;">
+                <option value="">All Status</option>
+                <option value="Paid">Paid</option><option value="Pending">Pending</option><option value="Under-process">Under-process</option>
+                <option value="__YTD__">This Year (YTD)</option>
               </select>
-              <select id="exp-cat-proj-filter" onchange="expRenderCatByProject()" style="background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:0.28rem 0.7rem;color:var(--text2);font-size:0.74rem;font-family:var(--font-mono);outline:none;cursor:pointer;min-width:150px;" title="Filter by Category">
+              <select id="exp-filter-cat" onchange="expApplyFilters()" style="background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:0.32rem 0.7rem;color:var(--text2);font-size:0.73rem;font-family:var(--font-mono);outline:none;cursor:pointer;">
                 <option value="">All Categories</option>
+                <option>Cab</option><option>Imprest</option><option>Reimbursement</option>
+                <option>Event</option><option>Cloud Computing</option><option>PR Communications</option>
+                <option>AMC</option><option>Consultant</option><option>RSF</option><option>Honorarium</option>
+                <option>IT Asset</option><option>Non IT Asset</option><option>Food</option>
+                <option>Refreshments (Tea, Coffee &amp; Snacks)</option><option>Stationary</option>
+                <option>Printing</option><option>Marketing</option><option>Legal</option>
+                <option>Maintenance</option><option>Training</option><option>Subscription</option>
+                <option>Miscellaneous</option><option>Travel</option><option>Others</option>
               </select>
-              <select id="exp-proj-chart-type" onchange="expRenderCatByProject()" style="background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:0.28rem 0.6rem;color:var(--text2);font-size:0.72rem;font-family:var(--font-mono);outline:none;cursor:pointer;">
-                <option value="bar">Bar Chart</option>
-                <option value="donut">Donut Chart</option>
-              </select>
-              <button class="tc-btn primary" onclick="expDownloadCatByProjectExcel()" title="Download Category-wise Expenses as Excel" style="display:flex;align-items:center;gap:0.35rem;font-size:0.73rem;padding:0.28rem 0.75rem;">
-                <span>⬇️</span><span>Excel</span>
-              </button>
+              <button class="tc-btn" onclick="expResetFilters()">✕ Reset</button>
+              <button class="tc-btn" onclick="expExportCSV()">📥 CSV</button>
+              <button class="tc-btn" style="border-color:rgba(239,68,68,0.4);color:var(--red);" onclick="expCloseRegistry()">▲ Collapse</button>
             </div>
-          </div>
-          <div style="padding:1rem 1.5rem 1.25rem;">
-            <div id="exp-cat-by-proj-summary" style="display:flex;gap:1.5rem;flex-wrap:wrap;margin-bottom:1rem;font-size:0.78rem;font-family:var(--font-mono);color:var(--text3);"></div>
-            <div id="exp-cat-by-proj-chart" style="min-height:160px;"></div>
-            <div id="exp-cat-by-proj-legend" style="display:flex;flex-wrap:wrap;gap:0.5rem 1rem;margin-top:0.75rem;font-size:0.68rem;font-family:var(--font-mono);color:var(--text3);"></div>
-            <!-- Project-wise expense detail table -->
-            <div id="exp-proj-detail-section" style="margin-top:1.5rem;display:none;">
-              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;flex-wrap:wrap;gap:0.5rem;">
-                <div style="font-size:0.78rem;font-family:var(--font-mono);font-weight:600;color:var(--text2);letter-spacing:0.05em;text-transform:uppercase;">📋 All Expenses by Project Number</div>
-                <div style="font-size:0.7rem;font-family:var(--font-mono);color:var(--text3);" id="exp-proj-detail-count"></div>
-              </div>
-              <div id="exp-proj-detail-body" style="overflow-x:auto;"></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- FILTER ROW -->
-        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;margin-bottom:1rem;">
-          <select id="exp-filter-month" onchange="expApplyFilters()" style="background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:0.35rem 0.7rem;color:var(--text2);font-size:0.75rem;font-family:var(--font-mono);outline:none;cursor:pointer;">
-            <option value="">All Months</option>
-          </select>
-          <select id="exp-filter-status" onchange="expApplyFilters()" style="background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:0.35rem 0.7rem;color:var(--text2);font-size:0.75rem;font-family:var(--font-mono);outline:none;cursor:pointer;">
-            <option value="">All Status</option>
-            <option>Paid</option><option>Pending</option><option>Under-process</option>
-          </select>
-          <select id="exp-filter-cat" onchange="expApplyFilters()" style="background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:0.35rem 0.7rem;color:var(--text2);font-size:0.75rem;font-family:var(--font-mono);outline:none;cursor:pointer;">
-            <option value="">All Categories</option>
-            <option>Cab</option><option>Imprest</option><option>Reimbursement</option>
-            <option>Event</option><option>Cloud Computing</option><option>PR Communications</option>
-            <option>AMC</option><option>Consultant</option><option>RSF</option><option>Honorarium</option>
-            <option>IT Asset</option><option>Non IT Asset</option><option>Food</option>
-            <option>Refreshments (Tea, Coffee &amp; Snacks)</option><option>Stationary</option>
-            <option>Printing</option><option>Marketing</option><option>Legal</option>
-            <option>Maintenance</option><option>Training</option><option>Subscription</option>
-            <option>Miscellaneous</option><option>Travel</option><option>Others</option>
-          </select>
-          <button class="tc-btn" onclick="expResetFilters()">✕ Reset</button>
-        </div>
-
-        <!-- EXPENSE TABLE -->
-        <div class="table-card">
-          <div class="tc-header">
-            <div class="tc-title">💰 Expense Register <span id="exp-table-count" style="font-size:0.72rem;font-family:var(--font-mono);color:var(--text3);font-weight:400;margin-left:6px;"></span></div>
           </div>
           <div style="overflow-x:auto;">
             <table>
@@ -3591,6 +3509,83 @@
           <div style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem 1.5rem;border-top:1px solid var(--border);font-size:0.78rem;font-family:var(--font-mono);color:var(--text3);flex-wrap:wrap;gap:0.5rem;">
             <span id="exp-page-info"></span>
             <div style="display:flex;gap:0.4rem;" id="exp-page-btns"></div>
+          </div>
+        </div>
+
+        <!-- ANALYTICS ROW 1: Monthly Trend (full width — Top Categories removed) -->
+        <div style="margin-bottom:1.5rem;">
+          <div class="table-card">
+            <div class="tc-header">
+              <div class="tc-title">📅 Monthly Spend Trend</div>
+              <div style="display:flex;align-items:center;gap:0.5rem;">
+                <select id="exp-trend-year" onchange="expRenderTrend()" style="background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:0.28rem 0.6rem;color:var(--text2);font-size:0.72rem;font-family:var(--font-mono);outline:none;">
+                  <option value="2024">2024</option><option value="2025">2025</option><option value="2026" selected>2026</option>
+                </select>
+              </div>
+            </div>
+            <div style="padding:1rem 1.5rem 0.5rem;">
+              <div id="exp-trend-chart" style="display:flex;align-items:flex-end;gap:6px;height:100px;border-bottom:1px solid var(--border);padding-bottom:4px;"></div>
+              <div id="exp-trend-labels" style="display:flex;gap:6px;margin-top:4px;"></div>
+              <div id="exp-trend-legend" style="display:flex;gap:1rem;margin-top:8px;font-size:0.65rem;font-family:var(--font-mono);color:var(--text3);"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ANALYTICS ROW 2: By Project (modal trigger) + Alerts (Status Breakdown removed) -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem;">
+          <!-- Project Breakdown — opens as a modal -->
+          <div class="table-card">
+            <div class="tc-header">
+              <div class="tc-title">📁 By Project</div>
+              <button class="tc-btn primary" onclick="expOpenProjectModal()" style="font-size:0.72rem;padding:0.28rem 0.75rem;">⤢ View All Projects</button>
+            </div>
+            <div style="padding:0.75rem 1.5rem;" id="exp-dept-bars"></div>
+          </div>
+          <!-- Attention Required -->
+          <div class="table-card" style="border-top:3px solid var(--orange);">
+            <div class="tc-header" style="background:rgba(245,158,11,0.05);">
+              <div class="tc-title" style="color:var(--orange);">⚠️ Needs Attention</div>
+            </div>
+            <div style="padding:0.75rem 1.5rem;max-height:180px;overflow-y:auto;" id="exp-alerts-list"></div>
+          </div>
+        </div>
+
+        <!-- ANALYTICS ROW 3: Category-wise Expenses by Project — now expandable/collapsible -->
+        <div class="table-card" style="margin-bottom:1.5rem;border-top:3px solid var(--accent);">
+          <div class="tc-header" style="background:rgba(59,130,246,0.04);flex-wrap:wrap;gap:0.5rem;cursor:pointer;" onclick="expToggleCatByProject(event)">
+            <div class="tc-title">🗂️ Category-wise Expenses by Project <span id="exp-catproj-toggle-icon" style="font-size:0.7rem;color:var(--text3);margin-left:6px;">▶ Expand</span></div>
+            <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;" onclick="event.stopPropagation()">
+              <input type="text" id="exp-search" placeholder="🔍 Description / Project #…" oninput="expApplyFilters()" style="background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:0.28rem 0.8rem;color:var(--text);font-size:0.74rem;outline:none;width:180px;">
+              <select id="exp-proj-year-filter" onchange="expPopulateProjFilter();expRenderCatByProject();" style="background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:0.28rem 0.7rem;color:var(--text2);font-size:0.74rem;font-family:var(--font-mono);outline:none;cursor:pointer;min-width:110px;" title="Filter by Year">
+                <option value="">All Years</option>
+              </select>
+              <select id="exp-proj-filter" onchange="expPopulateProjFilter();expRenderCatByProject()" style="background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:0.28rem 0.7rem;color:var(--text2);font-size:0.74rem;font-family:var(--font-mono);outline:none;cursor:pointer;min-width:170px;">
+                <option value="">All Projects</option>
+              </select>
+              <select id="exp-cat-proj-filter" onchange="expRenderCatByProject()" style="background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:0.28rem 0.7rem;color:var(--text2);font-size:0.74rem;font-family:var(--font-mono);outline:none;cursor:pointer;min-width:150px;" title="Filter by Category">
+                <option value="">All Categories</option>
+              </select>
+              <select id="exp-proj-chart-type" onchange="expRenderCatByProject()" style="background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:0.28rem 0.6rem;color:var(--text2);font-size:0.72rem;font-family:var(--font-mono);outline:none;cursor:pointer;">
+                <option value="bar">Bar Chart</option>
+                <option value="donut">Donut Chart</option>
+              </select>
+              <button class="tc-btn primary" onclick="expDownloadCatByProjectExcel()" title="Download Category-wise Expenses as Excel" style="display:flex;align-items:center;gap:0.35rem;font-size:0.73rem;padding:0.28rem 0.75rem;">
+                <span>⬇️</span><span>Excel</span>
+              </button>
+            </div>
+          </div>
+          <div id="exp-catproj-body" style="display:none;padding:1rem 1.5rem 1.25rem;">
+            <div id="exp-cat-by-proj-summary" style="display:flex;gap:1.5rem;flex-wrap:wrap;margin-bottom:1rem;font-size:0.78rem;font-family:var(--font-mono);color:var(--text3);"></div>
+            <div id="exp-cat-by-proj-chart" style="min-height:160px;"></div>
+            <div id="exp-cat-by-proj-legend" style="display:flex;flex-wrap:wrap;gap:0.5rem 1rem;margin-top:0.75rem;font-size:0.68rem;font-family:var(--font-mono);color:var(--text3);"></div>
+            <!-- Project-wise expense detail table -->
+            <div id="exp-proj-detail-section" style="margin-top:1.5rem;display:none;">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;flex-wrap:wrap;gap:0.5rem;">
+                <div style="font-size:0.78rem;font-family:var(--font-mono);font-weight:600;color:var(--text2);letter-spacing:0.05em;text-transform:uppercase;">📋 All Expenses by Project Number</div>
+                <div style="font-size:0.7rem;font-family:var(--font-mono);color:var(--text3);" id="exp-proj-detail-count"></div>
+              </div>
+              <div id="exp-proj-detail-body" style="overflow-x:auto;"></div>
+            </div>
           </div>
         </div>
 
@@ -3689,15 +3684,17 @@
           </div>
         </div>
 
-        <!-- KPI ROW — live from sheet -->
+        <!-- KPI ROW — live from sheet. Click a count card to open its registry below (same
+             click-through pattern as Expenses' expOpenRegistry / kpi-card-active highlight). -->
         <div class="kpi-grid" style="margin-bottom:1.5rem;">
-          <div class="kpi-card blue">  <div class="kpi-icon">📊</div><div class="kpi-val" id="pub-kpi-total">0</div><div class="kpi-label">Total Publications</div><div class="kpi-sub" id="pub-kpi-total-sub">All types</div></div>
-          <div class="kpi-card purple"><div class="kpi-icon">📚</div><div class="kpi-val" id="pub-kpi-journal">0</div><div class="kpi-label">Journal Papers</div><div class="kpi-sub" id="pub-kpi-journal-sub">—</div></div>
-          <div class="kpi-card cyan">  <div class="kpi-icon">🎤</div><div class="kpi-val" id="pub-kpi-conf">0</div><div class="kpi-label">Conference Papers</div><div class="kpi-sub" id="pub-kpi-conf-sub">—</div></div>
-          <div class="kpi-card green"> <div class="kpi-icon">📄</div><div class="kpi-val" id="pub-kpi-report">0</div><div class="kpi-label">Reports</div><div class="kpi-sub" id="pub-kpi-report-sub">—</div></div>
-          <div class="kpi-card orange"><div class="kpi-icon">🌐</div><div class="kpi-val" id="pub-kpi-preprint">0</div><div class="kpi-label">Preprints / ArXiv</div><div class="kpi-sub" id="pub-kpi-preprint-sub">—</div></div>
-          <div class="kpi-card gold">  <div class="kpi-icon">⭐</div><div class="kpi-val" id="pub-kpi-highif">0</div><div class="kpi-label">High Impact (IF&gt;5)</div><div class="kpi-sub" id="pub-kpi-aa">—</div></div>
+          <div class="kpi-card blue"   id="pub-kpi-card-total"    onclick="pubOpenRegistry('all','pub-kpi-card-total')"        style="cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='var(--shadow-lg)'" onmouseout="this.style.transform='';this.style.boxShadow=''" title="Open registry — all publications"><div class="kpi-icon">📊</div><div class="kpi-val" id="pub-kpi-total">0</div><div class="kpi-label">Total Publications</div><div class="kpi-sub" id="pub-kpi-total-sub">All types</div></div>
+          <div class="kpi-card purple" id="pub-kpi-card-journal"  onclick="pubOpenRegistry('journal','pub-kpi-card-journal')"  style="cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='var(--shadow-lg)'" onmouseout="this.style.transform='';this.style.boxShadow=''" title="Open registry — journal papers"><div class="kpi-icon">📚</div><div class="kpi-val" id="pub-kpi-journal">0</div><div class="kpi-label">Journal Papers</div><div class="kpi-sub" id="pub-kpi-journal-sub">—</div></div>
+          <div class="kpi-card cyan"   id="pub-kpi-card-conf"     onclick="pubOpenRegistry('conference','pub-kpi-card-conf')"  style="cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='var(--shadow-lg)'" onmouseout="this.style.transform='';this.style.boxShadow=''" title="Open registry — conference papers"><div class="kpi-icon">🎤</div><div class="kpi-val" id="pub-kpi-conf">0</div><div class="kpi-label">Conference Papers</div><div class="kpi-sub" id="pub-kpi-conf-sub">—</div></div>
+          <div class="kpi-card green"  id="pub-kpi-card-report"   onclick="pubOpenRegistry('report','pub-kpi-card-report')"    style="cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='var(--shadow-lg)'" onmouseout="this.style.transform='';this.style.boxShadow=''" title="Open registry — reports"><div class="kpi-icon">📄</div><div class="kpi-val" id="pub-kpi-report">0</div><div class="kpi-label">Reports</div><div class="kpi-sub" id="pub-kpi-report-sub">—</div></div>
+          <div class="kpi-card orange" id="pub-kpi-card-preprint" onclick="pubOpenRegistry('preprint','pub-kpi-card-preprint')" style="cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='var(--shadow-lg)'" onmouseout="this.style.transform='';this.style.boxShadow=''" title="Open registry — preprints / arXiv"><div class="kpi-icon">🌐</div><div class="kpi-val" id="pub-kpi-preprint">0</div><div class="kpi-label">Preprints / ArXiv</div><div class="kpi-sub" id="pub-kpi-preprint-sub">—</div></div>
+          <div class="kpi-card gold"   id="pub-kpi-card-highif"   onclick="pubOpenRegistry('highimpact','pub-kpi-card-highif')" style="cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='var(--shadow-lg)'" onmouseout="this.style.transform='';this.style.boxShadow=''" title="Open registry — high impact journals (IF&gt;5)"><div class="kpi-icon">⭐</div><div class="kpi-val" id="pub-kpi-highif">0</div><div class="kpi-label">High Impact (IF&gt;5)</div><div class="kpi-sub" id="pub-kpi-aa">—</div></div>
         </div>
+        <div style="text-align:center;margin-bottom:1.25rem;font-size:0.68rem;font-family:var(--font-mono);color:var(--text3);" id="pub-registry-hint">👆 Click a count card to open its publication list here</div>
 
         <!-- ANALYTICS PANELS: Year Matrix + Jurisdiction -->
         <div style="display:grid;grid-template-columns:1.6fr 1fr;gap:1.5rem;margin-bottom:1.5rem;">
@@ -3767,6 +3764,10 @@
           </div>
         </div>
 
+        <!-- REGISTRY PANEL — hidden until a KPI count card above is clicked (mirrors the
+             Expenses exp-registry-panel pattern). Holds the type tabs, filters, and table. -->
+        <div id="pub-registry-panel" style="display:none;margin-bottom:1.5rem;border-top:3px solid var(--accent);border-radius:12px;">
+
         <!-- TYPE TABS + TABLE -->
         <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1rem;align-items:center;">
           <button class="pub-tab-btn active" id="pubtab-all"        onclick="pubSwitchTab('all')">📦 All</button>
@@ -3794,7 +3795,8 @@
 
         <div class="table-card">
           <div class="tc-header">
-            <div class="tc-title">📋 Publications Register <span id="pub-table-count" style="font-size:0.72rem;font-family:var(--font-mono);color:var(--text3);font-weight:400;margin-left:6px;"></span></div>
+            <div class="tc-title" id="pub-registry-title">📋 Publications Register <span id="pub-table-count" style="font-size:0.72rem;font-family:var(--font-mono);color:var(--text3);font-weight:400;margin-left:6px;"></span></div>
+            <button class="tc-btn" style="border-color:rgba(239,68,68,0.4);color:var(--red);" onclick="pubCloseRegistry()">▲ Collapse</button>
           </div>
           <div style="overflow-x:auto;">
             <table>
@@ -3824,6 +3826,8 @@
             <div style="display:flex;gap:0.4rem;" id="pub-page-btns"></div>
           </div>
         </div>
+        </div>
+        <!-- END pub-registry-panel -->
 
         <!-- ADD PUBLICATION FORM -->
         <div class="table-card" id="pub-form-card" style="display:none;margin-top:1.5rem;">
@@ -10536,7 +10540,11 @@
         const key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
         if (key !== month) return false;
       }
-      if (status && r.status !== status) return false;
+      if (status === '__YTD__') {
+        const now = new Date();
+        const d = expParseDate(r.invoiceDate);
+        if (!d || isNaN(d) || d.getFullYear() !== now.getFullYear() || d > now) return false;
+      } else if (status && r.status !== status) return false;
       if (cat    && r.category !== cat) return false;
       if (search) {
         const hay = (r.description + (r.projectNumber||'') + (r.category||'') + (r.department||'')).toLowerCase();
@@ -10560,6 +10568,138 @@
     });
     const s=document.getElementById('exp-search'); if(s) s.value='';
     expApplyFilters();
+  }
+
+  // ── Count-card → tailored registry panel ──────────────────────────────
+  // Clicking a KPI card opens the registry filtered to that card's type,
+  // right below the KPI row. 'total'/'Paid'/'Pending'/'Under-process'/'YTD'
+  const EXP_CARD_TITLES = {
+    'total':          '💳 Expense Register — All Expenses',
+    'Paid':           '✅ Expense Register — Paid',
+    'Pending':        '⏳ Expense Register — Pending',
+    'Under-process':  '🔄 Expense Register — Under-process',
+    'YTD':            '📅 Expense Register — This Year (YTD)'
+  };
+  const EXP_CARD_STATUS_VALUE = {
+    'total': '', 'Paid': 'Paid', 'Pending': 'Pending',
+    'Under-process': 'Under-process', 'YTD': '__YTD__'
+  };
+
+  function expOpenRegistry(type, cardId) {
+    const statusSel = document.getElementById('exp-filter-status');
+    if (statusSel) statusSel.value = EXP_CARD_STATUS_VALUE.hasOwnProperty(type) ? EXP_CARD_STATUS_VALUE[type] : '';
+
+    const panel = document.getElementById('exp-registry-panel');
+    const hint  = document.getElementById('exp-registry-hint');
+    if (panel) panel.style.display = '';
+    if (hint)  hint.style.display  = 'none';
+
+    const titleEl = document.getElementById('exp-registry-title');
+    if (titleEl) {
+      const countSpan = document.getElementById('exp-table-count');
+      titleEl.innerHTML = (EXP_CARD_TITLES[type] || '💰 Expense Register') + ' ';
+      if (countSpan) titleEl.appendChild(countSpan);
+    }
+
+    expSyncCardHighlight(cardId);
+    expApplyFilters();
+    panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function expCloseRegistry() {
+    const panel = document.getElementById('exp-registry-panel');
+    const hint  = document.getElementById('exp-registry-hint');
+    if (panel) panel.style.display = 'none';
+    if (hint)  hint.style.display  = '';
+    expSyncCardHighlight(null);
+  }
+
+  function expSyncCardHighlight(cardId) {
+    ['exp-kpi-card-total','exp-kpi-card-paid','exp-kpi-card-pend','exp-kpi-card-up','exp-kpi-card-avg','exp-kpi-card-ytd'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.classList.toggle('kpi-card-active', id === cardId);
+    });
+  }
+
+  // When the status dropdown inside the registry panel is changed manually,
+  // keep the KPI card highlight in sync with the new selection.
+  function expStatusDropdownChanged() {
+    const v = document.getElementById('exp-filter-status')?.value || '';
+    const map = { '': 'exp-kpi-card-total', 'Paid': 'exp-kpi-card-paid', 'Pending': 'exp-kpi-card-pend',
+                  'Under-process': 'exp-kpi-card-up', '__YTD__': 'exp-kpi-card-ytd' };
+    const titleMap = { '': 'total', 'Paid': 'Paid', 'Pending': 'Pending', 'Under-process': 'Under-process', '__YTD__': 'YTD' };
+    expSyncCardHighlight(map[v] || null);
+    const titleEl = document.getElementById('exp-registry-title');
+    if (titleEl) {
+      const countSpan = document.getElementById('exp-table-count');
+      titleEl.innerHTML = (EXP_CARD_TITLES[titleMap[v]] || '💰 Expense Register') + ' ';
+      if (countSpan) titleEl.appendChild(countSpan);
+    }
+    expApplyFilters();
+  }
+
+  // ── By Project — full breakdown modal ──────────────────────────────────
+  function expOpenProjectModal() {
+    closeModal();
+    const projMap = {};
+    EXP.all.forEach(r => {
+      const proj = (r.projectNumber || r.project || '').toString().trim() || 'Unassigned';
+      if (!projMap[proj]) projMap[proj] = { total: 0, count: 0 };
+      projMap[proj].total += parseFloat(r.amount || 0);
+      projMap[proj].count += 1;
+    });
+    const sorted = Object.entries(projMap).sort((a, b) => b[1].total - a[1].total);
+    const grandTotal = sorted.reduce((s, [, v]) => s + v.total, 0) || 1;
+    const COLORS = typeof AN_COLORS !== 'undefined' ? AN_COLORS : ['#3B82F6','#10B981','#F59E0B','#EF4444','#8B5CF6','#06B6D4','#F97316'];
+    const fmt = v => typeof expFmtShort === 'function' ? expFmtShort(v) : '₹' + v.toFixed(0);
+
+    let rowsHtml = '';
+    if (!sorted.length) {
+      rowsHtml = '<div style="color:var(--text3);font-size:0.85rem;text-align:center;padding:2rem 0;">No project data available</div>';
+    } else {
+      rowsHtml = sorted.map(([proj, v], i) => {
+        const pct = (v.total / grandTotal * 100).toFixed(1);
+        const color = COLORS[i % COLORS.length];
+        return `<div style="margin-bottom:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;">
+            <span style="font-size:0.82rem;font-family:var(--font-mono);font-weight:600;color:var(--text);">📁 ${proj}</span>
+            <span style="font-size:0.74rem;font-family:var(--font-mono);color:var(--text3);">${v.count} txn${v.count!==1?'s':''} &nbsp;<strong style="color:${color};">${fmt(v.total)}</strong> &nbsp;(${pct}%)</span>
+          </div>
+          <div style="height:7px;background:var(--surface2);border-radius:99px;overflow:hidden;">
+            <div style="height:100%;width:${pct}%;background:${color};opacity:0.88;border-radius:99px;"></div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    const html = `<button class="modal-close" onclick="closeModal()">✕ Close</button>
+      <div class="modal-title">📁 Spending By Project</div>
+      <div style="font-size:0.78rem;font-family:var(--font-mono);color:var(--text3);margin-bottom:1.25rem;">
+        ${sorted.length} project${sorted.length!==1?'s':''} &nbsp;·&nbsp; ${fmt(grandTotal)} total spend
+      </div>
+      <div style="max-height:55vh;overflow-y:auto;padding-right:4px;">${rowsHtml}</div>`;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.id = 'exp-project-modal-overlay';
+    overlay.innerHTML = `<div class="modal-box" style="max-width:640px;">${html}</div>`;
+    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+    document.body.appendChild(overlay);
+
+    const closer = overlay.querySelector('.modal-close');
+    if (closer) closer.onclick = () => overlay.remove();
+  }
+
+  // ── Category-wise Expenses by Project — collapsible ──────────────────
+  function expToggleCatByProject(evt) {
+    if (evt && evt.target && evt.target.closest('input,select,button')) return;
+    const body = document.getElementById('exp-catproj-body');
+    const icon = document.getElementById('exp-catproj-toggle-icon');
+    if (!body) return;
+    const isOpen = body.style.display !== 'none';
+    body.style.display = isOpen ? 'none' : '';
+    if (icon) icon.textContent = isOpen ? '▶ Expand' : '▼ Collapse';
+    if (!isOpen) expRenderCatByProject();
   }
 
   // ── KPIs ──
@@ -10608,8 +10748,6 @@
   // ── Analytics panels ──
   function expRenderAnalytics() {
     expRenderTrend();
-    expRenderCatBars();
-    expRenderStatusBreakdown();
     expRenderDeptBars();
     expRenderAlerts();
     expRenderCatByProject();
@@ -11776,13 +11914,14 @@
   // ══════════════════════════════════════════════════════════════════
 
   const PUB = {
-    all:       [],
-    filtered:  [],
-    activeTab: 'all',
-    sortKey:   'dateOfPublication',
-    sortDir:   'desc',
-    page:      1,
-    pageSize:  30,
+    all:            [],
+    filtered:       [],
+    activeTab:      'all',
+    highImpactOnly: false,   // true when opened via the "High Impact (IF>5)" count card
+    sortKey:        'dateOfPublication',
+    sortDir:        'desc',
+    page:           1,
+    pageSize:       30,
   };
 
   // ── CONFIG mirrors CONFIG.publications from Apps Script ──
@@ -11899,6 +12038,8 @@
         jurisdiction:      r.jurisdiction || '',
         publishedPaper:    r.publishedPaper || '',
         comments:          r.comments || '',
+        _row:              r._row   || null,
+        _sheet:            r._sheet || 'Journals',
         _type: 'journal'
       };
     }
@@ -11917,6 +12058,8 @@
         jurisdiction:      r.jurisdiction || '',
         publishedPaper:    r.publishedPaper || '',
         comments:          '',          // conference has no comments column
+        _row:              r._row   || null,
+        _sheet:            r._sheet || 'Conferences',
         _type: 'conference'
       };
     }
@@ -11934,6 +12077,8 @@
         jurisdiction:      r.jurisdiction || '',
         publishedPaper:    r.publishedPaper || '',
         comments:          r.comments || '',
+        _row:              r._row   || null,
+        _sheet:            r._sheet || 'Report',
         _type: 'report'
       };
     }
@@ -11951,6 +12096,8 @@
         jurisdiction:      r.jurisdiction || '',
         publishedPaper:    r.publishedPaper || '',
         comments:          '',
+        _row:              r._row   || null,
+        _sheet:            r._sheet || 'Preprint Arxiv',
         _type: 'preprint'
       };
     }
@@ -12011,7 +12158,10 @@
     const tab    = PUB.activeTab;
 
     return PUB.all.filter(r => {
-      if (tab !== 'all' && r._type !== tab) return false;
+      // High Impact card: journals only, IF>5 — overrides the normal type-tab filter
+      if (PUB.highImpactOnly) {
+        if (r._type !== 'journal' || !(parseFloat(r.impactFactor) > 5)) return false;
+      } else if (tab !== 'all' && r._type !== tab) return false;
       // Year filter mirrors SEARCH-based GAS formula
       if (year && !pubYearMatch(r.dateOfPublication, year)) return false;
       if (jur    && r.jurisdiction  !== jur)    return false;
@@ -12045,10 +12195,67 @@
 
   function pubSwitchTab(tab) {
     PUB.activeTab = tab;
+    PUB.highImpactOnly = false;   // manual tab click always overrides the High Impact card filter
     ['all','journal','conference','report','preprint'].forEach(t => {
       const b=document.getElementById('pubtab-'+t); if(b) b.classList.toggle('active',t===tab);
     });
+    const cardMap = { all:'pub-kpi-card-total', journal:'pub-kpi-card-journal', conference:'pub-kpi-card-conf', report:'pub-kpi-card-report', preprint:'pub-kpi-card-preprint' };
+    pubSyncCardHighlight(cardMap[tab] || null);
     pubApplyFilters();
+  }
+
+  // ── Count-card → registry panel (mirrors Expenses' expOpenRegistry pattern) ──
+  // Clicking a KPI card opens the Publications Register panel filtered to that
+  // card's type, right below the KPI row. 'highimpact' is a special case: it
+  // filters to Journals with IF>5 rather than switching the active type-tab.
+  const PUB_CARD_TITLES = {
+    all:        '📋 Publications Register — All',
+    journal:    '📚 Publications Register — Journals',
+    conference: '🎤 Publications Register — Conferences',
+    report:     '📄 Publications Register — Reports',
+    preprint:   '🌐 Publications Register — Preprints / ArXiv',
+    highimpact: '⭐ Publications Register — High Impact Journals (IF>5)'
+  };
+
+  function pubOpenRegistry(type, cardId) {
+    PUB.highImpactOnly = (type === 'highimpact');
+    const effectiveTab = (type === 'highimpact') ? 'journal' : type;
+    PUB.activeTab = effectiveTab;
+    ['all','journal','conference','report','preprint'].forEach(t => {
+      const b = document.getElementById('pubtab-' + t);
+      if (b) b.classList.toggle('active', t === effectiveTab);
+    });
+
+    const panel = document.getElementById('pub-registry-panel');
+    const hint  = document.getElementById('pub-registry-hint');
+    if (panel) panel.style.display = '';
+    if (hint)  hint.style.display  = 'none';
+
+    const titleEl = document.getElementById('pub-registry-title');
+    if (titleEl) {
+      const countSpan = document.getElementById('pub-table-count');
+      titleEl.innerHTML = (PUB_CARD_TITLES[type] || '📋 Publications Register') + ' ';
+      if (countSpan) titleEl.appendChild(countSpan);
+    }
+
+    pubSyncCardHighlight(cardId);
+    pubApplyFilters();
+    if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function pubCloseRegistry() {
+    const panel = document.getElementById('pub-registry-panel');
+    const hint  = document.getElementById('pub-registry-hint');
+    if (panel) panel.style.display = 'none';
+    if (hint)  hint.style.display  = '';
+    pubSyncCardHighlight(null);
+  }
+
+  function pubSyncCardHighlight(cardId) {
+    ['pub-kpi-card-total','pub-kpi-card-journal','pub-kpi-card-conf','pub-kpi-card-report','pub-kpi-card-preprint','pub-kpi-card-highif'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.classList.toggle('kpi-card-active', id === cardId);
+    });
   }
 
   // ── KPIs — mirrors createKPISummary() formulas exactly ──
@@ -12493,7 +12700,7 @@
       <td style="font-size:0.82rem;white-space:nowrap;">${typeIcon[r._type]||'📋'} <span style="font-size:0.68rem;color:var(--text3);">${typeLabel[r._type]||r._type}</span></td>
       <td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:0.72rem;color:var(--text3);" title="${esc(r.comments)}">${esc(r.comments)||'—'}</td>
       <td style="white-space:nowrap;">
-        <button class="tbl-action-btn" onclick="pubEditRow(${start + slice.indexOf(r)})" title="Edit">✏️</button>
+        <button class="tbl-action-btn" onclick="pubEditRow(${PUB.all.indexOf(r)})" title="Edit">✏️</button>
         <button class="tbl-action-btn danger" onclick="pubDeleteRow(${PUB.all.indexOf(r)})" title="Delete">🗑</button>
       </td>
     </tr>`).join('') :
@@ -12567,6 +12774,8 @@
       jurisdiction:      get('pf-jurisdiction'),
       publishedPaper:    get('pf-published'),
       comments:          (type==='conference'||type==='preprint') ? '' : get('pf-comments'),
+      _row:   null,   // unknown until the next sheet sync — edit/delete falls back to doi/title match till then
+      _sheet: PUB_CONFIG.sheetNames[type] || type,
       _type: type
     };
 
@@ -12618,9 +12827,19 @@
         toast('🗑 Publication deleted');
         const url = _resolveUrl('publications') || WS_CONFIG.webAppUrl;
         if (url) {
-          const sheetName = PUB_CONFIG.sheetNames[rec._type] || rec._type;
+          const sheetName = rec._sheet || PUB_CONFIG.sheetNames[rec._type] || rec._type;
           const _sid = (typeof _serverSessionId !== 'undefined' && _serverSessionId) ? _serverSessionId : (sessionStorage.getItem('wsai_srv_token') || '');
-          _jsonpFetch(url, { action: 'DELETE_PUBLICATION', doi: rec.doi || '', data: JSON.stringify({ doi: rec.doi, publications: rec.publications }), sheet: sheetName, sessionId: _sid, t: Date.now() })
+          // Prefer the exact sheet row (rec._row, tagged by GET_PUBLICATIONS) so the
+          // right record is removed even if doi/title contain duplicates or blanks —
+          // same rowIndex/sourceSheet-first pattern used by Expenses' deleteExpense.
+          _jsonpFetch(url, {
+            action: 'DELETE_PUBLICATION',
+            rowIndex: rec._row || '',
+            sourceSheet: sheetName,
+            doi: rec.doi || '',
+            data: JSON.stringify({ _row: rec._row, _sheet: sheetName, doi: rec.doi, publications: rec.publications }),
+            sheet: sheetName, sessionId: _sid, t: Date.now()
+          })
             .then(function(_r){ if (_r && _r.error) toast('❌ Sheet delete failed: ' + _r.error); })
             .catch(function(e){ toast('❌ Sheet delete failed: ' + e.message); });
         }
@@ -12658,6 +12877,9 @@
         const type = get('pf-type');
         if (!get('pf-faculty')) { toast('⚠️ Faculty name is required'); return; }
         if (!get('pf-title'))   { toast('⚠️ Publication title is required'); return; }
+        // Carry the row identity forward (rec._row/_sheet) so this record can be
+        // edited again, and so the sheet write below targets the exact row even
+        // when the doi/title fields themselves were just changed in this edit.
         const updPub = {
           sNo: rec.sNo, _type: type,
           faculty: get('pf-faculty'), doi: get('pf-doi'),
@@ -12669,7 +12891,9 @@
           dateOfPublication: get('pf-date'),
           jurisdiction: get('pf-jurisdiction'),
           publishedPaper: get('pf-published'),
-          comments: get('pf-comments')
+          comments: get('pf-comments'),
+          _row:   rec._row   || null,
+          _sheet: rec._sheet || (PUB_CONFIG.sheetNames[type] || type)
         };
         PUB.all[idx] = updPub;
         pubApplyFilters();
@@ -12679,11 +12903,26 @@
         btn.onclick = pubSubmitForm;
         const url = _resolveUrl('publications') || WS_CONFIG.webAppUrl;
         if (url) {
-          const sheetName = PUB_CONFIG.sheetNames[type] || type;
+          const sheetName = updPub._sheet || PUB_CONFIG.sheetNames[type] || type;
           const _sid = (typeof _serverSessionId !== 'undefined' && _serverSessionId) ? _serverSessionId : (sessionStorage.getItem('wsai_srv_token') || '');
           try {
-            const _r = await _jsonpFetch(url, { action: 'UPDATE_PUBLICATION', rowIndex: idx, sheet: sheetName, data: JSON.stringify(updPub), sessionId: _sid, t: Date.now() });
-            if (_r && _r.error) throw new Error(_r.error);
+            // rowIndex/sourceSheet = preferred exact-row update path (mirrors
+            // Expenses' updateExpense). doi is also sent so the legacy
+            // doi/title-match fallback still works for records synced before
+            // this row-tagging existed (e.g. right after a fresh GET_PUBLICATIONS
+            // that predates this feature, or a local-only unsynced add).
+            const _r = await _jsonpFetch(url, {
+              action: 'UPDATE_PUBLICATION',
+              rowIndex: updPub._row || '',
+              sourceSheet: sheetName,
+              sheet: sheetName,
+              doi: rec.doi || '',
+              data: JSON.stringify(updPub),
+              sessionId: _sid, t: Date.now()
+            });
+            if (!_r || _r.error || _r.status === 'not_found' || _r.status === 'error') {
+              throw new Error((_r && (_r.error || _r.reason)) || 'Row not found in sheet — refresh and try again');
+            }
             toast('✅ Publication updated in Google Sheet');
           } catch(e) {
             toast('⚠️ Publication updated locally — sheet sync failed: ' + e.message);
@@ -37500,6 +37739,8 @@ tbody td { vertical-align: middle; }
     toast('⬇️ Export ready');
   }
   window.arExport = arExport;
+
+  console.log('%c✅ WSAI Portal v57 — Publications: count-card registry (like Assets/Expenses) · Edit/Delete now write the exact sheet row', 'color:#10B981;font-weight:700;font-size:12px;');
 
 })();
 </script>
